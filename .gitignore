@@ -1,0 +1,16 @@
+.DS_Store
+._*
+
+__pycache__
+*.py[cod]
+*$py.class
+.mypy_cache
+.vscode
+
+.coverage
+.env
+.pytest_cache
+celerybeat-schedule
+dev.db
+htmlcov
+test-reports

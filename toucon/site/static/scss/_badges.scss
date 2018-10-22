@@ -1,0 +1,54 @@
+div.badge {
+    position: relative;
+    width: 100%;
+    background: white;
+    text-align: center;
+    font-size: 16px;
+    padding: 0;
+
+    table.standard {
+        width: 100%;
+        height: 80mm;
+
+        h1, h2, h3, h4, h5, h6 {
+            width: 90%;
+            margin: 5px auto;
+            font-weight: 400;
+        }
+
+        .name {
+            font-size: 30px;
+            line-height: 30px;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .affiliation {
+            font-size: inherit;
+        }
+
+        td {
+            position: relative;
+            width: 100%;
+            text-align: center;
+        }
+
+        div.band {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 10mm;
+            line-height: 10mm;
+            color: white;
+            font-weight: 300;
+
+            &.top {
+                top: 0;
+            }
+
+            &.bottom {
+                bottom: 0;
+            }
+        }
+    }
+}

@@ -1,0 +1,76 @@
+<script type="text/x-template" id="{{ id }}">
+{% verbatim %}
+    <div v-cloak class="bg-lighter p-4">
+        <div class="float-right input-group w-50">
+            <input v-model="query" type="text" class="form-control" placeholder="Search code, notes...">
+            <span v-if="query" @click="query = ''" class="input-group-addon pointer">
+                <i class="material-icons">&#xE5CD;</i>
+            </span>
+            <span v-else class="input-group-addon"><i class="material-icons">&#xE8B6;</i></span>
+        </div>
+        <h4 class="text-secondary mb-4">Coupons</h4>
+        <div v-if="items.length" class="float-right">
+            <small class="text-secondary">
+                <i v-if="items.length < coupons.length" class="material-icons mr-1">&#xE152;</i>
+                <span>Showing {{ items.length }} of {{ coupons.length }}</span>
+            </small>
+        </div>
+        <div class="mb-3 dropdown">
+            <a href="#" data-toggle="dropdown">
+                <span><i class="material-icons mr-2">&#xE148;</i>New coupon</span>
+            </a>
+            <div class="dropdown-menu p-3">
+                <div class="form-group">
+                    <label for="couponValue">Coupon value <small class="text-danger">*</small></label>
+                    <div class="input-group">
+                        <span class="input-group-addon">{{ currencySymbol }}</span>
+                        <input v-model.number="coupon.value" type="number" class="form-control" id="couponValue">
+                        <span class="input-group-addon">.00</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="couponNotes">Notes <small class="text-danger">*</small></label>
+                    <input v-model.trim="coupon.notes" type="text" class="form-control" id="couponNotes">
+                </div>
+                <button @click.prevent="create()" :disabled="coupon.value == 0" class="btn btn-primary btn-block pointer">Create new coupon</button>
+            </div>
+        </div>
+        <div v-if="items.length">
+            <table class="table table-sm table-responsive-sm mb-0">
+                <thead>
+                    <tr>
+                        <th class="md pl-0">Code</th>
+                        <th class="md">Value</th>
+                        <th>Notes</th>
+                        <th class="sm"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="(item, index) in items">
+                        <th scope="row" class="text-nowrap pr-3 pl-0"><samp><small>{{ item.code }}</small></samp></th>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-addon">{{ currencySymbol }}</span>
+                                <input v-model.number="item.value" @input="update(item)" type="number" class="form-control form-control-sm" :disabled="saving">
+                            </div>
+                        </td>
+                        <td>
+                            <input v-model.trim="item.notes" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving">
+                        </td>
+                        <td v-if="_.has(usedCoupons, item.id)" class="text-nowrap pr-0">
+                            <span class="badge badge-success"><i class="material-icons mr-1">&#xE876;</i>Used</span>
+                            <router-link :to="{name: 'registration-detail', params: {uuid: usedCoupons[item.id].uuid}}" class="ml-1">
+                                <i class="material-icons">&#xE5C8;</i>
+                            </router-link>
+                        </td>
+                        <td v-else @click.prevent="destroy(item)" class="pointer">
+                            <i class="material-icons text-danger">&#xE5CD;</i>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p v-else class="text-info">No coupons found <em v-if="q">for "{{ q }}"</em></p>
+    </div>
+{% endverbatim %}
+</script>

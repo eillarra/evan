@@ -1,0 +1,14 @@
+{% extends 'account/base.html' %}
+
+{% load toucon %}
+
+
+{% block submenu %}
+    <a href="{% url 'account_change_password' %}" class="nav-link {% active request 'account_change_password,account_set_password' %}">
+        <i class="material-icons">vpn_key</i>Password</a>
+    <a href="{% url 'account_email' %}" class="nav-link {% active request 'account_email' %}">
+        <i class="material-icons">email</i>Emails</a>
+    <a href="{% url 'socialaccount_connections' %}" class="nav-link {% active request 'socialaccount_connections' %}">
+        <i class="material-icons">toys</i>Social accounts</a>
+
+{% endblock %}

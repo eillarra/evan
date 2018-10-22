@@ -1,0 +1,128 @@
+<script type="text/x-template" id="{{ id }}">
+{% verbatim %}
+    <div v-cloak v-if="conference" class="bg-lighter p-4">
+        <h4 class="text-secondary mb-4">Conference</h4>
+        <div class="row">
+            <div class="col-12 col-md-4 form-group">
+                <label>Toucon ID</label>
+                <input :value="conference.code" type="text" class="form-control" disabled>
+            </div>
+            <div class="col-6 col-md-4 form-group">
+                <label>Start date <small class="text-danger">*</small></label>
+                <input v-model="conference.start_date" @input="update" type="text" class="form-control" placeholder="YYYY-MM-DD">
+            </div>
+            <div class="col-6 col-md-4 form-group">
+                <label>End date <small class="text-danger">*</small><span v-if="conference.is_active" class="ml-2 badge badge-success">Active</span></label>
+                <input v-model="conference.end_date" @input="update" type="text" class="form-control" placeholder="YYYY-MM-DD">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-md-4 form-group">
+                <label>Registration start date <small class="text-danger">*</small></label>
+                <input v-model="conference.registration_start_date" @input="update" type="text" class="form-control" placeholder="YYYY-MM-DD">
+            </div>
+            <div class="col-12 col-md-4 form-group mb-0">
+                <label>Registration early deadline</label>
+                <input v-model="conference.registration_early_deadline" @input="update" type="text" class="form-control" placeholder="YYYY-MM-DD hh:mm">
+                <small class="form-text text-muted">Needed if you have early registration fees.</small>
+            </div>
+            <div class="col-12 col-md-4 form-group">
+                <label>Registration deadline <small class="text-danger">*</small><span v-if="conference.is_open_for_registration" class="ml-2 badge badge-success">Open</span></label>
+                <input v-model="conference.registration_deadline" @input="update" type="text" class="form-control" placeholder="YYYY-MM-DD hh:mm">
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="form-group">
+                    <label>Name <small class="text-danger">*</small></label>
+                    <input v-model.trim="conference.name" @input="update" type="text" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Full name <small class="text-danger">*</small></label>
+                    <textarea v-model.trim="conference.full_name" @input="update" rows="2" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Presentation <small class="text-danger">*</small></label>
+                    <textarea v-model.trim="conference.presentation" @input="update" rows="16" class="form-control"></textarea>
+                    <small class="form-text text-muted">You can use <a href="https://daringfireball.net/projects/markdown/syntax" target="_blank">Markdown</a> to style this text.</small>
+                </div>
+                <div class="form-group">
+                    <label>Website</label>
+                    <input v-model.trim="conference.website" @input="update" type="url" class="form-control" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Hashtag</label>
+                    <div class="input-group">
+                        <span class="input-group-addon">#</span>
+                        <input v-model.trim="conference.hashtag" @input="update" type="text" class="form-control">
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-6 d-none d-md-block">
+                <small class="d-block text-secondary mb-2"><i class="material-icons mr-1">&#xE8F4;</i>Preview</small>
+                <div class="bg-semi rounded p-4">
+                    <h3>{{ conference.name }}</h3>
+                    <h4 class="mb-3">{{ conference.full_name }}</h4>
+                    <p>
+                        <i class="material-icons mr-1">&#xE878;</i><em>{{ dates }}</em><br>
+                        <i class="material-icons mr-1">&#xE55F;</i><em>{{ conference.city }}, {{ conference.country.name }}</em>
+                    </p>
+                    <div v-html="markedPresentation"></div>
+                    <hr class="my-4">
+                    <p class="mb-0 text-primary">
+                        <span v-if="conference.website">
+                            <a :href="conference.website" target="_blank">
+                                <i class="material-icons mr-1">&#xE250;</i>External website</a><br>
+                        </span>
+                        <a :href="'https://www.toucon.net/r/' + conference.code + '/'" target="_blank"><i class="material-icons mr-1">&#xE862;</i>Registrations: <strong>toucon.net/r/{{ conference.code }}</strong></a><br>
+                        <span v-if="conference.hashtag">
+                            <a :href="'https://twitter.com/search?q=%23' + conference.hashtag" target="_blank">
+                                <i class="material-icons mr-1">&#xE8B6;</i>Hashtag: <strong>#{{ conference.hashtag }}</strong></a>
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="form-group">
+                    <label>Badge color <small class="text-danger">*</small></label>
+                    <input v-model="conference.badge.color" @input="update" type="text" class="form-control" pattern="#[a-fA-F\d]{6}">
+                    <small class="form-text text-muted">Color in six-digit hexadecimal format. <a target="_blank" href="https://en.wikipedia.org/wiki/Web_colors">Learn more</a>.</small>
+                </div>
+                <div class="form-group">
+                    <label>Sorting <small class="text-danger">*</small></label>
+                    <select v-model="conference.badge.order_by" @change="update" class="form-control">
+                        <option value="first_name">By first name</option>
+                        <option value="last_name">By last name</option>
+                    </select>
+                    <small class="form-text text-muted">When printing all the badges they will be ordered by `attendee.{{ conference.badge.order_by }}`.</small>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <small class="d-block text-secondary mb-2"><i class="material-icons mr-1">&#xE0BA;</i>Badge</small>
+                <div class="rounded border-semi badge">
+                    <table class="standard">
+                        <tr>
+                            <td>
+                                <div class="top band" :style="{background: conference.badge.color}">
+                                    <span>{{ conference.name }}</span>
+                                </div>
+                                {% endverbatim %}
+                                <h2 class="name">{{ user.first_name }} {{ user.last_name }}</h2>
+                                <h6 class="affiliation">{{ user.profile.affiliation }}, {{ user.profile.country.name }}</h6>
+                                {% verbatim %}
+                                <div class="bottom band" :style="{background: conference.badge.color}">
+                                    <span>{{ dates }}, {{ conference.city }}, <span class="nowrap">{{ conference.country.name }}</span></span>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endverbatim %}
+</script>

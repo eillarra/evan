@@ -1,0 +1,216 @@
+$ugent-blue: #1e64c8;
+$ugent-yellow: #ffd200;
+$elis-purple: #6f71b9;
+
+$primary-color: $ugent-blue;
+$light-color: #eceff1;  // Toucon bg
+$danger-color: #dc3545;  // Bootstrap default
+
+$font-color: #37474F;  // Blue Grey 800
+$font-color-light: #90A4AE;  // Blue Grey 300
+
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-strong: 600;
+
+
+[v-cloak] {
+    display: none !important;
+}
+
+.pointer,
+.btn {
+    cursor: pointer;
+}
+
+@media (min-width: 1280px) {
+    .container {
+        max-width: 1280px;
+    }
+}
+
+.ha-100 {
+    position: absolute;
+    bottom: 0;
+    top: 0;
+    width: 93%;
+}
+
+.msg-bar {
+    border-bottom: 0.5rem solid white;
+}
+
+
+/* Colors & logo */
+
+.logo {
+    width: 64px;
+    max-width: 100%;
+
+    &.logo-md {
+        width: 48px;
+    }
+
+    &.logo-sm {
+        width: 24px;
+    }
+
+    &.flipped {
+        transform: rotate(180deg);
+        -moz-filter: grayscale(1);
+        -ms-filter: grayscale(1);
+        -o-filter: grayscale(1);
+        filter: grayscale(1);
+    }
+}
+
+.bg-light {
+    background-color: $light-color !important;
+}
+
+.bg-lighter {
+    background-color: #fafafa !important;  // Grey 50
+}
+
+.bg-semi {
+    background-color: #e9ecef !important;
+}
+
+.border-semi {
+    border: 10px solid #e9ecef !important;
+}
+
+.bg-light-blue {
+    background-color: #E1F5FE !important;  // Light Blue 50
+}
+
+.bg-light-yellow {
+    background-color: lightyellow !important;
+}
+
+.bg-light-green {
+    background-color: #F1F8E9 !important;  // Light Green 50
+}
+
+.text-light {
+    color: $font-color-light !important;  // Blue Grey 200
+}
+
+
+/* Buttons */
+
+.btn-primary {
+    background-color: $primary-color;
+    border-color: $primary-color;
+
+    &:hover {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+}
+
+.btn-outline-primary {
+    color: $primary-color;
+    border-color: $primary-color;
+}
+
+
+/* Typography */
+
+body {
+    color: $font-color;
+    font-size: 15px;
+    font-weight: $font-weight-normal;
+}
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+    font-weight: $font-weight-strong;
+}
+
+h2, h3 {
+    line-height: 1.2;
+}
+
+h5, h6 {
+    font-size: 1rem;
+}
+
+.font-weight-light {
+    font-weight: $font-weight-light;
+}
+
+.font-weight-normal {
+    font-weight: $font-weight-normal;
+}
+
+strong, b,
+.font-weight-strong {
+    font-weight: $font-weight-strong;
+}
+
+.text-sm {
+    font-size: small;
+    line-height: 1.2rem;
+}
+
+.text-smr {
+    font-size: smaller;
+    line-height: 1.2rem;
+}
+
+.text-underline {
+    text-decoration: underline;
+}
+
+a {
+    color: $primary-color;
+
+    .router-link-active > & {
+        font-weight: bold;
+        color: $font-color;
+    }
+
+    &:hover {
+        text-decoration: none;
+    }
+
+    &.inherit {
+        color: inherit;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+.material-icons {
+    font-size: 1.1em;
+    vertical-align: -17.5%;
+
+    &.in {
+        vertical-align: -20%;
+    }
+}
+
+
+/* Footer */
+
+.list-inline-item:not(:last-child) {
+    margin-right: 1.5rem;
+}
+
+
+/* Dropdowns */
+
+.dropdown-menu {
+    &.dropdown-wide {
+        min-width: 20rem;
+    }
+}
+
+
+@import '_badges.scss';
+@import '_forms.scss';
+@import '_marked.scss';
+@import '_stripe.scss';
+@import '_tables.scss';

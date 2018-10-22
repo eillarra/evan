@@ -1,0 +1,64 @@
+{% extends 'user/base.html' %}
+
+{% load static %}
+
+
+{% block title %}{{ user.username }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <h4 class="text-secondary mb-4">{{ user }}</h4>
+    {% if conferences.count > 0 %}
+        <h5 class="mt-5">Conference management</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th class="pl-0">Conference</th>
+                    <th></th>
+                    <th class="sm"></th>
+                </tr>
+            </thead>
+            {% for conference in conferences %}
+                <tr>
+                    <td>{{ conference.name }}</td>
+                    <td>{{ conference.full_name }}</td>
+                    <td><a href="{{ conference.get_absolute_url }}">Management</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    {% if registrations.count > 0 %}
+        <h5 class="mt-5">My registrations</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th class="pl-0">Conference</th>
+                    <th class="">Registration ID</th>
+                    <th class="md">Date</th>
+                    <th class="sm">Status</th>
+                    <th class="sm"></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for registration in registrations %}
+                <tr>
+                    <td class="pl-0">{{ registration.conference.name }}</td>
+                    <td class="text-nowrap"><samp><small>{{ registration.code }}</small></samp></td>
+                    <td class="text-nowrap">{{ registration.created_at }}</td>
+                    <td>
+                        {% if registration.is_paid %}
+                            <span class="badge badge-success">Paid</span>
+                        {% else %}
+                            <span class="badge badge-warning text-white">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ registration.get_absolute_url }}">Update</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+    {% if sessions.count > 0 %}
+        {{ sessions }}<br>
+    {% endif %}
+{% endblock %}

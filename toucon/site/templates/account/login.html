@@ -1,0 +1,42 @@
+{% extends 'account/base.html' %}
+
+{% load crispy_forms_tags %}
+{% load account socialaccount %}
+
+
+{% block head_title %}Sign in - {{ block.super }}{% endblock %}
+
+{% block content %}
+    {% get_providers as socialaccount_providers %}
+
+    <h4 class="mb-4">Sign in</h4>
+
+    {% if socialaccount_providers %}
+        <p>Please sign in with one
+        of your existing third party accounts. Or, <a href="{{ signup_url }}">sign up</a>
+        for an account and sign in below:</p>
+
+        <ul class="socialaccounts bg-light rounded">
+            {% include 'socialaccount/snippets/provider_list.html' with process='login' %}
+        </ul>
+
+        {% include 'socialaccount/snippets/login_extra.html' %}
+
+    {% else %}
+        <p>If you have not created an account yet, then please <a href="{{ signup_url }}">sign up</a> first.</p>
+    {% endif %}
+
+    <form method="post" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {{ form | crispy }}
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+        {% endif %}
+        <button class="btn btn-primary mt-2" type="submit">Sign in</button>
+    </form>
+    <hr class="mt-5">
+    <p class="m-0 text-sm">
+        <i class="material-icons sm mr-2">help_outline</i>
+        <a href="{% url 'account_reset_password' %}">Forgot password?</a>
+    </p>
+{% endblock %}

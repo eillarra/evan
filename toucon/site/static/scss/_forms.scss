@@ -1,0 +1,86 @@
+form {
+    label {
+        margin-bottom: 0.3rem;
+    }
+
+    [id^=error].help-block {
+        background-color: ivory;
+        color: red;
+        margin: 0.25rem 0 0;
+        font-size: small;
+    }
+
+    .form-group {
+        [id^=hint] {
+            display: block;
+            margin-top: 0.25rem;
+
+            &:first-letter {
+                text-transform: uppercase;
+            }
+        }
+    }
+
+    input[type='submit'] {
+        cursor: pointer;
+    }
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+    background: white;
+    color: #888;
+}
+
+.account-form {
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .badge-or {
+        background-color: $ugent-yellow;
+    }
+
+    #div_id_remember {
+        float: right;
+        font-size: small;
+        line-height: 1.7;
+    }
+
+    .col-form-label {
+        font-size: small;
+
+        .asteriskField {
+            color: $danger-color;
+            margin-left: .25rem;
+        }
+    }
+
+    ul.socialaccounts {
+        padding: 1.5rem 1rem;
+        width: 100%;
+        text-align: center;
+
+        li {
+            display: inline;
+            margin: 0 1rem;
+        }
+
+        svg {
+            height: 32px;
+        }
+    }
+}
+
+.custom-control {
+    min-height: auto;
+    line-height: 1.25rem;
+}
+
+.custom-control-label {
+    &::after,
+    &::before {
+        top: .15rem;
+    }
+}

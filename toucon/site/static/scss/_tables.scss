@@ -1,0 +1,48 @@
+.table {
+    th.sm,
+    td.sm {
+        width: 1rem;
+    }
+
+    th.md,
+    td.md {
+        width: 6rem;
+    }
+
+    th.date,
+    td.date {
+        width: 6.5rem;
+    }
+
+    th.hour,
+    td.hour {
+        width: 5.7rem;
+    }
+
+    &.table-sm th,
+    &.table-sm td {
+        font-size: small;
+
+        .form-control-sm {
+            padding: .25rem .5rem .2rem;
+            font-size: 0.75rem;
+        }
+
+        .input-group-sm > .input-group-addon {
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .badge {
+            font-size: 85%;
+        }
+    }
+
+    th, td {
+        vertical-align: middle;
+    }
+
+    &.no-border-first tr:first-child td {
+        border-top: 0;
+    }
+}

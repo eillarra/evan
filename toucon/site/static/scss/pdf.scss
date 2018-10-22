@@ -1,0 +1,17 @@
+body {
+    font-family: "Lato", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+div.page {
+    page-break-inside: avoid !important;
+}
+div.break {
+    display: block;
+    clear: both;
+    page-break-after: always;
+}
+.float-right {
+    float: right;
+}
+.nowrap {
+    white-space: nowrap;
+}

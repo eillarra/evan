@@ -1,0 +1,331 @@
+{% extends 'app.html' %}
+
+{% load compress %}
+{% load static %}
+
+
+{% block title %}My {{ registration.conference.code }} registration - {{ block.super }}{% endblock %}
+
+{% block content %}
+    <div id="vue" v-cloak data-url-conference="{% url 'v1:conference-detail' registration.conference.code %}" data-url-registration="{% url 'v1:registration-detail' registration.uuid %}" data-url-user="{% url 'v1:user-detail' user.username %}" data-stripe-pk="{{ stripe_publishable_key }}" class="container">
+        <div class="row">
+            <div class="col-12 col-md-3 col-lg-2">
+                <div class="sticky-top pt-5">
+                    <img class="logo" src="{% static 'images/toucon.svg' %}">
+                    <h5 class="my-4">{{ conference.name }}</h5>
+                    <ul class="navbar-nav my-4">
+                        <router-link tag="li" :to="{name: 'registration'}">
+                            <a><i class="material-icons mr-2">&#xE03F;</i>Registration</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'payment'}" class="mb-3">
+                            <a><i class="material-icons mr-2">&#xE870;</i>Payment</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'profile'}">
+                            <a><i class="material-icons mr-2">&#xE87C;</i>My profile</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'conference'}">
+                            <a><i class="material-icons mr-2">&#xE1BD;</i>Conference info</a>
+                        </router-link>
+                    </ul>
+                    <hr>
+                    <ul class="navbar-nav my-4">
+                        <li>
+                            <a href="{% url 'dashboard' %}" class="d-block">
+                                <i class="float-right material-icons text-secondary mt-1">&#xE0B2;</i>
+                                <i class="material-icons mr-2">&#xE1AF;</i><span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-12 col-md-9 col-lg-10 mb-5">
+                {% verbatim %}
+                <div class="sticky-top msg-bar">
+                    <div v-if="error" class="bg-danger py-1 px-4 text-white" role="alert">
+                        <i class="material-icons mt-1 float-right">&#xE160;</i>
+                        <small>{{ error }}</small>
+                    </div>
+                    <div v-else>
+                        <div v-if="saving" class="bg-light-blue py-1 px-4 text-info">
+                            <i class="material-icons mt-1 float-right">&#xE837;</i>
+                            <small>{{ saving }}</small>
+                        </div>
+                        <div v-else class="bg-light-green py-1 px-4 text-success">
+                            <i class="material-icons mt-1 float-right">&#xE86C;</i>
+                            <small>All information is up to date</small>
+                        </div>
+                    </div>
+                </div>
+                {% endverbatim %}
+                <router-view></router-view>
+            </div>
+        </div>
+        {% include './v-session.modal.html' %}
+    </div>
+{% endblock %}
+
+{% block vue_templates %}
+    {% include './v-conference.html' with id='v-conference' %}
+    {% include './v-payment.html' with id='v-payment' %}
+    {% include './v-profile.html' with id='v-profile' %}
+    {% include './v-registration.html' with id='v-registration' %}
+{% endblock %}
+
+{% block styles %}
+    <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://js.stripe.com/v3/"></script>
+<script type="text/javascript">var COUNTRIES = {{ countries_json | safe }};</script>
+{% compress js file app_registration %}
+    <script type="text/javascript">
+        var Stripe = Stripe($('#vue').data('stripe-pk'));
+        var elements = Stripe.elements();
+        var card = elements.create('card', {
+            style: {
+                base: {
+                    color: '#495057',
+                    fontFamily: '"Open Sans", "Segoe UI", Helvetica, Arial, sans-serif',
+                    fontSize: '16px',
+                    '::placeholder': {
+                        color: '#999'
+                    }
+                },
+                invalid: {
+                    iconColor: '#dc3545',
+                    color: '#dc3545'
+                }
+            }
+        });
+
+        var Store = new Vuex.Store({
+            state: {
+                saving: false,
+                error: null,
+                user: null,
+                conference: null,
+                registration: null,
+                countries: COUNTRIES,
+                session: null,
+            },
+            getters: {
+                selectedDates: function (state) {
+                    if (!state.conference || !state.registration) return [];
+
+                    return _.pluck(_.filter(state.conference.days, function (obj) {
+                        return state.registration.days.indexOf(obj.id) !== -1;
+                    }), 'date');
+                }
+            },
+            mutations: {
+                set: function (state, data) {
+                    state[data[0]] = data[1];
+                },
+                parseError: function (state, err) {
+                    state.error = getParsedErrors(err);
+                    state.saving = false;
+                    setTimeout(function () { state.error = null; }, 10000);
+                },
+                startSaving: function (state, msg) {
+                    state.error = null;
+                    state.saving = msg;
+                },
+                endSaving: function (state, msg) {
+                    setTimeout(function () { state.saving = msg; }, DELAY / 2);
+                    setTimeout(function () { state.saving = false; }, DELAY);
+                },
+                getUser: function (state) {
+                    $.get($('#vue').data('url-user')).then(function (res) {
+                        state.user = res;
+                    });
+                },
+                getRegistration: function (state) {
+                    $.get($('#vue').data('url-registration')).then(function (res) {
+                        state.registration = res;
+                    });
+                },
+                getConference: function (state) {
+                    $.get($('#vue').data('url-conference')).then(function (res) {
+                        state.conference = res;
+                    });
+                },
+                loadSession: function (state, sessionId) {
+                    if (!state.conference) return null;
+                    session = _.findWhere(state.conference.sessions, {id: sessionId});
+                    session['markedSummary'] = marked(session.summary, {sanitize: true});
+                    state.session = session;
+                }
+            }
+        });
+
+        var ConferenceView = {
+            template: '#v-conference',
+            computed: _.extend(
+                Vuex.mapState(['conference']),
+                Vuex.mapGetters(['selectedDates']), {
+                markedPresentation: function () {
+                    if (this.conference.presentation == null) return '';
+                    return marked(this.conference.presentation, {sanitize: true});
+                }
+            }),
+        };
+
+        var PaymentView = {
+            template: '#v-payment',
+            data: function () {
+                return {
+                    method: 'card',
+                    cardholder: '',
+                    token: null,
+                    processing: false,
+                    stripeElementMounted: false
+                }
+            },
+            computed: _.extend(
+                Vuex.mapState(['card', 'error', 'user', 'conference', 'registration']), {
+            }),
+            methods: {
+                pay: function () {
+                    if (this.processing) return;
+
+                    // Check: https://stripe.com/docs/testing#cards
+                    var self = this;
+
+                    this.processing = true;
+                    self.$store.commit('startSaving', 'Processing payment...');
+
+                    Stripe.createToken(card, {
+                        name: self.cardholder
+                    }).then(function (res) {
+                        if (res.error) {
+                            self.$store.commit('set', ['error', res.error.message]);
+                        } else {
+                            ajax().post({amount: -self.registration.saldo, token: res.token.id}).then(function (res) {
+                                self.processing = false;
+                                self.$store.commit('set', ['registration', res]);
+                                self.$store.commit('endSaving', 'Payment processed!');
+                            }).fail(function (err) {
+                                self.$store.commit('parseError', err);
+                                self.processing = false;
+                            });
+                        }
+                    });
+                },
+                mountElement: function () {
+                    if ((this.registration && !this.registration.is_paid)
+                        && !this.stripeElementMounted && this.$refs.cardElement) {
+                        var self = this;
+
+                        card.mount(this.$refs.cardElement);
+                        card.addEventListener('change', function (e) {
+                            self.$store.commit('set', ['error', (e.error) ? e.error.message : '']);
+                        });
+                        this.stripeElementMounted = true;
+                    }
+
+                    if (this.cardholder == '' && this.user) {
+                        this.cardholder = this.user.first_name + ' ' + this.user.last_name;
+                    }
+                }
+            },
+            mounted: function () {
+                this.mountElement();
+            },
+            updated: function () {
+                this.mountElement();
+            }
+        };
+
+        var ProfileView = {
+            template: '#v-profile',
+            computed: _.extend(
+                Vuex.mapState(['countries', 'user', 'conference']), {
+                countryName: function () {
+                    return this.countries[this.user.profile.country.code];
+                },
+                hasCase: function () {
+                    return (/^[A-Z]*$/).test(this.user.first_name)
+                        || (/^[A-Z]*$/).test(this.user.last_name);
+                }
+            }),
+            methods: {
+                update: _.debounce(function () {
+                    if (this.user.profile.gender == 'null') this.user.profile.gender = null;
+                    var data = _.omit(this.user, ['username']);
+                    ajax().deput(this.$store, this.user.url, data, 'Saving user information...');
+                }, DELAY)
+            }
+        };
+
+        var RegistrationView = {
+            template: '#v-registration',
+            computed: _.extend(
+                Vuex.mapState(['conference', 'registration']),
+                Vuex.mapGetters(['selectedDates']), {
+            }),
+            methods: {
+                update: _.debounce(function () {
+                    var data = _.omit(this.registration, ['conference', 'fee', 'coupon']);
+                    ajax().deput(this.$store, this.registration.url, this.registration, 'Saving registration...');
+                }, DELAY),
+            }
+        };
+
+        var Router = new VueRouter({
+            routes: [
+                {
+                    path: '/',
+                    redirect: {name: 'registration'}
+                },
+                {
+                    name: 'conference',
+                    path: '/conference/',
+                    pathToRegexpOptions: {strict: true},
+                    component: ConferenceView
+                },
+                {
+                    name: 'payment',
+                    path: '/payment/',
+                    pathToRegexpOptions: {strict: true},
+                    component: PaymentView
+                },
+                {
+                    name: 'profile',
+                    path: '/profile/',
+                    pathToRegexpOptions: {strict: true},
+                    component: ProfileView
+                },
+                {
+                    name: 'registration',
+                    path: '/registration/',
+                    pathToRegexpOptions: {strict: true},
+                    component: RegistrationView
+                }
+            ],
+            scrollBehavior: function (to, from, savedPosition) {
+                return {x: 0, y: 0};
+            }
+        });
+
+        var app = new Vue({
+            el: '#vue',
+            store: Store,
+            router: Router,
+            computed: Vuex.mapState(['saving', 'error', 'session']),
+            mounted: function () {
+                $.when(
+                    this.$store.commit('getUser'),
+                    this.$store.commit('getConference'),
+                    this.$store.commit('getRegistration')
+                );
+            }
+        });
+
+        app.$on('viewSession', function (sessionId) {
+            this.$store.commit('loadSession', sessionId);
+            $('#session-modal').modal();
+        });
+    </script>
+{% endcompress %}
+{% endblock %}

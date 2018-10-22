@@ -1,0 +1,104 @@
+{% extends 'app.html' %}
+
+{% load compress %}
+{% load static %}
+
+
+{% block title %}{{ conference.code }} - {{ block.super }}{% endblock %}
+
+{% block styles %}
+    <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
+{% endblock %}
+
+{% block scripts %}
+{% compress js file app_race %}
+    <script src="{% static 'js/app/conference.js' %}"></script>
+{% endcompress %}
+{% endblock %}
+
+{% block content %}
+    <div id="vue" v-cloak data-url-conference="{% url 'v1:conference-detail' conference.code %}" data-url-coupons="{% url 'v1:coupons-list' conference.code %}" data-url-papers="{% url 'v1:papers-list' conference.code %}" data-url-papers-upload="{% url 'v1:papers-upload' conference.code %}" data-url-registrations="{% url 'v1:registrations-list' conference.code %}" data-url-rooms="{% url 'v1:rooms-list' conference.code %}" data-url-sessions="{% url 'v1:sessions-list' conference.code %}" data-url-topics="{% url 'v1:topics-list' conference.code %}" data-url-tracks="{% url 'v1:tracks-list' conference.code %}" data-url-venues="{% url 'v1:venues-list' conference.code %}" class="container">
+        <div class="row">
+            <div class="col-12 col-md-3 col-lg-2">
+                <div class="sticky-top pt-5">
+                    <img class="logo" src="{% static 'images/toucon.svg' %}">
+                    <h5 v-if="conference" class="my-4">{% verbatim %}{{ conference.name }}{% endverbatim %}</h5>
+                    <h5 v-else class="my-4">{{ conference.name }}</h5>
+                    <ul class="navbar-nav my-4">
+                        <router-link tag="li" :to="{name: 'conference'}">
+                            <a><i class="material-icons mr-2">&#xE1BD;</i>Conference</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'venues'}">
+                            <a><i class="material-icons mr-2">&#xE55E;</i>Venues & rooms</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'taxonomy'}">
+                            <a><i class="material-icons mr-2">&#xE892;</i>Tracks & topics</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'papers'}">
+                            <a><i class="material-icons mr-2">&#xE54B;</i>Papers</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'sessions'}" class="mb-3">
+                            <a><i class="material-icons mr-2">&#xE614;</i>Sessions</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'registrations'}">
+                            <a><i class="material-icons mr-2">&#xE03F;</i>Registrations</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'coupons'}" class="mb-3">
+                            <a><i class="material-icons mr-2">&#xE553;</i>Coupons</a>
+                        </router-link>
+                        <!--<router-link tag="li" :to="{name: 'finances'}">
+                            <a><i class="material-icons mr-2">&#xE870;</i>Finances</a>
+                        </router-link>
+                        <router-link tag="li" :to="{name: 'stats'}">
+                            <a><i class="material-icons mr-2">&#xE6DF;</i>Stats</a>
+                        </router-link>-->
+                    </ul>
+                    <hr>
+                    <ul class="navbar-nav my-4">
+                        <li>
+                            <a href="{% url 'dashboard' %}" class="d-block">
+                                <i class="float-right material-icons text-secondary mt-1">&#xE0B2;</i>
+                                <i class="material-icons mr-2">&#xE1AF;</i><span>Dashboard</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-12 col-md-9 col-lg-10 mb-5">
+                {% verbatim %}
+                <div class="sticky-top msg-bar">
+                    <div v-if="error" class="bg-danger py-1 px-4 text-white" role="alert">
+                        <i class="material-icons mt-1 float-right">&#xE160;</i>
+                        <small>{{ error }}</small>
+                    </div>
+                    <div v-else>
+                        <div v-if="saving" class="bg-light-blue py-1 px-4 text-info">
+                            <i class="material-icons mt-1 float-right">&#xE837;</i>
+                            <small>{{ saving }}</small>
+                        </div>
+                        <div v-else class="bg-light-green py-1 px-4 text-success">
+                            <i class="material-icons mt-1 float-right">&#xE86C;</i>
+                            <small>All information is up to date</small>
+                        </div>
+                    </div>
+                </div>
+                {% endverbatim %}
+                <router-view></router-view>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block vue_templates %}
+    {% include './v-conference.html' with id='v-conference' %}
+    {% include './v-coupons.html' with id='v-coupons' %}
+    {% include './v-finances.html' with id='v-finances' %}
+    {% include './v-papers.html' with id='v-papers' %}
+    {% include './v-registrations.html' with id='v-registrations' %}
+    {% include './v-registration-detail.html' with id='v-registration-detail' %}
+    {% include './v-sessions.html' with id='v-sessions' %}
+    {% include './v-session-detail.html' with id='v-session-detail' %}
+    {% include './v-stats.html' with id='v-stats' %}
+    {% include './v-taxonomy.html' with id='v-taxonomy' %}
+    {% include './v-venues.html' with id='v-venues' %}
+{% endblock %}

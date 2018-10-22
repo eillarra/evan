@@ -1,0 +1,40 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.7"
+
+[packages]
+commonmark = "*"
+coreapi = "*"
+django = "*"
+djangorestframework = "*"
+django-anymail = "*"
+django-allauth = "*"
+django-compressor = "*"
+django-cors-headers = "*"
+django-countries = "*"
+django-crispy-forms = "*"
+django-dnt = "*"
+django-libsass = "*"
+django-redis = "*"
+django-wkhtmltopdf = "*"
+gunicorn = "*"
+mysqlclient = "*"
+pyexcel = "*"
+requests = "*"
+sentry-sdk = "*"
+stripe = "*"
+whitenoise = "*"
+
+[dev-packages]
+django-debug-toolbar = "*"
+flake8 = "*"
+flake8-mypy = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-django = "*"
+maya = "*"
+model-mommy = "*"

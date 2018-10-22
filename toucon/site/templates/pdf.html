@@ -1,0 +1,40 @@
+{% load compress %}
+{% load static %}
+
+
+<!doctype html>
+<html lang="en">
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,400i,700" rel="stylesheet">
+        <style>
+            body {
+                font-family: "Lato", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            }
+            div.page {
+                page-break-inside: avoid !important;
+            }
+            div.break {
+                display: block;
+                clear: both;
+                page-break-after: always;
+            }
+            .float-right {
+                float: right;
+            }
+            .nowrap {
+                white-space: nowrap;
+            }
+        </style>
+        {% block styles %}{% endblock %}
+        <title>{% block title %}{% endblock %}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        {% block base_href %}{% endblock %}
+    </head>
+    <body>
+        <div>
+            {% block header %}{% endblock %}
+            {% block content %}{% endblock %}
+            {% block footer %}{% endblock %}
+        </div>
+    </body>
+</html>
