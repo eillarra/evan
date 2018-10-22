@@ -1,8 +1,11 @@
-image: python:3.6.2
+image: python:3.7
 
 pipelines:
     default:
         - step:
+            name: Build and test
+            cache: pip
             script:
-                - pip install -r requirements.txt
-                - python manage.py test toucon
+                - pip install pipenv && pipenv install --dev --deploy --system
+                - pytest --cov=evan --junitxml=./test-reports/junit.xml
+                - coverage report -m

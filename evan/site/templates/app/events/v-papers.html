@@ -1,0 +1,76 @@
+<script type="text/x-template" id="{{ id }}">
+    {% verbatim %}
+        <div v-cloak v-if="event" class="bg-lighter p-4">
+            <div class="float-right input-group w-50">
+                <input v-model="query" type="text" class="form-control" placeholder="Search title, authors...">
+                <div class="input-group-append">
+                    <div v-if="query" @click="query = ''" class="input-group-text pointer">
+                        <i class="material-icons">&#xE5CD;</i>
+                    </div>
+                    <div v-else class="input-group-text"><i class="material-icons">&#xE8B6;</i></div>
+                </div>
+            </div>
+            <h4 class="text-secondary mb-4">Papers</h4>
+            <div v-if="items.length" class="float-right">
+                <small class="text-secondary">
+                    <i v-if="items.length < event.papers.length" class="material-icons mr-1">&#xE152;</i>
+                    <span>Showing {{ items.length }} of {{ event.papers.length }}</span>
+                </small>
+            </div>
+            <div class="mb-3 dropdown d-inline-block mr-4">
+                <a href="#" data-toggle="dropdown">
+                    <span><i class="material-icons mr-2">&#xE148;</i>New paper</span>
+                </a>
+                <div class="dropdown-menu dropdown-wide p-3 bg-white">
+                    <div class="form-group">
+                        <label for="paperTitle">Title <small class="text-danger">*</small></label>
+                        <textarea v-model.trim="paper.title" rows="3" class="form-control" id="paperTitle"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="paperAuthors">Authors <small class="text-danger">*</small></label>
+                        <textarea v-model.trim="paper.authors" rows="3" class="form-control" id="paperAuthors"></textarea>
+                    </div>
+                    <button @click.prevent="create()" :disabled="paper.title == '' || paper.authors == ''" class="btn btn-primary btn-block pointer">Create new paper</button>
+                </div>
+            </div>
+            <div class="mb-3 dropdown d-inline-block">
+                <a href="#" data-toggle="dropdown">
+                    <span><i class="material-icons mr-1">&#xE2C6;</i>Upload CSV with papers</span>
+                </a>
+                <div class="dropdown-menu p-3">
+                    <p>The CSV file should have two columns:<br>`title` and `authors`.</p>
+                    <form enctype="multipart/form-data" @submit.prevent="upload($event)">
+                        <input id="csv" name="csv" type="file">
+                        <button type="submit" class="btn btn-primary btn-block mt-3">Upload CSV file</button>
+                        <p v-if="message" class="mt-3 mb-0 text-danger text-sm">{{ message }}</p>
+                    </form>
+                </div>
+            </div>
+            <div v-if="items.length">
+                <table class="table table-sm table-responsive-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Authors</th>
+                            <th class="sm"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in items">
+                            <td>
+                                <input v-model.trim="item.title" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving">
+                            </td>
+                            <td>
+                                <input v-model.trim="item.authors" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving">
+                            </td>
+                            <td @click.prevent="destroy(item)" class="pointer">
+                                <i class="material-icons text-danger">&#xE5CD;</i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p v-else class="text-info">No papers found <em v-if="q">for "{{ q }}"</em></p>
+        </div>
+    {% endverbatim %}
+    </script>

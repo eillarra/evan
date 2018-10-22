@@ -1,35 +1,36 @@
-Toucon
-======
+The Evan api/website uses [Django][1] and the [Django REST Framework][2].
 
-The Toucon api/website uses [Django](https://www.djangoproject.com/) and
-[Django REST framework](http://www.django-rest-framework.org/).
+### Application dependencies
 
-Application dependencies
-------------------------
-The application uses the [pip Package Manager](http://pip.readthedocs.org/en/latest/) to install dependencies:
+The application uses [Pipenv][3] to manage Python packages. While in development, you will need to install
+all dependencies (includes packages like `debug_toolbar`):
 
-    $ pip install -r requirements.txt
+    $ pipenv install --dev
+    $ pipenv shell
 
-Configuration
--------------
-For development, create a database and update the `settings/development.py` file.  
-Once the database configuration is filled in you can generate the necessary tables and load some fixtures using
-`manage.py`:
+Update dependencies (and manually update `requirements.txt`):
 
-    $ python manage.py migrate
-    $ python manage.py mock
+    $ pipenv update --dev && pipenv lock -r
 
-Running the servers
--------------------
+### Running the server
+
     $ python manage.py runserver
 
-Running tests
--------------
-    $ coverage run --source='toucon' manage.py test toucon
-    $ coverage report -m
+### Running tests
 
-Style guide
------------
-Unless otherwise specified, follow
-[Django Coding Style](https://docs.djangoproject.com/en/1.11/internals/contributing/writing-code/coding-style/).
-Tab size is 4 **spaces**. Maximum line length is 120. All changes should include tests and pass `flake8`.
+    $ pytest --cov=eva --cov-report=term
+
+### Run Celery
+
+    $ celery worker -B -A eva
+
+### Style guide
+
+Unless otherwise specified, follow [Django Coding Style][4]. Tab size is 4 **spaces**.
+Maximum line length is 120. All changes should include tests and pass `flake8`.
+
+
+[1]: https://www.djangoproject.com/
+[2]: https://www.django-rest-framework.org/
+[3]: https://docs.pipenv.org/#install-pipenv-today
+[4]: https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/

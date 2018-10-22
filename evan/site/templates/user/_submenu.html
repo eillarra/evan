@@ -1,0 +1,33 @@
+{% load evan %}
+
+
+<h6 class="mb-2">Dashboard</h6>
+<ul class="navbar-nav mb-4">
+    <li>
+        <a href="{% url 'dashboard' %}" class="d-block {% active request 'dashboard' %}">
+            <i class="material-icons mr-2">&#xE1AF;</i><span>Dashboard</span>
+        </a>
+    </li>
+</ul>
+<h6 class="mb-2">My account</h6>
+<ul class="navbar-nav mb-4">
+    <li>
+        <a href="{% url 'account_change_password' %}" class="d-block {% active request 'account_change_password,account_set_password' %}">
+            <i class="material-icons mr-1">vpn_key</i> Password</a>
+    </li>
+    <li>
+        <a href="{% url 'account_email' %}" class="d-block {% active request 'account_email' %}">
+            <i class="material-icons mr-1">email</i> Emails</a>
+    </li>
+    <li>
+        <a href="{% url 'socialaccount_connections' %}" class="d-block {% active request 'socialaccount_connections' %}">
+            <i class="material-icons mr-1">toys</i> Social accounts</a>
+    </li>
+</ul>
+<hr>
+<ul class="navbar-nav my-4">
+    <li>
+        <a href="{% url 'account_logout' %}" class="d-block text-secondary">
+            <i class="material-icons mr-1">block</i> Sign out</a>
+    </li>
+</ul>

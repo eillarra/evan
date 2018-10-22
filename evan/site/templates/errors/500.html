@@ -1,0 +1,18 @@
+{% extends 'layout_simple.html' %}
+
+
+{% block content %}
+    <h4 class="mb-4">Ops, a server error.</h4>
+    <p>We will start working on a fix asap.</p>
+    {% if sentry_event_id %}
+        <p class="text-sm text-danger">
+            <span>Error reference:</span><br>
+            <strong>{{ sentry_event_id }}</strong>
+        </p>
+    {% endif %}
+    <hr class="mt-5">
+    <p class="m-0 text-sm">
+        <i class="material-icons mr-2">arrow_back</i>
+        <a href="{% url 'homepage' %}">Back to homepage</a>
+    </p>
+{% endblock %}

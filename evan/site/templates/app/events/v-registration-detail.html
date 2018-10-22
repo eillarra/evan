@@ -1,0 +1,33 @@
+{% load static %}
+
+
+<script type="text/x-template" id="{{ id }}">
+{% verbatim %}
+    <div v-cloak v-if="registrations.length" class="bg-lighter p-4">
+        <div v-if="registration">
+            <p class="mb-4 float-right">
+                <a href="#" @click.prevent="$router.go(-1)" class="btn btn-sm btn-outline-secondary">Close</a>
+            </p>
+            <h4 class="text-secondary mb-4">Registration: <samp>{{ registration.uuid }}</samp></h4>
+            {% endverbatim %}
+                <div class="d-block mb-3">
+                    <a target="_blank" :href="'{% url 'event:badges' event.code %}?r='+registration.uuid">
+                        <span><i class="material-icons mr-2">&#xE0BA;</i>Download badge</span>
+                    </a>
+                </div>
+            {% verbatim %}
+            <ul class="list-unstyled mb-5">
+                <li><em>Attendee:</em> {{ registration.user.first_name }} {{ registration.user.last_name }} &lt;{{ registration.user.email }}&gt;</li>
+                <li><em>Affiliation:</em> {{ registration.user.profile.affiliation }}, {{ registration.user.profile.country.name }} <i class="ml-1" :class="registration.user.profile.country.flag_css"></i></li>
+                <li><em>Registration date:</em> {{ registration._date }}</li>
+            </ul>
+            <h2 v-if="registration.is_paid" class="text-success">
+                <i class="material-icons mr-2">&#xE5CA;</i>Paid</h2>
+            <h2 v-else class="text-warning">Pending</h2>
+        </div>
+        <div v-else>
+            <h1 class="text-warning">404 Not Found</h1>
+        </div>
+    </div>
+{% endverbatim %}
+</script>

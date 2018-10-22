@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+
+{% load static %}
+
+
+{% block title %}{{ block.super }}{% endblock %}
+
+{% block content %}
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-12 col-md-3 col-lg-2 mb-5">
+                <a href="{% url 'homepage' %}">
+                    <img class="logo" src="{% static 'images/evan.svg' %}">
+                </a>
+            </div>
+            <div class="col-12 col-lg-4 pl-lg-5 order-2">
+                <div class="row">
+                    {% if user.is_authenticated %}
+                        <div class="col">
+                            <a href="{% url 'dashboard' %}" class="btn btn-block btn-primary">
+                                <i class="material-icons mr-2">&#xE1AF;</i>My dashboard</a>
+                        </div>
+                    {% else %}
+                        <div class="col">
+                            <a href="{% url 'account_signup' %}" class="btn btn-block btn-primary mr-2">
+                                <i class="material-icons mr-2">&#xE254;</i>Sign up</a>
+                        </div>
+                        <div class="col">
+                            <a href="{% url 'account_login' %}" class="btn btn-block btn-outline-primary">Log in</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-12 col-md-9 col-lg-6 mb-5">
+                <h3 class="font-weight-light"><strong>Evan</strong> is an event assistant that helps you collect registration fees, manage attendees, organize the website and track the real-time status of your event.</h3>
+            </div>
+        </div>
+    </div>
+{% endblock %}
