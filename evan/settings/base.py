@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',
 
     # theme
+    'captcha',
     'compressor',
     'crispy_forms',
 
@@ -145,6 +146,9 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
+ACCOUNT_FORMS = {
+    'signup': 'evan.forms.EvanSignupForm',
+}
 
 # Social accounts
 
@@ -261,6 +265,15 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(SITE_ROOT, 'www', 'media')
+
+
+# reCAPTCHA
+# https://github.com/praekelt/django-recaptcha#installation
+
+RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY', 'RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY', 'RECAPTCHA_PRIVATE_KEY')
+RECAPTCHA_USE_SSL = True
+NOCAPTCHA = True  # For using reCAPTCHA v2
 
 
 # https://django-crispy-forms.readthedocs.io/en/latest/index.html
