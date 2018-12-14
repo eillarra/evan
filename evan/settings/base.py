@@ -13,7 +13,7 @@ SITE_ROOT = os.path.join(PACKAGE_ROOT, 'site')
 
 DEBUG = True
 
-ADMINS = (('Evan', 'dev@evan.net'),)
+ADMINS = (('eillarra', 'eillarra@ugent.be'),)
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'DJANGO_SECRET_KEY')
 SITE_ID = int(os.environ.get('SITE_ID', 1))
 
@@ -216,7 +216,8 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.template.context_processors.request',
                 'django.contrib.messages.context_processors.messages',
-                'evan.context_processors.git_rev',
+                'evan.context_processors.app',
+                'evan.context_processors.sentry',
             ],
         },
     },

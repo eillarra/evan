@@ -17,7 +17,7 @@
             <div class="row">
                 <div class="col-12 col-md-8">
                     <p>Your registration for {{ event.name }}, {{ event.full_name }}, <strong>has been fully paid</strong>. You can find your payment activity below, with a link to download your invoice.</p>
-                    <p>Feel free to <a href="mailto:support@evan.elis.ugent.be" target="_blank">contact us</a> if you have any question.</p>
+                    <p>Feel free to <a href="mailto:{% endverbatim %}{{ CONTACT_EMAIL }}{% endverbatim %}" target="_blank">contact us</a> if you have any question.</p>
                 </div>
                 <div class="col-12 col-md-4 text-right">
                     <h5 class="text-success font-weight-normal"><i class="material-icons mr-2">&#xE5CA;</i>Paid</h5>
