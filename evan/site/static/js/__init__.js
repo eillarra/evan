@@ -5,4 +5,6 @@ var LANGUAGE = $('html').attr('lang');
 var USER_ID = +$('html').data('user');
 var USER_IS_AUTHENTICATED = (USER_ID > 0);
 
+var DELAY = 150;
+
 moment.locale(LANGUAGE);

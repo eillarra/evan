@@ -1,6 +1,7 @@
 # flake8: noqa
 
 from .event import *
+from .metadata import *
 from .paper import *
 from .registration import *
 from .session import *

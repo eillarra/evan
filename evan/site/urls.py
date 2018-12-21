@@ -1,6 +1,7 @@
 from django.conf.urls import include
 from django.contrib.flatpages.views import flatpage
 from django.urls import path, re_path
+from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from evan.site import views
@@ -16,6 +17,9 @@ event_patterns = ([
 registration_patterns = ([
     path('<uuid:uuid>/', include([
         path('', views.RegistrationView.as_view(), name='app'),
+        path('payment/', never_cache(views.RegistrationPaymentView.as_view()), name='payment'),
+        path('payment/result/', never_cache(views.RegistrationPaymentResultView.as_view()), name='payment_result'),
+        path('receipt/', views.RegistrationPaymentResultView.as_view(), name='receipt'),
     ])),
     path('<slug:code>/', views.RegistrationRedirectView.as_view(), name='redirect'),
 ], 'registration_patterns')

@@ -23,7 +23,7 @@ SENDFILE_ROOT = f'{MEDIA_ROOT}private'
 SENDFILE_URL = '/-internal'
 
 
-# https://docs.djangoproject.com/en/2.1/topics/cache/
+# https://docs.djangoproject.com/en/2.2/topics/cache/
 
 CACHES = {
     'default': {
@@ -44,7 +44,12 @@ CACHE_MIDDLEWARE_SECONDS = 30
 USE_ETAGS = True
 
 
-# https://docs.djangoproject.com/en/2.1/topics/email/
+# http://celery.readthedocs.org/en/latest/django/
+
+CELERY_BROKER_URL = os.environ.get('RABBITMQ_URL')
+
+
+# https://docs.djangoproject.com/en/2.2/topics/email/
 
 DEFAULT_FROM_EMAIL = 'Evan <evan@ugent.be>'
 SERVER_EMAIL = 'evan@ugent.be'
@@ -61,7 +66,7 @@ REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = (  # noqa
 )
 
 
-# https://docs.djangoproject.com/en/2.1/topics/logging/#django-security
+# https://docs.djangoproject.com/en/2.2/topics/logging/#django-security
 # https://docs.sentry.io/platforms/python/?platform=python
 
 LOGGING = {

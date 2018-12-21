@@ -1,6 +1,7 @@
 import os
 
 from django.contrib.messages import constants as messages
+from kombu import Queue
 from urllib.parse import urlparse
 
 
@@ -18,6 +19,8 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'DJANGO_SECRET_KEY')
 SITE_ID = int(os.environ.get('SITE_ID', 1))
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
+
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.flatpages',
@@ -27,9 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'whitenoise.runserver_nostatic',
 
-    # theme
+    # helpers
     'captcha',
     'compressor',
     'crispy_forms',
@@ -58,8 +60,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.gzip.GZipMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
@@ -77,10 +79,10 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = 'evan.urls'
-WSGI_APPLICATION = 'evan.wsgi.application'
+WSGI_APPLICATION = 'evan.wsgi.app'
 
 
-# https://docs.djangoproject.com/en/2.1/ref/settings/#databases
+# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 db = urlparse(os.environ.get('DATABASE_URL'))
 DATABASES = {
@@ -96,14 +98,14 @@ DATABASES = {
 
 
 # Time zones
-# https://docs.djangoproject.com/en/2.1/topics/i18n/timezones/
+# https://docs.djangoproject.com/en/2.2/topics/i18n/timezones/
 
 USE_TZ = True
 TIME_ZONE = 'Europe/Brussels'
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/2.1/topics/i18n/
+# https://docs.djangoproject.com/en/2.2/topics/i18n/
 
 LANGUAGE_CODE = 'en'
 USE_I18N = False
@@ -113,7 +115,7 @@ FIRST_DAY_OF_WEEK = 1
 
 
 # Security
-# https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
 # CSRF / Cookie
 
@@ -167,17 +169,16 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         }
     },
-    'linkedin': {
+    'linkedin_oauth2': {
         'SCOPE': [
             'r_emailaddress',
+            'r_liteprofile',
         ],
         'PROFILE_FIELDS': [
             'id',
-            'first-name',
-            'last-name',
-            'email-address',
-            'picture-url',
-            'public-profile-url',
+            'firstName',
+            'lastName',
+            'emailAddress',
         ]
     },
 }
@@ -196,7 +197,7 @@ REST_FRAMEWORK = {
 }
 
 
-# https://docs.djangoproject.com/en/2.1/topics/templates/
+# https://docs.djangoproject.com/en/2.2/topics/templates/
 
 TEMPLATES = [
     {
@@ -234,8 +235,8 @@ COUNTRIES_OVERRIDE = {
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.1/howto/static-files/
-# https://docs.djangoproject.com/en/2.1/howto/static-files/deployment/
+# https://docs.djangoproject.com/en/2.2/howto/static-files/
+# https://docs.djangoproject.com/en/2.2/howto/static-files/deployment/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(SITE_ROOT, 'www', 'static')
@@ -249,6 +250,7 @@ STATICFILES_FINDERS = (
 )
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
 COMPRESS_OFFLINE = True
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
@@ -256,16 +258,30 @@ COMPRESS_PRECOMPILERS = (
 
 
 # File uploads
-# https://docs.djangoproject.com/en/2.1/topics/http/file-uploads/
+# https://docs.djangoproject.com/en/2.2/topics/http/file-uploads/
 
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 
 # http://stackoverflow.com/questions/24071290/
-# https://docs.djangoproject.com/en/2.1/ref/settings/#media-root
+# https://docs.djangoproject.com/en/2.2/ref/settings/#media-root
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(SITE_ROOT, 'www', 'media')
+
+
+# http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#celerytut-configuration
+
+task_default_queue = 'evan'
+CELERY_TASK_QUEUES = [Queue(name=task_default_queue)]
+CELERY_TASK_DEFAULT_QUEUE = task_default_queue
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = False
 
 
 # reCAPTCHA

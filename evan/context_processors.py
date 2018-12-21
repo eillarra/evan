@@ -1,8 +1,11 @@
 import os
 
+from evan.models import Event
+
 
 def app(request):
     return {
+        'UPCOMING_EVENTS': Event.objects.upcoming(),
         'CONTACT_EMAIL': 'evan@ugent.be'
     }
 

@@ -4,7 +4,7 @@
         <h4 class="text-secondary mb-4">Event</h4>
         <div class="row">
             <div class="col-12 col-md-4 form-group">
-                <label>Eva ID</label>
+                <label>Evan ID</label>
                 <input :value="event.code" type="text" class="form-control" disabled>
             </div>
             <div class="col-6 col-md-4 form-group">
@@ -70,14 +70,14 @@
                         <i class="material-icons mr-1">&#xE878;</i><em>{{ dates }}</em><br>
                         <i class="material-icons mr-1">&#xE55F;</i><em>{{ event.city }}, {{ event.country.name }}</em>
                     </p>
-                    <div v-html="markedPresentation"></div>
+                    <marked :text="event.presentation"></marked>
                     <hr class="my-4">
                     <p class="mb-0 text-primary">
                         <span v-if="event.website">
                             <a :href="event.website" target="_blank">
-                                <i class="material-icons mr-1">&#xE250;</i>External website</a>
+                                <i class="material-icons mr-1">&#xE250;</i>Website: <strong>{{ event.website }}</strong></a>
                         </span><br>
-                        <!--<a :href="'https://evan.elis.ugent.be/r/' + event.code + '/'" target="_blank"><i class="material-icons mr-1">&#xE862;</i>Registrations: <strong>evan.elis.ugent.be/r/{{ event.code }}</strong></a><br>-->
+                        <a :href="'https://evan.ugent.be/r/' + event.code + '/'" target="_blank"><i class="material-icons mr-1">&#xE862;</i>Registrations: <strong>evan.ugent.be/r/{{ event.code }}</strong></a><br>
                         <span v-if="event.hashtag">
                             <a :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank">
                                 <i class="material-icons mr-1">&#xE8B6;</i>Hashtag: <strong>#{{ event.hashtag }}</strong></a>

@@ -1,4 +1,4 @@
-{% extends 'user/base.html' %}
+{% extends 'users/base.html' %}
 
 {% load crispy_forms_tags %}
 
@@ -9,7 +9,7 @@
     <h4 class="mb-4">Emails</h4>
 
     {% if user.emailaddress_set.all %}
-        <p>The following e-mail addresses are associated with your eva account. The primary email will be used for communications:</p>
+        <p>The following e-mail addresses are associated with your Evan account. The primary email will be used for communications:</p>
 
         <form method="post" action="{% url 'account_email' %}">
             {% csrf_token %}

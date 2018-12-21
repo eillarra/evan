@@ -2,6 +2,11 @@
 
 from .errors import *
 
-from .event import EventView, EventBadgesView
-from .registration import RegistrationRedirectView, RegistrationView
-from .user import DashboardView
+from .events import EventView, EventBadgesView
+from .registrations import (
+    RegistrationRedirectView,
+    RegistrationView,
+    RegistrationPaymentView,
+    RegistrationPaymentResultView
+)
+from .users import DashboardView

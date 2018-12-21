@@ -15,16 +15,19 @@ except Exception:
     pass
 
 
-# https://docs.djangoproject.com/en/2.1/topics/cache/
+# https://docs.djangoproject.com/en/2.2/topics/cache/
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 }
 
+CACHE_MIDDLEWARE_SECONDS = 20
 
-# https://docs.djangoproject.com/en/2.1/topics/email/
+
+# https://docs.djangoproject.com/en/2.2/topics/email/
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

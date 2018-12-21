@@ -1,0 +1,27 @@
+{% extends 'layout.html' %}
+
+{% load static %}
+
+
+{% block head_title %}{{ block.super }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row mt-5">
+            <div class="col-3 col-sm-3 col-lg-2">
+                <a href="{% url 'homepage' %}">
+                    <img class="mr-3 logo" src="{% static 'images/evan.svg' %}">
+                </a>
+            </div>
+            <div class="col col-sm-9 col-lg-6">
+                <h3 class="font-weight-light">MANAGE SESSIONS {{ code }}</h3>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block vue_templates %}
+    {% include './v-attendees.html' with id='v-attendees' %}
+    {% include './v-notifications.html' with id='v-notifications' %}
+    {% include './v-session.html' with id='v-session' %}
+{% endblock %}

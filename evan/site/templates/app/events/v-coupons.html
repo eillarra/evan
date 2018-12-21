@@ -3,10 +3,12 @@
     <div v-cloak class="bg-lighter p-4">
         <div class="float-right input-group w-50">
             <input v-model="query" type="text" class="form-control" placeholder="Search code, notes...">
-            <span v-if="query" @click="query = ''" class="input-group-addon pointer">
-                <i class="material-icons">&#xE5CD;</i>
-            </span>
-            <span v-else class="input-group-addon"><i class="material-icons">&#xE8B6;</i></span>
+            <div class="input-group-append">
+                <div v-if="query" @click="query = ''" class="input-group-text pointer">
+                    <i class="material-icons">&#xE5CD;</i>
+                </div>
+                <div v-else class="input-group-text"><i class="material-icons">&#xE8B6;</i></div>
+            </div>
         </div>
         <h4 class="text-secondary mb-4">Coupons</h4>
         <div v-if="items.length" class="float-right">

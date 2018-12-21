@@ -11,4 +11,4 @@ class EvanSignupForm(SignupForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not settings.DEBUG:
-            self.fields['captcha'] = ReCaptchaField(attrs={'theme': 'clean'})
+            self.fields['captcha'] = ReCaptchaField()

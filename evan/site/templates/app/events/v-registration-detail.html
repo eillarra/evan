@@ -21,7 +21,7 @@
                 <li><em>Affiliation:</em> {{ registration.user.profile.affiliation }}, {{ registration.user.profile.country.name }} <i class="ml-1" :class="registration.user.profile.country.flag_css"></i></li>
                 <li><em>Registration date:</em> {{ registration._date }}</li>
             </ul>
-            <h2 v-if="registration.is_paid" class="text-success">
+            <h2 v-if="registration.isPaid" class="text-success">
                 <i class="material-icons mr-2">&#xE5CA;</i>Paid</h2>
             <h2 v-else class="text-warning">Pending</h2>
         </div>

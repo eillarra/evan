@@ -20,6 +20,7 @@
                         <tr v-for="item in tracks" class="py-2 px-3 mb-2">
                             <td class="sm"><i class="material-icons">&#xE893;</i></td>
                             <td><input v-model.trim="item.name" @input="updateTrack(item)" type="text" class="form-control form-control-sm" placeholder="Track name" :disabled="saving"></td>
+                            <td><input v-model="item.position" @input="updateTrack(item)" type="number" class="form-control form-control-sm" :disabled="saving"></td>
                             <td @click.prevent="destroyTrack(item)" class="sm pointer">
                                 <i class="material-icons text-danger">&#xE5CD;</i>
                             </td>

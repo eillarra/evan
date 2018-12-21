@@ -1,0 +1,34 @@
+<script type="text/x-template" id="{{ id }}">
+{% verbatim %}
+    <div ref="modal" v-if="active" class="modal" tabindex="-1" role="dialog">
+        <div v-if="session" class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ session.title }}</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <ul class="list-unstyled">
+                        <li><i class="material-icons mr-1">calendar_today</i> {{ session.date | moment }}, {{ session.startAt }} - {{ session.endAt }}</li>
+                        <li v-if="session.topicsDisplay">
+                            <i class="material-icons mr-1">local_offer</i> {{ session.topicsDisplay }}</li>
+                    </ul>
+                    <marked :text="session.summary"></marked>
+                    <div v-if="session.room" class="mt-4 bg-light-blue p-3">
+                        <h6>Venue: {{ session.room.venue.name }}</h6>
+                        <marked v-if="session.is_social_event" :text="session.room.venue.presentation" class="text-sm"></marked>
+                        <ul class="list-unstyled text-sm text-secondary mt-3 mb-0">
+                            <li><i class="material-icons">meeting_room</i> {{ session.room.name }}</li>
+                            <li><i class="material-icons">location_city</i> {{ session.room.venue.address }}, {{ session.room.venue.city }}</li>
+                            <li><i class="material-icons">location_on</i> lat: {{ session.room.venue.lat }}, lng: {{ session.room.venue.lng }}</li>
+                            <li><a v-if="session.room.venue.website" :href="session.room.venue.website" target="_blank" rel="noopener" class="d-inline-block text-truncate w-100"><i class="material-icons">open_in_new</i> {{ session.room.venue.website }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endverbatim %}
+</script>

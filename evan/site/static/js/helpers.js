@@ -1,11 +1,11 @@
 var DELAY = 1000;
 
-var textSort = function (key) {
-    return function (a, b) {
-        if (a[key].toLowerCase() < b[key].toLowerCase()) return -1;
-        if (a[key].toLowerCase() > b[key].toLowerCase()) return 1;
-        return 0;
-    }
+function textSort(a, b) {
+    var a = a.toLowerCase();
+    var b = b.toLowerCase();
+    if (a < b) return -1;
+    if (a > b) return 1;
+    return 0;
 }
 
 var getParsedErrors = function (err) {
@@ -13,4 +13,10 @@ var getParsedErrors = function (err) {
         return '"' + key.replace(/_/g, ' ') + '": ' + JSON.stringify(msg);
     });
     return errors.join(' ');
+}
+
+function getDescendantProp(obj, desc) {
+    var arr = desc.split('.');
+    while(arr.length && (obj = obj[arr.shift()]));
+    return obj;
 }

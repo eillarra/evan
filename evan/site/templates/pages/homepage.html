@@ -3,7 +3,7 @@
 {% load static %}
 
 
-{% block title %}{{ block.super }}{% endblock %}
+{% block head_title %}{{ block.super }}{% endblock %}
 
 {% block content %}
     <div class="container py-5">
@@ -14,7 +14,7 @@
                 </a>
             </div>
             <div class="col-12 col-lg-4 pl-lg-5 order-2">
-                <div class="row">
+                <div class="row mb-5">
                     {% if user.is_authenticated %}
                         <div class="col">
                             <a href="{% url 'dashboard' %}" class="btn btn-block btn-primary">
@@ -30,6 +30,7 @@
                         </div>
                     {% endif %}
                 </div>
+                <img class="w-100" src="{% static 'images/bulbs.png' %}">
             </div>
             <div class="col-12 col-md-9 col-lg-6 mb-5">
                 <h3 class="font-weight-light"><strong>Evan</strong> is an event assistant that helps you collect registration fees, manage attendees, organize the website and track the real-time status of your event.</h3>

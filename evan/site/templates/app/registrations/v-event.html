@@ -1,0 +1,14 @@
+<script type="text/x-template" id="{{ id }}">
+{% verbatim %}
+    <div v-cloak v-if="event">
+        <h4 class="text-secondary mb-4">Event information</h4>
+        <h5 class="mb-3">{{ event.name }}: {{ event.full_name }}</h5>
+        <ul class="list-unstyled text-sm text-secondary my-3">
+            <li><i class="material-icons">location_on</i> {{ event.city }}, {{ event.country.name }}</li>
+            <li v-if="event.hashtag"><a :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener"><i class="material-icons">search</i> #{{ event.hashtag }}</a></li>
+            <li v-if="event.website"><a :href="event.website" target="_blank" rel="noopener" class="d-inline-block text-truncate w-100"><i class="material-icons">open_in_new</i> {{ event.website }}</a></li>
+        </ul>
+        <marked :text="event.presentation"></marked>
+    </div>
+{% endverbatim %}
+</script>

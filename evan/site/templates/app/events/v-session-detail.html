@@ -52,7 +52,14 @@
                 </div>
             </div>
             <div class="form-group">
-                <label>Track <small class="text-danger">*</small></label><br>
+                <label>Mark here if it is a social event <small class="text-danger">*</small></label>
+                <div class="custom-control custom-checkbox my-1">
+                    <input type="checkbox" v-model="session.is_social_event" class="custom-control-input" id="is_social_event" @change="update(session)">
+                    <label class="custom-control-label" for="is_social_event">Social event</label>
+                </div>
+            </div>
+            <div class="form-group" v-show="!session.is_social_event && tracks.length">
+                <label>...or choose a track <small class="text-danger">*</small></label><br>
                 <div v-for="track in tracks" class="form-check form-check-inline">
                     <label class="form-check-label">
                         <input v-model="session.track" :value="track.id" @change="update(session)" type="radio" class="form-check-input">{{ track.name }}</label>
@@ -84,7 +91,7 @@
                         <p v-if="session.room">
                             <i class="material-icons mr-1">&#xE55E;</i><em>Room: {{ valueRoom(session.room) }}</em>
                         </p>
-                        <div class="mt-3" v-html="markedSummary"></div>
+                        <marked :text="session.summary"></marked>
                         <div v-if="session.website">
                             <hr class="my-4">
                             <p class="mb-0 text-primary">

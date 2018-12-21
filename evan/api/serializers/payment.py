@@ -6,4 +6,4 @@ from evan.models import Payment
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
-        fields = ('currency', 'amount', 'status', 'outcome')
+        fields = ('amount', 'status', 'outcome')

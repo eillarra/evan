@@ -5,7 +5,7 @@
 
 {% block content %}
     <h4 class="mb-4">Sign out</h4>
-    <p class="content">Are you sure you want to sign out of evan.elis.ugent.be? </p>
+    <p class="content">Are you sure you want to sign out of evan.ugent.be? </p>
     <form method="post" action="{% url 'account_logout' %}">
         {% csrf_token %}
         {% if redirect_field_value %}

@@ -46,7 +46,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(item, index) in items">
+                    <tr v-for="(item, index) in items" class="position-relative">
                         <td class="text-nowrap pr-3 pl-0">
                             <input v-model.trim="item.date" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving">
                         </td>
@@ -58,10 +58,11 @@
                         </td>
                         <td class="pr-3">{{ item.title }}</td>
                         <td>
-                            <span v-if="item.track" class="badge badge-secondary">{{ item._track }}</span>
+                            <span v-if="item.is_social_event" class="badge badge-info">Social</span>
+                            <span v-else-if="item.track" class="badge badge-secondary">{{ item._track }}</span>
                         </td>
                         <td class="pr-0">
-                            <router-link :to="{name: 'session-detail', params: {id: item.id}}">
+                            <router-link :to="{name: 'session-detail', params: {id: item.id}}" class="stretched-link">
                                 <i class="material-icons">&#xE5C8;</i>
                             </router-link>
                         </td>

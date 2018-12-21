@@ -1,5 +1,6 @@
 # flake8: noqa
 
-from .event import *
-from .registration import *
-from .session import *
+from .events import *
+from .registrations import *
+from .sessions import *
+from .users import *

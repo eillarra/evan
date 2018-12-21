@@ -1,0 +1,17 @@
+.nav {
+    font-size: .9rem;
+
+    .nav-link {
+        color: $font-color-light;
+
+        @media (max-width: $small-breakpoint) {
+            padding: .5rem;
+        }
+    }
+
+    li.active a.nav-link {
+        color: $ugent-blue;
+        font-weight: $font-weight-strong;
+        border-bottom: 3px solid $ugent-blue;
+    }
+}

@@ -1,7 +1,9 @@
+from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
-from evan.models import Coupon, Registration
-from .user import BasicUserSerializer
+from evan.models import Coupon, Person, Registration
+from .generic import MetadataField
+from .user import UserSerializer
 
 
 class CouponSerializer(serializers.ModelSerializer):
@@ -13,19 +15,33 @@ class CouponSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'code', 'event', 'created_at')
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class PersonSerializer(serializers.ModelSerializer):
+    dietary = MetadataField()
+
+    class Meta:
+        model = Person
+        exclude = ('registration',)
+
+
+class RegistrationSerializer(WritableNestedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='v1:registration-detail', lookup_field='uuid')
-    user = BasicUserSerializer(read_only=True)
-    is_paid = serializers.BooleanField(read_only=True)
-    pending_amount = serializers.IntegerField(read_only=True)
+    user = UserSerializer(read_only=True)
+    coupon = CouponSerializer(read_only=True)
+    href_payment = serializers.URLField(source='get_payment_url', read_only=True)
 
     class Meta:
         model = Registration
-        exclude = ('id', 'event', 'invoice_sent', 'visa_sent', 'days', 'sessions')
-        read_only_fields = ('id', 'uuid', 'event', 'fee', 'saldo', 'coupon', 'created_at', 'updated_at')
+        exclude = ('id', 'event', 'saldo', 'invoice_sent', 'visa_sent', 'days', 'sessions')
+        read_only_fields = ('id', 'uuid', 'event', 'created_at', 'updated_at')
 
 
 class RegistrationRetrieveSerializer(RegistrationSerializer):
+    accompanying_persons = PersonSerializer(many=True)
+    extra_fees = serializers.SerializerMethodField(read_only=True)
+
     class Meta(RegistrationSerializer.Meta):
         model = Registration
-        exclude = ('id', 'event', 'invoice_sent', 'visa_sent')
+        exclude = ('id', 'event', 'invoice_sent', 'visa_sent', 'saldo')
+
+    def get_extra_fees(self, obj):
+        return obj.event.social_event_bundle_fee * obj.accompanying_persons.count()

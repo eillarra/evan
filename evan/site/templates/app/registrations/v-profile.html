@@ -1,0 +1,76 @@
+{% load static %}
+
+
+<script type="text/x-template" id="{{ id }}">
+{% verbatim %}
+    <div v-cloak v-if="user">
+        <h4 class="text-secondary mb-4">Your profile</h4>
+        <div class="row">
+            <div class="col-12 col-md-6 form-group">
+                <label>Username</label>
+                <input :value="user.username" type="text" class="form-control" disabled>
+            </div>
+            <div class="col-12 col-md-6 form-group">
+                <label>Gender <small class="text-danger">*</small></label>
+                <metadata-select v-model.number="user.profile.gender" type="gender"></metadata-select>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="form-group">
+            <label>First name <small class="text-danger">*</small></label>
+            <input v-model="user.first_name" type="text" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Last name <small class="text-danger">*</small></label>
+            <input v-model="user.last_name" type="text" class="form-control">
+        </div>
+        <div class="form-group">
+            <label>Affiliation <small class="text-danger">*</small></label>
+            <input v-model="user.profile.affiliation" type="text" class="form-control">
+        </div>
+        <div class="row">
+            <div class="col-12 col-md-6 form-group">
+                <label>Country <small class="text-danger">*</small></label>
+                <country-select v-model="user.profile.country" select-property="code" field="profile.children.country"></country-select>
+            </div>
+            <div class="col-12 col-md-6 form-group">
+                <label>Dietary requirements <small class="text-danger">*</small></label>
+                <metadata-select v-model.number="user.profile.dietary" type="meal_preference"></metadata-select>
+                <small class="form-text text-muted">This information will only be used to provide you with the right dietary options.</small>
+            </div>
+        </div>
+        <div v-if="event">
+            <hr class="my-4">
+            <div class="row">
+                <div class="col-12 col-md-10">
+                    <small class="d-block text-secondary mb-2">
+                        <i class="material-icons mr-1">&#xE0BA;</i>Badge <strong v-if="hasCase" class="ml-2 text-danger mb-2"><i class="material-icons">&#xE645;</i>Please use Title Case for your name and affiliation</strong>
+                    </small>
+                    <div class="rounded border-semi badge">
+                        <table class="standard">
+                            <tr>
+                                <td>
+                                    <div class="top band" :style="{background: event.badge.color}">
+                                        <span>{{ event.name }}</span>
+                                    </div>
+                                    <h2 class="name">{{ user.first_name }} {{ user.last_name }}</h2>
+                                    <h5 class="affiliation">{{ user.profile.affiliation }}, {{ countryName }}</h5>
+                                    <div class="bottom band" :style="{background: event.badge.color}">
+                                        <span>{{ event.dates }}, {{ event.city }}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4">
+        </div>
+        <div class="row">
+            <div class="col-12 col-md-8 col-lg-6 my-4">
+                <button @click.prevent="update(user)" class="btn btn-primary btn-block">Save</button>
+            </div>
+        </div>
+    </div>
+{% endverbatim %}
+</script>

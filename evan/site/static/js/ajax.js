@@ -83,3 +83,14 @@ function ajax() {
         }
     }
 };
+
+function api() {
+    return {
+        getMetadata: function () {
+            return ajax().get('/api/v1/metadata/');
+        },
+        getSession: function (id) {
+            return ajax().get('/api/v1/events/sessions/' + id + '/');
+        }
+    };
+}

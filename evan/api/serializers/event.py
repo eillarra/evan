@@ -1,7 +1,7 @@
 from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
-from evan.models import Event, Day, validate_event_dates
+from evan.models import Event, Day, Fee, validate_event_dates
 from .generic import JsonField
 from .paper import PaperSerializer
 from .session import SessionSerializer
@@ -16,6 +16,12 @@ class DaySerializer(serializers.ModelSerializer):
         exclude = ('event',)
 
 
+class FeeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Fee
+        exclude = ('event',)
+
+
 class EventSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='v1:event-detail', lookup_field='code')
     country = CountryField(country_dict=True, read_only=True)
@@ -23,6 +29,7 @@ class EventSerializer(serializers.ModelSerializer):
     is_closed = serializers.BooleanField(read_only=True)
     is_open_for_registration = serializers.BooleanField(read_only=True)
     days = DaySerializer(many=True, read_only=True)
+    fees = FeeSerializer(many=True, read_only=True)
     papers = PaperSerializer(many=True, read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
@@ -32,7 +39,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        exclude = ('id',)
+        exclude = ('id', 'wbs_element', 'ingenico_salt', 'test_mode')
         read_only_fields = ('code',)
 
     def validate(self, data):
