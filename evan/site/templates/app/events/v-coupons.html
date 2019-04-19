@@ -59,7 +59,7 @@
                                 <div class="input-group-prepend">
                                     <div class="input-group-text">{{ currencySymbol }}</div>
                                 </div>
-                                <input v-model.number="item.value" @input="update(item)" type="number" class="form-control form-control-sm" :disabled="saving">
+                                <input v-model.number="item.value" @input="update(item)" type="number" class="form-control form-control-sm" :disabled="saving || _.has(usedCoupons, item.id)">
                             </div>
                         </td>
                         <td>

@@ -163,3 +163,19 @@ class Person(models.Model):
 @receiver(post_delete, sender=Person)
 def person_post_update(sender, instance, *args, **kwargs):
     instance.registration.save()
+
+
+class InvitationLetter(models.Model):
+    """
+    Information necessary to issue an invitation letter.
+    """
+    registration = models.OneToOneField(Registration, primary_key=True, related_name='letter', on_delete=models.CASCADE)
+    name = models.CharField(max_length=190)
+    passport_number = models.CharField(max_length=60)
+    nationality = models.CharField(max_length=190)
+    address = models.TextField()
+    submitted_paper = models.TextField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return str(self.registration.uuid)

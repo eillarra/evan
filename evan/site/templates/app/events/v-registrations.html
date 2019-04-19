@@ -58,18 +58,22 @@
                             </a>
                         </td>
                         <td class="text-center">
-                            <span v-if="item.visa_requested" class="badge badge-success">
-                                <i class="material-icons mr-1">&#xE876;</i>Yes</span>
+                            <span v-if="item.visa_requested && item.visa_sent" class="badge badge-success">
+                                <i class="material-icons mr-1">check</i>Yes</span>
+                            <span v-else-if="item.visa_requested && !item.visa_sent" class="badge badge-warning text-white">
+                                <i class="material-icons mr-1">radio_button_unchecked</i>Yes</span>
                             <span v-else class="badge badge-secondary text-white">No</span>
                         </td>
                         <td class="text-center">
-                            <span v-if="item.invoice_requested" class="badge badge-success">
-                                <i class="material-icons mr-1">&#xE876;</i>Yes</span>
+                            <span v-if="item.invoice_requested && item.invoice_sent" class="badge badge-success">
+                                <i class="material-icons mr-1">check</i>Yes</span>
+                            <span v-else-if="item.invoice_requested && !item.invoice_sent" class="badge badge-warning text-white">
+                                <i class="material-icons mr-1">radio_button_unchecked</i>Yes</span>
                             <span v-else class="badge badge-secondary text-white">No</span>
                         </td>
                         <td class="text-center">
                             <span v-if="item.isPaid" class="badge badge-success">
-                                <i class="material-icons mr-1">&#xE876;</i>Paid</span>
+                                <i class="material-icons mr-1">check</i>Paid</span>
                             <span v-else class="badge badge-warning text-white">Pending</span>
                         </td>
                         <td class="pr-0">

@@ -31,7 +31,7 @@ class RegistrationSerializer(WritableNestedModelSerializer):
 
     class Meta:
         model = Registration
-        exclude = ('id', 'event', 'saldo', 'invoice_sent', 'visa_sent', 'days', 'sessions')
+        exclude = ('id', 'event', 'saldo', 'days', 'sessions')
         read_only_fields = ('id', 'uuid', 'event', 'created_at', 'updated_at')
 
 
@@ -41,7 +41,7 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
 
     class Meta(RegistrationSerializer.Meta):
         model = Registration
-        exclude = ('id', 'event', 'invoice_sent', 'visa_sent', 'saldo')
+        exclude = ('id', 'event', 'saldo')
 
     def get_extra_fees(self, obj):
         return obj.event.social_event_bundle_fee * obj.accompanying_persons.count()
