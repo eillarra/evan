@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -158,3 +156,13 @@ class RegistrationPaymentResultView(generic.TemplateView):
 
         # ...and redirect
         return redirect(registration.get_payment_url())
+
+
+class RegistrationReceipt(generic.DetailView):
+    model = Registration
+    template_name = 'app/registrations/payment/registration_receipt.html'
+
+    def get_object(self, queryset=None) -> Registration:
+        if not hasattr(self, 'object'):
+            self.object = get_object_or_404(Registration, uuid=self.kwargs.get('uuid'))
+        return self.object

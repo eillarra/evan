@@ -19,7 +19,7 @@ registration_patterns = ([
         path('', views.RegistrationView.as_view(), name='app'),
         path('payment/', never_cache(views.RegistrationPaymentView.as_view()), name='payment'),
         path('payment/result/', never_cache(views.RegistrationPaymentResultView.as_view()), name='payment_result'),
-        path('receipt/', views.RegistrationPaymentResultView.as_view(), name='receipt'),
+        path('receipt/', never_cache(views.RegistrationReceipt.as_view()), name='receipt'),
     ])),
     path('<slug:code>/', views.RegistrationRedirectView.as_view(), name='redirect'),
 ], 'registration_patterns')
