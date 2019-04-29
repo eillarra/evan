@@ -39,7 +39,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Event
-        exclude = ('id', 'wbs_element', 'ingenico_salt', 'test_mode')
+        exclude = ('id', 'wbs_element', 'ingenico_salt', 'test_mode', 'signature')
         read_only_fields = ('code',)
 
     def validate(self, data):

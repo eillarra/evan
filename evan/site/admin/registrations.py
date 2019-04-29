@@ -1,5 +1,6 @@
 from django.contrib import admin
-from django.urls import reverse
+from django.contrib.admin.utils import unquote
+from django.urls import path, reverse
 from django.utils.html import format_html
 
 from evan.models import Registration, InvitationLetter
@@ -64,6 +65,23 @@ class RegistrationAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user__profile', 'coupon').prefetch_related('event')
+
+    def get_urls(self):
+        my_urls = [
+            path('<path:object_id>/letter/', self.pdf_letter_view, name='registration_pdf_letter'),
+        ]
+        return my_urls + super().get_urls()
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['has_letter'] = InvitationLetter.objects.filter(registration_id=object_id).exists()
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    def pdf_letter_view(self, request, object_id, extra_context=None):
+        from evan.site.pdfs.registrations import InvitationLetterPdfMaker
+        obj = self.get_object(request, unquote(object_id))
+        maker = InvitationLetterPdfMaker(registration=obj, filename=f'letter--{obj.id}.pdf', as_attachment=False)
+        return maker.response
 
     def name(self, obj):
         affiliation = obj.user.profile.affiliation if obj.user.profile.affiliation else '-'

@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+    {% if has_letter %}
+        <li><a href="{% url 'admin:registration_pdf_letter' object_id %}" target="_blank">Invitation Letter</a></li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

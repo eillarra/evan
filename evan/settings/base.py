@@ -130,8 +130,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 # Account
 
-LOGIN_URL = '/u/login/'
-LOGIN_REDIRECT_URL = '/u/dashboard/'
+LOGIN_URL = 'account_login'
+LOGIN_REDIRECT_URL = 'dashboard'
 
 ACCOUNT_ACTIVATION_DAYS = 7
 AUTH_PASSWORD_VALIDATORS = [
