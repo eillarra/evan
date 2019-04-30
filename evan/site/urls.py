@@ -10,7 +10,8 @@ from evan.site import views
 event_patterns = ([
     path('<slug:code>/', include([
         path('', views.EventView.as_view(), name='app'),
-        path('-/badges.pdf', views.EventBadgesView.as_view(), name='badges'),
+        path('files/badges.pdf', views.EventBadgesPdf.as_view(), name='badges'),
+        path('files/registrations.csv', views.EventRegistrationsCsv.as_view(), name='registrations_csv'),
     ])),
 ], 'event_patterns')
 

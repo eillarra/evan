@@ -6,7 +6,8 @@ from django.utils.decorators import method_decorator
 from django.views import generic
 from os import environ
 
-from evan.models import Event
+from evan.models import Event, Registration
+from evan.tools.csv import ModelCsvWriter
 
 
 class EventView(generic.DetailView):
@@ -30,7 +31,7 @@ class EventView(generic.DetailView):
         return context
 
 
-class EventBadgesView(EventView):
+class EventBadgesPdf(EventView):
     def get(self, request, *args, **kwargs):
         pass
         """
@@ -55,3 +56,16 @@ class EventBadgesView(EventView):
             show_content_in_browser=True
         )
         """
+
+
+class EventRegistrationsCsv(EventView):
+
+    def get(self, request, *args, **kwargs):
+        class RegistrationCsvWriter(ModelCsvWriter):
+            model = Registration
+            custom_fields = ('dates',)
+            exclude = ('id', 'updated_at', 'letter', 'sessions', 'days', 'accompanying_persons', 'payments', 'logs')
+            metadata_fields = ()
+
+        queryset = self.get_object().registrations.all()
+        return RegistrationCsvWriter(filename='registrations.csv', queryset=queryset).response
