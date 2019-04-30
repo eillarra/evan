@@ -106,6 +106,10 @@ class Registration(models.Model):
 @receiver(post_save, sender=Registration)
 def registration_post_save(sender, instance, created, *args, **kwargs):
     if created:
+        event = instance.event
+        event.registrations_count = event.registrations.count()
+        event.save()
+
         email = (
             '_emails/registrations_created.md.html',
             f'[{instance.event.hashtag}] Your registration / {instance.uuid}',

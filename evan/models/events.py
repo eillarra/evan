@@ -67,6 +67,8 @@ class Event(models.Model):
     badge = models.TextField(null=True, blank=True, default='{}')
     signature = models.TextField(null=True, blank=True)
 
+    registrations_count = models.PositiveIntegerField(default=0)
+
     acl = GenericRelation('evan.Permission')
 
     objects = EventManager()
