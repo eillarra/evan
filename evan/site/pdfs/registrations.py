@@ -45,9 +45,9 @@ Sincerely yours,
             pdf.add_text('To Whom It May Concern,')
             pdf.add_text(intro, 'p', 'markdown')
 
-            if reg.letter.submitted_paper:
+            if reg.letter.submitted:
                 paper = f"""
-{reg.user.profile.name} has submitted a paper titled \u2018{reg.letter.submitted_paper}\u2019
+{reg.user.profile.name} has submitted a {reg.letter.submitted} titled \u2018{reg.letter.submitted_title}\u2019
 with the intention to present it during the event.
 """
                 pdf.add_text(paper, 'p', 'markdown')

@@ -173,12 +173,20 @@ class InvitationLetter(models.Model):
     """
     Information necessary to issue an invitation letter.
     """
+    PAPER = 'paper'
+    POSTER = 'poster'
+    SUBMITTED_CHOICES = (
+        (PAPER, 'Paper'),
+        (POSTER, 'Poster'),
+    )
+
     registration = models.OneToOneField(Registration, primary_key=True, related_name='letter', on_delete=models.CASCADE)
     name = models.CharField(max_length=190)
     passport_number = models.CharField(max_length=60)
     nationality = models.CharField(max_length=190)
     address = models.TextField()
-    submitted_paper = models.TextField(null=True, blank=True)
+    submitted = models.CharField(max_length=16, null=True, blank=True, default=None, choices=SUBMITTED_CHOICES)
+    submitted_title = models.TextField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
 
     def __str__(self) -> str:
