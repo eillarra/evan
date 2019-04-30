@@ -4,6 +4,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 
 from evan.models import Registration, InvitationLetter
+from evan.site.emails.registrations import RegistrationReminderEmail, PaymentReminderEmail, VisaReminderEmail
 
 
 class RegistrationIsPaidFilter(admin.SimpleListFilter):
@@ -62,6 +63,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         }),
     )
     inlines = (InvitationLetterInline,)
+    actions = ('send_reminder', 'send_visa_reminder', 'send_payment_reminder')
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user__profile', 'coupon').prefetch_related('event')
@@ -102,3 +104,21 @@ class RegistrationAdmin(admin.ModelAdmin):
         return obj.coupon is not None
     with_coupon.boolean = True
     with_coupon.short_description = 'Coupon'
+
+    def send_reminder(self, request, queryset):
+        for instance in queryset:
+            RegistrationReminderEmail(instance=instance).send()
+        admin.ModelAdmin.message_user(self, request, 'Emails are being sent.')
+    send_reminder.short_description = ('[Mailer] Send general reminder to users')
+
+    def send_payment_reminder(self, request, queryset):
+        for instance in queryset:
+            PaymentReminderEmail(instance=instance).send()
+        admin.ModelAdmin.message_user(self, request, 'Emails are being sent.')
+    send_payment_reminder.short_description = ('[Mailer] Send payment reminder to users')
+
+    def send_visa_reminder(self, request, queryset):
+        for instance in queryset:
+            VisaReminderEmail(instance=instance).send()
+        admin.ModelAdmin.message_user(self, request, 'Emails are being sent.')
+    send_visa_reminder.short_description = ('[Mailer] Send visa reminder to users')
