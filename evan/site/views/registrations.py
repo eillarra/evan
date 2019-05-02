@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views import generic
 
 from evan.models import Event, Registration, Coupon
+from evan.site.emails.registrations import PaymentReminderEmail
 from evan.tools.payments.ingenico import Ingenico
 
 
@@ -78,9 +79,6 @@ class RegistrationPaymentView(generic.TemplateView):
         registration = self.get_object()
         if not registration.editable_by_user(request.user):
             messages.error(request, 'You don\'t have the necessary permissions to update this registration.')
-            raise PermissionDenied
-        if not registration.is_paid and registration.invoice_requested:
-            messages.error(request, 'You requested an invoice before. Contact us first if you want to pay by card.')
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
@@ -166,3 +164,25 @@ class RegistrationReceipt(generic.DetailView):
         if not hasattr(self, 'object'):
             self.object = get_object_or_404(Registration, uuid=self.kwargs.get('uuid'))
         return self.object
+
+
+class RegistrationInvoiceRequestView(generic.RedirectView):
+
+    def get_object(self, queryset=None) -> Registration:
+        if not hasattr(self, 'object'):
+            self.object = get_object_or_404(Registration, uuid=self.kwargs.get('uuid'))
+        return self.object
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        registration = self.get_object()
+        if not registration.editable_by_user(request.user):
+            messages.error(request, 'You don\'t have the necessary permissions to update this registration.')
+            raise PermissionDenied
+        registration.invoice_requested = True
+        registration.save()
+        PaymentReminderEmail(instance=registration).send()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_redirect_url(self, *args, **kwargs):
+        return self.get_object().get_payment_url()

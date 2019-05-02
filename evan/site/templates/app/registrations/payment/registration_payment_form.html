@@ -64,21 +64,27 @@
                             <input class="btn btn-outline-secondary btn-block mt-2" type="submit" value="Update balance with my coupon">
                         </form>
                     {% endif %}
-                    <hr>
-                    <div class="clearfix">
-                        <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> using our secure server. Once the payment is made you will be able to download a receipt <strong>&mdash;no invoice&mdash;</strong>:</p>
-                        <img src="{% static 'images/ingenico.svg' %}" class="float-right logo mt-2">
-                        <form method="post" action="{{ ingenico_url }}">
-                            {% for key, value in ingenico_parameters.items %}
-                                <input type="hidden" name="{{ key }}" value="{{ value }}">
-                            {% endfor %}
-                            <button class="btn btn-primary" type="submit">
-                                <i class="material-icons mr-2">lock</i><span>Pay</span>
-                            </button>
-                        </form>
-                    </div>
+                    <hr class="my-4">
+                    {% if registration.invoice_requested %}
+                        <p><strong>You have requested an invoice</strong></p>
+                        <p>Please check your email for payment instructions. You should receive an invoice from us soon. If you prefer to pay online <strong>&mdash;no invoice&mdash;</strong> contact us to change your registration: <a href="mailto:evan@ugent.be">evan@ugent.be</a></p>
+                    {% else %}
+                        <div class="clearfix">
+                            <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> online using our secure payment server. Once the payment is made you will be able to download a receipt <strong>&mdash;no invoice&mdash;</strong>:</p>
+                            <img src="{% static 'images/ingenico.svg' %}" class="float-right logo mt-2">
+                            <form method="post" action="{{ ingenico_url }}">
+                                {% for key, value in ingenico_parameters.items %}
+                                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                                {% endfor %}
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="material-icons mr-2">lock</i><span>Pay</span>
+                                </button>
+                            </form>
+                            <p class="mt-4 text-sm text-secondary"><i class="material-icons mr-1">account_balance</i> <strong>Payment with invoice</strong>:<br>if you prefer to pay via bank transfer you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request an invoice here</a>.</p>
+                        </div>
+                    {% endif %}
                 {% endif %}
-                <hr>
+                <hr class="mt-4">
                 <p class="mb-0">
                     <a href="{{ registration.get_absolute_url }}">
                         <i class="material-icons sm mr-1">arrow_back</i>
