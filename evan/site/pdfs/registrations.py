@@ -15,13 +15,13 @@ class InvitationLetterPdfMaker:
         reg = self.registration
         event = reg.event
         address = f"""
-_{reg.user.profile.name}_\u0020\u0020
+_{reg.letter.name}_\u0020\u0020
 _{reg.letter.address}_
 """
         intro = f"""
 On behalf of the {event.name} organizing committee, I would hereby like to invite
 
-_Name: **{reg.user.profile.name}**_\u0020\u0020
+_Name: **{reg.letter.name}**_\u0020\u0020
 _Passport number: **{reg.letter.passport_number}**_\u0020\u0020
 _Nationality: **{reg.letter.nationality}**_\u0020\u0020
 
@@ -33,7 +33,7 @@ in {event.city}, {event.country.name}.
 More information about this event can be found on:\u0020\u0020
 <{event.website}>
 
-We look forward to welcoming {reg.user.profile.name} in {event.city}.\u0020\u0020
+We look forward to welcoming {reg.letter.name} in {event.city}.\u0020\u0020
 Please do not hesitate to contact me for additional information.\u0020\u0020
 Sincerely yours,
 """
