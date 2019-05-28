@@ -5,7 +5,6 @@ from django.db import models
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
-from typing import List
 
 from evan.functions import send_task
 from .fees import Fee
@@ -102,10 +101,6 @@ class Registration(models.Model):
     @property
     def total_fee(self):
         return self.base_fee + self.extra_fees + self.manual_extra_fees
-
-    @property
-    def dates(self) -> List[str]:
-        return [str(day.date) for day in self.days.all()]
 
 
 @receiver(post_save, sender=Registration)

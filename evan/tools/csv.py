@@ -39,6 +39,9 @@ class ModelCsvWriter(CsvWriter):
         return queryset
 
     def get_value(self, obj, field):
+        display_method = getattr(self, 'get_' + field + '_display', None)
+        if callable(display_method):
+            return display_method(obj)
         if field == 'country':
             return getattr(obj, field).name
         return getattr(obj, field)
@@ -51,4 +54,4 @@ class ModelCsvWriter(CsvWriter):
         self.writer.writerow(fields)
 
         for obj in self.queryset:
-            self.writer.writerow([self.get_value(obj, f) for f in fields])
+            self.writer.writerow([self.get_value(obj, field) for field in fields])
