@@ -45,7 +45,7 @@ class RegistrationAdmin(admin.ModelAdmin):
                     'visa_requested', 'visa_sent')
     list_filter = (RegistrationIsPaidFilter, 'invoice_requested', 'invoice_sent',
                    'visa_requested', 'visa_sent', 'event')
-    search_fields = ('id', 'user__email', 'user__username', 'user__first_name', 'user__last_name')
+    search_fields = ('id', 'uuid', 'user__email', 'user__username', 'user__first_name', 'user__last_name')
 
     raw_id_fields = ('event', 'user', 'coupon')
     readonly_fields = ('event', 'base_fee', 'extra_fees', 'paid', 'saldo')
