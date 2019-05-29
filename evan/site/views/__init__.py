@@ -8,7 +8,7 @@ from .registrations import (
     RegistrationView,
     RegistrationPaymentView,
     RegistrationPaymentResultView,
-    RegistrationReceipt,
+    RegistrationReceiptPdf,
     RegistrationInvoiceRequestView
 )
 from .users import DashboardView

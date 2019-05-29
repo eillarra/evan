@@ -75,14 +75,16 @@ class RegistrationAdmin(admin.ModelAdmin):
         return my_urls + super().get_urls()
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
+        obj = self.get_object(request, unquote(object_id))
         extra_context = extra_context or {}
         extra_context['has_letter'] = InvitationLetter.objects.filter(registration_id=object_id).exists()
+        extra_context['receipt_url'] = obj.get_receipt_url() if obj.paid else None
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     def pdf_letter_view(self, request, object_id, extra_context=None):
         from evan.site.pdfs.registrations import InvitationLetterPdfMaker
         obj = self.get_object(request, unquote(object_id))
-        maker = InvitationLetterPdfMaker(registration=obj, filename=f'letter--{obj.id}.pdf', as_attachment=False)
+        maker = InvitationLetterPdfMaker(registration=obj, filename=f'letter--{obj.uuid}.pdf', as_attachment=False)
         return maker.response
 
     def name(self, obj):

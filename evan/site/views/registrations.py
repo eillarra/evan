@@ -8,6 +8,7 @@ from django.views import generic
 
 from evan.models import Event, Registration, Coupon
 from evan.site.emails.registrations import PaymentReminderEmail
+from evan.site.pdfs.registrations import ReceiptPdfMaker
 from evan.tools.payments.ingenico import Ingenico
 
 
@@ -156,14 +157,29 @@ class RegistrationPaymentResultView(generic.TemplateView):
         return redirect(registration.get_payment_url())
 
 
-class RegistrationReceipt(generic.DetailView):
-    model = Registration
+class RegistrationReceiptPdf(generic.DetailView):
+    """
+    Download a receipt in PDF format.
+    """
     template_name = 'app/registrations/payment/registration_receipt.html'
 
     def get_object(self, queryset=None) -> Registration:
         if not hasattr(self, 'object'):
             self.object = get_object_or_404(Registration, uuid=self.kwargs.get('uuid'))
         return self.object
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        registration = self.get_object()
+        if not registration.editable_by_user(request.user) and not request.user.is_staff:
+            messages.error(request, 'You don\'t have the necessary permissions to update this registration.')
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        maker = ReceiptPdfMaker(registration=obj, filename=f'receipt--{obj.uuid}.pdf', as_attachment=False)
+        return maker.response
 
 
 class RegistrationInvoiceRequestView(generic.RedirectView):
