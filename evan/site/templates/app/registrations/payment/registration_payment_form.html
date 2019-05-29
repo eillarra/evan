@@ -80,7 +80,7 @@
                                     <i class="material-icons mr-2">lock</i><span>Pay</span>
                                 </button>
                             </form>
-                            <p class="mt-4 text-sm text-secondary"><i class="material-icons mr-1">account_balance</i> <strong>Payment with invoice</strong>:<br>if you prefer to pay via bank transfer you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request an invoice here</a>.</p>
+                            <p class="mt-4 text-sm text-secondary"><i class="material-icons mr-1">account_balance</i> <strong>Payment with invoice</strong>:<br>if you need an official invoice you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request an it here</a> and pay via bank transfer.</p>
                         </div>
                     {% endif %}
                 {% endif %}
