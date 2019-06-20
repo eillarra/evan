@@ -51,10 +51,10 @@
                             <input v-model.trim="item.date" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving">
                         </td>
                         <td class="text-nowrap pr-3">
-                            <input v-model.trim="item.start_at" @input="update(item)" type="time" class="form-control form-control-sm" :disabled="saving" maxlength="5">
+                            <input v-model.trim="item.start_at" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving" maxlength="5" placeholder="hh:mm">
                         </td>
                         <td class="text-nowrap pr-3">
-                            <input v-model.trim="item.end_at" @input="update(item)" type="time" class="form-control form-control-sm" :disabled="saving" maxlength="5">
+                            <input v-model.trim="item.end_at" @input="update(item)" type="text" class="form-control form-control-sm" :disabled="saving" maxlength="5" placeholder="hh:mm">
                         </td>
                         <td class="pr-3">{{ item.title }}</td>
                         <td>
