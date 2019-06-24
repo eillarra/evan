@@ -157,3 +157,27 @@ class Day(models.Model):
 
     def clean(self) -> None:
         validate_event_day(self)
+
+
+class ImportantDate(models.Model):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='dates')
+    date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    note = models.CharField(max_length=250)
+
+    class Meta:
+        ordering = ('date',)
+
+    def __str__(self) -> str:
+        return self.note
+
+    def date_display(self) -> str:
+        if self.end_date:
+            pattern = '-j, Y' if self.date.month == self.end_date.month else ' - N j, Y'
+            return '{0}{1}'.format(date_filter(self.date, 'N j'), date_filter(self.end_date, pattern))
+        return date_filter(self.date, 'N j, Y')
+
+    def is_past(self) -> bool:
+        if self.end_date:
+            return self.end_date < timezone.now().date()
+        return self.date < timezone.now().date()

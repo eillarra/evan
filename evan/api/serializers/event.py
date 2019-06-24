@@ -1,7 +1,7 @@
 from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
-from evan.models import Event, Day, Fee, validate_event_dates
+from evan.models import Event, Day, Fee, ImportantDate, validate_event_dates
 from .generic import JsonField
 from .paper import PaperSerializer
 from .session import SessionSerializer
@@ -22,6 +22,15 @@ class FeeSerializer(serializers.ModelSerializer):
         exclude = ('event',)
 
 
+class ImportantDateSerializer(serializers.ModelSerializer):
+    date_display = serializers.CharField(read_only=True)
+    is_past = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ImportantDate
+        exclude = ('event',)
+
+
 class EventSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='v1:event-detail', lookup_field='code')
     country = CountryField(country_dict=True, read_only=True)
@@ -30,6 +39,7 @@ class EventSerializer(serializers.ModelSerializer):
     is_open_for_registration = serializers.BooleanField(read_only=True)
     days = DaySerializer(many=True, read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
+    dates = ImportantDateSerializer(many=True, read_only=True)
     papers = PaperSerializer(many=True, read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)

@@ -3,8 +3,14 @@ from django.db.models import Count
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from evan.models import Event, Fee
+from evan.models import Event, Fee, ImportantDate
 from .generic import PermissionsInline
+
+
+class ImportantDatesInline(admin.TabularInline):
+    model = ImportantDate
+    classes = ('collapse',)
+    extra = 0
 
 
 class FeesInline(admin.TabularInline):
@@ -22,7 +28,7 @@ class EventAdmin(admin.ModelAdmin):
     search_fields = ('city', 'country', 'start_date__year')
 
     readonly_fields = ('registrations_count',)
-    inlines = (FeesInline, PermissionsInline,)
+    inlines = (FeesInline, ImportantDatesInline, PermissionsInline,)
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(Count('sessions', distinct=True))
