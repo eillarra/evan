@@ -36,6 +36,7 @@ class EventSerializer(serializers.ModelSerializer):
     tracks = TrackSerializer(many=True, read_only=True)
     venues = VenueSerializer(many=True, read_only=True)
     badge = JsonField()
+    href_registration = serializers.URLField(source='get_registration_url', read_only=True)
 
     class Meta:
         model = Event

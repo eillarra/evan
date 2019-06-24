@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.template.defaultfilters import date as date_filter
@@ -99,6 +100,9 @@ class Event(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse('event:app', args=[self.code])
+
+    def get_registration_url(self) -> str:
+        return ''.join(['https://', get_current_site(None).domain, reverse('registration:redirect', args=[self.code])])
 
     @property
     def has_social_event_bundle(self) -> bool:
