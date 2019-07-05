@@ -69,10 +69,13 @@ class Registration(models.Model):
         return f'{self.uuid} ({self.user})'
 
     def editable_by_user(self, user) -> bool:
-        return self.user_id == user.id
+        return self.user_id == user.id and not self.event.is_closed
 
     def get_absolute_url(self) -> str:
         return reverse('registration:app', args=[self.uuid])
+
+    def get_certificate_url(self) -> str:
+        return reverse('registration:certificate', args=[self.uuid])
 
     def get_payment_url(self) -> str:
         return reverse('registration:payment', args=[self.uuid])

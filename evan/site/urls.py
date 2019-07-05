@@ -18,6 +18,7 @@ event_patterns = ([
 registration_patterns = ([
     path('<uuid:uuid>/', include([
         path('', views.RegistrationView.as_view(), name='app'),
+        path('certificate.pdf', never_cache(views.RegistrationCertificatePdf.as_view()), name='certificate'),
         path('payment/', never_cache(views.RegistrationPaymentView.as_view()), name='payment'),
         path('payment/result/', never_cache(views.RegistrationPaymentResultView.as_view()), name='payment_result'),
         path('receipt.pdf', never_cache(views.RegistrationReceiptPdf.as_view()), name='receipt'),

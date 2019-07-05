@@ -28,9 +28,9 @@
                         </thead>
                         {% for event in events %}
                             <tr>
-                                <td>{{ event.name }}</td>
+                                <td class="pl-0">{{ event.name }}</td>
                                 <td>{{ event.full_name }}</td>
-                                <td><a href="{{ event.get_absolute_url }}">Management</a></td>
+                                <td class="pr-0 pl-4"><a href="{{ event.get_absolute_url }}" class="btn btn-sm btn-outline-secondary"><i class="material-icons">settings</i> Management</a></td>
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -43,8 +43,7 @@
                             <tr>
                                 <th class="pl-0">Event</th>
                                 <th class="">Registration ID</th>
-                                <th class="md">Date</th>
-                                <th class="sm">Status</th>
+                                <th class="sm">Date</th>
                                 <th class="sm"></th>
                             </tr>
                         </thead>
@@ -52,16 +51,22 @@
                         {% for registration in registrations %}
                             <tr>
                                 <td class="pl-0">{{ registration.event.name }}</td>
-                                <td class="text-nowrap"><samp><small>{{ registration.code }}</small></samp></td>
-                                <td class="text-nowrap">{{ registration.created_at }}</td>
-                                <td>
+                                <td class="text-nowrap">
+                                    <samp class="mr-2"><small>{{ registration.uuid }}</small></samp>
                                     {% if registration.is_paid %}
                                         <span class="badge badge-success">Paid</span>
                                     {% else %}
                                         <span class="badge badge-warning text-white">Pending</span>
                                     {% endif %}
                                 </td>
-                                <td><a href="{{ registration.get_absolute_url }}">Update</a></td>
+                                <td class="text-nowrap">{{ registration.created_at }}</td>
+                                <td class="pr-0 text-right pl-4">
+                                    {% if registration.event.is_closed %}
+                                        <a href="{{ registration.get_certificate_url }}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="material-icons">description</i> Certificate</a>
+                                    {% else %}
+                                        <a href="{{ registration.get_absolute_url }}" class="btn btn-sm btn-secondary"><i class="material-icons">edit</i> Update</a>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                         </tbody>

@@ -46,3 +46,14 @@
         border-top: 0;
     }
 }
+
+.table-sm {
+    .btn-sm {
+        font-size: smaller;
+
+        .material-icons {
+            margin-right: .2em;
+            vertical-align: -15%;
+        }
+    }
+}

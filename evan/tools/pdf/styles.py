@@ -40,7 +40,7 @@ PDF_STYLES = {
         'default',
         fontName='IBMPlexSans-Regular',
         fontSize=10,
-        leading=12,
+        leading=13,
         textColor=TEXT_COLOR,
     )
 }
