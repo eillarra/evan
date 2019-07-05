@@ -30,7 +30,7 @@ reportlab = "*"
 requests = "*"
 sentry-sdk = "*"
 stripe = "*"
-svglib = "*"
+svglib = "==0.9.0"
 whitenoise = "*"
 
 [dev-packages]
