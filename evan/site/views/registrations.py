@@ -189,7 +189,7 @@ class RegistrationPdfView(generic.View):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         registration = self.get_object()
-        if not registration.editable_by_user(request.user) and not request.user.is_staff:
+        if not registration.viewable_by_user(request.user) and not request.user.is_staff:
             messages.error(request, 'You don\'t have the necessary permissions to view this file.')
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

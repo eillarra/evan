@@ -71,6 +71,9 @@ class Registration(models.Model):
     def editable_by_user(self, user) -> bool:
         return self.user_id == user.id and not self.event.is_closed
 
+    def viewable_by_user(self, user) -> bool:
+        return self.user_id == user.id
+
     def get_absolute_url(self) -> str:
         return reverse('registration:app', args=[self.uuid])
 
