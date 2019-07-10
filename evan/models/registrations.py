@@ -100,6 +100,10 @@ class Registration(models.Model):
         return self.saldo >= 0
 
     @property
+    def is_paid_online(self) -> bool:
+        return self.saldo >= 0 and self.paid > 0
+
+    @property
     def remaining_fee(self):
         coupon_discount = self.coupon.value if self.coupon else 0
         return self.total_fee - self.paid - self.paid_via_invoice - coupon_discount
