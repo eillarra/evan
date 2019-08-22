@@ -1,6 +1,6 @@
 import pyexcel as pe
 
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -18,7 +18,7 @@ class PapersViewSet(EventRelatedCreateOnlyViewSet):
     queryset = Paper.objects.all()
     serializer_class = PaperSerializer
 
-    @list_route(methods=['POST'], parser_classes=(FormParser, MultiPartParser,))
+    @action(detail=False, methods=['POST'], parser_classes=(FormParser, MultiPartParser,))
     def upload(self, request, *args, **kwargs):
         event = Event.objects.get(code=kwargs.get('code'))
         bulk_papers = []
