@@ -32,3 +32,8 @@ class EventRelatedViewSet(EventListModelMixin, EventCreateModelMixin, GenericVie
 class EventRelatedCreateOnlyViewSet(EventCreateModelMixin, GenericViewSet):
     permission_classes = (EventRelatedPermission,)
     schema = AutoSchema(manual_fields=[event_code_field])
+
+
+class EventRelatedListOnlyViewSet(EventListModelMixin, GenericViewSet):
+    permission_classes = (EventRelatedPermission,)
+    schema = AutoSchema(manual_fields=[event_code_field])

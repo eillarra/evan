@@ -13,6 +13,7 @@ class Router(DefaultRouter):
         self.register(r'users', views.UserViewSet, base_name='user')
 
         self.register(r'events', views.EventViewSet, base_name='event')
+        self.register(r'events/(?P<code>[\w-]+)/contents', views.ContentsViewSet, base_name='contents')
         self.register(r'events/(?P<code>[\w-]+)/coupons', views.CouponsViewSet, base_name='coupons')
         self.register(r'events/(?P<code>[\w-]+)/papers', views.PapersViewSet, base_name='papers')
         self.register(r'events/(?P<code>[\w-]+)/registrations', views.RegistrationsViewSet, base_name='registrations')
