@@ -89,8 +89,12 @@ class Event(models.Model):
             self.hashtag = self.hashtag[1:] if self.hashtag.startswith('#') else self.hashtag
 
     @property
-    def date_range(self) -> str:
-        return '{0} - {1}'.format(date_filter(self.start_date, 'j'), date_filter(self.end_date, 'j F Y'))
+    def dates_display(self) -> str:
+        two_months = self.start_date.month != self.end_date.month
+        if two_months:
+            return '{0} - {1}'.format(date_filter(self.start_date, 'F j'), date_filter(self.end_date, 'F j, Y'))
+        else:
+            return '{0}-{1}'.format(date_filter(self.start_date, 'F j'), date_filter(self.end_date, 'j, Y'))
 
     def editable_by_user(self, user) -> bool:
         return self.can_be_managed_by(user)

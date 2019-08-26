@@ -40,6 +40,7 @@ class EventSerializer(serializers.ModelSerializer):
     days = DaySerializer(many=True, read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
     dates = ImportantDateSerializer(many=True, read_only=True)
+    dates_display = serializers.CharField(read_only=True)
     papers = PaperSerializer(many=True, read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)

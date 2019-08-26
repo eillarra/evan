@@ -19,7 +19,7 @@
                     <h1>{{ registration.user.profile.name }}</h1>
                     <h4>{{ registration.user.profile.affiliation }}, {{ registration.user.profile.country.name }}</h4>
                     <div class="bottom band" style="background-color: {{ event.json_badge.color }}">
-                        <span>{{ event.date_range }}, {{ event.city }}, <span class="nowrap">{{ event.country.name }}</span></span>
+                        <span>{{ event.dates_display }}, {{ event.city }}, <span class="nowrap">{{ event.country.name }}</span></span>
                     </div>
                 </td>
             {% endfor %}
