@@ -64,8 +64,8 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.http.ConditionalGetMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -126,6 +126,9 @@ CSRF_USE_SESSIONS = not DEBUG
 # XFRAME
 
 X_FRAME_OPTIONS = 'DENY'
+
+# CORS
+
 CORS_ORIGIN_ALLOW_ALL = True
 
 # Account
