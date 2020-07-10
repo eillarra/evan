@@ -67,6 +67,7 @@ class Event(models.Model):
     signature = models.TextField(null=True, blank=True)
 
     registrations_count = models.PositiveIntegerField(default=0)
+    custom_fields = models.TextField(default="{}")
 
     acl = GenericRelation("evan.Permission")
 

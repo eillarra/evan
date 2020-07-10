@@ -49,6 +49,8 @@ class EventSerializer(serializers.ModelSerializer):
     badge = JsonField()
     href_registration = serializers.URLField(source="get_registration_url", read_only=True)
 
+    custom_fields = JsonField(read_only=True)
+
     class Meta:
         model = Event
         exclude = ("id", "wbs_element", "ingenico_salt", "test_mode", "signature")

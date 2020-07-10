@@ -41,6 +41,8 @@ class Registration(models.Model):
     paid_via_invoice = models.PositiveSmallIntegerField(default=0)
     saldo = models.IntegerField(default=0, editable=False)
 
+    custom_data = models.TextField(default="{}")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

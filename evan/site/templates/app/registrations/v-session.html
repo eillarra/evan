@@ -19,7 +19,7 @@
                     <div v-if="session.room" class="mt-4 bg-light-blue p-3">
                         <h6>Venue: {{ session.room.venue.name }}</h6>
                         <marked v-if="session.is_social_event" :text="session.room.venue.presentation" class="text-sm"></marked>
-                        <ul class="list-unstyled text-sm text-secondary mt-3 mb-0">
+                        <ul class="list-unstyled text-sm text-grey-8 mt-3 mb-0">
                             <li><i class="material-icons">meeting_room</i> {{ session.room.name }}</li>
                             <li><i class="material-icons">location_city</i> {{ session.room.venue.address }}, {{ session.room.venue.city }}</li>
                             <li><i class="material-icons">location_on</i> lat: {{ session.room.venue.lat }}, lng: {{ session.room.venue.lng }}</li>

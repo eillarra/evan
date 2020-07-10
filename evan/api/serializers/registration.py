@@ -2,7 +2,7 @@ from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from evan.models import Coupon, Person, Registration
-from .generic import MetadataField
+from .generic import JsonField, MetadataField
 from .user import UserSerializer
 
 
@@ -28,6 +28,7 @@ class RegistrationSerializer(WritableNestedModelSerializer):
     user = UserSerializer(read_only=True)
     coupon = CouponSerializer(read_only=True)
     href_payment = serializers.URLField(source="get_payment_url", read_only=True)
+    custom_data = JsonField()
 
     class Meta:
         model = Registration
@@ -36,7 +37,7 @@ class RegistrationSerializer(WritableNestedModelSerializer):
 
 
 class RegistrationRetrieveSerializer(RegistrationSerializer):
-    accompanying_persons = PersonSerializer(many=True)
+    accompanying_persons = PersonSerializer(many=True, required=False)
     extra_fees = serializers.SerializerMethodField(read_only=True)
 
     class Meta(RegistrationSerializer.Meta):

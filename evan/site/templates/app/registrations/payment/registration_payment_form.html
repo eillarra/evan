@@ -39,7 +39,7 @@
         </div>
         <div class="row justify-content-md-center pt-4 pt-md-5">
             <div class="col-12 col-md-9 col-lg-8 col-xl-6 mb-5">
-                <h4 class="text-secondary mb-4">#{{ registration.event.hashtag }} payment<br><small><samp>{{ registration.uuid }}</samp></small>
+                <h4 class="text-grey-8 mb-4">#{{ registration.event.hashtag }} payment<br><small><samp>{{ registration.uuid }}</samp></small>
                 </h4>
                 {% if registration.is_paid %}
                     <p>Your registration is fully paid.</p>
@@ -80,7 +80,7 @@
                                     <i class="material-icons mr-2">lock</i><span>Pay</span>
                                 </button>
                             </form>
-                            <p class="mt-4 text-sm text-secondary"><i class="material-icons mr-1">account_balance</i> <strong>Payment with invoice</strong>:<br>if you need an official invoice you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request an it here</a> and pay via bank transfer.</p>
+                            <p class="mt-4 text-sm text-grey-8"><i class="material-icons mr-1">account_balance</i> <strong>Payment with invoice</strong>:<br>if you need an official invoice you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request it here</a> and pay via bank transfer.</p>
                         </div>
                     {% endif %}
                 {% endif %}
