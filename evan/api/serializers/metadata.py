@@ -4,7 +4,6 @@ from evan.models import Metadata
 
 
 class MetadataNestedSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Metadata
         exclude = ()

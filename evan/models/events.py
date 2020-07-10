@@ -15,37 +15,35 @@ from .permissions import Permission
 
 def validate_event_dates(event):
     if event.end_date < event.start_date:
-        raise ValidationError('End date cannot be earlier than start date.')
+        raise ValidationError("End date cannot be earlier than start date.")
     if event.start_date <= event.registration_start_date:
-        raise ValidationError('Registrations should open before the event starts.')
+        raise ValidationError("Registrations should open before the event starts.")
     if event.registration_deadline.date() < event.registration_start_date:
-        raise ValidationError('Registrations cannot end before they start...')
+        raise ValidationError("Registrations cannot end before they start...")
 
     if event.registration_early_deadline:
         if event.registration_early_deadline.date() < event.registration_start_date:
-            raise ValidationError('Early deadline cannot be earlier than registration start date.')
+            raise ValidationError("Early deadline cannot be earlier than registration start date.")
         if event.registration_early_deadline > event.registration_deadline:
-            raise ValidationError('Early deadline cannot be later than registration deadline.')
+            raise ValidationError("Early deadline cannot be later than registration deadline.")
 
 
 def validate_event_day(day):
     if day.date < day.event.start_date or day.date > day.event.end_date:
-        raise ValidationError('Please check the date: it should be between the start and end dates of the event.')
+        raise ValidationError("Please check the date: it should be between the start and end dates of the event.")
 
 
 class EventManager(models.Manager):
-
     def upcoming(self):
-        return self.filter(end_date__gte=timezone.now().date()).order_by('end_date')
+        return self.filter(end_date__gte=timezone.now().date()).order_by("end_date")
 
 
 class Event(models.Model):
     """
     An event.
     """
-    SUPPORTED_CURRENCIES = (  # https://stripe.com/docs/currencies
-        ('EUR', 'Euro'),
-    )
+
+    SUPPORTED_CURRENCIES = (("EUR", "Euro"),)  # https://stripe.com/docs/currencies
 
     code = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=32)
@@ -65,19 +63,19 @@ class Event(models.Model):
     ingenico_salt = models.CharField(max_length=200, null=True, blank=True)
     test_mode = models.BooleanField(default=True, editable=False)
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
-    badge = models.TextField(null=True, blank=True, default='{}')
+    badge = models.TextField(null=True, blank=True, default="{}")
     signature = models.TextField(null=True, blank=True)
 
     registrations_count = models.PositiveIntegerField(default=0)
 
-    acl = GenericRelation('evan.Permission')
+    acl = GenericRelation("evan.Permission")
 
     objects = EventManager()
 
     class Meta:
         indexes = [
-            models.Index(fields=['code']),
-            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=["code"]),
+            models.Index(fields=["start_date", "end_date"]),
         ]
 
     def __str__(self) -> str:
@@ -86,15 +84,15 @@ class Event(models.Model):
     def clean(self) -> None:
         validate_event_dates(self)
         if self.hashtag:
-            self.hashtag = self.hashtag[1:] if self.hashtag.startswith('#') else self.hashtag
+            self.hashtag = self.hashtag[1:] if self.hashtag.startswith("#") else self.hashtag
 
     @property
     def dates_display(self) -> str:
         two_months = self.start_date.month != self.end_date.month
         if two_months:
-            return '{0} - {1}'.format(date_filter(self.start_date, 'F j'), date_filter(self.end_date, 'F j, Y'))
+            return "{0} - {1}".format(date_filter(self.start_date, "F j"), date_filter(self.end_date, "F j, Y"))
         else:
-            return '{0}-{1}'.format(date_filter(self.start_date, 'F j'), date_filter(self.end_date, 'j, Y'))
+            return "{0}-{1}".format(date_filter(self.start_date, "F j"), date_filter(self.end_date, "j, Y"))
 
     def editable_by_user(self, user) -> bool:
         return self.can_be_managed_by(user)
@@ -103,10 +101,10 @@ class Event(models.Model):
         return user.is_staff or self.acl.filter(user_id=user.id, level__gte=Permission.ADMIN).exists()
 
     def get_absolute_url(self) -> str:
-        return reverse('event:app', args=[self.code])
+        return reverse("event:app", args=[self.code])
 
     def get_registration_url(self) -> str:
-        return ''.join(['https://', get_current_site(None).domain, reverse('registration:redirect', args=[self.code])])
+        return "".join(["https://", get_current_site(None).domain, reverse("registration:redirect", args=[self.code])])
 
     @property
     def has_social_event_bundle(self) -> bool:
@@ -133,8 +131,8 @@ class Event(models.Model):
 
     @cached_property
     def fees_dict(self):
-        if not hasattr(self, '_fees'):
-            self._fees = {(f[0], f[1]): f[2] for f in self.fees.values_list('type', 'is_early', 'value')}
+        if not hasattr(self, "_fees"):
+            self._fees = {(f[0], f[1]): f[2] for f in self.fees.values_list("type", "is_early", "value")}
         return self._fees
 
     @cached_property
@@ -146,15 +144,16 @@ class Day(models.Model):
     """
     Event days: useful for registrations.
     """
-    event = models.ForeignKey(Event, related_name='days', on_delete=models.CASCADE)
+
+    event = models.ForeignKey(Event, related_name="days", on_delete=models.CASCADE)
     date = models.DateField()
     name = models.CharField(max_length=190)
 
     class Meta:
         indexes = [
-            models.Index(fields=['event', 'date']),
+            models.Index(fields=["event", "date"]),
         ]
-        ordering = ('date',)
+        ordering = ("date",)
 
     def __str__(self) -> str:
         return f'{self.name} ({date_filter(self.date, "D, N j")})'
@@ -164,22 +163,22 @@ class Day(models.Model):
 
 
 class ImportantDate(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='dates')
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="dates")
     date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     note = models.CharField(max_length=250)
 
     class Meta:
-        ordering = ('date',)
+        ordering = ("date",)
 
     def __str__(self) -> str:
         return self.note
 
     def date_display(self) -> str:
         if self.end_date:
-            pattern = '-j, Y' if self.date.month == self.end_date.month else ' - N j, Y'
-            return '{0}{1}'.format(date_filter(self.date, 'N j'), date_filter(self.end_date, pattern))
-        return date_filter(self.date, 'N j, Y')
+            pattern = "-j, Y" if self.date.month == self.end_date.month else " - N j, Y"
+            return "{0}{1}".format(date_filter(self.date, "N j"), date_filter(self.end_date, pattern))
+        return date_filter(self.date, "N j, Y")
 
     def is_past(self) -> bool:
         if self.end_date:

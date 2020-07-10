@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Paper(models.Model):
-    event = models.ForeignKey('evan.Event', related_name='papers', on_delete=models.CASCADE)
+    event = models.ForeignKey("evan.Event", related_name="papers", on_delete=models.CASCADE)
     title = models.TextField()
     authors = models.TextField()
 

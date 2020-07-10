@@ -5,7 +5,6 @@ from evan.tools.pdf import PdfResponse, Pdf
 
 
 class CertificatePdfMaker:
-
     def __init__(self, *, registration, filename: str, as_attachment: bool = False):
         self._response = PdfResponse(filename=filename, as_attachment=as_attachment)
         self.registration = registration
@@ -28,22 +27,22 @@ Sincerely yours,
 """
 
         with Pdf() as pdf:
-            pdf.add_text(date_filter(timezone.now()), 'p_right')
+            pdf.add_text(date_filter(timezone.now()), "p_right")
             pdf.add_spacer(1.5)
-            pdf.add_text(f'Certificate of attendance', 'h3')
-            pdf.add_text(f'ID: {reg.uuid}', 'p_small')
+            pdf.add_text(f"Certificate of attendance", "h3")
+            pdf.add_text(f"ID: {reg.uuid}", "p_small")
             pdf.add_spacer(0.5)
-            pdf.add_text('To Whom It May Concern,')
-            pdf.add_text(intro, 'p', 'markdown')
-            pdf.add_text(f'{reg.user.profile.name} attended the following sessions:')
-            for session in reg.sessions.select_related('track'):
+            pdf.add_text("To Whom It May Concern,")
+            pdf.add_text(intro, "p", "markdown")
+            pdf.add_text(f"{reg.user.profile.name} attended the following sessions:")
+            for session in reg.sessions.select_related("track"):
                 if not session.is_social_event:
-                    track = f'*{session.track}:* ' if session.track else ''
+                    track = f"*{session.track}:* " if session.track else ""
                     t = f'- {track}"{session.title}" ({date_filter(session.date, "N j")})'
-                    pdf.add_text(t, 'p', 'markdown')
-            pdf.add_text(signature, 'p', 'markdown')
+                    pdf.add_text(t, "p", "markdown")
+            pdf.add_text(signature, "p", "markdown")
             pdf.add_spacer(1.5)
-            pdf.add_text(event.signature, 'p', 'markdown')
+            pdf.add_text(event.signature, "p", "markdown")
             pdf.add_page_break()
 
             self._response.write(pdf.get())
@@ -54,7 +53,6 @@ Sincerely yours,
 
 
 class InvitationLetterPdfMaker:
-
     def __init__(self, *, registration, filename: str, as_attachment: bool = False):
         self._response = PdfResponse(filename=filename, as_attachment=as_attachment)
         self.registration = registration
@@ -88,22 +86,22 @@ Sincerely yours,
 """
 
         with Pdf() as pdf:
-            pdf.add_text(date_filter(timezone.now()), 'p_right')
-            pdf.add_text(address, 'p_small', 'markdown')
+            pdf.add_text(date_filter(timezone.now()), "p_right")
+            pdf.add_text(address, "p_small", "markdown")
             pdf.add_spacer(1.5)
-            pdf.add_text('To Whom It May Concern,')
-            pdf.add_text(intro, 'p', 'markdown')
+            pdf.add_text("To Whom It May Concern,")
+            pdf.add_text(intro, "p", "markdown")
 
             if reg.letter.submitted:
                 paper = f"""
 {reg.user.profile.name} has submitted a {reg.letter.submitted} titled \u2018{reg.letter.submitted_title}\u2019
 with the intention to present it during the event.
 """
-                pdf.add_text(paper, 'p', 'markdown')
+                pdf.add_text(paper, "p", "markdown")
 
-            pdf.add_text(signature, 'p', 'markdown')
+            pdf.add_text(signature, "p", "markdown")
             pdf.add_spacer(1.5)
-            pdf.add_text(event.signature, 'p', 'markdown')
+            pdf.add_text(event.signature, "p", "markdown")
             pdf.add_page_break()
 
             self._response.write(pdf.get())
@@ -114,7 +112,6 @@ with the intention to present it during the event.
 
 
 class ReceiptPdfMaker:
-
     def __init__(self, *, registration, filename: str, as_attachment: bool = False):
         self._response = PdfResponse(filename=filename, as_attachment=as_attachment)
         self.registration = registration
@@ -143,16 +140,16 @@ Sincerely yours,
 """
 
         with Pdf() as pdf:
-            pdf.add_text(date_filter(timezone.now()), 'p_right')
+            pdf.add_text(date_filter(timezone.now()), "p_right")
             pdf.add_spacer(1.5)
-            pdf.add_text(f'Receipt', 'h3')
-            pdf.add_text(f'ID: {reg.uuid}', 'p_small')
+            pdf.add_text(f"Receipt", "h3")
+            pdf.add_text(f"ID: {reg.uuid}", "p_small")
             pdf.add_spacer(0.5)
-            pdf.add_text('To Whom It May Concern,')
-            pdf.add_text(intro, 'p', 'markdown')
-            pdf.add_text(signature, 'p', 'markdown')
+            pdf.add_text("To Whom It May Concern,")
+            pdf.add_text(intro, "p", "markdown")
+            pdf.add_text(signature, "p", "markdown")
             pdf.add_spacer(1.5)
-            pdf.add_text(event.signature, 'p', 'markdown')
+            pdf.add_text(event.signature, "p", "markdown")
             pdf.add_page_break()
 
             self._response.write(pdf.get())

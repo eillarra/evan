@@ -6,6 +6,6 @@ from .routers import Router
 
 
 urlpatterns = [
-    path('v1/', include((Router('v1').urls, 'api'), namespace='v1')),
-    path('', include_docs_urls(title='Evan API')),
+    path("v1/", include((Router("v1").urls, "api"), namespace="v1")),
+    path("", include_docs_urls(title="Evan API")),
 ]

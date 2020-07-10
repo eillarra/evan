@@ -4,7 +4,7 @@ from typing import List
 
 
 class Topic(models.Model):
-    event = models.ForeignKey('evan.Event', related_name='topics', on_delete=models.CASCADE)
+    event = models.ForeignKey("evan.Event", related_name="topics", on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
 
     def __str__(self) -> str:

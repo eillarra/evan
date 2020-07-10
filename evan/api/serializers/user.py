@@ -1,5 +1,9 @@
 from django.contrib.auth import get_user_model
-from drf_writable_nested import UniqueFieldsMixin, NestedUpdateMixin, WritableNestedModelSerializer
+from drf_writable_nested import (
+    UniqueFieldsMixin,
+    NestedUpdateMixin,
+    WritableNestedModelSerializer,
+)
 from rest_framework import serializers
 
 from evan.models import Profile
@@ -13,7 +17,7 @@ class ProfileSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
 
     class Meta:
         model = Profile
-        exclude = ('user',)
+        exclude = ("user",)
 
 
 class UserSerializer(NestedUpdateMixin, serializers.ModelSerializer):
@@ -21,5 +25,5 @@ class UserSerializer(NestedUpdateMixin, serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('username', 'email', 'first_name', 'last_name', 'profile', 'url')
-        read_only_fields = ('username',)
+        fields = ("username", "email", "first_name", "last_name", "profile", "url")
+        read_only_fields = ("username",)

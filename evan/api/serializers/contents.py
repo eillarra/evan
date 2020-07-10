@@ -4,10 +4,9 @@ from evan.models import Image, Content
 
 
 class ImageSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Image
-        fields = ('image',)
+        fields = ("image",)
 
 
 class ContentSerializer(serializers.ModelSerializer):
@@ -15,4 +14,4 @@ class ContentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Content
-        exclude = ('id', 'event', 'notes')
+        exclude = ("id", "event", "notes")

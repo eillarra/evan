@@ -13,13 +13,13 @@ from .venue import VenueSerializer
 class DaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Day
-        exclude = ('event',)
+        exclude = ("event",)
 
 
 class FeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fee
-        exclude = ('event',)
+        exclude = ("event",)
 
 
 class ImportantDateSerializer(serializers.ModelSerializer):
@@ -28,11 +28,11 @@ class ImportantDateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ImportantDate
-        exclude = ('event',)
+        exclude = ("event",)
 
 
 class EventSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='v1:event-detail', lookup_field='code')
+    url = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
     country = CountryField(country_dict=True, read_only=True)
     is_active = serializers.BooleanField(read_only=True)
     is_closed = serializers.BooleanField(read_only=True)
@@ -47,12 +47,12 @@ class EventSerializer(serializers.ModelSerializer):
     tracks = TrackSerializer(many=True, read_only=True)
     venues = VenueSerializer(many=True, read_only=True)
     badge = JsonField()
-    href_registration = serializers.URLField(source='get_registration_url', read_only=True)
+    href_registration = serializers.URLField(source="get_registration_url", read_only=True)
 
     class Meta:
         model = Event
-        exclude = ('id', 'wbs_element', 'ingenico_salt', 'test_mode', 'signature')
-        read_only_fields = ('code',)
+        exclude = ("id", "wbs_element", "ingenico_salt", "test_mode", "signature")
+        read_only_fields = ("code",)
 
     def validate(self, data):
         validate_event_dates(Event(**data))

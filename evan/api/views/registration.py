@@ -1,13 +1,22 @@
 from django.db import IntegrityError
 from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import (
+    CreateModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event, Coupon, Registration
 from ..permissions import EventRelatedObjectPermission, RegistrationPermission
-from ..serializers import CouponSerializer, RegistrationSerializer, RegistrationRetrieveSerializer
+from ..serializers import (
+    CouponSerializer,
+    RegistrationSerializer,
+    RegistrationRetrieveSerializer,
+)
 from ..viewsets import EventRelatedViewSet
 
 
@@ -23,7 +32,7 @@ class CouponViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
 
 
 class RegistrationsViewSet(EventRelatedViewSet):
-    queryset = Registration.objects.select_related('user__profile').prefetch_related('coupon')
+    queryset = Registration.objects.select_related("user__profile").prefetch_related("coupon")
     serializer_class = RegistrationRetrieveSerializer
 
     def list(self, request, *args, **kwargs):
@@ -32,27 +41,31 @@ class RegistrationsViewSet(EventRelatedViewSet):
 
     def perform_create(self, serializer):
         try:
-            serializer.save(user=self.request.user, event=Event.objects.get(code=self.kwargs.get('code')))
+            serializer.save(
+                user=self.request.user, event=Event.objects.get(code=self.kwargs.get("code")),
+            )
         except IntegrityError:
-            raise ValidationError({'event-user': ['Duplicate entry - this user already has a registration.']})
+            raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]})
 
 
 class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    queryset = Registration.objects.select_related('user__profile').prefetch_related('coupon')
+    queryset = Registration.objects.select_related("user__profile").prefetch_related("coupon")
     serializer_class = RegistrationRetrieveSerializer
 
     def perform_create(self, serializer):
         try:
-            serializer.save(user=self.request.user, event=Event.objects.get(code=self.kwargs.get('code')))
+            serializer.save(
+                user=self.request.user, event=Event.objects.get(code=self.kwargs.get("code")),
+            )
         except IntegrityError:
-            raise ValidationError({'event-user': ['Duplicate entry - this user already has a registration.']})
+            raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]})
 
 
 class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
-    lookup_field = 'uuid'
+    lookup_field = "uuid"
     permission_classes = (RegistrationPermission,)
-    queryset = Registration.objects.prefetch_related('sessions').select_related('user__profile')
+    queryset = Registration.objects.prefetch_related("sessions").select_related("user__profile")
     serializer_class = RegistrationRetrieveSerializer
 
     @never_cache

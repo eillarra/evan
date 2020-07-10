@@ -10,13 +10,13 @@ register = template.Library()
 @register.simple_tag
 def active(request, patterns):
     if patterns:
-        for pattern in patterns.split(','):
+        for pattern in patterns.split(","):
             try:
                 if pattern == request.resolver_match.url_name:
-                    return 'active'
+                    return "active"
             except Exception as e:
-                return ''
-    return ''
+                return ""
+    return ""
 
 
 @register.filter
@@ -24,13 +24,13 @@ def markdown(text):
     return mark_safe(marked(text))
 
 
-@register.tag(name='markdown')
+@register.tag(name="markdown")
 def do_markdown(parser, token):
-    nodelist = parser.parse(('endmarkdown',))
+    nodelist = parser.parse(("endmarkdown",))
     parser.delete_first_token()
     bits = token.split_contents()
     if len(bits) > 1:
-        raise template.TemplateSyntaxError('`markdown` tag requires exactly zero arguments')
+        raise template.TemplateSyntaxError("`markdown` tag requires exactly zero arguments")
     return MarkdownNode(nodelist)
 
 

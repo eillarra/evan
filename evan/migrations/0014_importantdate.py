@@ -7,21 +7,24 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0013_auto_20190430_1201'),
+        ("evan", "0013_auto_20190430_1201"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ImportantDate',
+            name="ImportantDate",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateField()),
-                ('end_date', models.DateField(blank=True, null=True)),
-                ('note', models.CharField(max_length=250)),
-                ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dates', to='evan.Event')),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("date", models.DateField()),
+                ("end_date", models.DateField(blank=True, null=True)),
+                ("note", models.CharField(max_length=250)),
+                (
+                    "event",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="dates", to="evan.Event"
+                    ),
+                ),
             ],
-            options={
-                'ordering': ('date',),
-            },
+            options={"ordering": ("date",),},
         ),
     ]

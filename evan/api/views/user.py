@@ -9,7 +9,7 @@ from ..serializers import UserSerializer
 
 class UserViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = (UserPermission,)
-    queryset = get_user_model().objects.select_related('profile')
+    queryset = get_user_model().objects.select_related("profile")
     serializer_class = UserSerializer
 
     @never_cache

@@ -6,13 +6,11 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0001_initial'),
+        ("evan", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='social_event_bundle_fee',
-            field=models.PositiveSmallIntegerField(default=0),
+            model_name="event", name="social_event_bundle_fee", field=models.PositiveSmallIntegerField(default=0),
         ),
     ]

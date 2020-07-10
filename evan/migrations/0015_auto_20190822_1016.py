@@ -7,24 +7,26 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0014_importantdate'),
+        ("evan", "0014_importantdate"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Content',
+            name="Content",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('key', models.CharField(max_length=32)),
-                ('value', models.TextField(blank=True, null=True)),
-                ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='contents', to='evan.Event')),
+                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("key", models.CharField(max_length=32)),
+                ("value", models.TextField(blank=True, null=True)),
+                (
+                    "event",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, related_name="contents", to="evan.Event"
+                    ),
+                ),
             ],
-            options={
-                'ordering': ('event', 'key'),
-            },
+            options={"ordering": ("event", "key"),},
         ),
         migrations.AddIndex(
-            model_name='content',
-            index=models.Index(fields=['event', 'key'], name='evan_conten_event_i_935c38_idx'),
+            model_name="content", index=models.Index(fields=["event", "key"], name="evan_conten_event_i_935c38_idx"),
         ),
     ]

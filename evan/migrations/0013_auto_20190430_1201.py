@@ -6,18 +6,16 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0012_event_registrations_count'),
+        ("evan", "0012_event_registrations_count"),
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='invitationletter',
-            old_name='submitted_paper',
-            new_name='submitted_title',
-        ),
+        migrations.RenameField(model_name="invitationletter", old_name="submitted_paper", new_name="submitted_title",),
         migrations.AddField(
-            model_name='invitationletter',
-            name='submitted',
-            field=models.CharField(blank=True, choices=[('paper', 'Paper'), ('poster', 'Poster')], default=None, max_length=16, null=True),
+            model_name="invitationletter",
+            name="submitted",
+            field=models.CharField(
+                blank=True, choices=[("paper", "Paper"), ("poster", "Poster")], default=None, max_length=16, null=True
+            ),
         ),
     ]

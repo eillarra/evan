@@ -2,8 +2,8 @@ from evan.functions import send_task
 
 
 class TemplateEmail:
-    template = ''
-    from_email = 'Ghent University <evan@ugent.be>'
+    template = ""
+    from_email = "Ghent University <evan@ugent.be>"
 
     def __init__(self, *args, instance, **kwargs) -> None:
         self.instance = instance
@@ -19,4 +19,4 @@ class TemplateEmail:
         )
 
     def send(self) -> None:
-        send_task('evan.tasks.emails.send_template_email', self.data)
+        send_task("evan.tasks.emails.send_template_email", self.data)

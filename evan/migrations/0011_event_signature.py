@@ -6,13 +6,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0010_invitationletter'),
+        ("evan", "0010_invitationletter"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='event',
-            name='signature',
-            field=models.TextField(blank=True, null=True),
-        ),
+        migrations.AddField(model_name="event", name="signature", field=models.TextField(blank=True, null=True),),
     ]

@@ -12,23 +12,25 @@ from evan.tools.csv import ModelCsvWriter
 
 
 class EventView(generic.DetailView):
-    template_name = 'app/events/index.html'
+    template_name = "app/events/index.html"
 
     def get_object(self, queryset=None) -> Event:
-        if not hasattr(self, 'object'):
-            self.object = get_object_or_404(Event, code=self.kwargs.get('code'))
+        if not hasattr(self, "object"):
+            self.object = get_object_or_404(Event, code=self.kwargs.get("code"))
         return self.object
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not self.get_object().editable_by_user(request.user):
-            messages.error(request, 'You don\'t have the necessary permissions to manage this event.')
+            messages.error(
+                request, "You don't have the necessary permissions to manage this event.",
+            )
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['google_maps_static_api_key'] = environ.get('GOOGLE_MAPS_STATIC_API_KEY')
+        context["google_maps_static_api_key"] = environ.get("GOOGLE_MAPS_STATIC_API_KEY")
         return context
 
 
@@ -61,8 +63,8 @@ class EventBadgesPdf(EventView):
 
 class RegistrationCsvWriter(ModelCsvWriter):
     model = Registration
-    custom_fields = ('affiliation', 'email', 'dietary')
-    exclude = ('id', 'updated_at', 'letter', 'accompanying_persons', 'payments', 'logs')
+    custom_fields = ("affiliation", "email", "dietary")
+    exclude = ("id", "updated_at", "letter", "accompanying_persons", "payments", "logs")
     metadata_fields = ()
 
     @staticmethod
@@ -87,11 +89,10 @@ class RegistrationCsvWriter(ModelCsvWriter):
 
     @staticmethod
     def get_sessions_display(obj) -> List[str]:
-        return [f'{session.title} ({session.date})' for session in obj.sessions.all()]
+        return [f"{session.title} ({session.date})" for session in obj.sessions.all()]
 
 
 class EventRegistrationsCsv(EventView):
-
     def get(self, request, *args, **kwargs):
-        queryset = self.get_object().registrations.select_related('user__profile').all()
-        return RegistrationCsvWriter(filename='registrations.csv', queryset=queryset).response
+        queryset = self.get_object().registrations.select_related("user__profile").all()
+        return RegistrationCsvWriter(filename="registrations.csv", queryset=queryset).response

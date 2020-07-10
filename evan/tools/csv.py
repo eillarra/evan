@@ -4,15 +4,13 @@ from django.http import HttpResponse
 
 
 class CsvResponse(HttpResponse):
-
-    def __init__(self, *args, filename: str = '', **kwargs):
-        kwargs.setdefault('content_type', 'text/csv; charset=utf-8')
+    def __init__(self, *args, filename: str = "", **kwargs):
+        kwargs.setdefault("content_type", "text/csv; charset=utf-8")
         super().__init__(*args, **kwargs)
-        self['Content-Disposition'] = f'attachment; filename="{filename}"'
+        self["Content-Disposition"] = f'attachment; filename="{filename}"'
 
 
 class CsvWriter:
-
     def __init__(self, *, filename: str):
         self._response = CsvResponse(filename=filename)
         self.writer = csv.writer(self._response)
@@ -39,10 +37,10 @@ class ModelCsvWriter(CsvWriter):
         return queryset
 
     def get_value(self, obj, field):
-        display_method = getattr(self, 'get_' + field + '_display', None)
+        display_method = getattr(self, "get_" + field + "_display", None)
         if callable(display_method):
             return display_method(obj)
-        if field == 'country':
+        if field == "country":
             return getattr(obj, field).name
         return getattr(obj, field)
 

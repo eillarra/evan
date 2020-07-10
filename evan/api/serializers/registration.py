@@ -7,12 +7,12 @@ from .user import UserSerializer
 
 
 class CouponSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='v1:coupon-detail')
+    url = serializers.HyperlinkedIdentityField(view_name="v1:coupon-detail")
 
     class Meta:
         model = Coupon
-        exclude = ('event',)
-        read_only_fields = ('id', 'code', 'event', 'created_at')
+        exclude = ("event",)
+        read_only_fields = ("id", "code", "event", "created_at")
 
 
 class PersonSerializer(serializers.ModelSerializer):
@@ -20,19 +20,19 @@ class PersonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Person
-        exclude = ('registration',)
+        exclude = ("registration",)
 
 
 class RegistrationSerializer(WritableNestedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='v1:registration-detail', lookup_field='uuid')
+    url = serializers.HyperlinkedIdentityField(view_name="v1:registration-detail", lookup_field="uuid")
     user = UserSerializer(read_only=True)
     coupon = CouponSerializer(read_only=True)
-    href_payment = serializers.URLField(source='get_payment_url', read_only=True)
+    href_payment = serializers.URLField(source="get_payment_url", read_only=True)
 
     class Meta:
         model = Registration
-        exclude = ('id', 'event', 'saldo', 'days', 'sessions')
-        read_only_fields = ('id', 'uuid', 'event', 'created_at', 'updated_at')
+        exclude = ("id", "event", "saldo", "days", "sessions")
+        read_only_fields = ("id", "uuid", "event", "created_at", "updated_at")
 
 
 class RegistrationRetrieveSerializer(RegistrationSerializer):
@@ -41,7 +41,7 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
 
     class Meta(RegistrationSerializer.Meta):
         model = Registration
-        exclude = ('id', 'event', 'saldo')
+        exclude = ("id", "event", "saldo")
 
     def get_extra_fees(self, obj):
         return obj.event.social_event_bundle_fee * obj.accompanying_persons.count()

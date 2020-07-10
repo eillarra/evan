@@ -9,4 +9,4 @@ class PermissionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Permission
-        fields = ('user', 'level')
+        fields = ("user", "level")

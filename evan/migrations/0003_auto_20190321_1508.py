@@ -7,18 +7,32 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0002_event_social_event_bundle_fee'),
+        ("evan", "0002_event_social_event_bundle_fee"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='profile',
-            name='dietary',
-            field=models.ForeignKey(blank=True, limit_choices_to={'type': 'meal_preference'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='user_meal_preference', to='evan.Metadata'),
+            model_name="profile",
+            name="dietary",
+            field=models.ForeignKey(
+                blank=True,
+                limit_choices_to={"type": "meal_preference"},
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="user_meal_preference",
+                to="evan.Metadata",
+            ),
         ),
         migrations.AlterField(
-            model_name='profile',
-            name='gender',
-            field=models.ForeignKey(blank=True, limit_choices_to={'type': 'gender'}, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='gender', to='evan.Metadata'),
+            model_name="profile",
+            name="gender",
+            field=models.ForeignKey(
+                blank=True,
+                limit_choices_to={"type": "gender"},
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="gender",
+                to="evan.Metadata",
+            ),
         ),
     ]

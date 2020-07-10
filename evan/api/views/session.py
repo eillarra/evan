@@ -1,4 +1,8 @@
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import (
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+)
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Session

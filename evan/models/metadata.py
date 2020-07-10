@@ -8,11 +8,12 @@ class Metadata(models.Model):
     """
     Metadata used by other models.
     """
-    GENDER = 'gender'
-    MEAL_PREFERENCE = 'meal_preference'
+
+    GENDER = "gender"
+    MEAL_PREFERENCE = "meal_preference"
     TYPE_CHOICES = (
-        (GENDER, 'Gender'),
-        (MEAL_PREFERENCE, 'Meal preference'),
+        (GENDER, "Gender"),
+        (MEAL_PREFERENCE, "Meal preference"),
     )
 
     type = models.CharField(max_length=32, choices=TYPE_CHOICES)
@@ -20,10 +21,8 @@ class Metadata(models.Model):
     position = models.PositiveSmallIntegerField(default=0)
 
     class Meta:
-        indexes = [
-            models.Index(fields=['type'])
-        ]
-        ordering = ('type', 'value')
+        indexes = [models.Index(fields=["type"])]
+        ordering = ("type", "value")
 
     def __str__(self) -> str:
         return self.value
@@ -31,10 +30,10 @@ class Metadata(models.Model):
 
 def get_cached_metadata_queryset() -> List[Metadata]:
     try:
-        queryset = cache.get('cached_metadata_queryset')
+        queryset = cache.get("cached_metadata_queryset")
         if not queryset:
             queryset = Metadata.objects.all()
-            cache.set('cached_metadata_queryset', queryset, 30)
+            cache.set("cached_metadata_queryset", queryset, 30)
         return queryset
     except ProgrammingError:
         return []
@@ -42,10 +41,10 @@ def get_cached_metadata_queryset() -> List[Metadata]:
 
 def get_cached_metadata() -> Dict[int, Metadata]:
     try:
-        objects = cache.get('cached_metadata_objects')
+        objects = cache.get("cached_metadata_objects")
         if not objects:
             objects = {m.id: m for m in get_cached_metadata_queryset()}
-            cache.set('cached_metadata_objects', objects, 30)
+            cache.set("cached_metadata_objects", objects, 30)
         return objects
     except ProgrammingError:
         return {}

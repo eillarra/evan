@@ -12,20 +12,20 @@ from .metadata import Metadata
 
 
 class RegistrationManager(models.Manager):
-
     def with_profiles(self):
-        return super().get_queryset().select_related('user__profile').order_by('user__first_name', 'user__last_name')
+        return super().get_queryset().select_related("user__profile").order_by("user__first_name", "user__last_name")
 
 
 class Registration(models.Model):
     """
     A event registration for a User.
     """
+
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    event = models.ForeignKey('evan.Event', related_name='registrations', on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), related_name='registrations', on_delete=models.CASCADE)
-    days = models.ManyToManyField('evan.Day', related_name='registrations')
-    sessions = models.ManyToManyField('evan.Session', related_name='registrations')
+    event = models.ForeignKey("evan.Event", related_name="registrations", on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), related_name="registrations", on_delete=models.CASCADE)
+    days = models.ManyToManyField("evan.Day", related_name="registrations", blank=True)
+    sessions = models.ManyToManyField("evan.Session", related_name="registrations", blank=True)
 
     visa_requested = models.BooleanField(default=False)
     visa_sent = models.BooleanField(default=False)
@@ -34,7 +34,7 @@ class Registration(models.Model):
     base_fee = models.PositiveSmallIntegerField(default=0, editable=False)
     extra_fees = models.PositiveSmallIntegerField(default=0, editable=False)
     manual_extra_fees = models.PositiveSmallIntegerField(default=0)
-    coupon = models.OneToOneField('evan.Coupon', null=True, blank=True, on_delete=models.SET_NULL)
+    coupon = models.OneToOneField("evan.Coupon", null=True, blank=True, on_delete=models.SET_NULL)
     invoice_requested = models.BooleanField(default=False)
     invoice_sent = models.BooleanField(default=False)
     paid = models.PositiveSmallIntegerField(default=0, editable=False)
@@ -48,10 +48,10 @@ class Registration(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['uuid']),
+            models.Index(fields=["uuid"]),
         ]
-        ordering = ('-created_at',)
-        unique_together = ('event', 'user')
+        ordering = ("-created_at",)
+        unique_together = ("event", "user")
 
     def save(self, *args, **kwargs):
         """
@@ -66,7 +66,7 @@ class Registration(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f'{self.uuid} ({self.user})'
+        return f"{self.uuid} ({self.user})"
 
     def editable_by_user(self, user) -> bool:
         return self.user_id == user.id and not self.event.is_closed
@@ -75,19 +75,19 @@ class Registration(models.Model):
         return self.user_id == user.id
 
     def get_absolute_url(self) -> str:
-        return reverse('registration:app', args=[self.uuid])
+        return reverse("registration:app", args=[self.uuid])
 
     def get_certificate_url(self) -> str:
-        return reverse('registration:certificate', args=[self.uuid])
+        return reverse("registration:certificate", args=[self.uuid])
 
     def get_payment_url(self) -> str:
-        return reverse('registration:payment', args=[self.uuid])
+        return reverse("registration:payment", args=[self.uuid])
 
     def get_payment_result_url(self) -> str:
-        return reverse('registration:payment_result', args=[self.uuid])
+        return reverse("registration:payment_result", args=[self.uuid])
 
     def get_receipt_url(self) -> str:
-        return reverse('registration:receipt', args=[self.uuid])
+        return reverse("registration:receipt", args=[self.uuid])
 
     @property
     def is_early(self) -> bool:
@@ -121,28 +121,28 @@ def registration_post_save(sender, instance, created, *args, **kwargs):
         event.save()
 
         email = (
-            '_emails/registrations_created.md.html',
-            f'[{instance.event.hashtag}] Your registration / {instance.uuid}',
-            'Ghent University <evan@ugent.be>',
+            "_emails/registrations_created.md.html",
+            f"[{instance.event.hashtag}] Your registration / {instance.uuid}",
+            "Ghent University <evan@ugent.be>",
             [instance.user.email],
             {
-                'registration_uuid': str(instance.uuid),
-                'registration_url': instance.get_absolute_url(),
-                'visa_requested': instance.visa_requested,
-                'event_city': instance.event.city,
-                'event_name': instance.event.name,
-            }
+                "registration_uuid": str(instance.uuid),
+                "registration_url": instance.get_absolute_url(),
+                "visa_requested": instance.visa_requested,
+                "event_city": instance.event.city,
+                "event_name": instance.event.name,
+            },
         )
-        send_task('evan.tasks.emails.send_template_email', email)
+        send_task("evan.tasks.emails.send_template_email", email)
 
 
 @receiver(m2m_changed, sender=Registration.sessions.through)
 def registration_sessions_changed(sender, instance, **kwargs) -> None:
-    if kwargs.get('action') == 'post_add':
-        logs = list(RegistrationLog.objects.filter(registration_id=instance.id).values_list('session_id', flat=True))
+    if kwargs.get("action") == "post_add":
+        logs = list(RegistrationLog.objects.filter(registration_id=instance.id).values_list("session_id", flat=True))
         new_logs = []
 
-        for session in instance.sessions.exclude(id__in=logs).only('id'):
+        for session in instance.sessions.exclude(id__in=logs).only("id"):
             new_logs.append(RegistrationLog(registration_id=instance.id, session_id=session.id))
 
         if new_logs:
@@ -154,23 +154,30 @@ class RegistrationLog(models.Model):
     In some occasions, it can be interesting to know when somebody first registered for an activity.
     If later an activity is unselected, this log shows when the initial registration was made.
     """
-    registration = models.ForeignKey(Registration, related_name='logs', on_delete=models.CASCADE)
-    session = models.ForeignKey('evan.Session', related_name='logs', on_delete=models.CASCADE)
+
+    registration = models.ForeignKey(Registration, related_name="logs", on_delete=models.CASCADE)
+    session = models.ForeignKey("evan.Session", related_name="logs", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('registration', 'session')
+        unique_together = ("registration", "session")
 
 
 class Person(models.Model):
     """
     Accompanying person.
     """
-    registration = models.ForeignKey(Registration, related_name='accompanying_persons', on_delete=models.CASCADE)
+
+    registration = models.ForeignKey(Registration, related_name="accompanying_persons", on_delete=models.CASCADE)
     name = models.CharField(max_length=190)
-    dietary = models.ForeignKey(Metadata, null=True, blank=True, on_delete=models.SET_NULL,
-                                limit_choices_to={'type': Metadata.MEAL_PREFERENCE},
-                                related_name='person_' + Metadata.MEAL_PREFERENCE)
+    dietary = models.ForeignKey(
+        Metadata,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        limit_choices_to={"type": Metadata.MEAL_PREFERENCE},
+        related_name="person_" + Metadata.MEAL_PREFERENCE,
+    )
 
 
 @receiver(post_save, sender=Person)
@@ -183,14 +190,15 @@ class InvitationLetter(models.Model):
     """
     Information necessary to issue an invitation letter.
     """
-    PAPER = 'paper'
-    POSTER = 'poster'
+
+    PAPER = "paper"
+    POSTER = "poster"
     SUBMITTED_CHOICES = (
-        (PAPER, 'Paper'),
-        (POSTER, 'Poster'),
+        (PAPER, "Paper"),
+        (POSTER, "Poster"),
     )
 
-    registration = models.OneToOneField(Registration, primary_key=True, related_name='letter', on_delete=models.CASCADE)
+    registration = models.OneToOneField(Registration, primary_key=True, related_name="letter", on_delete=models.CASCADE)
     name = models.CharField(max_length=190)
     passport_number = models.CharField(max_length=60)
     nationality = models.CharField(max_length=190)

@@ -13,8 +13,8 @@ class RoomsViewSet(EventRelatedCreateOnlyViewSet):
     serializer_class = RoomSerializer
 
     def create(self, request, *args, **kwargs):
-        if not Venue.objects.filter(id=request.data.get('venue'), event__code=kwargs.get('code')).exists():
-            raise serializers.ValidationError({'venue': ['Venue is not valid for this event.']})
+        if not Venue.objects.filter(id=request.data.get("venue"), event__code=kwargs.get("code")).exists():
+            raise serializers.ValidationError({"venue": ["Venue is not valid for this event."]})
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):

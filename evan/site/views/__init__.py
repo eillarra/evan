@@ -10,6 +10,6 @@ from .registrations import (
     RegistrationPaymentResultView,
     RegistrationInvoiceRequestView,
     RegistrationCertificatePdf,
-    RegistrationReceiptPdf
+    RegistrationReceiptPdf,
 )
 from .users import DashboardView
