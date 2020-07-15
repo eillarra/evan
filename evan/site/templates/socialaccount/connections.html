@@ -6,7 +6,7 @@
 {% block content %}
     <h4 class="display-sm mb-4">Account connections</h4>
     {% if form.accounts %}
-        <p>You can sign in to your account using any of the following third party accounts:</p>
+        <p>You can sign in to your account using any of the following third-party accounts:</p>
         <form method="post" action="{% url 'socialaccount_connections' %}">
             {% csrf_token %}
             {% if form.non_field_errors %}
