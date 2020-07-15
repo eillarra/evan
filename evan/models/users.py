@@ -35,6 +35,7 @@ class Profile(models.Model):
         limit_choices_to={"type": Metadata.MEAL_PREFERENCE},
         related_name="profile_" + Metadata.MEAL_PREFERENCE,
     )
+    position = models.CharField(max_length=190, null=True, blank=True)
     affiliation = models.CharField(max_length=190)
     country = CountryField()
     updated_at = models.DateTimeField(auto_now=True)

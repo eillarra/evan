@@ -3,30 +3,18 @@
 {% load compress %}
 
 
-{% block main %}
-    <div id="vue">
-        {% if messages %}
-            <div class="container">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        <span>{{ message }}</span>
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        {% block content %}{% endblock %}
-    </div>
+{% block page %}
+  <div class="q-pl-lg">
+    {% block content %}{% endblock %}
+  </div>
 {% endblock %}
 
 {% block scripts %}
 {% compress js inline %}
-    <script type="text/javascript">
-        new Vue({
-            el: '#vue'
-        });
-    </script>
+  <script type="text/javascript">
+    new Vue({
+      el: '#vue'
+    });
+  </script>
 {% endcompress %}
 {% endblock %}

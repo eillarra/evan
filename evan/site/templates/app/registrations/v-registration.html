@@ -1,163 +1,191 @@
 <script type="text/x-template" id="{{ id }}">
 {% verbatim %}
-  <div v-cloak v-if="event && registration" class="q-pa-xl">
+  <div v-cloak v-if="event && registration" class="row q-col-gutter-md">
 
+    <div class="col-12 col-md-9 col-lg-8">
+      <q-card flat class="q-pa-lg">
 
-
-    <h4 v-if="registration.uuid" class="text-grey-8 mb-4">Your #{{ event.hashtag }} registration<br><small><samp>{{ registration.uuid }}</samp></small>
-    </h4>
-    <div v-else class="text-grey-8 mb-4">
-      <small v-if="event.registration_early_deadline">Early registration deadline: {{ event.registration_early_deadline | moment }} ({{ event.registration_early_deadline | moment('YYYY-MM-DDTHH:mm:ssZ') }})</small>
-      <h4 class="text-grey-8 mb-4">Register now for #{{ event.hashtag }}</h4>
-    </div>
-    <div v-if="registration.uuid" class="alert alert-warning clearfix p-2 text-sm">
-      <a v-if="registration.isPaid" :href="registration.href_payment">
-        <i class="material-icons sm mr-1">info</i>
-        <span>View payment info</span>
-      </a>
-      <span v-else>
-        <a v-if="!registration.invoice_requested" :href="registration.href_payment">
-          <i class="material-icons sm mr-1">credit_card</i> Proceed with payment</a>
-        <button v-else class="float-right btn btn-outline-secondary" disabled>
-          <i class="material-icons sm mr-1">info</i> Invoice is being prepared</button>
-      </span>
-    </div>
-    <div class="form-group">
-      <h6 class="q-mb-sm">Select fee <small class="text-danger">*</small></h6>
-      <div v-for="fee in fees" class="custom-control custom-radio my-1">
-        <input type="radio" v-model="registration.fee_type" :value="fee.type" class="custom-control-input" :id="'fee' + fee.id">
-        <label class="custom-control-label" :for="'fee' + fee.id">{{ fee.notes }} ({{ fee.value }} EUR) <span v-if="!fee.social_events_included" class="text-danger text-smr"><i class="material-icons mr-1">block</i>Social events not available</span></label>
-      </div>
-    </div>
-
-    <div v-if="!replaceMainForm">
-      <div class="form-group">
-        <h6 class="q-mb-sm">Travel visa</h6>
-        <div class="custom-control custom-checkbox my-1">
-          <input type="checkbox" v-model="registration.visa_requested" class="custom-control-input" id="visa_requested">
-          <label class="custom-control-label" for="visa_requested">I require an Invitation Letter for my visa application</label>
-        </div>
-      </div>
-      <div class="form-group">
-        <h6 class="q-mb-sm">Choose the sessions you would like to attend <small class="text-danger">*</small><small class="text-info d-block mt-1">Select at least one.</small></h6>
-        <div v-if="showSessionsByDay">
-          <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-              <a class="nav-item nav-link pointer" v-for="day in event.days" :key:="day.id" @click="selectedDate = day.date" :class="{'active': day.date == selectedDate}">{{ day.date | moment('ddd') }}</a>
-            </div>
-          </nav>
-          <div class="border border-top-0 rounded-bottom bg-white p-3">
-            <div v-for="session in regularSessions" :key="session.id" v-show="session.date == selectedDate" class="custom-control custom-checkbox my-1">
-              <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
-              <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link></label>
-            </div>
-          </div>
+        <div v-if="registration.uuid">
+          <h5 class="q-mt-none q-mb-lg text-weight-bold">Your #{{ event.hashtag }} registration</h5>
         </div>
         <div v-else>
-          <div v-for="session in regularSessions" :key="session.id" class="custom-control custom-checkbox my-1">
-            <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
-            <label class="custom-control-label" :for="'session' + session.id">{{ session.niceDate }}: {{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
+          <h5 class="q-mt-none q-mb-lg text-weight-bold">Register now for #{{ event.hashtag }}</h5>
+          <q-banner v-if="event.registration_early_deadline" rounded dense class="bg-grey-2 text-grey-8">
+            Early registration deadline: {{ event.registration_early_deadline | moment }} ({{ event.registration_early_deadline | moment('YYYY-MM-DDTHH:mm:ssZ') }})
+          </q-banner>
+        </div>
+
+        <h6 class="q-mb-sm">Registration fee</h6>
+        <p>Please select the appropriate fee. Students might be required to present some kind of identification. <strong class="text-orange">*</strong></p>
+
+        <div v-for="fee in fees" class="custom-control custom-radio my-1">
+          <q-radio
+            v-model="registration.fee_type" :val="fee.type"
+            :label="fee.notes + ' (' + fee.value + ' EUR)'"></q-radio>
+        </div>
+
+        <div v-if="!replaceMainForm">
+          <div class="form-group">
+            <h6 class="q-mb-sm">Travel visa</h6>
+            <div class="custom-control custom-checkbox my-1">
+              <input type="checkbox" v-model="registration.visa_requested" class="custom-control-input" id="visa_requested">
+              <label class="custom-control-label" for="visa_requested">I require an Invitation Letter for my visa application</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <h6 class="q-mb-sm">Choose the sessions you would like to attend <small class="text-danger">*</small><small class="text-info d-block mt-1">Select at least one.</small></h6>
+            <div v-if="showSessionsByDay">
+              <nav>
+                <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                  <a class="nav-item nav-link pointer" v-for="day in event.days" :key:="day.id" @click="selectedDate = day.date" :class="{'active': day.date == selectedDate}">{{ day.date | moment('ddd') }}</a>
+                </div>
+              </nav>
+              <div class="border border-top-0 rounded-bottom bg-white p-3">
+                <div v-for="session in regularSessions" :key="session.id" v-show="session.date == selectedDate" class="custom-control custom-checkbox my-1">
+                  <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
+                  <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link></label>
+                </div>
+              </div>
+            </div>
+            <div v-else>
+              <div v-for="session in regularSessions" :key="session.id" class="custom-control custom-checkbox my-1">
+                <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
+                <label class="custom-control-label" :for="'session' + session.id">{{ session.niceDate }}: {{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
+              </div>
+            </div>
+          </div>
+          <div v-if="feeIncludesSocialEvents">
+            <h6 class="q-mb-sm">Choose the social events you would like to attend</h6>
+            <div v-for="session in socialEvents" :key="session.id" class="custom-control custom-checkbox my-1">
+              <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
+              <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} ({{ session.date | moment('dddd') }}) </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
+            </div>
+            <h6 class="q-mb-sm">Accompanying persons<small v-if="event.social_event_bundle_fee > 0" class="text-info d-block mt-1">Accompanying persons can attend the social event(s) for an extra fee of <strong>{{ event.social_event_bundle_fee }} EUR</strong> per person.</small></h6>
+            <p v-if="!registration.accompanying_persons.length" class="text-sm">
+              <a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Click here</a> if you want to add an accompanying person for this event.</p>
+            <table v-else class="table table-sm">
+              <thead>
+                <tr class="text-sm">
+                  <th>Name</th>
+                  <th>Dietary requirements</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="person in registration.accompanying_persons">
+                  <td class="pl-0">
+                    <input v-model="person.name" class="form-control form-control-sm" placeholder="Person's name">
+                  </td>
+                  <td>
+                    <metadata-select v-model="person.dietary" type="meal_preference" :sm="true"></metadata-select>
+                  </td>
+                  <td class="sm"><a href @click.prevent="removePerson(person)" class="text-danger"><i class="material-icons mt-1">remove_circle</i></a></td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <small><a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Add another person</a></small>
+              </tfoot>
+            </table>
+          </div>
+          <div class="form-group">
+            <hr class="my-4">
+            <h6 class="q-mb-sm">Days you will attend (automatic)<small class="text-danger">*</small><small class="text-info d-block mt-1" v-if="feeIsOneDay" :class="{'text-danger': feeIsOneDay && registration.days.length > 1}">You have selected the one day fee. You can only attend one of the days of the event.</small></h6>
+            <div v-for="day in event.days" class="custom-control custom-checkbox custom-control-inline my-1">
+              <input type="checkbox" v-model="registration.days" :value="day.id" class="custom-control-input" :id="'day' + day.id" disabled>
+              <label class="custom-control-label" :for="'day' + day.id">{{ day.niceDate }}<span v-if="day.name">: {{ day.name }}</span></label>
+            </div>
           </div>
         </div>
-      </div>
-      <div v-if="feeIncludesSocialEvents">
-        <h6 class="q-mb-sm">Choose the social events you would like to attend</h6>
-        <div v-for="session in socialEvents" :key="session.id" class="custom-control custom-checkbox my-1">
-          <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
-          <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} ({{ session.date | moment('dddd') }}) </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
-        </div>
-        <h6 class="q-mb-sm">Accompanying persons<small v-if="event.social_event_bundle_fee > 0" class="text-info d-block mt-1">Accompanying persons can attend the social event(s) for an extra fee of <strong>{{ event.social_event_bundle_fee }} EUR</strong> per person.</small></h6>
-        <p v-if="!registration.accompanying_persons.length" class="text-sm">
-          <a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Click here</a> if you want to add an accompanying person for this event.</p>
-        <table v-else class="table table-sm">
-          <thead>
-            <tr class="text-sm">
-              <th>Name</th>
-              <th>Dietary requirements</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="person in registration.accompanying_persons">
-              <td class="pl-0">
-                <input v-model="person.name" class="form-control form-control-sm" placeholder="Person's name">
-              </td>
-              <td>
-                <metadata-select v-model="person.dietary" type="meal_preference" :sm="true"></metadata-select>
-              </td>
-              <td class="sm"><a href @click.prevent="removePerson(person)" class="text-danger"><i class="material-icons mt-1">remove_circle</i></a></td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <small><a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Add another person</a></small>
-          </tfoot>
-        </table>
-      </div>
-      <div class="form-group">
-        <hr class="my-4">
-        <h6 class="q-mb-sm">Days you will attend (automatic)<small class="text-danger">*</small><small class="text-info d-block mt-1" v-if="feeIsOneDay" :class="{'text-danger': feeIsOneDay && registration.days.length > 1}">You have selected the one day fee. You can only attend one of the days of the event.</small></h6>
-        <div v-for="day in event.days" class="custom-control custom-checkbox custom-control-inline my-1">
-          <input type="checkbox" v-model="registration.days" :value="day.id" class="custom-control-input" :id="'day' + day.id" disabled>
-          <label class="custom-control-label" :for="'day' + day.id">{{ day.niceDate }}<span v-if="day.name">: {{ day.name }}</span></label>
-        </div>
-      </div>
-    </div>
 
-    <div v-if="registration.fee_type">
-      <div v-for="fieldset in customFieldsets[registration.fee_type]" :key="fieldset.title">
-        <h6 class="q-mt-lg q-mb-sm">{{ fieldset.title }}</h6>
-        <div v-for="field in fieldset.fields" :key="field.id">
-          <p v-show="field.type != 'checkbox'" class="q-mb-md">{{ field.label }} <strong v-show="field.required" class="text-red">*</strong></p>
-          <div class="q-pl-md">
-            <q-input v-if="field.type == 'text'"
-              v-model="registration.custom_data[field.id]"
-              filled dense class="q-mb-lg"></q-input>
-            <text-list v-else-if="field.type == 'text_list'"
-              v-model="registration.custom_data[field.id]"
-              :fields="field.fields" class="q-mb-md"></text-list>
-            <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'"
-              v-model="registration.custom_data[field.id]"
-              :options="field.options"
-              :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'"
-              class="q-mb-md"></q-option-group>
-            <q-item v-else-if="field.type == 'checkbox'">
-              <q-item-section avatar>
-                <q-checkbox v-model="registration.custom_data[field.id]"
-                  keep-color :color="(field.mandatory && !registration.custom_data[field.id]) ? 'red' : null"></q-checkbox>
-              </q-item-section>
-              <q-item-section>
-                <q-item-label><marked :text="field.label"></marked></q-item-label>
-                <small v-show="field.mandatory" class="text-caption text-grey-8">Mandatory</small>
-              </q-item-section>
-            </q-item>
-            <div v-else>{{ field }}</div>
+        <div v-if="registration.fee_type">
+          <div v-for="fieldset in customFieldsets[registration.fee_type]" :key="fieldset.title">
+            <h6 class="q-mt-lg q-mb-sm">{{ fieldset.title }}</h6>
+            <div v-for="field in fieldset.fields" :key="field.id">
+              <p v-show="field.type != 'checkbox'" class="q-mb-md">{{ field.label }} <strong v-show="field.required" class="text-orange">*</strong></p>
+              <div>
+                <q-input v-if="field.type == 'text'"
+                  v-model="registration.custom_data[field.id]"
+                  filled dense class="q-mb-lg"></q-input>
+                <text-list v-else-if="field.type == 'text_list'"
+                  v-model="registration.custom_data[field.id]"
+                  :fields="field.fields" class="q-mb-md"></text-list>
+                <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'"
+                  v-model="registration.custom_data[field.id]"
+                  :options="field.options"
+                  :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'"
+                  class="q-mb-md"></q-option-group>
+                <q-item v-else-if="field.type == 'checkbox'" class="q-pl-none">
+                  <q-item-section avatar class="q-px-none">
+                    <q-checkbox v-model="registration.custom_data[field.id]"
+                      keep-color :color="(field.mandatory && !registration.custom_data[field.id]) ? 'orange' : null"></q-checkbox>
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label><marked :text="field.label"></marked></q-item-label>
+                    <small v-show="field.mandatory" class="text-caption text-grey-8">Mandatory</small>
+                  </q-item-section>
+                </q-item>
+                <div v-else>{{ field }}</div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+
+        <div class="q-mt-xl">
+          <q-btn unelevated
+            @click.prevent="save"
+            :disabled="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'"
+            label="Save registration"></q-btn>
+          <p class="q-mt-md text-orange" v-show="!formIsValid">
+            <i class="material-icons q-mr-sm">block</i>
+            <span v-if="feeIsOneDay && registration.days.length > 1">You can only attend one of the days of the event.</span>
+            <strong v-else>Please select a fee and fill in mandatory fields.</strong>
+          </p>
+        </div>
+
+      </q-card>
     </div>
 
-    <div class="row">
-      <div class="col-12 col-md-8 col-lg-6 q-my-xl">
-        <button @click.prevent="save" class="btn btn-secondary btn-block" :disabled="!formIsValid" :class="{'btn-primary': formIsValid}">Save</button>
-        <p class="q-mt-md text-danger text-smr" v-show="!formIsValid">
-          <i class="material-icons mr-1">block</i>
-          <span v-if="feeIsOneDay && registration.days.length > 1">You can only attend one of the days of the event.</span>
-          <span v-else>Please select a fee and fill in mandatory fields.</span>
-        </p>
-      </div>
-    </div>
+    <div v-if="registration && !registrationIsNew" class="col-12 col-md-3 col-lg-4">
 
-    <div v-if="!registrationIsNew">
-      <hr class="my-4">
-      <ul class="text-sm text-grey-8 m-0 list-unstyled">
-        <li>Registration ID: {{ registration.uuid }}</li>
-        <li>Total fee: {{ registration.base_fee }} EUR <span v-if="registration.extra_fees">+ {{ registration.extra_fees }} EUR</span></li>
-        <li>Last updated: {{ registration.updated_at | moment('YYYY-MM-DDTHH:mm:ssZ') }}</li>
-        <li v-if="registration.uuid" class="mt-1">
-          <a :href="registration.href_payment"><i class="material-icons sm mr-1">credit_card</i>Payment information</a>
-        </li>
-      </a>
-      </ul>
+      <q-list class="bg-grey-3 rounded-borders q-py-md q-px-sm">
+        <q-item>
+          <q-item-section>
+            <q-item-label>Registration ID</q-item-label>
+            <q-item-label caption>{{ registration.uuid }}</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item>
+          <q-item-section>
+            <q-item-label>Last updated</q-item-label>
+            <q-item-label caption>{{ registration.updated_at | moment('YYYY-MM-DDTHH:mm:ssZ') }}</q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-item>
+          <q-item-section>
+            <q-item-label>Total fee</q-item-label>
+            <q-item-label caption>{{ registration.base_fee }} EUR <span v-if="registration.extra_fees">+ {{ registration.extra_fees }} EUR</span></q-item-label>
+          </q-item-section>
+          <q-item-section side top class="q-mt-sm">
+            <q-badge v-if="registration.isPaid" label="PAID" color="primary"></q-badge>
+            <q-badge v-else label="PENDING" color="dark"></q-badge>
+          </q-item-section>
+        </q-item>
+        <q-item>
+          <q-item-section>
+            <q-btn v-if="registration.isPaid"
+              outline icon="info" color="primary" label="View payment info" class="full-width"
+              type="a" :href="registration.href_payment"></q-btn>
+            <span v-else>
+              <q-btn v-if="!registration.invoice_requested"
+                outline icon="credit_card" color="green" label="Proceed with payment" class="full-width"
+                type="a" :href="registration.href_payment"></q-btn>
+              <q-btn v-else disabled
+                outline icon="info" color="dark" label="Invoice is being prepared" class="full-width"></q-btn>
+            </span>
+          </q-item-section>
+        </q-item>
+      </q-list>
+
     </div>
 
   </div>

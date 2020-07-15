@@ -6,47 +6,62 @@
 
 {% block head_title %}{{ event.name }} - {{ block.super }}{% endblock %}
 
-{% block content %}
-  <div id="vars" v-cloak data-url-event="{% url 'v1:event-detail' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}" class="container">
+{% block header %}
+  <q-header bordered class="bg-grey-2 text-dark q-pl-sm">
+    <q-toolbar>
+      <q-btn flat @click="visibleDrawer = !visibleDrawer" round dense icon="menu"></q-btn>
+      <q-toolbar-title>
+        <strong>{{ event.name }}</strong>
+      </q-toolbar-title>
+    </q-toolbar>
+  </q-header>
+{% endblock %}
 
-    <div class="sticky-top bg-white border-bottom mb-3">
-      <div is="saving-bar" text="{{ user.username }} / {{ user.email }}"></div>
-      <div class="row pt-2">
-        <div class="col-12 col-md-3 col-lg-2 pb-2 pb-md-0 text-center text-md-left">
-          <h4 class="m-0 pl-0 pl-md-2">{{ event.name }}</h4>
-        </div>
-        <div class="col-12 col-md-9 col-lg-8">
-          <ul class="nav justify-content-center">
-            <li is="router-link" tag="li" :to="{name: 'registration'}" class="nav-item">
-              <a class="nav-link">
-                <i class="d-none d-md-inline material-icons mr-1">recent_actors</i> Registration</a>
-            </li>
-            <li is="router-link" tag="li" :to="{name: 'event'}" class="nav-item">
-              <a class="nav-link">
-                <i class="d-none d-md-inline material-icons mr-1">widgets</i> Event</a>
-            </li>
-            <li is="router-link" tag="li" :to="{name: 'profile'}" class="nav-item">
-              <a class="nav-link">
-                <i class="d-none d-md-inline material-icons mr-1">account_circle</i> Your profile</a>
-            </li>
-            <li v-if="registration && registration.uuid" class="nav-item border-left ml-2 ml-md-3 pl-2 pl-md-3">
-              <a class="nav-link" :href="registration.href_payment">
-                <i class="material-icons mr-1">credit_card</i> Payment</a>
-            </li>
-          </ul>
-        </div>
-        <div class="col-12 col-lg-2 text-right d-none d-xl-block">
-          <img class="logo logo-md mr-2" src="{% static 'images/evan--light.svg' %}">
-        </div>
+{% block drawer %}
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md"
+    content-class="bg-grey-2 q-pt-xl q-pl-sm text-weight-medium" :width="220">
+    <q-scroll-area class="fit">
+      <q-list dense>
+        <q-item clickable :to="{name: 'registration'}">
+          <q-item-section avatar>
+            <q-icon name="assignment_turned_in"></q-icon>
+          </q-item-section>
+          <q-item-section>Registration</q-item-section>
+        </q-item>
+        <q-item clickable :to="{name: 'profile'}">
+          <q-item-section avatar>
+            <q-icon name="account_circle"></q-icon>
+          </q-item-section>
+          <q-item-section>Your profile</q-item-section>
+          <q-item-section side v-if="user && user.profile.affiliation == ''">
+            <q-icon name="fiber_manual_record" color="orange" size="xs"></q-icon>
+          </q-item-section>
+        </q-item>
+        <q-item clickable :to="{name: 'event'}">
+          <q-item-section avatar>
+            <q-icon name="widgets"></q-icon>
+          </q-item-section>
+          <q-item-section>Event</q-item-section>
+        </q-item>
+      </q-list>
+      <div v-if="registration && !registrationIsNew">
+        <q-separator spaced="lg"></q-separator>
+        <q-list dense>
+          <q-item clickable tag="a" :href="registration.href_payment">
+            <q-item-section avatar>
+              <q-icon name="credit_card"></q-icon>
+            </q-item-section>
+            <q-item-section>Payment</q-item-section>
+          </q-item>
+        </q-list>
       </div>
-    </div>
-    <div class="row justify-content-md-center pt-4 pt-md-5">
-      <div class="col-12 col-md-9 col-lg-8 col-lg-6 mb-5">
-        <div is="router-view"></div>
-        <div is="router-view" name="modal"></div>
-      </div>
-    </div>
-  </div>
+    </q-scroll-area>
+  </q-drawer>
+{% endblock %}
+
+{% block page %}
+  <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}"></div>
+  <div is="router-view" class="q-pt-lg"></div>
 {% endblock %}
 
 {% block vue_templates %}
@@ -92,7 +107,7 @@
 
             setTimeout(function () {
               self.commit('fetchEvent');
-            }, 30000);
+            }, 45000);
           });
         },
         fetchRegistration: function (state) {
@@ -148,11 +163,11 @@
       }),
       methods: {
         update: _.debounce(function () {
-          EventHub.$emit('saving', true);
           if (this.user.profile.gender == 'null') this.user.profile.gender = null;
           var data = _.omit(this.user, ['username']);
-          ajax().put(this.user.url, data).always(function () {
-            EventHub.$emit('saving', false);
+          var self = this;
+          ajax().put(this.user.url, data).then(function () {
+            self.$q.notify('Your profile has been updated');
           });
         }, 250)
       }
@@ -283,14 +298,14 @@
             ajax().post(endpoint, this.registration).then(function (res) {
               self.$store.commit('updateRegistration', mapper().registrations([res])[0]);
               self.$store.commit('updateRegistrationIsNew', false);
-            });
-            /*.always(function () {
-              EventHub.$emit('saving', false);
+              self.$q.notify('Registration has been created');
+            }).always(function () {
               window.scrollTo(0, 0);
-            });*/
+            });
           } else {
             ajax().put(this.registration.url, this.registration).then(function (res) {
               self.$store.commit('updateRegistration', mapper().registrations([res])[0]);
+              self.$q.notify('Your registration has been updated');
             });
           }
         },
@@ -445,7 +460,12 @@
       el: '#vue',
       store: Store,
       router: Router,
-      computed: Vuex.mapState(['registration', 'session']),
+      data: function () {
+        return {
+          visibleDrawer: true
+        };
+      },
+      computed: Vuex.mapState(['user', 'registration', 'session', 'registrationIsNew']),
       mounted: function () {
         this.$store.commit('fetchOptions');
         this.$store.commit('fetchEvent');

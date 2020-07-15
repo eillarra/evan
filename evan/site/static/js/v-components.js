@@ -23,23 +23,25 @@ Vue.component('text-list', {
     };
   },
   template: '' +
-    '<div>' +
-      '<input v-model="inputVal" type="hidden">' +
-      '<div v-for="el in value" class="row">' +
+    '<div class="q-mb-lg">' +
+      '<input v-model="mutable" type="hidden" />' +
+      '<div v-for="el in value" class="row q-col-gutter-xs q-mb-sm items-center">' +
         '<div v-for="field in fields" class="col">' +
           '<q-input v-model="el[field.id]" :label="field.label" filled dense></q-input>' +
         '</div>' +
-        '<div class="col-1"><a href @click.prevent="removeFromStack(el)">&times;</a></div>' +
+        '<div class="col-1 text-center">' +
+          '<a href @click.prevent="removeFromStack(el)" class="text-pink"><q-icon name="close"></q-icon></a>' +
+        '</div>' +
       '</div>' +
-      '<a href @click.prevent="addToStack">+ {{ addText }}</a></p>' +
+      '<q-btn outline @click="addToStack" size="sm" color="green" icon="add" :label="addText"></q-btn>' +
     '</div>' +
   '',
   computed: {
-    inputVal: {
-      get() {
+    mutable: {
+      get: function () {
         return this.value;
       },
-      set(val) {
+      set: function (val) {
         this.$emit('input', val);
       }
     }

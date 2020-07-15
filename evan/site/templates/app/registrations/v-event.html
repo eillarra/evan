@@ -1,14 +1,27 @@
 <script type="text/x-template" id="{{ id }}">
 {% verbatim %}
-    <div v-cloak v-if="event">
-        <h4 class="text-grey-8 mb-4">Event information</h4>
-        <h5 class="mb-3">{{ event.name }}: {{ event.full_name }}</h5>
-        <ul class="list-unstyled text-sm text-grey-8 my-3">
-            <li><i class="material-icons">location_on</i> {{ event.city }}, {{ event.country.name }}</li>
-            <li v-if="event.hashtag"><a :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener"><i class="material-icons">search</i> #{{ event.hashtag }}</a></li>
-            <li v-if="event.website"><a :href="event.website" target="_blank" rel="noopener" class="d-inline-block text-truncate w-100"><i class="material-icons">open_in_new</i> {{ event.website }}</a></li>
-        </ul>
-        <marked :text="event.presentation"></marked>
+  <div v-cloak v-if="event" class="row q-col-gutter-md">
+
+    <div class="col-12 col-md-9 col-lg-8">
+      <q-card flat class="q-pa-lg">
+
+        <div class="q-gutter-md float-right">
+          <q-btn outline
+            size="sm" icon="search" color="light-blue" label="Twitter"
+            type="a" :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener"></q-btn>
+          <q-btn outline
+            size="sm" icon="open_in_new" color="primary" label="Website"
+            type="a" :href="event.website" target="_blank" rel="noopener"></q-btn>
+        </div>
+
+        <h5 class="q-mt-none q-mb-lg text-weight-bold">Event information</h5>
+        <h5>{{ event.name }}: {{ event.full_name }}</h5>
+
+        <marked :text="event.presentation" class="q-mt-lg"></marked>
+
+      </q-card>
     </div>
+
+  </div>
 {% endverbatim %}
 </script>

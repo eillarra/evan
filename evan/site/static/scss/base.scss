@@ -78,131 +78,39 @@ body {
     }
 }
 
-.bg-light {
-    background-color: $light-color !important;
-}
-
-.bg-lighter {
-    background-color: #fafafa !important;  // Grey 50
-}
-
-.bg-semi {
-    background-color: #e9ecef !important;
-}
-
-.border-semi {
-    border: 10px solid #e9ecef !important;
-}
-
-.bg-light-blue {
-    background-color: #E1F5FE !important;  // Light Blue 50
-}
-
-.bg-light-yellow {
-    background-color: lightyellow !important;
-}
-
-.bg-light-green {
-    background-color: #F1F8E9 !important;  // Light Green 50
-}
-
-.text-light {
-    color: $font-color-light !important;  // Blue Grey 200
-}
-
-.color-blue {
-    color: $ugent-blue;
-}
-
-
-/* Buttons */
-
-.btn-primary {
-    background-color: $primary-color;
-    border-color: $primary-color;
-
-    &:hover {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-}
-
-.btn-outline-primary {
-    color: $primary-color;
-    border-color: $primary-color;
-}
-
 
 /* Typography */
 
-.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
-    font-weight: $font-weight-strong;
-}
-
 h2, h3 {
-    line-height: 1.35;
-    margin-top: -.25rem;
-}
-
-h4 {
-    font-size: 1.25rem;
-}
-
-h5 {
-    font-size: 1rem;
+  line-height: 1.35;
+  margin-top: -.25rem;
 }
 
 h6 {
-    text-transform: uppercase;
-    font-size: smaller;
-}
-
-.font-weight-light {
-    font-weight: $font-weight-light;
-}
-
-.font-weight-normal {
-    font-weight: $font-weight-normal;
-}
-
-strong, b,
-.font-weight-strong {
-    font-weight: $font-weight-strong;
-}
-
-.text-sm {
-    font-size: small;
-    line-height: 1.2rem;
-}
-
-.text-smr {
-    font-size: smaller;
-    line-height: 1.2rem;
-}
-
-.text-underline {
-    text-decoration: underline;
+  text-transform: uppercase;
+  font-size: smaller;
 }
 
 a {
-    color: $primary-color;
+  color: $primary-color;
 
-    .router-link-active > & {
-        font-weight: bold;
-        color: $font-color;
-    }
+  .router-link-active > & {
+    font-weight: bold;
+    color: $font-color;
+  }
+
+  &:hover {
+    text-decoration: none;
+  }
+
+  &.inherit {
+    color: inherit;
+    text-decoration: none;
 
     &:hover {
-        text-decoration: none;
+      text-decoration: underline;
     }
-
-    &.inherit {
-        color: inherit;
-
-        &:hover {
-            text-decoration: underline;
-        }
-    }
+  }
 }
 
 .material-icons {
@@ -221,14 +129,6 @@ a {
     margin-right: 1.5rem;
 }
 
-
-/* Dropdowns */
-
-.dropdown-menu {
-    &.dropdown-wide {
-        min-width: 20rem;
-    }
-}
 
 @import '_badges.scss';
 @import '_forms.scss';

@@ -1,0 +1,22 @@
+{% extends 'email.txt' %}
+
+
+{% block body %}
+**Registration number: {{ registration_uuid }}**
+
+Dear {{ user_name }},
+
+Given the number of registrations ({{ registrations_count }} already and still going up),
+it is important that we know in advance who will attend which activities.
+May we therefore ask you to log in onto the Evan website, and check your registration page for {{ event_name }}?
+https://evan.ugent.be{{ registration_url }}
+
+**Please make sure that the social events are selected if you intend to go.**
+
+We look forward to seeing you in {{ event_city }}!
+
+PS: please also check your badge information on your profile page:
+https://evan.ugent.be{{ registration_url }}#/profile/
+{% endblock %}
+
+{% block footer %}{{ event_name }}{% endblock %}
