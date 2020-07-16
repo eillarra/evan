@@ -4,7 +4,12 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 
 from evan.models import Registration, InvitationLetter
-from evan.site.emails.registrations import RegistrationReminderEmail, PaymentReminderEmail, VisaReminderEmail
+from evan.site.emails.registrations import (
+    RegistrationProfileReminderEmail,
+    RegistrationReminderEmail,
+    PaymentReminderEmail,
+    VisaReminderEmail,
+)
 
 
 class RegistrationIsPaidFilter(admin.SimpleListFilter):
@@ -84,7 +89,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         ("EXTRA INFORMATION", {"fields": ("visa_requested", "visa_sent"),}),
     )
     inlines = (InvitationLetterInline,)
-    actions = ("send_reminder", "send_visa_reminder", "send_payment_reminder")
+    actions = ("send_reminder", "send_visa_reminder", "send_payment_reminder", "send_profile_reminder")
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
@@ -144,6 +149,13 @@ class RegistrationAdmin(admin.ModelAdmin):
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     send_payment_reminder.short_description = "[Mailer] Send payment reminder to users"
+
+    def send_profile_reminder(self, request, queryset):
+        for instance in queryset:
+            RegistrationProfileReminderEmail(instance=instance).send()
+        admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
+
+    send_profile_reminder.short_description = "[Mailer] Send profile reminder to users"
 
     def send_visa_reminder(self, request, queryset):
         for instance in queryset:

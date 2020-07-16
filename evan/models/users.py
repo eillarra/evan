@@ -36,7 +36,7 @@ class Profile(models.Model):
         related_name="profile_" + Metadata.MEAL_PREFERENCE,
     )
     position = models.CharField(max_length=190, null=True, blank=True)
-    affiliation = models.CharField(max_length=190)
+    affiliation = models.CharField(max_length=190, null=True, blank=True)
     country = CountryField()
     updated_at = models.DateTimeField(auto_now=True)
 

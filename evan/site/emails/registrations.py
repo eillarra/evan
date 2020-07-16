@@ -20,6 +20,13 @@ class RegistrationEmail(TemplateEmail):
         }
 
 
+class RegistrationProfileReminderEmail(RegistrationEmail):
+    template = "_emails/registrations_profile_update_reminder.md.html"
+
+    def get_subject(self) -> str:
+        return f"[{self.instance.event.hashtag}] Please update your profile / {self.instance.uuid}"
+
+
 class RegistrationReminderEmail(RegistrationEmail):
     template = "_emails/registrations_reminder.md.html"
 

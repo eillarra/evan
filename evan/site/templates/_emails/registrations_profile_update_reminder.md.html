@@ -1,0 +1,15 @@
+{% extends 'email.txt' %}
+
+
+{% block body %}
+**Registration number: {{ registration_uuid }}**
+
+Dear {{ user_name }},
+
+Please update your profile [on our website](https://evan.ugent.be{{ registration_url }}#/profile/).
+
+This public profile will be used in the attendees list (only visible for {{ event_name }} attendees)
+and it can help others know more about you. We will never share email addresses directly.
+{% endblock %}
+
+{% block footer %}{{ event_name }}{% endblock %}
