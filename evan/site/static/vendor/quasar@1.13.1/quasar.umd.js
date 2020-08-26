@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v1.12.8
+ * Quasar Framework v1.13.1
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -12,7 +12,7 @@
 
   Vue = Vue && Object.prototype.hasOwnProperty.call(Vue, 'default') ? Vue['default'] : Vue;
 
-  var version = "1.12.8";
+  var version = "1.13.1";
 
   /* eslint-disable no-useless-escape */
 
@@ -973,7 +973,8 @@
       months: 'January_February_March_April_May_June_July_August_September_October_November_December'.split('_'),
       monthsShort: 'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec'.split('_'),
       firstDayOfWeek: 0, // 0-6, 0 - Sunday, 1 Monday, ...
-      format24h: false
+      format24h: false,
+      pluralDay: 'days'
     },
     table: {
       noData: 'No data available',
@@ -1191,16 +1192,17 @@
     var v = ref.v;
     var a = ref.a;
 
-    var r, g, b, i, f, p, q, t;
+    var r, g, b;
     s = s / 100;
     v = v / 100;
 
     h = h / 360;
-    i = Math.floor(h * 6);
-    f = h * 6 - i;
-    p = v * (1 - s);
-    q = v * (1 - f * s);
-    t = v * (1 - (1 - f) * s);
+    var
+      i = Math.floor(h * 6),
+      f = h * 6 - i,
+      p = v * (1 - s),
+      q = v * (1 - f * s),
+      t = v * (1 - (1 - f) * s);
 
     switch (i % 6) {
       case 0:
@@ -1250,11 +1252,12 @@
     var a = ref.a;
 
     var
-      max = Math.max(r, g, b), min = Math.min(r, g, b),
+      max = Math.max(r, g, b),
+      min = Math.min(r, g, b),
       d = max - min,
-      h,
       s = (max === 0 ? 0 : d / max),
       v = max / 255;
+    var h;
 
     switch (max) {
       case min:
@@ -1913,6 +1916,58 @@
     pad: pad
   };
 
+  function cache (vm, key, obj) {
+    if (isSSR === true) { return obj }
+
+    var k = "__qcache_" + key;
+    return vm[k] === void 0
+      ? (vm[k] = obj)
+      : vm[k]
+  }
+
+  function getPropCacheMixin (propName, proxyPropName) {
+    var obj;
+
+    return {
+      data: function data () {
+        var obj;
+
+        var target = {};
+        var source = this[propName];
+
+        for (var prop in source) {
+          target[prop] = source[prop];
+        }
+
+        return ( obj = {}, obj[proxyPropName] = target, obj )
+      },
+
+      watch: ( obj = {}, obj[propName] = function (newObj, oldObj) {
+          var target = this[proxyPropName];
+
+          if (oldObj !== void 0) {
+            // we first delete obsolete events
+            for (var prop in oldObj) {
+              if (newObj[prop] === void 0) {
+                this.$delete(target, prop);
+              }
+            }
+          }
+
+          for (var prop$1 in newObj) {
+            // we then update changed events
+            if (target[prop$1] !== newObj[prop$1]) {
+              this.$set(target, prop$1, newObj[prop$1]);
+            }
+          }
+        }, obj )
+    }
+  }
+
+  var ariaHidden = { 'aria-hidden': 'true' };
+
+  var AttrsMixin = getPropCacheMixin('$attrs', 'qAttrs');
+
   var
     xhr = isSSR ? null : XMLHttpRequest,
     send = isSSR ? null : xhr.prototype.send,
@@ -2062,9 +2117,7 @@
             'aria-valuemax': 100,
             'aria-valuenow': this.progress
           }
-          : {
-            'aria-hidden': 'true'
-          }
+          : ariaHidden
       }
     },
 
@@ -2202,50 +2255,6 @@
     }
   };
 
-  function cache (vm, key, obj) {
-    if (isSSR === true) { return obj }
-
-    var k = "__qcache_" + key;
-    return vm[k] === void 0
-      ? (vm[k] = obj)
-      : vm[k]
-  }
-
-  function getPropCacheMixin (propName, proxyPropName) {
-    var obj;
-
-    return {
-      data: function data () {
-        var obj;
-
-        return ( obj = {}, obj[proxyPropName] = {}, obj )
-      },
-
-      watch: ( obj = {}, obj[propName] = {
-          immediate: true,
-          handler: function handler (newObj, oldObj) {
-            var target = this[proxyPropName];
-
-            if (oldObj !== void 0) {
-              // we first delete obsolete events
-              for (var prop in oldObj) {
-                if (newObj[prop] === void 0) {
-                  this.$delete(target, prop);
-                }
-              }
-            }
-
-            for (var prop$1 in newObj) {
-              // we then update changed events
-              if (target[prop$1] !== newObj[prop$1]) {
-                this.$set(target, prop$1, newObj[prop$1]);
-              }
-            }
-          }
-        }, obj )
-    }
-  }
-
   var ListenersMixin = getPropCacheMixin('$listeners', 'qListeners');
 
   function slot (vm, slotName, otherwise) {
@@ -2374,6 +2383,19 @@
           }
         }
 
+        if (icon.startsWith('svguse:') === true) {
+          var ref$1 = icon.split('|');
+          var def$1 = ref$1[0];
+          var viewBox$1 = ref$1[1];
+
+          return {
+            svguse: true,
+            cls: this.classes,
+            src: def$1.substring(7),
+            viewBox: viewBox$1 !== void 0 ? viewBox$1 : '0 0 24 24'
+          }
+        }
+
         var content = ' ';
 
         if (/^[l|f]a[s|r|l|b|d]{0,1} /.test(icon) || icon.startsWith('icon-') === true) {
@@ -2451,6 +2473,19 @@
         data.attrs.viewBox = this.type.viewBox;
 
         return h('svg', data, mergeSlot(this.type.nodes, this, 'default'))
+      }
+      if (this.type.svguse === true) {
+        data.attrs.focusable = 'false'; /* needed for IE11 */
+        data.attrs.viewBox = this.type.viewBox;
+
+        return h('svg', data, [
+          h('use', {
+            attrs: {
+              'xlink:href': this.type.src
+            }
+          }),
+          mergeSlot(this.type.nodes, this, 'default')
+        ])
       }
 
       return h(this.tag, data, mergeSlot([
@@ -2979,7 +3014,12 @@
   // internal
   function getBodyFullscreenElement (isFullscreen, activeEl) {
     return isFullscreen === true
-      ? (activeEl === document.documentElement ? document.body : activeEl)
+      ? (
+        // when a video tag enters fullscreen activeEl is null
+        activeEl === document.documentElement || activeEl === null
+          ? document.body
+          : activeEl
+      )
       : document.body
   }
 
@@ -3012,20 +3052,19 @@
   function showRipple (evt, el, ctx, forceCenter) {
     ctx.modifiers.stop === true && stop(evt);
 
-    var ref = ctx.modifiers;
-    var center = ref.center;
-    var color = ref.color;
+    var color = ctx.modifiers.color;
+    var center = ctx.modifiers.center;
     center = center === true || forceCenter === true;
 
     var
       node = document.createElement('span'),
       innerNode = document.createElement('span'),
       pos = position(evt);
-    var ref$1 = el.getBoundingClientRect();
-    var left = ref$1.left;
-    var top = ref$1.top;
-    var width = ref$1.width;
-    var height = ref$1.height;
+    var ref = el.getBoundingClientRect();
+    var left = ref.left;
+    var top = ref.top;
+    var width = ref.width;
+    var height = ref.height;
     var diameter = Math.sqrt(width * width + height * height),
       radius = diameter / 2,
       centerX = ((width - diameter) / 2) + "px",
@@ -3070,22 +3109,27 @@
     }, 50);
   }
 
-  function updateCtx (ctx, ref) {
-    var value = ref.value;
+  function updateModifiers (ctx, ref) {
     var modifiers = ref.modifiers;
+    var value = ref.value;
     var arg = ref.arg;
 
-    ctx.enabled = value !== false;
+    var cfg = Object.assign({}, $q.config.ripple, modifiers, value);
+    ctx.modifiers = {
+      early: cfg.early === true,
+      stop: cfg.stop === true,
+      center: cfg.center === true,
+      color: cfg.color || arg,
+      keyCodes: [].concat(cfg.keyCodes || 13)
+    };
+  }
 
-    if (ctx.enabled === true) {
-      var cfg = Object.assign({}, $q.config.ripple, modifiers, value);
-      ctx.modifiers = {
-        early: cfg.early === true,
-        stop: cfg.stop === true,
-        center: cfg.center === true,
-        color: cfg.color || arg,
-        keyCodes: [].concat(cfg.keyCodes || 13)
-      };
+  function destroy (el) {
+    var ctx = el.__qripple;
+    if (ctx !== void 0) {
+      ctx.abort.forEach(function (fn) { fn(); });
+      cleanEvt(ctx, 'main');
+      delete el._qripple;
     }
   }
 
@@ -3093,7 +3137,13 @@
     name: 'ripple',
 
     inserted: function inserted (el, binding) {
+      if (el.__qripple !== void 0) {
+        destroy(el);
+        el.__qripple_destroyed = true;
+      }
+
       var ctx = {
+        enabled: binding.value !== false,
         modifiers: {},
         abort: [],
 
@@ -3125,11 +3175,7 @@
         }, 300)
       };
 
-      updateCtx(ctx, binding);
-
-      if (el.__qripple) {
-        el.__qripple_old = el.__qripple;
-      }
+      updateModifiers(ctx, binding);
 
       el.__qripple = ctx;
 
@@ -3143,15 +3189,22 @@
     },
 
     update: function update (el, binding) {
-      el.__qripple !== void 0 && updateCtx(el.__qripple, binding);
+      var ctx = el.__qripple;
+      if (ctx !== void 0 && binding.oldValue !== binding.value) {
+        ctx.enabled = binding.value !== false;
+
+        if (ctx.enabled === true && Object(binding.value) === binding.value) {
+          updateModifiers(ctx, binding);
+        }
+      }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qripple_old || el.__qripple;
-      if (ctx !== void 0) {
-        ctx.abort.forEach(function (fn) { fn(); });
-        cleanEvt(ctx, 'main');
-        delete el[el.__qripple_old ? '__qripple_old' : '__qripple'];
+      if (el.__qripple_destroyed === void 0) {
+        destroy(el);
+      }
+      else {
+        delete el.__qripple_destroyed;
       }
     }
   };
@@ -3194,8 +3247,10 @@
 
     props: {
       type: String,
+
       to: [ Object, String ],
       replace: Boolean,
+      append: Boolean,
 
       label: [ Number, String ],
       icon: String,
@@ -3267,6 +3322,17 @@
         return 'standard'
       },
 
+      currentLocation: function currentLocation () {
+        if (this.hasRouterLink === true) {
+          // we protect from accessing this.$route without
+          // actually needing it so that we won't trigger
+          // unnecessary updates
+          return this.append === true
+            ? this.$router.resolve(this.to, this.$route, true)
+            : this.$router.resolve(this.to)
+        }
+      },
+
       attrs: function attrs () {
         var attrs = { tabindex: this.computedTabIndex };
 
@@ -3275,7 +3341,7 @@
         }
 
         if (this.hasRouterLink === true) {
-          attrs.href = this.$router.resolve(this.to).href;
+          attrs.href = this.currentLocation.href;
           attrs.role = 'link';
         }
         else {
@@ -3291,7 +3357,7 @@
 
         if (this.disable === true) {
           attrs.disabled = '';
-          attrs['aria-disabled'] = '';
+          attrs['aria-disabled'] = 'true';
         }
 
         return attrs
@@ -3387,25 +3453,6 @@
     }
 
     return dir
-  }
-
-  function updateModifiers (ctx, ref) {
-    var oldValue = ref.oldValue;
-    var value = ref.value;
-    var modifiers = ref.modifiers;
-
-    if (oldValue !== value) {
-      typeof value !== 'function' && ctx.end();
-      ctx.handler = value;
-    }
-
-    if (
-      ctx.modifiers.mouseAllDir !== modifiers.mouseAllDir ||
-      directions.some(function (direction) { return modifiers[direction] !== ctx.modifiers[direction]; })
-    ) {
-      ctx.modifiers = modifiers;
-      ctx.direction = getModifierDirections(modifiers);
-    }
   }
 
   var getTouchTarget = isSSR === false && iosEmulated !== true && (
@@ -3553,14 +3600,10 @@
         }
 
         var go = function () {
-          var res = this$1.$router[this$1.replace === true ? 'replace' : 'push'](this$1.to);
-
           // vue-router now throwing error if navigating
           // to the same route that the user is currently at
           // https://github.com/vuejs/vue-router/issues/2872
-          if (res !== void 0 && typeof res.catch === 'function') {
-            res.catch(noop);
-          }
+          this$1.$router[this$1.replace === true ? 'replace' : 'push'](this$1.currentLocation.route, void 0, noop);
         };
 
         this.$emit('click', e, go);
@@ -4407,8 +4450,6 @@
     }
   };
 
-  var AttrsMixin = getPropCacheMixin('$attrs', 'qAttrs');
-
   function getVmOfNode (el) {
     for (var node = el; node !== null; node = node.parentNode) {
       // node.__vue__ can be null if the instance was destroyed
@@ -4492,7 +4533,7 @@
               isVmChildOf(getVmOfNode(target), vmEl) === false
             )
           ) {
-            // mark the event as beeing processed by clickOutside
+            // mark the event as being processed by clickOutside
             // used to prevent refocus after menu close
             evt.qClickOutside = true;
 
@@ -4767,13 +4808,24 @@
   };
 
   var handlers$1 = [];
+  var escDown = false;
 
   var EscapeKey = {
     __install: function __install () {
       this.__installed = true;
+      window.addEventListener('keydown', function (evt) {
+        escDown = evt.keyCode === 27;
+      });
+      window.addEventListener('blur', function () {
+        escDown === true && (escDown = false);
+      });
       window.addEventListener('keyup', function (evt) {
-        if (handlers$1.length !== 0 && isKeyCode(evt, 27) === true) {
-          handlers$1[handlers$1.length - 1].fn(evt);
+        if (escDown === true) {
+          escDown = false;
+
+          if (handlers$1.length !== 0 && isKeyCode(evt, 27) === true) {
+            handlers$1[handlers$1.length - 1].fn(evt);
+          }
         }
       });
     },
@@ -5049,6 +5101,7 @@
       autoClose: Boolean,
       separateClosePopup: Boolean,
 
+      noRouteDismiss: Boolean,
       noRefocus: Boolean,
       noFocus: Boolean,
 
@@ -5111,7 +5164,8 @@
       },
 
       hideOnRouteChange: function hideOnRouteChange () {
-        return this.persistent !== true
+        return this.persistent !== true &&
+          this.noRouteDismiss !== true
       },
 
       onEvents: function onEvents () {
@@ -5406,7 +5460,7 @@
       var label = slot(this, 'label', []);
       var attrs = {
         'aria-expanded': this.showing === true ? 'true' : 'false',
-        'aria-haspopup': true
+        'aria-haspopup': 'true'
       };
 
       if (
@@ -5416,7 +5470,7 @@
           this.disableDropdown === true
         )
       ) {
-        attrs['aria-disabled'] = '';
+        attrs['aria-disabled'] = 'true';
       }
 
       var Arrow = [
@@ -5623,6 +5677,7 @@
       glossy: Boolean,
 
       size: String,
+      padding: String,
 
       noCaps: Boolean,
       noWrap: Boolean,
@@ -5651,6 +5706,52 @@
           name: this.name,
           value: this.value
         }
+      },
+
+      btnOptions: function btnOptions () {
+        var this$1 = this;
+
+        var mergeOption = function (opt, key) { return opt[key] === void 0 ? this$1[key] : opt[key]; };
+
+        return this.options.map(function (opt, i) { return ({
+          slot: opt.slot,
+
+          options: {
+            key: i,
+            class: opt.class,
+            style: opt.style,
+            on: Object.assign({}, this$1.qListeners,
+              {click: function (e) { return this$1.__set(opt.value, opt, e); }}),
+            attrs: opt.attrs,
+            props: Object.assign({}, opt,
+              {slot: void 0,
+              class: void 0,
+              style: void 0,
+              value: void 0,
+              attrs: void 0,
+
+              outline: this$1.outline,
+              flat: this$1.flat,
+              rounded: this$1.rounded,
+              push: this$1.push,
+              unelevated: this$1.unelevated,
+              dense: this$1.dense,
+
+              disable: this$1.disable === true || opt.disable === true,
+
+              // Options that come from the button specific options first, then from general props
+              color: opt.value === this$1.value ? mergeOption(opt, 'toggleColor') : mergeOption(opt, 'color'),
+              textColor: opt.value === this$1.value ? mergeOption(opt, 'toggleTextColor') : mergeOption(opt, 'textColor'),
+              noCaps: mergeOption(opt, 'noCaps') === true,
+              noWrap: mergeOption(opt, 'noWrap') === true,
+
+              size: mergeOption(opt, 'size'),
+              padding: mergeOption(opt, 'padding'),
+              ripple: mergeOption(opt, 'ripple'),
+              stack: mergeOption(opt, 'stack') === true,
+              stretch: mergeOption(opt, 'stretch') === true})
+          }
+        }); })
       }
     },
 
@@ -5675,34 +5776,8 @@
     render: function render (h) {
       var this$1 = this;
 
-      var child = this.options.map(function (opt, i) {
-        return h(QBtn, {
-          key: i,
-          on: Object.assign({}, this$1.qListeners,
-            {click: function (e) { return this$1.__set(opt.value, opt, e); }}),
-          props: {
-            disable: this$1.disable || opt.disable,
-            label: opt.label,
-            // Colors come from the button specific options first, then from general props
-            color: opt.value === this$1.value ? opt.toggleColor || this$1.toggleColor : opt.color || this$1.color,
-            textColor: opt.value === this$1.value ? opt.toggleTextColor || this$1.toggleTextColor : opt.textColor || this$1.textColor,
-            icon: opt.icon,
-            iconRight: opt.iconRight,
-            noCaps: this$1.noCaps === true || opt.noCaps === true,
-            noWrap: this$1.noWrap === true || opt.noWrap === true,
-            outline: this$1.outline,
-            flat: this$1.flat,
-            rounded: this$1.rounded,
-            push: this$1.push,
-            unelevated: this$1.unelevated,
-            size: this$1.size,
-            dense: this$1.dense,
-            ripple: this$1.ripple !== void 0 ? this$1.ripple : opt.ripple,
-            stack: this$1.stack === true || opt.stack === true,
-            tabindex: opt.tabindex,
-            stretch: this$1.stretch
-          }
-        }, opt.slot !== void 0 ? slot(this$1, opt.slot) : void 0)
+      var child = this.btnOptions.map(function (opt, i) {
+        return h(QBtn, opt.options, opt.slot !== void 0 ? slot(this$1, opt.slot) : void 0)
       });
 
       if (this.name !== void 0 && this.disable !== true && this.hasActiveValue === true) {
@@ -5818,6 +5893,20 @@
     return data
   }
 
+  function destroy$1 (el) {
+    var ctx = el.__qtouchswipe;
+
+    if (ctx !== void 0) {
+      cleanEvt(ctx, 'main');
+      cleanEvt(ctx, 'temp');
+
+      client.is.firefox === true && preventDraggable(el, false);
+      ctx.styleCleanup !== void 0 && ctx.styleCleanup();
+
+      delete el.__qtouchswipe;
+    }
+  }
+
   var TouchSwipe = {
     name: 'touch-swipe',
 
@@ -5825,6 +5914,11 @@
       var value = ref.value;
       var arg = ref.arg;
       var modifiers = ref.modifiers;
+
+      if (el.__qtouchswipe !== void 0) {
+        destroy$1(el);
+        el.__qtouchswipe_destroyed = true;
+      }
 
       // early return, we don't need to do anything
       if (modifiers.mouse !== true && client.has.touch !== true) {
@@ -6026,10 +6120,6 @@
         }
       };
 
-      if (el.__qtouchswipe) {
-        el.__qtouchswipe_old = el.__qtouchswipe;
-      }
-
       el.__qtouchswipe = ctx;
 
       modifiers.mouse === true && addEvt(ctx, 'main', [
@@ -6042,21 +6132,23 @@
       ]);
     },
 
-    update: function update (el, binding) {
-      el.__qtouchswipe !== void 0 && updateModifiers(el.__qtouchswipe, binding);
+    update: function update (el, ref) {
+      var oldValue = ref.oldValue;
+      var value = ref.value;
+
+      var ctx = el.__qtouchswipe;
+      if (ctx !== void 0 && oldValue !== value) {
+        typeof value !== 'function' && ctx.end();
+        ctx.handler = value;
+      }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qtouchswipe_old || el.__qtouchswipe;
-
-      if (ctx !== void 0) {
-        cleanEvt(ctx, 'main');
-        cleanEvt(ctx, 'temp');
-
-        client.is.firefox === true && preventDraggable(el, false);
-        ctx.styleCleanup !== void 0 && ctx.styleCleanup();
-
-        delete el[el.__qtouchswipe_old ? '__qtouchswipe_old' : '__qtouchswipe'];
+      if (el.__qtouchswipe_destroyed === void 0) {
+        destroy$1(el);
+      }
+      else {
+        delete el.__qtouchswipe_destroyed;
       }
     }
   };
@@ -6424,7 +6516,7 @@
         return false
       }
 
-      var length, i, keys;
+      var length, i;
 
       if (a.constructor === Array) {
         length = a.length;
@@ -6510,7 +6602,7 @@
         return a.toString() === b.toString()
       }
 
-      keys = Object.keys(a);
+      var keys = Object.keys(a);
       length = keys.length;
 
       if (length !== Object.keys(b).length) {
@@ -7130,7 +7222,7 @@
         };
 
         if (this.disable === true) {
-          attrs['aria-disabled'] = '';
+          attrs['aria-disabled'] = 'true';
         }
 
         return attrs
@@ -7248,7 +7340,7 @@
           }, [
             h('svg', {
               staticClass: 'q-checkbox__svg fit absolute-full',
-              attrs: { focusable: 'false' /* needed for IE11 */, viewBox: '0 0 24 24' }
+              attrs: { focusable: 'false' /* needed for IE11 */, viewBox: '0 0 24 24', 'aria-hidden': 'true' }
             }, [
               h('path', {
                 staticClass: 'q-checkbox__truthy',
@@ -7344,7 +7436,7 @@
 
       attrs: function attrs () {
         return this.disable === true
-          ? { tabindex: -1, 'aria-disabled': '' }
+          ? { tabindex: -1, 'aria-disabled': 'true' }
           : { tabindex: this.tabindex || 0 }
       }
     },
@@ -7601,7 +7693,8 @@
           style: this.svgStyle,
           attrs: {
             focusable: 'false' /* needed for IE11 */,
-            viewBox: this.viewBoxAttr
+            viewBox: this.viewBoxAttr,
+            'aria-hidden': 'true'
           }
         }, svgChild)
       ];
@@ -7656,8 +7749,8 @@
   };
 
   function getChanges (evt, ctx, isFinal) {
+    var pos = position(evt);
     var
-      pos = position(evt),
       dir,
       distX = pos.left - ctx.event.x,
       distY = pos.top - ctx.event.y,
@@ -7766,6 +7859,24 @@
     }
   }
 
+  function destroy$2 (el) {
+    var ctx = el.__qtouchpan;
+    if (ctx !== void 0) {
+      // emit the end event when the directive is destroyed while active
+      // this is only needed in TouchPan because the rest of the touch directives do not emit an end event
+      // the condition is also checked in the start of function but we avoid the call
+      ctx.event !== void 0 && ctx.end();
+
+      cleanEvt(ctx, 'main');
+      cleanEvt(ctx, 'temp');
+
+      client.is.firefox === true && preventDraggable(el, false);
+      ctx.styleCleanup !== void 0 && ctx.styleCleanup();
+
+      delete el.__qtouchpan;
+    }
+  }
+
   var uid = 0;
 
   var TouchPan = {
@@ -7774,6 +7885,11 @@
     bind: function bind (el, ref) {
       var value = ref.value;
       var modifiers = ref.modifiers;
+
+      if (el.__qtouchpan !== void 0) {
+        destroy$2(el);
+        el.__qtouchpan_destroyed = true;
+      }
 
       // early return, we don't need to do anything
       if (modifiers.mouse !== true && client.has.touch !== true) {
@@ -7888,7 +8004,9 @@
           var start = function () {
             handleEvent(evt, isMouseEvt);
 
-            document.documentElement.style.cursor = 'grabbing';
+            if (modifiers.preserveCursor !== true) {
+              document.documentElement.style.cursor = 'grabbing';
+            }
             isMouseEvt === true && document.body.classList.add('no-pointer-events--children');
             document.body.classList.add('non-selectable');
             clearSelection();
@@ -7896,7 +8014,9 @@
             ctx.styleCleanup = function (withDelayedFn) {
               ctx.styleCleanup = void 0;
 
-              document.documentElement.style.cursor = '';
+              if (modifiers.preserveCursor !== true) {
+                document.documentElement.style.cursor = '';
+              }
               document.body.classList.remove('non-selectable');
 
               if (isMouseEvt === true) {
@@ -8015,10 +8135,6 @@
         }
       };
 
-      if (el.__qtouchpan) {
-        el.__qtouchpan_old = el.__qtouchpan;
-      }
-
       el.__qtouchpan = ctx;
 
       modifiers.mouse === true && addEvt(ctx, 'main', [
@@ -8031,26 +8147,23 @@
       ]);
     },
 
-    update: function update (el, binding) {
-      el.__qtouchpan !== void 0 && updateModifiers(el.__qtouchpan, binding);
+    update: function update (el, ref) {
+      var oldValue = ref.oldValue;
+      var value = ref.value;
+
+      var ctx = el.__qtouchpan;
+      if (ctx !== void 0 && oldValue !== value) {
+        typeof value !== 'function' && ctx.end();
+        ctx.handler = value;
+      }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qtouchpan_old || el.__qtouchpan;
-
-      if (ctx !== void 0) {
-        // emit the end event when the directive is destroyed while active
-        // this is only needed in TouchPan because the rest of the touch directives do not emit an end event
-        // the condition is also checked in the start of function but we avoid the call
-        ctx.event !== void 0 && ctx.end();
-
-        cleanEvt(ctx, 'main');
-        cleanEvt(ctx, 'temp');
-
-        client.is.firefox === true && preventDraggable(el, false);
-        ctx.styleCleanup !== void 0 && ctx.styleCleanup();
-
-        delete el[el.__qtouchpan_old ? '__qtouchpan_old' : '__qtouchpan'];
+      if (el.__qtouchpan_destroyed === void 0) {
+        destroy$2(el);
+      }
+      else {
+        delete el.__qtouchpan_destroyed;
       }
     }
   };
@@ -8146,8 +8259,7 @@
         return "q-slider q-slider" + (this.axis) + " q-slider--" + (this.active === true ? '' : 'in') + "active" +
           (this.isReversed === true ? ' q-slider--reversed' : '') +
           (this.color !== void 0 ? (" text-" + (this.color)) : '') +
-          (this.disable === true ? ' disabled' : '') +
-          (this.editable === true ? ' q-slider--editable' : '') +
+          (this.disable === true ? ' disabled' : ' q-slider--enabled' + (this.editable === true ? ' q-slider--editable' : '')) +
           (this.focus === 'both' ? ' q-slider--focus' : '') +
           (this.label || this.labelAlways === true ? ' q-slider--label' : '') +
           (this.labelAlways === true ? ' q-slider--label-always' : '') +
@@ -8210,10 +8322,10 @@
         };
 
         if (this.disable === true) {
-          attrs['aria-disabled'] = '';
+          attrs['aria-disabled'] = 'true';
         }
         else if (this.readonly === true) {
-          attrs['aria-readonly'] = '';
+          attrs['aria-readonly'] = 'true';
         }
 
         return attrs
@@ -8240,7 +8352,8 @@
             focusable: 'false', /* needed for IE11 */
             viewBox: '0 0 20 20',
             width: '20',
-            height: '20'
+            height: '20',
+            'aria-hidden': 'true'
           }
         }, [
           h('path', {
@@ -8779,6 +8892,9 @@
       leftIcon: String,
       rightIcon: String,
 
+      outsideArrows: Boolean,
+      mobileArrows: Boolean,
+
       switchIndicator: Boolean,
 
       narrowIndicator: Boolean,
@@ -8847,10 +8963,26 @@
 
       noCaps: function noCaps (v) {
         this.tabs.noCaps = v;
+      },
+
+      outsideArrows: function outsideArrows () {
+        this.$nextTick(this.__recalculateScroll());
+      },
+
+      arrowsEnabled: function arrowsEnabled (v) {
+        this.__updateArrows = v === true
+          ? this.__updateArrowsFn
+          : noop;
+
+        this.$nextTick(this.__recalculateScroll());
       }
     },
 
     computed: {
+      arrowsEnabled: function arrowsEnabled () {
+        return this.$q.platform.is.desktop === true || this.mobileArrows === true
+      },
+
       alignClass: function alignClass () {
         var align = this.scrollable === true
           ? 'left'
@@ -8862,6 +8994,7 @@
       classes: function classes () {
         return "q-tabs--" + (this.scrollable === true ? '' : 'not-') + "scrollable" +
           " q-tabs--" + (this.vertical === true ? 'vertical' : 'horizontal') +
+          " q-tabs__arrows--" + (this.arrowsEnabled === true && this.outsideArrows === true ? 'outside' : 'inside') +
           (this.dense === true ? ' q-tabs--dense' : '') +
           (this.shrink === true ? ' col-shrink' : '') +
           (this.stretch === true ? ' self-stretch' : '')
@@ -8995,12 +9128,12 @@
             ? ("translate3d(0," + (oldPos.top - newPos.top) + "px,0) scale3d(1," + (newPos.height ? oldPos.height / newPos.height : 1) + ",1)")
             : ("translate3d(" + (oldPos.left - newPos.left) + "px,0,0) scale3d(" + (newPos.width ? oldPos.width / newPos.width : 1) + ",1,1)");
 
-          // allow scope updates to kick in
+          // allow scope updates to kick in (QRouteTab needs more time)
           this.$nextTick(function () {
             this$1.animateTimer = setTimeout(function () {
               newEl.style.transition = 'transform .25s cubic-bezier(.4, 0, .2, 1)';
               newEl.style.transform = 'none';
-            }, 30);
+            }, 70);
           });
         }
 
@@ -9028,7 +9161,7 @@
         }
       },
 
-      __updateArrows: function __updateArrows () {
+      __updateArrowsFn: function __updateArrowsFn () {
         var
           content = this.$refs.content,
           rect = content.getBoundingClientRect(),
@@ -9066,11 +9199,11 @@
       },
 
       __scrollTowards: function __scrollTowards (value) {
+        var content = this.$refs.content;
         var
-          content = this.$refs.content,
           pos = this.vertical === true ? content.scrollTop : content.scrollLeft,
-          direction = value < pos ? -1 : 1,
           done = false;
+        var direction = value < pos ? -1 : 1;
 
         pos += direction * 5;
         if (pos < 0) {
@@ -9093,10 +9226,9 @@
 
     created: function created () {
       this.buffer = [];
-
-      if (this.$q.platform.is.desktop !== true) {
-        this.__updateArrows = noop;
-      }
+      this.__updateArrows = this.arrowsEnabled === true
+        ? this.__updateArrowsFn
+        : noop;
     },
 
     beforeDestroy: function beforeDestroy () {
@@ -9117,7 +9249,7 @@
         }, slot(this, 'default'))
       ];
 
-      this.$q.platform.is.desktop === true && child.push(
+      this.arrowsEnabled === true && child.push(
         h(QIcon, {
           staticClass: 'q-tabs__arrow q-tabs__arrow--left absolute q-tab__icon',
           class: this.leftArrow === true ? '' : 'q-tabs__arrow--faded',
@@ -9226,7 +9358,7 @@
         };
 
         if (this.disable === true) {
-          attrs['aria-disabled'] = '';
+          attrs['aria-disabled'] = 'true';
         }
 
         return attrs
@@ -9553,10 +9685,10 @@
 
       attrs: function attrs () {
         if (this.disable === true) {
-          return { 'aria-disabled': '' }
+          return { 'aria-disabled': 'true' }
         }
         if (this.readonly === true) {
-          return { 'aria-readonly': '' }
+          return { 'aria-readonly': 'true' }
         }
       }
     },
@@ -10305,7 +10437,8 @@
       @returns number of years since the last leap year (0 to 4)
    */
   function jalCalLeap (jy) {
-    var bl = breaks.length,
+    var bl = breaks.length;
+    var
       jp = breaks[0],
       jm,
       jump,
@@ -10348,15 +10481,15 @@
     @see: http://www.fourmilab.ch/documents/calendar/
   */
   function jalCal (jy, withoutLeap) {
-    var bl = breaks.length,
-      gy = jy + 621,
+    var
+      bl = breaks.length,
+      gy = jy + 621;
+    var
       leapJ = -14,
       jp = breaks[0],
       jm,
       jump,
       leap,
-      leapG,
-      march,
       n,
       i;
 
@@ -10378,10 +10511,10 @@
     if (mod(jump, 33) === 4 && jump - n === 4) { leapJ += 1; }
 
     // And the same in the Gregorian calendar (until the year gy).
-    leapG = div(gy, 4) - div((div(gy, 100) + 1) * 3, 4) - 150;
+    var leapG = div(gy, 4) - div((div(gy, 100) + 1) * 3, 4) - 150;
 
     // Determine the Gregorian date of Farvardin the 1st.
-    march = 20 + leapJ - leapG;
+    var march = 20 + leapJ - leapG;
 
     // Find how many years have passed since the last leap year.
     if (!withoutLeap) {
@@ -10422,13 +10555,15 @@
       jd: Jalaali day (1 to 29/31)
   */
   function d2j (jdn) {
-    var gy = d2g(jdn).gy, // Calculate Gregorian year (gy).
+    var gy = d2g(jdn).gy; // Calculate Gregorian year (gy).
+    var
       jy = gy - 621,
-      r = jalCal(jy, false),
-      jdn1f = g2d(gy, 3, r.march),
       jd,
       jm,
       k;
+    var
+      r = jalCal(jy, false),
+      jdn1f = g2d(gy, 3, r.march);
 
     // Find number of days that passed since 1 Farvardin.
     k = jdn - jdn1f;
@@ -10493,17 +10628,13 @@
       gd: Calendar day of the month M (1 to 28/29/30/31)
   */
   function d2g (jdn) {
-    var j,
-      i,
-      gd,
-      gm,
-      gy;
-    j = 4 * jdn + 139361631;
+    var j = 4 * jdn + 139361631;
     j = j + div(div(4 * jdn + 183187720, 146097) * 3, 4) * 4 - 3908;
-    i = div(mod(j, 1461), 4) * 5 + 308;
-    gd = div(mod(i, 153), 5) + 1;
-    gm = mod(div(i, 153), 12) + 1;
-    gy = div(j, 1461) - 100100 + div(8 - gm, 6);
+    var
+      i = div(mod(j, 1461), 4) * 5 + 308,
+      gd = div(mod(i, 153), 5) + 1,
+      gm = mod(div(i, 153), 12) + 1,
+      gy = div(j, 1461) - 100100 + div(8 - gm, 6);
     return {
       gy: gy,
       gm: gm,
@@ -10523,6 +10654,8 @@
     return a - ~~(a / b) * b
   }
 
+  var calendars = [ 'gregorian', 'persian' ];
+
   var DateTimeMixin = {
     mixins: [ DarkMixin, FormMixin, ListenersMixin ],
 
@@ -10538,7 +10671,7 @@
 
       calendar: {
         type: String,
-        validator: function (v) { return ['gregorian', 'persian'].includes(v); },
+        validator: function (v) { return calendars.includes(v); },
         default: 'gregorian'
       },
 
@@ -10555,25 +10688,15 @@
       disable: Boolean
     },
 
-    watch: {
-      mask: function mask () {
-        var this$1 = this;
-
-        this.$nextTick(function () {
-          this$1.__updateValue({}, /* reason for QDate only */ 'mask');
-        });
+    computed: {
+      computedMask: function computedMask () {
+        return this.__getMask()
       },
 
       computedLocale: function computedLocale () {
-        var this$1 = this;
+        return this.__getLocale()
+      },
 
-        this.$nextTick(function () {
-          this$1.__updateValue({}, /* reason for QDate only */ 'locale');
-        });
-      }
-    },
-
-    computed: {
       editable: function editable () {
         return this.disable !== true && this.readonly !== true
       },
@@ -10595,15 +10718,11 @@
         this.color !== void 0 && cls.push(("bg-" + (this.color)));
         this.textColor !== void 0 && cls.push(("text-" + (this.textColor)));
         return cls.join(' ')
-      },
-
-      computedLocale: function computedLocale () {
-        return this.__getComputedLocale()
       }
     },
 
     methods: {
-      __getComputedLocale: function __getComputedLocale () {
+      __getLocale: function __getLocale () {
         return this.locale || this.$q.lang.date
       },
 
@@ -10622,7 +10741,11 @@
         return {
           year: d.getFullYear(),
           month: d.getMonth() + 1,
-          day: d.getDate()
+          day: d.getDate(),
+          hour: 0,
+          minute: 0,
+          second: 0,
+          millisecond: 0
         }
       },
 
@@ -10808,7 +10931,7 @@
   }
 
   function __splitDate (str, mask, dateLocale, calendar, defaultModel) {
-    var date = Object.assign({
+    var date = {
       year: null,
       month: null,
       day: null,
@@ -10819,7 +10942,9 @@
       timezoneOffset: null,
       dateHash: null,
       timeHash: null
-    }, defaultModel);
+    };
+
+    defaultModel !== void 0 && Object.assign(date, defaultModel);
 
     if (
       str === void 0 ||
@@ -11522,7 +11647,10 @@
   };
 
   var yearsInterval = 20;
-  var viewIsValid = function (v) { return ['Calendar', 'Years', 'Months'].includes(v); };
+  var views = [ 'Calendar', 'Years', 'Months' ];
+  var viewIsValid = function (v) { return views.includes(v); };
+  var yearMonthValidator = function (v) { return /^-?[\d]+\/[0-1]\d$/.test(v); };
+  var lineStr = ' \u2014 ';
 
   var QDate = Vue.extend({
     name: 'QDate',
@@ -11530,10 +11658,11 @@
     mixins: [ DateTimeMixin ],
 
     props: {
+      multiple: Boolean,
+      range: Boolean,
+
       title: String,
       subtitle: String,
-
-      emitImmediately: Boolean,
 
       mask: {
         // this mask is forced
@@ -11543,17 +11672,30 @@
 
       defaultYearMonth: {
         type: String,
-        validator: function (v) { return /^-?[\d]+\/[0-1]\d$/.test(v); }
+        validator: yearMonthValidator
       },
 
       yearsInMonthView: Boolean,
 
-      events: [Array, Function],
-      eventColor: [String, Function],
+      events: [ Array, Function ],
+      eventColor: [ String, Function ],
 
-      options: [Array, Function],
+      // DEPRECATED; TODO: remove in v2
+      emitImmediately: Boolean,
 
-      firstDayOfWeek: [String, Number],
+      options: [ Array, Function ],
+
+      navigationMinYearMonth: {
+        type: String,
+        validator: yearMonthValidator
+      },
+
+      navigationMaxYearMonth: {
+        type: String,
+        validator: yearMonthValidator
+      },
+
+      firstDayOfWeek: [ String, Number ],
       todayBtn: Boolean,
       minimal: Boolean,
       defaultView: {
@@ -11564,51 +11706,58 @@
     },
 
     data: function data () {
-      var ref = this.__getModels(this.value, this.mask, this.__getComputedLocale());
-      var inner = ref.inner;
-      var external = ref.external;
-      var direction = this.$q.lang.rtl === true ? 'right' : 'left';
+      var
+        innerMask = this.__getMask(),
+        innerLocale = this.__getLocale(),
+        viewModel = this.__getViewModel(innerMask, innerLocale),
+        year = viewModel.year,
+        direction = this.$q.lang.rtl === true ? 'right' : 'left';
 
       return {
         view: this.defaultView,
         monthDirection: direction,
         yearDirection: direction,
-        startYear: inner.year - inner.year % yearsInterval - (inner.year < 0 ? yearsInterval : 0),
-        innerModel: inner,
-        extModel: external
+        startYear: year - (year % yearsInterval) - (year < 0 ? yearsInterval : 0),
+        editRange: void 0,
+        innerMask: innerMask,
+        innerLocale: innerLocale,
+        viewModel: viewModel // model of current calendar view
       }
     },
 
     watch: {
       value: function value (v) {
-        var this$1 = this;
-
-        var ref = this.__getModels(v, this.mask, this.__getComputedLocale());
-        var inner = ref.inner;
-        var external = ref.external;
-
-        if (
-          this.extModel.dateHash !== external.dateHash ||
-          this.extModel.timeHash !== external.timeHash
-        ) {
-          this.extModel = external;
+        if (this.lastEmitValue === v) {
+          this.lastEmitValue = 0;
         }
-
-        if (inner.dateHash !== this.innerModel.dateHash) {
-          this.monthDirection = (this.innerModel.dateHash < inner.dateHash) === (this.$q.lang.rtl !== true) ? 'left' : 'right';
-          if (inner.year !== this.innerModel.year) {
-            this.yearDirection = this.monthDirection;
-          }
-
-          this.$nextTick(function () {
-            this$1.startYear = inner.year - inner.year % yearsInterval - (inner.year < 0 ? yearsInterval : 0);
-            this$1.innerModel = inner;
-          });
+        else {
+          var ref = this.__getViewModel(this.innerMask, this.innerLocale);
+          var year = ref.year;
+          var month = ref.month;
+          this.__updateViewModel(year, month);
         }
       },
 
       view: function view () {
         this.$refs.blurTarget !== void 0 && this.$refs.blurTarget.focus();
+      },
+
+      'viewModel.year': function viewModel_year (year) {
+        this.$emit('navigation', { year: year, month: this.viewModel.month });
+      },
+
+      'viewModel.month': function viewModel_month (month) {
+        this.$emit('navigation', { year: this.viewModel.year, month: month });
+      },
+
+      computedMask: function computedMask (val) {
+        this.__updateValue(val, this.innerLocale, 'mask');
+        this.innerMask = val;
+      },
+
+      computedLocale: function computedLocale (val) {
+        this.__updateValue(this.innerMask, val, 'locale');
+        this.innerLocale = val;
       }
     },
 
@@ -11623,43 +11772,159 @@
           (this.disable === true ? ' disabled' : (this.readonly === true ? ' q-date--readonly' : ''))
       },
 
+      // DEPRECATED; TODO: remove in v2
+      isImmediate: function isImmediate () {
+        return this.emitImmediately === true &&
+          this.daysModel[0] !== void 0 &&
+          this.daysModel[0].dateHash !== null
+      },
+
+      normalizedModel: function normalizedModel () {
+        return Array.isArray(this.value) === true
+          ? this.value
+          : (this.value !== null && this.value !== void 0 ? [ this.value ] : [])
+      },
+
+      daysModel: function daysModel () {
+        var this$1 = this;
+
+        return this.normalizedModel
+          .filter(function (date) { return typeof date === 'string'; })
+          .map(function (date) { return this$1.__decodeString(date, this$1.innerMask, this$1.innerLocale); })
+          .filter(function (date) { return date.dateHash !== null; })
+      },
+
+      rangeModel: function rangeModel () {
+        var this$1 = this;
+
+        var fn = function (date) { return this$1.__decodeString(date, this$1.innerMask, this$1.innerLocale); };
+        return this.normalizedModel
+          .filter(function (date) { return Object(date) === date && date.from !== void 0 && date.to !== void 0; })
+          .map(function (range) { return ({ from: fn(range.from), to: fn(range.to) }); })
+          .filter(function (range) { return range.from.dateHash !== null && range.to.dateHash !== null && range.from.dateHash < range.to.dateHash; })
+      },
+
+      getNativeDateFn: function getNativeDateFn () {
+        return this.calendar !== 'persian'
+          ? function (model) { return new Date(model.year, model.month - 1, model.day); }
+          : function (model) {
+            var gDate = toGregorian(model.year, model.month, model.day);
+            return new Date(gDate.gy, gDate.gm - 1, gDate.gd)
+          }
+      },
+
+      encodeObjectFn: function encodeObjectFn () {
+        var this$1 = this;
+
+        return this.calendar === 'persian'
+          ? this.__getDayHash
+          : function (date, mask, locale) { return formatDate(
+            new Date(
+              date.year,
+              date.month - 1,
+              date.day,
+              date.hour,
+              date.minute,
+              date.second,
+              date.millisecond
+            ),
+            mask === void 0 ? this$1.innerMask : mask,
+            locale === void 0 ? this$1.innerLocale : locale,
+            date.year,
+            date.timezoneOffset
+          ); }
+      },
+
+      daysInModel: function daysInModel () {
+        var this$1 = this;
+
+        return this.daysModel.length + this.rangeModel.reduce(
+          function (acc, range) { return acc + 1 + getDateDiff(
+            this$1.getNativeDateFn(range.to),
+            this$1.getNativeDateFn(range.from)
+          ); },
+          0
+        )
+      },
+
       headerTitle: function headerTitle () {
         if (this.title !== void 0 && this.title !== null && this.title.length > 0) {
           return this.title
         }
 
-        var model = this.extModel;
-        if (model.dateHash === null) { return ' --- ' }
+        if (this.editRange !== void 0) {
+          var model$1 = this.editRange.init;
+          var date$1 = this.getNativeDateFn(model$1);
 
-        var date;
-
-        if (this.calendar !== 'persian') {
-          date = new Date(model.year, model.month - 1, model.day);
-        }
-        else {
-          var gDate = toGregorian(model.year, model.month, model.day);
-          date = new Date(gDate.gy, gDate.gm - 1, gDate.gd);
+          return this.innerLocale.daysShort[ date$1.getDay() ] + ', ' +
+            this.innerLocale.monthsShort[ model$1.month - 1 ] + ' ' +
+            model$1.day + lineStr + '?'
         }
 
-        if (isNaN(date.valueOf()) === true) { return ' --- ' }
-
-        if (this.computedLocale.headerTitle !== void 0) {
-          return this.computedLocale.headerTitle(date, model)
+        if (this.daysInModel === 0) {
+          return lineStr
         }
 
-        return this.computedLocale.daysShort[ date.getDay() ] + ', ' +
-          this.computedLocale.monthsShort[ model.month - 1 ] + ' ' +
+        if (this.daysInModel > 1) {
+          return ((this.daysInModel) + " " + (this.innerLocale.pluralDay))
+        }
+
+        var model = this.daysModel[0];
+        var date = this.getNativeDateFn(model);
+
+        if (isNaN(date.valueOf()) === true) {
+          return lineStr
+        }
+
+        if (this.innerLocale.headerTitle !== void 0) {
+          return this.innerLocale.headerTitle(date, model)
+        }
+
+        return this.innerLocale.daysShort[ date.getDay() ] + ', ' +
+          this.innerLocale.monthsShort[ model.month - 1 ] + ' ' +
           model.day
       },
 
       headerSubtitle: function headerSubtitle () {
-        return this.subtitle !== void 0 && this.subtitle !== null && this.subtitle.length > 0
-          ? this.subtitle
-          : (
-            this.extModel.year !== null
-              ? this.extModel.year
-              : ' --- '
-          )
+        if (this.subtitle !== void 0 && this.subtitle !== null && this.subtitle.length > 0) {
+          return this.subtitle
+        }
+
+        if (this.daysInModel === 0) {
+          return lineStr
+        }
+
+        if (this.daysInModel > 1) {
+          var from = this.minSelectedModel;
+          var to = this.maxSelectedModel;
+          var month = this.innerLocale.monthsShort;
+
+          return month[from.month - 1] + (
+            from.year !== to.year
+              ? ' ' + from.year + lineStr + month[to.month - 1] + ' '
+              : (
+                from.month !== to.month
+                  ? lineStr + month[to.month - 1]
+                  : ''
+              )
+          ) + ' ' + to.year
+        }
+
+        return this.daysModel[0].year
+      },
+
+      minSelectedModel: function minSelectedModel () {
+        var model = this.daysModel.concat(this.rangeModel.map(function (range) { return range.from; }))
+          .sort(function (a, b) { return a.year - b.year || a.month - b.month; });
+
+        return model[0]
+      },
+
+      maxSelectedModel: function maxSelectedModel () {
+        var model = this.daysModel.concat(this.rangeModel.map(function (range) { return range.to; }))
+          .sort(function (a, b) { return b.year - a.year || b.month - a.month; });
+
+        return model[0]
       },
 
       dateArrow: function dateArrow () {
@@ -11670,12 +11935,12 @@
       computedFirstDayOfWeek: function computedFirstDayOfWeek () {
         return this.firstDayOfWeek !== void 0
           ? Number(this.firstDayOfWeek)
-          : this.computedLocale.firstDayOfWeek
+          : this.innerLocale.firstDayOfWeek
       },
 
       daysOfWeek: function daysOfWeek () {
         var
-          days = this.computedLocale.daysShort,
+          days = this.innerLocale.daysShort,
           first = this.computedFirstDayOfWeek;
 
         return first > 0
@@ -11684,19 +11949,14 @@
       },
 
       daysInMonth: function daysInMonth () {
-        return this.__getDaysInMonth(this.innerModel)
+        var date = this.viewModel;
+        return this.calendar !== 'persian'
+          ? (new Date(date.year, date.month, 0)).getDate()
+          : jalaaliMonthLength(date.year, date.month)
       },
 
       today: function today () {
         return this.__getCurrentDate()
-      },
-
-      evtFn: function evtFn () {
-        var this$1 = this;
-
-        return typeof this.events === 'function'
-          ? this.events
-          : function (date) { return this$1.events.includes(date); }
       },
 
       evtColor: function evtColor () {
@@ -11704,31 +11964,228 @@
 
         return typeof this.eventColor === 'function'
           ? this.eventColor
-          : function (date) { return this$1.eventColor; }
+          : function () { return this$1.eventColor; }
       },
 
-      isInSelection: function isInSelection () {
+      minNav: function minNav () {
+        if (this.navigationMinYearMonth !== void 0) {
+          var data = this.navigationMinYearMonth.split('/');
+          return { year: parseInt(data[0], 10), month: parseInt(data[1], 10) }
+        }
+      },
+
+      maxNav: function maxNav () {
+        if (this.navigationMaxYearMonth !== void 0) {
+          var data = this.navigationMaxYearMonth.split('/');
+          return { year: parseInt(data[0], 10), month: parseInt(data[1], 10) }
+        }
+      },
+
+      navBoundaries: function navBoundaries () {
+        var data = {
+          month: { prev: true, next: true },
+          year: { prev: true, next: true }
+        };
+
+        if (this.minNav !== void 0 && this.minNav.year >= this.viewModel.year) {
+          data.year.prev = false;
+          if (this.minNav.year === this.viewModel.year && this.minNav.month >= this.viewModel.month) {
+            data.month.prev = false;
+          }
+        }
+
+        if (this.maxNav !== void 0 && this.maxNav.year <= this.viewModel.year) {
+          data.year.next = false;
+          if (this.maxNav.year === this.viewModel.year && this.maxNav.month <= this.viewModel.month) {
+            data.month.next = false;
+          }
+        }
+
+        return data
+      },
+
+      daysMap: function daysMap () {
         var this$1 = this;
 
-        return typeof this.options === 'function'
-          ? this.options
-          : function (date) { return this$1.options.includes(date); }
+        var map = {};
+
+        this.daysModel.forEach(function (entry) {
+          var hash = this$1.__getMonthHash(entry);
+
+          if (map[hash] === void 0) {
+            map[hash] = [];
+          }
+
+          map[hash].push(entry.day);
+        });
+
+        return map
       },
 
-      days: function days () {
-        var date, endDay;
+      rangeMap: function rangeMap () {
+        var this$1 = this;
 
-        var res = [];
+        var map = {};
 
-        if (this.calendar !== 'persian') {
-          date = new Date(this.innerModel.year, this.innerModel.month - 1, 1);
-          endDay = (new Date(this.innerModel.year, this.innerModel.month - 1, 0)).getDate();
+        this.rangeModel.forEach(function (entry) {
+          var hashFrom = this$1.__getMonthHash(entry.from);
+          var hashTo = this$1.__getMonthHash(entry.to);
+
+          if (map[hashFrom] === void 0) {
+            map[hashFrom] = [];
+          }
+
+          map[hashFrom].push({
+            from: entry.from.day,
+            to: hashFrom === hashTo ? entry.to.day : void 0,
+            range: entry
+          });
+
+          if (hashFrom < hashTo) {
+            var hash;
+            var ref = entry.from;
+            var year = ref.year;
+            var month = ref.month;
+            var cur = month < 12
+              ? { year: year, month: month + 1 }
+              : { year: year + 1, month: 1 };
+
+            while ((hash = this$1.__getMonthHash(cur)) <= hashTo) {
+              if (map[hash] === void 0) {
+                map[hash] = [];
+              }
+
+              map[hash].push({
+                from: void 0,
+                to: hash === hashTo ? entry.to.day : void 0,
+                range: entry
+              });
+
+              cur.month++;
+              if (cur.month > 12) {
+                cur.year++;
+                cur.month = 1;
+              }
+            }
+          }
+        });
+
+        return map
+      },
+
+      rangeView: function rangeView () {
+        if (this.editRange === void 0) {
+          return
+        }
+
+        var ref = this.editRange;
+        var init = ref.init;
+        var initHash = ref.initHash;
+        var final = ref.final;
+        var finalHash = ref.finalHash;
+
+        var ref$1 = initHash <= finalHash
+          ? [ init, final ]
+          : [ final, init ];
+        var from = ref$1[0];
+        var to = ref$1[1];
+
+        var fromHash = this.__getMonthHash(from);
+        var toHash = this.__getMonthHash(to);
+
+        if (fromHash !== this.viewMonthHash && toHash !== this.viewMonthHash) {
+          return
+        }
+
+        var view = {};
+
+        if (fromHash === this.viewMonthHash) {
+          view.from = from.day;
+          view.includeFrom = true;
         }
         else {
-          var gDate = toGregorian(this.innerModel.year, this.innerModel.month, 1);
+          view.from = 1;
+        }
+
+        if (toHash === this.viewMonthHash) {
+          view.to = to.day;
+          view.includeTo = true;
+        }
+        else {
+          view.to = this.daysInMonth;
+        }
+
+        return view
+      },
+
+      viewMonthHash: function viewMonthHash () {
+        return this.__getMonthHash(this.viewModel)
+      },
+
+      selectionDaysMap: function selectionDaysMap () {
+        var this$1 = this;
+
+        var map = {};
+
+        if (this.options === void 0) {
+          for (var i = 1; i <= this.daysInMonth; i++) {
+            map[i] = true;
+          }
+
+          return map
+        }
+
+        var fn = typeof this.options === 'function'
+          ? this.options
+          : function (date) { return this$1.options.includes(date); };
+
+        for (var i$1 = 1; i$1 <= this.daysInMonth; i$1++) {
+          var dayHash = this.viewMonthHash + '/' + pad(i$1);
+          map[i$1] = fn(dayHash);
+        }
+
+        return map
+      },
+
+      eventDaysMap: function eventDaysMap () {
+        var this$1 = this;
+
+        var map = {};
+
+        if (this.events === void 0) {
+          for (var i = 1; i <= this.daysInMonth; i++) {
+            map[i] = false;
+          }
+        }
+        else {
+          var fn = typeof this.events === 'function'
+            ? this.events
+            : function (date) { return this$1.events.includes(date); };
+
+          for (var i$1 = 1; i$1 <= this.daysInMonth; i$1++) {
+            var dayHash = this.viewMonthHash + '/' + pad(i$1);
+            map[i$1] = fn(dayHash) === true && this.evtColor(dayHash);
+          }
+        }
+
+        return map
+      },
+
+      viewDays: function viewDays () {
+        var date, endDay;
+        var ref = this.viewModel;
+        var year = ref.year;
+        var month = ref.month;
+
+        if (this.calendar !== 'persian') {
+          date = new Date(year, month - 1, 1);
+          endDay = (new Date(year, month - 1, 0)).getDate();
+        }
+        else {
+          var gDate = toGregorian(year, month, 1);
           date = new Date(gDate.gy, gDate.gm - 1, gDate.gd);
-          var prevJM = this.innerModel.month - 1;
-          var prevJY = this.innerModel.year;
+          var prevJM = month - 1;
+          var prevJY = year;
           if (prevJM === 0) {
             prevJM = 12;
             prevJY--;
@@ -11736,7 +12193,19 @@
           endDay = jalaaliMonthLength(prevJY, prevJM);
         }
 
-        var days = (date.getDay() - this.computedFirstDayOfWeek - 1);
+        return {
+          days: date.getDay() - this.computedFirstDayOfWeek - 1,
+          endDay: endDay
+        }
+      },
+
+      days: function days () {
+        var this$1 = this;
+
+        var res = [];
+        var ref = this.viewDays;
+        var days = ref.days;
+        var endDay = ref.endDay;
 
         var len = days < 0 ? days + 7 : days;
         if (len < 6) {
@@ -11745,64 +12214,161 @@
           }
         }
 
-        var
-          index = res.length,
-          prefix = this.innerModel.year + '/' + pad(this.innerModel.month) + '/';
+        var index = res.length;
 
         for (var i$1 = 1; i$1 <= this.daysInMonth; i$1++) {
-          var day = prefix + pad(i$1);
+          var day = { i: i$1, event: this.eventDaysMap[i$1], classes: [] };
 
-          if (this.options !== void 0 && this.isInSelection(day) !== true) {
-            res.push({ i: i$1 });
+          if (this.selectionDaysMap[i$1] === true) {
+            day.in = true;
+            day.flat = true;
           }
-          else {
-            var event = this.events !== void 0 && this.evtFn(day) === true
-              ? this.evtColor(day)
-              : false;
 
-            res.push({ i: i$1, in: true, flat: true, event: event });
-          }
+          res.push(day);
         }
 
-        if (this.innerModel.year === this.extModel.year && this.innerModel.month === this.extModel.month) {
-          var i$2 = index + this.innerModel.day - 1;
-          res[i$2] !== void 0 && Object.assign(res[i$2], {
-            unelevated: true,
-            flat: false,
-            color: this.computedColor,
-            textColor: this.computedTextColor
+        // if current view has days in model
+        if (this.daysMap[this.viewMonthHash] !== void 0) {
+          this.daysMap[this.viewMonthHash].forEach(function (day) {
+            var i = index + day - 1;
+            Object.assign(res[i], {
+              selected: true,
+              unelevated: true,
+              flat: false,
+              color: this$1.computedColor,
+              textColor: this$1.computedTextColor
+            });
           });
         }
 
-        if (this.innerModel.year === this.today.year && this.innerModel.month === this.today.month) {
+        // if current view has ranges in model
+        if (this.rangeMap[this.viewMonthHash] !== void 0) {
+          this.rangeMap[this.viewMonthHash].forEach(function (entry) {
+            if (entry.from !== void 0) {
+              var from = index + entry.from - 1;
+              var to = index + (entry.to || this$1.daysInMonth) - 1;
+
+              for (var day = from; day <= to; day++) {
+                Object.assign(res[day], {
+                  range: entry.range,
+                  unelevated: true,
+                  color: this$1.computedColor,
+                  textColor: this$1.computedTextColor
+                });
+              }
+
+              Object.assign(res[from], {
+                rangeFrom: true,
+                flat: false
+              });
+
+              entry.to !== void 0 && Object.assign(res[to], {
+                rangeTo: true,
+                flat: false
+              });
+            }
+            else if (entry.to !== void 0) {
+              var to$1 = index + entry.to - 1;
+
+              for (var day$1 = index; day$1 <= to$1; day$1++) {
+                Object.assign(res[day$1], {
+                  range: entry.range,
+                  unelevated: true,
+                  color: this$1.computedColor,
+                  textColor: this$1.computedTextColor
+                });
+              }
+
+              Object.assign(res[to$1], {
+                flat: false,
+                rangeTo: true
+              });
+            }
+            else {
+              var to$2 = index + this$1.daysInMonth - 1;
+              for (var day$2 = index; day$2 <= to$2; day$2++) {
+                Object.assign(res[day$2], {
+                  range: entry.range,
+                  unelevated: true,
+                  color: this$1.computedColor,
+                  textColor: this$1.computedTextColor
+                });
+              }
+            }
+          });
+        }
+
+        if (this.rangeView !== void 0) {
+          var from = index + this.rangeView.from - 1;
+          var to = index + this.rangeView.to - 1;
+
+          for (var day$1 = from; day$1 <= to; day$1++) {
+            res[day$1].color = this.computedColor;
+            res[day$1].editRange = true;
+          }
+
+          if (this.rangeView.includeFrom === true) {
+            res[from].editRangeFrom = true;
+          }
+          if (this.rangeView.includeTo === true) {
+            res[to].editRangeTo = true;
+          }
+        }
+
+        if (this.viewModel.year === this.today.year && this.viewModel.month === this.today.month) {
           res[index + this.today.day - 1].today = true;
         }
 
         var left = res.length % 7;
         if (left > 0) {
           var afterDays = 7 - left;
-          for (var i$3 = 1; i$3 <= afterDays; i$3++) {
-            res.push({ i: i$3, fill: true });
+          for (var i$2 = 1; i$2 <= afterDays; i$2++) {
+            res.push({ i: i$2, fill: true });
           }
         }
+
+        res.forEach(function (day) {
+          var cls = "q-date__calendar-item ";
+
+          if (day.fill === true) {
+            cls += 'q-date__calendar-item--fill';
+          }
+          else {
+            cls += "q-date__calendar-item--" + (day.in === true ? 'in' : 'out');
+
+            if (day.range !== void 0) {
+              cls += " q-date__range" + (day.rangeTo === true ? '-to' : (day.rangeFrom === true ? '-from' : ''));
+            }
+
+            if (day.editRange === true) {
+              cls += " q-date__edit-range" + (day.editRangeFrom === true ? '-from' : '') + (day.editRangeTo === true ? '-to' : '');
+            }
+
+            if (day.range !== void 0 || day.editRange === true) {
+              cls += " text-" + (day.color);
+            }
+          }
+
+          day.classes = cls;
+        });
 
         return res
       },
 
       attrs: function attrs () {
         if (this.disable === true) {
-          return { 'aria-disabled': '' }
+          return { 'aria-disabled': 'true' }
         }
         if (this.readonly === true) {
-          return { 'aria-readonly': '' }
+          return { 'aria-readonly': 'true' }
         }
       }
     },
 
     methods: {
       setToday: function setToday () {
-        this.__updateValue(Object.assign({}, this.today), 'today');
-        this.view = 'Calendar';
+        this.__toggleDate(this.today, this.__getMonthHash(this.today));
+        this.setCalendarTo(this.today.year, this.today.month);
       },
 
       setView: function setView (view) {
@@ -11819,23 +12385,72 @@
         }
       },
 
-      __getModels: function __getModels (val, mask, locale) {
-        var external = __splitDate(
-          val,
-          this.calendar === 'persian' ? 'YYYY/MM/DD' : mask,
-          locale,
-          this.calendar
-        );
-
-        return {
-          external: external,
-          inner: external.dateHash === null
-            ? this.__getDefaultModel()
-            : Object.assign({}, external)
-        }
+      setCalendarTo: function setCalendarTo (year, month) {
+        this.view = 'Calendar';
+        this.__updateViewModel(year, month);
       },
 
-      __getDefaultModel: function __getDefaultModel () {
+      setEditingRange: function setEditingRange (from, to) {
+        if (this.range === false || !from) {
+          this.editRange = void 0;
+          return
+        }
+
+        var init = Object.assign(Object.assign({}, this.viewModel), from);
+        var final = to !== void 0
+          ? Object.assign(Object.assign({}, this.viewModel), to)
+          : init;
+
+        this.editRange = {
+          init: init,
+          initHash: this.__getDayHash(init),
+          final: final,
+          finalHash: this.__getDayHash(final)
+        };
+
+        this.setCalendarTo(init.year, init.month);
+      },
+
+      __getMask: function __getMask () {
+        return this.calendar === 'persian' ? 'YYYY/MM/DD' : this.mask
+      },
+
+      __decodeString: function __decodeString (date, mask, locale) {
+        return __splitDate(
+          date,
+          mask,
+          locale,
+          this.calendar,
+          {
+            hour: 0,
+            minute: 0,
+            second: 0,
+            millisecond: 0
+          }
+        )
+      },
+
+      __getViewModel: function __getViewModel (mask, locale) {
+        var model = Array.isArray(this.value) === true
+          ? this.value
+          : (this.value ? [ this.value ] : []);
+
+        if (model.length === 0) {
+          return this.__getDefaultViewModel()
+        }
+
+        var decoded = this.__decodeString(
+          model[0].from !== void 0 ? model[0].from : model[0],
+          mask,
+          locale
+        );
+
+        return decoded.dateHash === null
+          ? this.__getDefaultViewModel()
+          : decoded
+      },
+
+      __getDefaultViewModel: function __getDefaultViewModel () {
         var year, month;
 
         if (this.defaultYearMonth !== void 0) {
@@ -11921,7 +12536,7 @@
             ]),
 
             this.todayBtn === true ? h(QBtn, {
-              staticClass: 'q-date__header-today',
+              staticClass: 'q-date__header-today self-start',
               props: {
                 icon: this.$q.iconSet.datetime.today,
                 flat: true,
@@ -11942,6 +12557,7 @@
         var key = ref.key;
         var dir = ref.dir;
         var goTo = ref.goTo;
+        var boundaries = ref.boundaries;
         var cls = ref.cls;
 
         return [
@@ -11955,7 +12571,8 @@
                 size: 'sm',
                 flat: true,
                 icon: this.dateArrow[0],
-                tabindex: this.computedTabindex
+                tabindex: this.computedTabindex,
+                disable: boundaries.prev === false
               },
               on: cache(this, 'go-#' + view, { click: function click () { goTo(-1); } })
             })
@@ -11994,7 +12611,8 @@
                 size: 'sm',
                 flat: true,
                 icon: this.dateArrow[1],
-                tabindex: this.computedTabindex
+                tabindex: this.computedTabindex,
+                disable: boundaries.next === false
               },
               on: cache(this, 'go+#' + view, { click: function click () { goTo(1); } })
             })
@@ -12013,18 +12631,20 @@
             h('div', {
               staticClass: 'q-date__navigation row items-center no-wrap'
             }, this.__getNavigation(h, {
-              label: this.computedLocale.months[ this.innerModel.month - 1 ],
+              label: this.innerLocale.months[ this.viewModel.month - 1 ],
               view: 'Months',
-              key: this.innerModel.month,
+              key: this.viewModel.month,
               dir: this.monthDirection,
               goTo: this.__goToMonth,
+              boundaries: this.navBoundaries.month,
               cls: ' col'
             }).concat(this.__getNavigation(h, {
-              label: this.innerModel.year,
+              label: this.viewModel.year,
               view: 'Years',
-              key: this.innerModel.year,
+              key: this.viewModel.year,
               dir: this.yearDirection,
               goTo: this.__goToYear,
+              boundaries: this.navBoundaries.year,
               cls: ''
             }))),
 
@@ -12041,11 +12661,9 @@
                 }
               }, [
                 h('div', {
-                  key: this.innerModel.year + '/' + this.innerModel.month,
+                  key: this.viewMonthHash,
                   staticClass: 'q-date__calendar-days fit'
-                }, this.days.map(function (day) { return h('div', {
-                  staticClass: ("q-date__calendar-item q-date__calendar-item--" + (day.fill === true ? 'fill' : (day.in === true ? 'in' : 'out')))
-                }, [
+                }, this.days.map(function (day) { return h('div', { staticClass: day.classes }, [
                   day.in === true
                     ? h(QBtn, {
                       staticClass: day.today === true ? 'q-date__today' : null,
@@ -12058,7 +12676,10 @@
                         label: day.i,
                         tabindex: this$1.computedTabindex
                       },
-                      on: cache(this$1, 'day#' + day.i, { click: function () { this$1.__setDay(day.i); } })
+                      on: cache(this$1, 'day#' + day.i, {
+                        click: function () { this$1.__onDayClick(day.i); },
+                        mouseover: function () { this$1.__onDayMouseover(day.i); }
+                      })
                     }, day.event !== false ? [
                       h('div', { staticClass: 'q-date__event bg-' + day.event })
                     ] : null)
@@ -12073,10 +12694,16 @@
       __getMonthsView: function __getMonthsView (h) {
         var this$1 = this;
 
-        var currentYear = this.innerModel.year === this.today.year;
+        var currentYear = this.viewModel.year === this.today.year;
+        var isDisabled = function (month) {
+          return (
+            (this$1.minNav !== void 0 && this$1.viewModel.year === this$1.minNav.year && this$1.minNav.month > month) ||
+            (this$1.maxNav !== void 0 && this$1.viewModel.year === this$1.maxNav.year && this$1.maxNav.month < month)
+          )
+        };
 
-        var content = this.computedLocale.monthsShort.map(function (month, i) {
-          var active = this$1.innerModel.month === i + 1;
+        var content = this.innerLocale.monthsShort.map(function (month, i) {
+          var active = this$1.viewModel.month === i + 1;
 
           return h('div', {
             staticClass: 'q-date__months-item flex flex-center'
@@ -12089,7 +12716,8 @@
                 unelevated: active,
                 color: active === true ? this$1.computedColor : null,
                 textColor: active === true ? this$1.computedTextColor : null,
-                tabindex: this$1.computedTabindex
+                tabindex: this$1.computedTabindex,
+                disable: isDisabled(i + 1)
               },
               on: cache(this$1, 'month#' + i, { click: function () { this$1.__setMonth(i + 1); } })
             })
@@ -12099,11 +12727,12 @@
         this.yearsInMonthView === true && content.unshift(
           h('div', { staticClass: 'row no-wrap full-width' }, [
             this.__getNavigation(h, {
-              label: this.innerModel.year,
+              label: this.viewModel.year,
               view: 'Years',
-              key: this.innerModel.year,
+              key: this.viewModel.year,
               dir: this.yearDirection,
               goTo: this.__goToYear,
+              boundaries: this.navBoundaries.year,
               cls: ' col'
             })
           ])
@@ -12123,8 +12752,15 @@
           stop = start + yearsInterval,
           years = [];
 
+        var isDisabled = function (year) {
+          return (
+            (this$1.minNav !== void 0 && this$1.minNav.year > year) ||
+            (this$1.maxNav !== void 0 && this$1.maxNav.year < year)
+          )
+        };
+
         var loop = function ( i ) {
-          var active = this$1.innerModel.year === i;
+          var active = this$1.viewModel.year === i;
 
           years.push(
             h('div', {
@@ -12138,9 +12774,10 @@
                   label: i,
                   dense: true,
                   unelevated: active,
-                  color: active ? this$1.computedColor : null,
-                  textColor: active ? this$1.computedTextColor : null,
-                  tabindex: this$1.computedTabindex
+                  color: active === true ? this$1.computedColor : null,
+                  textColor: active === true ? this$1.computedTextColor : null,
+                  tabindex: this$1.computedTabindex,
+                  disable: isDisabled(i)
                 },
                 on: cache(this$1, 'yr#' + i, { click: function () { this$1.__setYear(i); } })
               })
@@ -12162,7 +12799,8 @@
                 dense: true,
                 flat: true,
                 icon: this.dateArrow[0],
-                tabindex: this.computedTabindex
+                tabindex: this.computedTabindex,
+                disable: isDisabled(start)
               },
               on: cache(this, 'y-', { click: function () { this$1.startYear -= yearsInterval; } })
             })
@@ -12181,7 +12819,8 @@
                 dense: true,
                 flat: true,
                 icon: this.dateArrow[1],
-                tabindex: this.computedTabindex
+                tabindex: this.computedTabindex,
+                disable: isDisabled(stop)
               },
               on: cache(this, 'y+', { click: function () { this$1.startYear += yearsInterval; } })
             })
@@ -12189,119 +12828,297 @@
         ])
       },
 
-      __getDaysInMonth: function __getDaysInMonth (obj) {
-        return this.calendar !== 'persian'
-          ? (new Date(obj.year, obj.month, 0)).getDate()
-          : jalaaliMonthLength(obj.year, obj.month)
-      },
-
       __goToMonth: function __goToMonth (offset) {
-        var
-          month = Number(this.innerModel.month) + offset,
-          yearDir = this.yearDirection;
+        var year = this.viewModel.year;
+        var month = Number(this.viewModel.month) + offset;
 
         if (month === 13) {
           month = 1;
-          this.innerModel.year++;
-          yearDir = (this.$q.lang.rtl !== true) ? 'left' : 'right';
+          year++;
         }
         else if (month === 0) {
           month = 12;
-          this.innerModel.year--;
-          yearDir = (this.$q.lang.rtl !== true) ? 'right' : 'left';
+          year--;
         }
 
-        this.monthDirection = (offset > 0) === (this.$q.lang.rtl !== true) ? 'left' : 'right';
-        this.yearDirection = yearDir;
-        this.innerModel.month = month;
-        this.emitImmediately === true && this.__updateValue({}, 'month');
+        this.__updateViewModel(year, month);
+        this.isImmediate === true && this.__emitImmediately('month');
       },
 
       __goToYear: function __goToYear (offset) {
-        this.monthDirection = this.yearDirection = (offset > 0) === (this.$q.lang.rtl !== true) ? 'left' : 'right';
-        this.innerModel.year = Number(this.innerModel.year) + offset;
-        this.emitImmediately === true && this.__updateValue({}, 'year');
+        var year = Number(this.viewModel.year) + offset;
+        this.__updateViewModel(year, this.viewModel.month);
+        this.isImmediate === true && this.__emitImmediately('year');
       },
 
       __setYear: function __setYear (year) {
-        this.innerModel.year = year;
-        this.emitImmediately === true && this.__updateValue({ year: year }, 'year');
-        this.view = this.extModel.month === null || this.defaultView === 'Years' ? 'Months' : 'Calendar';
+        this.__updateViewModel(year, this.viewModel.month);
+        this.view = this.defaultView === 'Years' ? 'Months' : 'Calendar';
+        this.isImmediate === true && this.__emitImmediately('year');
       },
 
       __setMonth: function __setMonth (month) {
-        this.innerModel.month = month;
-        this.emitImmediately === true && this.__updateValue({ month: month }, 'month');
+        this.__updateViewModel(this.viewModel.year, month);
         this.view = 'Calendar';
+        this.isImmediate === true && this.__emitImmediately('month');
       },
 
-      __setDay: function __setDay (day) {
-        this.__updateValue({ day: day }, 'day');
+      __getMonthHash: function __getMonthHash (date) {
+        return date.year + '/' + pad(date.month)
       },
 
-      __updateValue: function __updateValue (date, reason) {
+      __getDayHash: function __getDayHash (date) {
+        return date.year + '/' + pad(date.month) + '/' + pad(date.day)
+      },
+
+      __toggleDate: function __toggleDate (date, monthHash) {
+        var month = this.daysMap[monthHash];
+        var fn = month !== void 0 && month.includes(date.day) === true
+          ? this.__removeFromModel
+          : this.__addToModel;
+
+        fn(date);
+      },
+
+      __getShortDate: function __getShortDate (date) {
+        return { year: date.year, month: date.month, day: date.day }
+      },
+
+      __onDayClick: function __onDayClick (dayIndex) {
+        var day = Object.assign({}, this.viewModel, {day: dayIndex});
+
+        if (this.range === false) {
+          this.__toggleDate(day, this.viewMonthHash);
+          return
+        }
+
+        if (this.editRange === void 0) {
+          var dayProps = this.days.find(function (day) { return day.fill !== true && day.i === dayIndex; });
+
+          if (dayProps.range !== void 0) {
+            this.__removeFromModel({ target: day, from: dayProps.range.from, to: dayProps.range.to });
+            return
+          }
+
+          if (dayProps.selected === true) {
+            this.__removeFromModel(day);
+            return
+          }
+
+          var initHash = this.__getDayHash(day);
+
+          this.editRange = {
+            init: day,
+            initHash: initHash,
+            final: day,
+            finalHash: initHash
+          };
+
+          this.$emit('range-start', this.__getShortDate(day));
+        }
+        else {
+          var
+            initHash$1 = this.editRange.initHash,
+            finalHash = this.__getDayHash(day),
+            payload = initHash$1 <= finalHash
+              ? { from: this.editRange.init, to: day }
+              : { from: day, to: this.editRange.init };
+
+          this.editRange = void 0;
+          this.__addToModel(initHash$1 === finalHash ? day : Object.assign({}, {target: day}, payload));
+
+          this.$emit('range-end', {
+            from: this.__getShortDate(payload.from),
+            to: this.__getShortDate(payload.to)
+          });
+        }
+      },
+
+      __onDayMouseover: function __onDayMouseover (dayIndex) {
+        if (this.editRange !== void 0) {
+          var final = Object.assign({}, this.viewModel, {day: dayIndex});
+
+          Object.assign(this.editRange, {
+            final: final,
+            finalHash: this.__getDayHash(final)
+          });
+        }
+      },
+
+      __updateViewModel: function __updateViewModel (year, month) {
         var this$1 = this;
 
-        if (date.year === void 0) {
-          date.year = this.innerModel.year;
-        }
-        if (date.month === void 0) {
-          date.month = this.innerModel.month;
-        }
-        if (
-          date.day === void 0 ||
-          (this.emitImmediately === true && (reason === 'year' || reason === 'month'))
-        ) {
-          date.day = this.innerModel.day;
-          var maxDay = this.emitImmediately === true
-            ? this.__getDaysInMonth(date)
-            : this.daysInMonth;
-
-          date.day = Math.min(Math.max(1, date.day), maxDay);
-        }
-
-        var val = this.calendar === 'persian'
-          ? date.year + '/' + pad(date.month) + '/' + pad(date.day)
-          : formatDate(
-            new Date(
-              date.year,
-              date.month - 1,
-              date.day,
-              this.extModel.hour,
-              this.extModel.minute,
-              this.extModel.second,
-              this.extModel.millisecond
-            ),
-            this.mask,
-            this.computedLocale,
-            date.year,
-            this.extModel.timezoneOffset
-          );
-
-        date.changed = val !== this.value;
-        this.$emit('input', val, reason, date);
-
-        if (val === this.value && reason === 'today') {
-          var newHash = date.year + '/' + pad(date.month) + '/' + pad(date.day);
-          var curHash = this.innerModel.year + '/' + pad(this.innerModel.month) + '/' + pad(this.innerModel.day);
-
-          if (newHash !== curHash) {
-            this.monthDirection = (curHash < newHash) === (this.$q.lang.rtl !== true) ? 'left' : 'right';
-            if (date.year !== this.innerModel.year) {
-              this.yearDirection = this.monthDirection;
-            }
-
-            this.$nextTick(function () {
-              this$1.startYear = date.year - date.year % yearsInterval - (date.year < 0 ? yearsInterval : 0);
-              Object.assign(this$1.innerModel, {
-                year: date.year,
-                month: date.month,
-                day: date.day,
-                dateHash: newHash
-              });
-            });
+        if (this.minNav !== void 0 && year <= this.minNav.year) {
+          year = this.minNav.year;
+          if (month < this.minNav.month) {
+            month = this.minNav.month;
           }
         }
+
+        if (this.maxNav !== void 0 && year >= this.maxNav.year) {
+          year = this.maxNav.year;
+          if (month > this.maxNav.month) {
+            month = this.maxNav.month;
+          }
+        }
+
+        var newHash = year + '/' + pad(month) + '/01';
+
+        if (newHash !== this.viewModel.dateHash) {
+          this.monthDirection = (this.viewModel.dateHash < newHash) === (this.$q.lang.rtl !== true) ? 'left' : 'right';
+          if (year !== this.viewModel.year) {
+            this.yearDirection = this.monthDirection;
+          }
+
+          this.$nextTick(function () {
+            this$1.startYear = year - year % yearsInterval - (year < 0 ? yearsInterval : 0);
+            Object.assign(this$1.viewModel, {
+              year: year,
+              month: month,
+              day: 1,
+              dateHash: newHash
+            });
+          });
+        }
+      },
+
+      __emitValue: function __emitValue (val, action, date) {
+        var value = val !== null && val.length === 1 && this.multiple === false
+          ? val[0]
+          : val;
+
+        this.lastEmitValue = value;
+
+        var ref = this.__getEmitParams(action, date);
+        var reason = ref.reason;
+        var details = ref.details;
+        this.$emit('input', value, reason, details);
+      },
+
+      // DEPRECATED - TODO: remove in v2
+      __emitImmediately: function __emitImmediately (reason) {
+        var this$1 = this;
+
+        var date = this.daysModel[0];
+
+        // nextTick required because of animation delay in viewModel
+        this.$nextTick(function () {
+          date.year = this$1.viewModel.year;
+          date.month = this$1.viewModel.month;
+
+          var maxDay = this$1.calendar !== 'persian'
+            ? (new Date(date.year, date.month, 0)).getDate()
+            : jalaaliMonthLength(date.year, date.month);
+
+          date.day = Math.min(Math.max(1, date.day), maxDay);
+
+          var value = this$1.__encodeEntry(date);
+          this$1.lastEmitValue = value;
+
+          var ref = this$1.__getEmitParams('', date);
+          var details = ref.details;
+          this$1.$emit('input', value, reason, details);
+        });
+      },
+
+      __getEmitParams: function __getEmitParams (action, date) {
+        return date.from !== void 0
+          ? {
+            reason: (action + "-range"),
+            details: Object.assign({}, this.__getShortDate(date.target),
+              {from: this.__getShortDate(date.from),
+              to: this.__getShortDate(date.to),
+              changed: true})
+          }
+          : {
+            reason: (action + "-day"),
+            details: Object.assign({}, this.__getShortDate(date),
+              {changed: true})
+          }
+      },
+
+      __encodeEntry: function __encodeEntry (date, mask, locale) {
+        return date.from !== void 0
+          ? { from: this.encodeObjectFn(date.from, mask, locale), to: this.encodeObjectFn(date.to, mask, locale) }
+          : this.encodeObjectFn(date, mask, locale)
+      },
+
+      __addToModel: function __addToModel (date) {
+        var this$1 = this;
+
+        var value;
+
+        if (this.multiple === true) {
+          if (date.from !== void 0) {
+            // we also need to filter out intersections
+
+            var fromHash = this.__getDayHash(date.from);
+            var toHash = this.__getDayHash(date.to);
+
+            var days = this.daysModel
+              .filter(function (day) { return day.dateHash < fromHash || day.dateHash > toHash; });
+
+            var ranges = this.rangeModel
+              .filter(function (ref) {
+                var from = ref.from;
+                var to = ref.to;
+
+                return to.dateHash < fromHash || from.dateHash > toHash;
+            });
+
+            value = days.concat(ranges).concat(date).map(function (entry) { return this$1.__encodeEntry(entry); });
+          }
+          else {
+            var model = this.normalizedModel.slice();
+            model.push(this.__encodeEntry(date));
+            value = model;
+          }
+        }
+        else {
+          value = this.__encodeEntry(date);
+        }
+
+        this.__emitValue(value, 'add', date);
+      },
+
+      __removeFromModel: function __removeFromModel (date) {
+        var model = null;
+
+        if (this.multiple === true && Array.isArray(this.value) === true) {
+          var val = this.__encodeEntry(date);
+
+          if (date.from !== void 0) {
+            model = this.value.filter(
+              function (date) { return date.from !== void 0
+                ? (date.from !== val.from && date.to !== val.to)
+                : true; }
+            );
+          }
+          else {
+            model = this.value.filter(function (date) { return date !== val; });
+          }
+
+          if (model.length === 0) {
+            model = null;
+          }
+        }
+
+        this.__emitValue(model, 'remove', date);
+      },
+
+      __updateValue: function __updateValue (mask, locale, reason) {
+        var this$1 = this;
+
+        var model = this.daysModel
+          .concat(this.rangeModel)
+          .map(function (entry) { return this$1.__encodeEntry(entry, mask, locale); })
+          .filter(function (entry) {
+            return entry.from !== void 0
+              ? entry.from.dateHash !== null && entry.to.dateHash !== null
+              : entry.dateHash !== null
+          });
+
+        this.$emit('input', (this.multiple === true ? model : model[0]) || null, reason);
       }
     },
 
@@ -12419,7 +13236,7 @@
   function onAppleScroll (e) {
     if (e.target === document) {
       // required, otherwise iOS blocks further scrolling
-      // until the mobile scrollbar dissapears
+      // until the mobile scrollbar dissappears
       document.scrollingElement.scrollTop = document.scrollingElement.scrollTop; // eslint-disable-line
     }
   }
@@ -12907,6 +13724,7 @@
           }, this.useBackdrop === true ? [
             h('div', {
               staticClass: 'q-dialog__backdrop fixed-full',
+              attrs: ariaHidden,
               on: cache(this, 'bkdrop', {
                 click: this.__onBackdropClick
               })
@@ -13156,7 +13974,7 @@
       },
 
       backdropClass: function backdropClass () {
-        return this.showing === false ? 'no-pointer-events' : null
+        return this.showing === false ? 'hidden' : null
       },
 
       headerSlot: function headerSlot () {
@@ -13332,6 +14150,12 @@
         }
       },
 
+      __setBackdropVisible: function __setBackdropVisible (v) {
+        if (this.$refs.backdrop !== void 0) {
+          this.$refs.backdrop.classList[v === true ? 'remove' : 'add']('hidden');
+        }
+      },
+
       __setScrollable: function __setScrollable (v) {
         var action = v === true
           ? 'remove'
@@ -13382,6 +14206,7 @@
             this.__applyPosition(this.stateDirection * width);
             el.classList.remove('q-drawer--delimiter');
             el.classList.add('q-layout--prevent-focus');
+            this.__setBackdropVisible(false);
           }
 
           return
@@ -13401,6 +14226,7 @@
           el$1.classList.add('no-transition');
           el$1.classList.add('q-drawer--delimiter');
           el$1.classList.remove('q-layout--prevent-focus');
+          this.__setBackdropVisible(true);
         }
       },
 
@@ -13447,6 +14273,7 @@
 
         this.__addHistory();
 
+        this.__setBackdropVisible(true);
         evt !== false && this.layout.__animate();
         this.__applyPosition(0);
 
@@ -13479,6 +14306,7 @@
 
         this.__applyBackdrop(0);
         this.__applyPosition(this.stateDirection * this.size);
+        this.__setBackdropVisible(false);
 
         this.__cleanup();
 
@@ -13579,6 +14407,7 @@
         this.noSwipeOpen !== true && child.push(
           h('div', {
             staticClass: ("q-drawer__opener fixed-" + (this.side)),
+            attrs: ariaHidden,
             directives: this.openDirective
           })
         );
@@ -13588,11 +14417,14 @@
             ref: 'backdrop',
             staticClass: 'fullscreen q-drawer__backdrop',
             class: this.backdropClass,
+            attrs: ariaHidden,
             style: this.lastBackdropBg !== void 0
               ? { backgroundColor: this.lastBackdropBg }
               : null,
             on: cache(this, 'bkdrop', { click: this.hide }),
-            directives: this.backdropCloseDirective
+            directives: this.showing === false
+              ? void 0
+              : this.backdropCloseDirective
           })
         );
       }
@@ -13850,8 +14682,8 @@
 
   var
     buf,
-    bufIdx = 0,
-    hexBytes = new Array(256);
+    bufIdx = 0;
+  var hexBytes = new Array(256);
 
   // Pre-calculate toString(16) for speed
   for (var i = 0; i < 256; i++) {
@@ -13949,6 +14781,8 @@
 
       loading: Boolean,
 
+      labelSlot: Boolean,
+
       bottomSlots: Boolean,
       hideBottomSpace: Boolean,
 
@@ -14044,7 +14878,7 @@
       classes: function classes () {
         var obj;
 
-        return ( obj = {}, obj[this.fieldClass] = this.fieldClass !== void 0, obj[("q-field--" + (this.styleType))] = true, obj['q-field--rounded'] = this.rounded, obj['q-field--square'] = this.square, obj['q-field--focused'] = this.focused === true || this.hasError === true, obj['q-field--float'] = this.floatingLabel, obj['q-field--labeled'] = this.label !== void 0, obj['q-field--dense'] = this.dense, obj['q-field--item-aligned q-item-type'] = this.itemAligned, obj['q-field--dark'] = this.isDark, obj['q-field--auto-height'] = this.__getControl === void 0, obj['q-field--with-bottom'] = this.hideBottomSpace !== true && this.shouldRenderBottom === true, obj['q-field--error'] = this.hasError, obj['q-field--readonly'] = this.readonly === true && this.disable !== true, obj['q-field--disabled'] = this.disable, obj )
+        return ( obj = {}, obj[this.fieldClass] = this.fieldClass !== void 0, obj[("q-field--" + (this.styleType))] = true, obj['q-field--rounded'] = this.rounded, obj['q-field--square'] = this.square, obj['q-field--focused'] = this.focused === true || this.hasError === true, obj['q-field--float'] = this.floatingLabel, obj['q-field--labeled'] = this.hasLabel, obj['q-field--dense'] = this.dense, obj['q-field--item-aligned q-item-type'] = this.itemAligned, obj['q-field--dark'] = this.isDark, obj['q-field--auto-height'] = this.__getControl === void 0, obj['q-field--with-bottom'] = this.hideBottomSpace !== true && this.shouldRenderBottom === true, obj['q-field--error'] = this.hasError, obj['q-field--readonly'] = this.readonly === true && this.disable !== true, obj['q-field--disabled'] = this.disable, obj )
       },
 
       styleType: function styleType () {
@@ -14075,6 +14909,10 @@
         return cls
       },
 
+      hasLabel: function hasLabel () {
+        return this.labelSlot === true || this.label !== void 0
+      },
+
       labelClass: function labelClass () {
         if (
           this.labelColor !== void 0 &&
@@ -14102,10 +14940,10 @@
         };
 
         if (this.disable === true) {
-          attrs['aria-disabled'] = '';
+          attrs['aria-disabled'] = 'true';
         }
         else if (this.readonly === true) {
-          attrs['aria-readonly'] = '';
+          attrs['aria-readonly'] = 'true';
         }
 
         return attrs
@@ -14239,11 +15077,11 @@
           );
         }
 
-        this.label !== void 0 && node.push(
+        this.hasLabel === true && node.push(
           h('div', {
             staticClass: 'q-field__label no-pointer-events absolute ellipsis',
             class: this.labelClass
-          }, [ this.label ])
+          }, [ slot(this, 'label', this.label) ])
         );
 
         this.suffix !== void 0 && this.suffix !== null && node.push(
@@ -14485,8 +15323,10 @@
         if (this.accept !== void 0) {
           return this.accept.split(',').map(function (ext) {
             ext = ext.trim();
-            // support "image/*"
-            if (ext.endsWith('/*')) {
+            if (ext === '*') { // support "*"
+              return '*/'
+            }
+            else if (ext.endsWith('/*')) { // support "image/*" or "*/*"
               ext = ext.slice(0, ext.length - 1);
             }
             return ext.toUpperCase()
@@ -14530,7 +15370,7 @@
         };
 
         // filter file types
-        if (this.accept !== void 0) {
+        if (this.accept !== void 0 && this.extensions.indexOf('*/') === -1) {
           files = filterFiles(files, rejectedFiles, 'accept', function (file) {
             return this$1.extensions.some(function (ext) { return (
               file.type.toUpperCase().startsWith(ext) ||
@@ -14766,8 +15606,9 @@
 
         var
           maskMarked = this.maskMarked,
-          padPos = maskMarked.indexOf(MARKER),
           pad = '';
+        var
+          padPos = maskMarked.indexOf(MARKER);
 
         if (padPos > -1) {
           for (var i = size - maskMarked.length; i > 0; i--) {
@@ -15911,7 +16752,7 @@
       }
       else if (this.isActionable === true) {
         data.attrs = {
-          'aria-disabled': ''
+          'aria-disabled': 'true'
         };
       }
 
@@ -16024,10 +16865,10 @@
   }
 
   function getDropdown (h, vm, btn) {
+    var onlyIcons = btn.list === 'only-icons';
     var
       label = btn.label,
       icon = btn.icon,
-      onlyIcons = btn.list === 'only-icons',
       contentClass,
       Items;
 
@@ -16597,8 +17438,8 @@
       options, name, src, copy, copyIsArray, clone,
       target = arguments[0] || {},
       i = 1,
-      length = arguments.length,
       deep = false;
+    var length = arguments.length;
 
     if (typeof target === 'boolean') {
       deep = target;
@@ -16894,10 +17735,10 @@
 
       attrs: function attrs () {
         if (this.disable === true) {
-          return { 'aria-disabled': '' }
+          return { 'aria-disabled': 'true' }
         }
         if (this.readonly === true) {
-          return { 'aria-readonly': '' }
+          return { 'aria-readonly': 'true' }
         }
       }
     },
@@ -16959,7 +17800,7 @@
         this.$emit('click', e);
       },
 
-      __onBlur: function __onBlur () {
+      __onBlur: function __onBlur (e) {
         if (this.$refs.content !== void 0) {
           var ref = this.$refs.content;
           var scrollTop = ref.scrollTop;
@@ -16967,10 +17808,10 @@
           this.__offsetBottom = scrollHeight - scrollTop;
         }
         this.$q.platform.is.ie !== true && this.caret.save();
-        this.$emit('blur');
+        this.$emit('blur', e);
       },
 
-      __onFocus: function __onFocus () {
+      __onFocus: function __onFocus (e) {
         var this$1 = this;
 
         this.$nextTick(function () {
@@ -16978,6 +17819,7 @@
             this$1.$refs.content.scrollTop = this$1.$refs.content.scrollHeight - this$1.__offsetBottom;
           }
         });
+        this.$emit('focus', e);
       },
 
       __onMouseup: function __onMouseup (e) {
@@ -17657,9 +18499,11 @@
     }
   });
 
-  var labelPositions = [ 'top', 'right', 'bottom', 'left' ];
+  var labelPositions = ['top', 'right', 'bottom', 'left'];
 
   var FabMixin = {
+    mixins: [ ListenersMixin ],
+
     props: {
       type: {
         type: String,
@@ -17694,7 +18538,9 @@
       labelClass: [ Array, String, Object ],
       labelStyle: [ Array, String, Object ],
 
-      disable: Boolean
+      disable: Boolean,
+
+      tabindex: [ Number, String ]
     },
 
     computed: {
@@ -17745,19 +18591,13 @@
   var QFab = Vue.extend({
     name: 'QFab',
 
-    mixins: [ FabMixin, ModelToggleMixin ],
+    inheritAttrs: false,
+
+    mixins: [ FabMixin, AttrsMixin, ModelToggleMixin ],
 
     provide: function provide () {
-      var this$1 = this;
-
       return {
-        __qFabClose: function (evt) {
-          this$1.hide(evt);
-
-          if (this$1.$refs.trigger && this$1.$refs.trigger.$el) {
-            this$1.$refs.trigger.$el.focus();
-          }
-        }
+        __qFab: this
       }
     },
 
@@ -17799,6 +18639,22 @@
       classes: function classes () {
         return "q-fab--align-" + (this.verticalActionsAlign) + " " + (this.formClass) +
           (this.showing === true ? ' q-fab--opened' : '')
+      },
+
+      attrs: function attrs () {
+        return Object.assign({}, {'aria-expanded': this.showing === true ? 'true' : 'false',
+          'aria-haspopup': 'true'},
+          this.qAttrs)
+      }
+    },
+
+    methods: {
+      __onChildClick: function __onChildClick (evt) {
+        this.hide(evt);
+
+        if (this.$refs.trigger && this.$refs.trigger.$el) {
+          this.$refs.trigger.$el.focus();
+        }
       }
     },
 
@@ -17827,11 +18683,6 @@
         class: this.classes,
         on: Object.assign({}, this.qListeners)
       }, [
-        h('div', {
-          staticClass: 'q-fab__actions flex no-wrap inline',
-          class: ("q-fab__actions--" + (this.direction))
-        }, slot(this, 'default')),
-
         h(QBtn, {
           ref: 'trigger',
           class: this.formClass,
@@ -17843,10 +18694,16 @@
             label: void 0,
             noCaps: true,
             fab: true}),
+          attrs: this.attrs,
           on: cache(this, 'tog', {
             click: this.toggle
           })
-        }, mergeSlot(child, this, 'tooltip'))
+        }, mergeSlot(child, this, 'tooltip')),
+
+        h('div', {
+          staticClass: 'q-fab__actions flex no-wrap inline',
+          class: ("q-fab__actions--" + (this.direction))
+        }, slot(this, 'default'))
       ])
     }
   });
@@ -17862,7 +18719,7 @@
   var QFabAction = Vue.extend({
     name: 'QFabAction',
 
-    mixins: [ ListenersMixin, FabMixin ],
+    mixins: [ FabMixin ],
 
     props: {
       icon: {
@@ -17875,12 +18732,12 @@
         validator: function (v) { return anchorValues.includes(v); }
       },
 
-      to: [String, Object],
+      to: [ String, Object ],
       replace: Boolean
     },
 
     inject: {
-      __qFabClose: {
+      __qFab: {
         default: function default$1 () {
           console.error('QFabAction needs to be child of QFab');
         }
@@ -17896,12 +18753,16 @@
       onEvents: function onEvents () {
         return Object.assign({}, this.qListeners,
           {click: this.click})
+      },
+
+      isDisabled: function isDisabled () {
+        return this.__qFab.showing !== true || this.disable === true
       }
     },
 
     methods: {
       click: function click (e) {
-        this.__qFabClose();
+        this.__qFab.__onChildClick(e);
         this.$emit('click', e);
       }
     },
@@ -17927,7 +18788,8 @@
           icon: void 0,
           label: void 0,
           noCaps: true,
-          fabMini: true}),
+          fabMini: true,
+          disable: this.isDisabled}),
         on: this.onEvents
       }, mergeSlot(child, this, 'default'))
     }
@@ -19090,13 +19952,15 @@
         default: void 0
       },
 
+      initialIndex: Number,
+
       disable: Boolean,
       reverse: Boolean
     },
 
     data: function data () {
       return {
-        index: 0,
+        index: this.initialIndex || 0,
         fetching: false,
         working: true
       }
@@ -19212,6 +20076,10 @@
         }
       },
 
+      setIndex: function setIndex (index) {
+        this.index = index;
+      },
+
       __setDebounce: function __setDebounce (val) {
         val = parseInt(val, 10);
         if (val <= 0) {
@@ -19317,12 +20185,7 @@
     rootMargin: '0px'
   };
 
-  function update (el, ctx, ref) {
-    var modifiers = ref.modifiers;
-    var value = ref.value;
-
-    ctx.once = modifiers.once;
-
+  function update (el, ctx, value) {
     var handler, cfg, changed;
 
     if (typeof value === 'function') {
@@ -19365,7 +20228,7 @@
             res === false ||
             (ctx.once === true && entry.isIntersecting === true)
           ) {
-            destroy(el);
+            destroy$3(el);
           }
         }
       }, cfg);
@@ -19374,7 +20237,7 @@
     }
   }
 
-  function destroy (el) {
+  function destroy$3 (el) {
     var ctx = el.__qvisible;
 
     if (ctx !== void 0) {
@@ -19386,18 +20249,37 @@
   var Intersection = {
     name: 'intersection',
 
-    inserted: function inserted (el, binding) {
-      var ctx = {};
-      update(el, ctx, binding);
+    inserted: function inserted (el, ref) {
+      var modifiers = ref.modifiers;
+      var value = ref.value;
+
+      if (el.__qvisible !== void 0) {
+        destroy$3(el);
+        el.__qvisible_destroyed = true;
+      }
+
+      var ctx = {
+        once: modifiers.once === true
+      };
+
+      update(el, ctx, value);
+
       el.__qvisible = ctx;
     },
 
     update: function update$1 (el, binding) {
       var ctx = el.__qvisible;
-      ctx !== void 0 && update(el, ctx, binding);
+      ctx !== void 0 && update(el, ctx, binding.value);
     },
 
-    unbind: destroy
+    unbind: function unbind (el) {
+      if (el.__qvisible_destroyed === void 0) {
+        destroy$3(el);
+      }
+      else {
+        delete el.__qvisible_destroyed;
+      }
+    }
   };
 
   var QIntersection = Vue.extend({
@@ -20227,7 +21109,7 @@
         };
 
         if (this.disable === true) {
-          attrs['aria-disabled'] = '';
+          attrs['aria-disabled'] = 'true';
         }
 
         return attrs
@@ -20253,7 +21135,7 @@
       var content = [
         h('svg', {
           staticClass: 'q-radio__bg absolute',
-          attrs: { focusable: 'false' /* needed for IE11 */, viewBox: '0 0 24 24' }
+          attrs: { focusable: 'false' /* needed for IE11 */, viewBox: '0 0 24 24', 'aria-hidden': 'true' }
         }, [
           h('path', {
             attrs: {
@@ -20440,7 +21322,7 @@
           };
 
           if (this.disable === true) {
-            attrs['aria-disabled'] = '';
+            attrs['aria-disabled'] = 'true';
           }
 
           return attrs
@@ -20991,7 +21873,7 @@
       attrs: function attrs () {
         if (this.disable === true) {
           return {
-            'aria-disabled': ''
+            'aria-disabled': 'true'
           }
         }
       },
@@ -21306,7 +22188,7 @@
       },
 
       __updatePos: function __updatePos () {
-        var containerTop, containerHeight, containerBottom, top, bottom;
+        var containerTop, containerHeight, containerBottom;
 
         if (this.__scrollTarget === window) {
           containerTop = 0;
@@ -21319,8 +22201,8 @@
           containerBottom = containerTop + containerHeight;
         }
 
-        top = offset(this.$el).top;
-        bottom = top + this.height;
+        var top = offset(this.$el).top;
+        var bottom = top + this.height;
 
         if (this.observer !== void 0 || (bottom > containerTop && top < containerBottom)) {
           var percent = (containerBottom - top) / (this.height + containerHeight);
@@ -21742,7 +22624,10 @@
     }
   });
 
-  function width$1 (val) {
+  function width$1 (val, reverse) {
+    if (reverse === true) {
+      return { transform: ("translateX(100%) scale3d(" + (-val) + ",1,1)") }
+    }
     return { transform: ("scale3d(" + val + ",1,1)") }
   }
 
@@ -21793,7 +22678,7 @@
       },
 
       trackStyle: function trackStyle () {
-        return width$1(this.buffer !== void 0 ? this.buffer : 1)
+        return width$1(this.buffer !== void 0 ? this.buffer : 1, this.reverse)
       },
 
       trackClass: function trackClass () {
@@ -21803,7 +22688,7 @@
       },
 
       modelStyle: function modelStyle () {
-        return width$1(this.motion === true ? 1 : this.value)
+        return width$1(this.motion === true ? 1 : this.value, this.reverse)
       },
 
       modelClasses: function modelClasses () {
@@ -22336,9 +23221,8 @@
           ratioMax: (this.model.max - this.min) / diff
         };
 
-        var
-          ratio = getRatio(event, dragging, this.isReversed, this.vertical),
-          type;
+        var ratio = getRatio(event, dragging, this.isReversed, this.vertical);
+        var type;
 
         if (this.dragOnlyRange !== true && ratio < dragging.ratioMin + sensitivity) {
           type = dragType.MIN;
@@ -22374,8 +23258,8 @@
 
         var
           ratio = getRatio(event, dragging, this.isReversed, this.vertical),
-          model = getModel(ratio, this.min, this.max, this.step, this.decimals),
-          pos;
+          model = getModel(ratio, this.min, this.max, this.step, this.decimals);
+        var pos;
 
         switch (dragging.type) {
           case dragType.MIN:
@@ -22672,10 +23556,10 @@
 
       attrs: function attrs () {
         if (this.disable === true) {
-          return { 'aria-disabled': '' }
+          return { 'aria-disabled': 'true' }
         }
         if (this.readonly === true) {
-          return { 'aria-readonly': '' }
+          return { 'aria-readonly': 'true' }
         }
       }
     },
@@ -23088,6 +23972,7 @@
           staticClass: 'q-scrollarea__bar',
           style: this.barStyle,
           class: this.barClass,
+          attrs: ariaHidden,
           on: cache(this, 'bar', {
             mousedown: this.__mouseDown
           })
@@ -23098,6 +23983,7 @@
           staticClass: 'q-scrollarea__thumb',
           style: this.style,
           class: this.thumbClass,
+          attrs: ariaHidden,
           directives: cache(this, 'thumb#' + this.horizontal, [{
             name: 'touch-pan',
             modifiers: {
@@ -23137,7 +24023,40 @@
 
   var aggBucketSize = 1000;
 
+  var scrollToEdges = [
+    'start',
+    'center',
+    'end',
+    'start-force',
+    'center-force',
+    'end-force'
+  ];
+
   var slice = Array.prototype.slice;
+
+  var buggyRTL = void 0;
+
+  // mobile Chrome takes the crown for this
+  function detectBuggyRTL () {
+    var scroller = document.createElement('div');
+    var spacer = document.createElement('div');
+
+    scroller.setAttribute('dir', 'rtl');
+    scroller.style.width = '1px';
+    scroller.style.height = '1px';
+    scroller.style.overflow = 'auto';
+
+    spacer.style.width = '1000px';
+    spacer.style.height = '1px';
+
+    document.body.appendChild(scroller);
+    scroller.appendChild(spacer);
+    scroller.scrollLeft = -1000;
+
+    buggyRTL = scroller.scrollLeft >= 0;
+
+    scroller.remove();
+  }
 
   function sumFn (acc, h) {
     return acc + h
@@ -23149,6 +24068,7 @@
     beforeRef,
     afterRef,
     horizontal,
+    rtl,
     stickyStart,
     stickyEnd
   ) {
@@ -23173,6 +24093,10 @@
         details.scrollViewSize += parentCalc.clientWidth;
       }
       details.scrollMaxSize = parentCalc.scrollWidth;
+
+      if (rtl === true) {
+        details.scrollStart = (buggyRTL === true ? details.scrollMaxSize - details.scrollViewSize : 0) - details.scrollStart;
+      }
     }
     else {
       if (parent === window) {
@@ -23224,17 +24148,26 @@
     return details
   }
 
-  function setScroll$1 (parent, scroll, horizontal) {
+  function setScroll$1 (parent, scroll, horizontal, rtl) {
     if (parent === window) {
       if (horizontal === true) {
+        if (rtl === true) {
+          scroll = (buggyRTL === true ? document.body.scrollWidth - window.innerWidth : 0) - scroll;
+        }
         window.scrollTo(scroll, window.pageYOffset || window.scrollY || document.body.scrollTop || 0);
       }
       else {
         window.scrollTo(window.pageXOffset || window.scrollX || document.body.scrollLeft || 0, scroll);
       }
     }
+    else if (horizontal === true) {
+      if (rtl === true) {
+        scroll = (buggyRTL === true ? parent.scrollWidth - parent.offsetWidth : 0) - scroll;
+      }
+      parent.scrollLeft = scroll;
+    }
     else {
-      parent[horizontal === true ? 'scrollLeft' : 'scrollTop'] = scroll;
+      parent.scrollTop = scroll;
     }
   }
 
@@ -23261,7 +24194,7 @@
   var commonVirtScrollProps = {
     virtualScrollSliceSize: {
       type: Number,
-      default: 30
+      default: null
     },
 
     virtualScrollItemSize: {
@@ -23277,7 +24210,9 @@
     virtualScrollStickySizeEnd: {
       type: Number,
       default: 0
-    }
+    },
+
+    tableColspan: [ Number, String ]
   };
 
   var commonVirtPropsList = Object.keys(commonVirtScrollProps);
@@ -23308,6 +24243,12 @@
 
         return ['virtualScrollItemSize', 'virtualScrollHorizontal']
           .map(function (p) { return this$1[p]; }).join(';')
+      },
+
+      colspanAttr: function colspanAttr () {
+        return this.tableColspan !== void 0
+          ? { colspan: this.tableColspan }
+          : { colspan: 100 }
       }
     },
 
@@ -23320,27 +24261,32 @@
         this.__resetVirtualScroll(toIndex === void 0 ? this.prevToIndex : toIndex);
       },
 
-      scrollTo: function scrollTo (toIndex) {
+      scrollTo: function scrollTo (toIndex, edge) {
         var scrollEl = this.__getVirtualScrollTarget();
 
         if (scrollEl === void 0 || scrollEl === null || scrollEl.nodeType === 8) {
           return
         }
 
+        var scrollDetails = getScrollDetails(
+          scrollEl,
+          this.__getVirtualScrollEl(),
+          this.$refs.before,
+          this.$refs.after,
+          this.virtualScrollHorizontal,
+          this.$q.lang.rtl,
+          this.virtualScrollStickySizeStart,
+          this.virtualScrollStickySizeEnd
+        );
+
+        this.__scrollViewSize !== scrollDetails.scrollViewSize && this.__setVirtualScrollSize(scrollDetails.scrollViewSize);
+
         this.__setVirtualScrollSliceRange(
           scrollEl,
-          getScrollDetails(
-            scrollEl,
-            this.__getVirtualScrollEl(),
-            this.$refs.before,
-            this.$refs.after,
-            this.virtualScrollHorizontal,
-            this.virtualScrollStickySizeStart,
-            this.virtualScrollStickySizeEnd
-          ),
+          scrollDetails,
           Math.min(this.virtualScrollLength - 1, Math.max(0, parseInt(toIndex, 10) || 0)),
           0,
-          this.prevToIndex > -1 && toIndex > this.prevToIndex ? 'end' : 'start'
+          scrollToEdges.indexOf(edge) > -1 ? edge : (this.prevToIndex > -1 && toIndex > this.prevToIndex ? 'end' : 'start')
         );
       },
 
@@ -23358,24 +24304,34 @@
             this.$refs.before,
             this.$refs.after,
             this.virtualScrollHorizontal,
+            this.$q.lang.rtl,
             this.virtualScrollStickySizeStart,
             this.virtualScrollStickySizeEnd
           ),
-          scrollMaxStart = scrollDetails.scrollMaxSize - Math.max(scrollDetails.scrollViewSize, scrollDetails.offsetEnd),
-          listLastIndex = this.virtualScrollLength - 1;
+          listLastIndex = this.virtualScrollLength - 1,
+          listEndOffset = scrollDetails.scrollMaxSize - scrollDetails.offsetStart - scrollDetails.offsetEnd - this.virtualScrollPaddingAfter;
 
         if (this.prevScrollStart === scrollDetails.scrollStart) {
           return
         }
         this.prevScrollStart = void 0;
 
+        if (scrollDetails.scrollMaxSize <= 0) {
+          this.__setVirtualScrollSliceRange(scrollEl, scrollDetails, 0, 0);
+          return
+        }
+
+        this.__scrollViewSize !== scrollDetails.scrollViewSize && this.__setVirtualScrollSize(scrollDetails.scrollViewSize);
+
         this.__updateVirtualScrollSizes(this.virtualScrollSliceRange.from);
+
+        var scrollMaxStart = scrollDetails.scrollMaxSize - Math.max(scrollDetails.scrollViewSize, scrollDetails.offsetEnd) - this.virtualScrollSizes[listLastIndex];
 
         if (scrollMaxStart > 0 && scrollDetails.scrollStart >= scrollMaxStart) {
           this.__setVirtualScrollSliceRange(
             scrollEl,
             scrollDetails,
-            this.virtualScrollLength - 1,
+            listLastIndex,
             scrollDetails.scrollMaxSize - scrollDetails.offsetEnd - this.virtualScrollSizesAgg.reduce(sumFn, 0)
           );
 
@@ -23387,9 +24343,16 @@
           listOffset = scrollDetails.scrollStart - scrollDetails.offsetStart,
           offset = listOffset;
 
-        for (var j = 0; listOffset >= this.virtualScrollSizesAgg[j] && toIndex < listLastIndex; j++) {
-          listOffset -= this.virtualScrollSizesAgg[j];
-          toIndex += aggBucketSize;
+        if (listOffset <= listEndOffset && listOffset + scrollDetails.scrollViewSize >= this.virtualScrollPaddingBefore) {
+          listOffset -= this.virtualScrollPaddingBefore;
+          toIndex = this.virtualScrollSliceRange.from;
+          offset = listOffset;
+        }
+        else {
+          for (var j = 0; listOffset >= this.virtualScrollSizesAgg[j] && toIndex < listLastIndex; j++) {
+            listOffset -= this.virtualScrollSizesAgg[j];
+            toIndex += aggBucketSize;
+          }
         }
 
         while (listOffset > 0 && toIndex < listLastIndex) {
@@ -23414,8 +24377,11 @@
       __setVirtualScrollSliceRange: function __setVirtualScrollSliceRange (scrollEl, scrollDetails, toIndex, offset, align) {
         var this$1 = this;
 
+        var alignForce = typeof align === 'string' && align.indexOf('-force') > -1;
+        var alignEnd = alignForce === true ? align.replace('-force', '') : align;
+
         var
-          from = Math.max(0, Math.ceil(toIndex - (align === void 0 ? 3 : 2) * this.virtualScrollSliceSizeComputed / 6)),
+          from = Math.max(0, Math.ceil(toIndex - this.virtualScrollSliceSizeComputed / (alignEnd === void 0 || alignEnd === 'center' ? 2 : (alignEnd === 'start' ? 3 : 1.5)))),
           to = from + this.virtualScrollSliceSizeComputed;
 
         if (to > this.virtualScrollLength) {
@@ -23425,11 +24391,14 @@
 
         var rangeChanged = from !== this.virtualScrollSliceRange.from || to !== this.virtualScrollSliceRange.to;
 
-        if (rangeChanged === false && align === void 0) {
+        if (rangeChanged === false && alignEnd === void 0) {
           this.__emitScroll(toIndex);
 
           return
         }
+
+        var hadFocus = rangeChanged === true && typeof scrollEl.contains === 'function' && scrollEl.contains(document.activeElement);
+        var sizeBefore = alignEnd !== void 0 ? this.virtualScrollSizes.slice(from, toIndex).reduce(sumFn, 0) : 0;
 
         if (rangeChanged === true) {
           this.virtualScrollSliceRange = { from: from, to: to };
@@ -23437,29 +24406,49 @@
           this.virtualScrollPaddingAfter = sumSize(this.virtualScrollSizesAgg, this.virtualScrollSizes, to, this.virtualScrollLength);
         }
 
-        this.$nextTick(function () {
+        this.__activeScrollStart = scrollDetails.scrollStart;
+
+        requestAnimationFrame(function () {
+          if (hadFocus === true && scrollEl.contains(document.activeElement) !== true) {
+            scrollEl.focus();
+          }
+
+          if (this$1.__activeScrollStart !== scrollDetails.scrollStart) {
+            return
+          }
+
           if (rangeChanged === true) {
             this$1.__updateVirtualScrollSizes(from);
           }
 
           var
-            posStart = this$1.virtualScrollSizes.slice(from, toIndex).reduce(sumFn, scrollDetails.offsetStart + this$1.virtualScrollPaddingBefore),
-            posEnd = posStart + this$1.virtualScrollSizes[toIndex];
+            sizeAfter = this$1.virtualScrollSizes.slice(from, toIndex).reduce(sumFn, 0),
+            posStart = sizeAfter + scrollDetails.offsetStart + this$1.virtualScrollPaddingBefore,
+            posEnd = posStart + this$1.virtualScrollSizes[toIndex],
+            rtl = this$1.$q.lang.rtl === true;
 
           var scrollPosition = posStart + offset;
 
-          if (align !== void 0) {
-            scrollPosition = scrollDetails.scrollStart < posStart && posEnd < scrollDetails.scrollStart + scrollDetails.scrollViewSize
-              ? scrollDetails.scrollStart
-              : (align === 'end' ? posEnd - scrollDetails.scrollViewSize : posStart);
+          if (alignEnd !== void 0) {
+            var sizeDiff = sizeAfter - sizeBefore;
+            var scrollStart = scrollDetails.scrollStart + sizeDiff;
+
+            scrollPosition = alignForce !== true && scrollStart < posStart && posEnd < scrollStart + scrollDetails.scrollViewSize
+              ? scrollStart
+              : (
+                alignEnd === 'end'
+                  ? posEnd - scrollDetails.scrollViewSize
+                  : posStart - (alignEnd === 'start' ? 0 : Math.round((scrollDetails.scrollViewSize - this$1.virtualScrollSizes[toIndex]) / 2))
+              );
           }
 
           this$1.prevScrollStart = scrollPosition;
 
-          this$1.__setScroll(
+          setScroll$1(
             scrollEl,
             scrollPosition,
-            this$1.virtualScrollHorizontal
+            this$1.virtualScrollHorizontal,
+            rtl
           );
 
           this$1.__emitScroll(toIndex);
@@ -23473,18 +24462,20 @@
           var
             children = slice.call(contentEl.children).filter(function (el) { return el.classList.contains('q-virtual-scroll--skip') === false; }),
             childrenLength = children.length,
-            sizeProp = this.virtualScrollHorizontal === true ? 'offsetWidth' : 'offsetHeight';
+            sizeFn = this.virtualScrollHorizontal === true
+              ? function (el) { return el.getBoundingClientRect().width; }
+              : function (el) { return el.offsetHeight; };
 
           var
             index = from,
             size, diff;
 
           for (var i = 0; i < childrenLength;) {
-            size = children[i][sizeProp];
+            size = sizeFn(children[i]);
             i++;
 
             while (i < childrenLength && children[i].classList.contains('q-virtual-scroll--with-prev') === true) {
-              size += children[i][sizeProp];
+              size += sizeFn(children[i]);
               i++;
             }
 
@@ -23546,17 +24537,35 @@
         }
       },
 
-      __setVirtualScrollSize: function __setVirtualScrollSize () {
-        if (this.virtualScrollHorizontal === true) {
-          this.virtualScrollSliceSizeComputed = typeof window === 'undefined'
-            ? this.virtualScrollSliceSize
-            : Math.max(this.virtualScrollSliceSize, Math.ceil(window.innerWidth / this.virtualScrollItemSize * 2));
+      __setVirtualScrollSize: function __setVirtualScrollSize (scrollViewSize) {
+        if (this.virtualScrollSliceSize > 0) {
+          this.virtualScrollSliceSizeComputed = this.virtualScrollSliceSize;
+
+          return
         }
-        else {
-          this.virtualScrollSliceSizeComputed = typeof window === 'undefined'
-            ? this.virtualScrollSliceSize
-            : Math.max(this.virtualScrollSliceSize, Math.ceil(window.innerHeight / this.virtualScrollItemSize * 2));
+
+        if (scrollViewSize === void 0 && typeof window !== 'undefined') {
+          var scrollEl = this.__getVirtualScrollTarget();
+
+          if (scrollEl !== void 0 && scrollEl !== null && scrollEl.nodeType !== 8) {
+            scrollViewSize = getScrollDetails(
+              scrollEl,
+              this.__getVirtualScrollEl(),
+              this.$refs.before,
+              this.$refs.after,
+              this.virtualScrollHorizontal,
+              this.$q.lang.rtl,
+              this.virtualScrollStickySizeStart,
+              this.virtualScrollStickySizeEnd
+            ).scrollViewSize;
+          }
         }
+
+        this.__scrollViewSize = scrollViewSize;
+
+        this.virtualScrollSliceSizeComputed = scrollViewSize === void 0 || scrollViewSize <= 0
+          ? 30
+          : Math.ceil(scrollViewSize / this.virtualScrollItemSize * 3);
       },
 
       __padVirtualScroll: function __padVirtualScroll (h, tag, content) {
@@ -23574,7 +24583,7 @@
               h('tr', [
                 h('td', {
                   style: ( obj = {}, obj[paddingSize] = ((this.virtualScrollPaddingBefore) + "px"), obj ),
-                  attrs: { colspan: '100%' }
+                  attrs: this.colspanAttr
                 })
               ])
             ])
@@ -23600,7 +24609,7 @@
               h('tr', [
                 h('td', {
                   style: ( obj$2 = {}, obj$2[paddingSize] = ((this.virtualScrollPaddingAfter) + "px"), obj$2 ),
-                  attrs: { colspan: '100%' }
+                  attrs: this.colspanAttr
                 })
               ])
             ])
@@ -23633,13 +24642,14 @@
     },
 
     beforeMount: function beforeMount () {
-      this.__onVirtualScrollEvt = debounce(this.__onVirtualScrollEvt, 70);
-      this.__setScroll = frameDebounce(setScroll$1);
+      buggyRTL === void 0 && detectBuggyRTL();
+      this.__onVirtualScrollEvt = debounce(this.__onVirtualScrollEvt, this.$q.platform.is.ios === true ? 120 : 70);
       this.__setVirtualScrollSize();
     }
   };
 
   var validateNewValueMode = function (v) { return ['add', 'add-unique', 'toggle'].includes(v); };
+  var reEscapeList = '.*+?^${}()|[]\\';
 
   var QSelect = Vue.extend({
     name: 'QSelect',
@@ -24294,29 +25304,36 @@
 
         var optionsLength = this.virtualScrollLength;
 
+        // clear search buffer if expired
+        if (this.searchBuffer === void 0 || this.searchBufferExp < Date.now()) {
+          this.searchBuffer = '';
+        }
+
         // keyboard search when not having use-input
-        if (optionsLength > 0 && this.useInput !== true && e.keyCode >= 48 && e.keyCode <= 90) {
+        if (
+          optionsLength > 0 &&
+          this.useInput !== true &&
+          e.key.length === 1 && // printable char
+          e.altKey === e.ctrlKey && // not kbd shortcut
+          (e.keyCode !== 32 || this.searchBuffer.length > 0) // space in middle of search
+        ) {
           this.menu !== true && this.showPopup(e);
 
-          // clear search buffer if expired
-          if (this.searchBuffer === void 0 || this.searchBufferExp < Date.now()) {
-            this.searchBuffer = '';
-          }
-
           var
-            char = String.fromCharCode(e.keyCode).toLocaleLowerCase(),
+            char = e.key.toLocaleLowerCase(),
             keyRepeat = this.searchBuffer.length === 1 && this.searchBuffer[0] === char;
 
           this.searchBufferExp = Date.now() + 1500;
           if (keyRepeat === false) {
+            stopAndPrevent(e);
             this.searchBuffer += char;
           }
 
-          var searchRe = new RegExp('^' + this.searchBuffer.split('').join('.*'), 'i');
+          var searchRe = new RegExp('^' + this.searchBuffer.split('').map(function (l) { return reEscapeList.indexOf(l) > -1 ? '\\' + l : l; }).join('.*'), 'i');
 
           var index = this.optionIndex;
 
-          if (keyRepeat === true || searchRe.test(this.getOptionLabel(this.options[index])) !== true) {
+          if (keyRepeat === true || index < 0 || searchRe.test(this.getOptionLabel(this.options[index])) !== true) {
             do {
               index = normalizeToInterval(index + 1, -1, optionsLength - 1);
             }
@@ -24340,12 +25357,12 @@
           return
         }
 
-        // enter, space (when not using use-input), or tab (when not using multiple and option selected)
+        // enter, space (when not using use-input and not in search), or tab (when not using multiple and option selected)
         // same target is checked above
         if (
           e.keyCode !== 13 &&
-          (this.useInput === true || e.keyCode !== 32) &&
-          (tabShouldSelect === false || e.keyCode !== 9)
+          (e.keyCode !== 32 || this.useInput === true || this.searchBuffer !== '') &&
+          (e.keyCode !== 9 || tabShouldSelect === false)
         ) { return }
 
         e.keyCode !== 9 && stopAndPrevent(e);
@@ -24697,11 +25714,14 @@
 
               this$1.$nextTick(function () {
                 this$1.innerLoading = false;
-                if (this$1.menu === true) {
-                  this$1.__updateMenu(true);
-                }
-                else {
-                  this$1.menu = true;
+
+                if (this$1.editable === true) {
+                  if (this$1.menu === true) {
+                    this$1.__updateMenu(true);
+                  }
+                  else {
+                    this$1.menu = true;
+                  }
                 }
 
                 typeof afterFn === 'function' && this$1.$nextTick(function () { afterFn(this$1); });
@@ -24938,6 +25958,10 @@
 
       showPopup: function showPopup (e) {
         var this$1 = this;
+
+        if (this.editable !== true) {
+          return
+        }
 
         if (this.hasDialog === true) {
           this.__onControlFocusin(e);
@@ -27602,7 +28626,7 @@
     },
 
     render: function render (h) {
-      var attrs = this.disable === true ? { 'aria-disabled': '' } : void 0;
+      var attrs = this.disable === true ? { 'aria-disabled': 'true' } : void 0;
       var child = [
         h('div', {
           ref: 'before',
@@ -27693,7 +28717,7 @@
 
         return this.isDisable === false &&
           this.stepper.headerNav &&
-          (this.isActive === true || nav)
+          nav
       },
 
       hasPrefix: function hasPrefix () {
@@ -27778,7 +28802,7 @@
           keyup: this.keyup
         }),
         attrs: this.isDisable === true
-          ? { tabindex: -1, 'aria-disabled': '' }
+          ? { tabindex: -1, 'aria-disabled': 'true' }
           : { tabindex: this.qAttrs.tabindex || 0 }
       });
 
@@ -27985,14 +29009,16 @@
         if (this.vertical === true) {
           this.__isValidPanelName(this.value) && this.__updatePanelIndex();
 
-          return top.concat(
-            h('div', {
-              staticClass: 'q-stepper__content',
-              // stop propagation of content emitted @input
-              // which would tamper with Panel's model
-              on: cache(this, 'stop', { input: stop })
-            }, slot(this, 'default'))
-          )
+          var content = h('div', {
+            staticClass: 'q-stepper__content',
+            // stop propagation of content emitted @input
+            // which would tamper with Panel's model
+            on: cache(this, 'stop', { input: stop })
+          }, slot(this, 'default'));
+
+          return top === void 0
+            ? [ content ]
+            : top.concat(content)
         }
 
         return [
@@ -28194,7 +29220,7 @@
             h('tr', { staticClass: 'q-table__progress' }, [
               h('th', {
                 staticClass: 'relative-position',
-                attrs: { colspan: '100%' }
+                attrs: { colspan: this.computedColspan }
               }, this.__getProgress(h))
             ])
           );
@@ -28362,14 +29388,14 @@
         if (this.qListeners['row-click'] !== void 0) {
           data.class['cursor-pointer'] = true;
           data.on.click = function (evt) {
-            this$1.$emit('row-click', evt, row);
+            this$1.$emit('row-click', evt, row, pageIndex);
           };
         }
 
         if (this.qListeners['row-dblclick'] !== void 0) {
           data.class['cursor-pointer'] = true;
           data.on.dblclick = function (evt) {
-            this$1.$emit('row-dblclick', evt, row);
+            this$1.$emit('row-dblclick', evt, row, pageIndex);
           };
         }
 
@@ -28405,8 +29431,8 @@
         var body = this.$scopedSlots.body;
 
         return body !== void 0
-          ? function (props, pageIndex) { return this$1.getTableRowBody(props.item, body, pageIndex); }
-          : function (props, pageIndex) { return this$1.getTableRow(h, props.item, pageIndex); }
+          ? function (props) { return this$1.getTableRowBody(props.item, body, props.index); }
+          : function (props) { return this$1.getTableRow(h, props.item, props.index); }
       },
 
       addBodyRowMeta: function addBodyRowMeta (data) {
@@ -28714,13 +29740,13 @@
 
             if (this$1.qListeners['row-click'] !== void 0) {
               data.on.click = function (evt) {
-                this$1.$emit('row-click', evt, scope.row);
+                this$1.$emit('row-click', evt, scope.row, scope.pageIndex);
               };
             }
 
             if (this$1.qListeners['row-dblclick'] !== void 0) {
               data.on.dblclick = function (evt) {
-                this$1.$emit('row-dblclick', evt, scope.row);
+                this$1.$emit('row-dblclick', evt, scope.row, scope.pageIndex);
               };
             }
 
@@ -29024,7 +30050,11 @@
 
           var lowerTerms = terms ? terms.toLowerCase() : '';
           return rows.filter(
-            function (row) { return cols.some(function (col) { return (cellValue(col, row) + '').toLowerCase().indexOf(lowerTerms) !== -1; }); }
+            function (row) { return cols.some(function (col) {
+              var val = cellValue(col, row) + '';
+              var haystack = (val === 'undefined' || val === 'null') ? '' : val.toLowerCase();
+              return haystack.indexOf(lowerTerms) !== -1
+            }); }
           )
         }
       }
@@ -29403,6 +30433,12 @@
           names[col.name] = col;
         });
         return names
+      },
+
+      computedColspan: function computedColspan () {
+        return this.tableColspan !== void 0
+          ? this.tableColspan
+          : this.computedCols.length + (this.hasSelectionMode === true ? 1 : 0)
       }
     }
   };
@@ -29690,7 +30726,8 @@
             ref: 'virtScroll',
             props: Object.assign({}, this.virtProps,
               {items: this.computedRows,
-              type: '__qtable'}),
+              type: '__qtable',
+              tableColspan: this.computedColspan}),
             on: cache(this, 'vs', {
               'virtual-scroll': this.__onVScroll
             }),
@@ -29888,10 +30925,65 @@
       }
     },
 
+    computed: {
+      onEvents: function onEvents () {
+        return Object.assign({}, {input: stop},
+          this.qListeners,
+          {'!click': this.__activate, // we need capture to intercept before vue-router
+          keyup: this.__onKeyup})
+      }
+    },
+
     methods: {
       __activate: function __activate (e, keyboard) {
+        var this$1 = this;
+
         if (this.disable !== true) {
-          this.__checkActivation(true);
+          if (
+            e !== void 0 && (
+              e.ctrlKey === true ||
+              e.shiftKey === true ||
+              e.altKey === true ||
+              e.metaKey === true
+            )
+          ) {
+            // if it has meta keys, let vue-router link
+            // handle this by its own
+            this.__checkActivation(true);
+          }
+          else {
+            // we use programatic navigation instead of letting vue-router handle it
+            // so we can check for activation when the navigation is complete
+            e !== void 0 && stopAndPrevent(e);
+
+            var go = function (to, append, replace) {
+              if ( to === void 0 ) to = this$1.to;
+              if ( append === void 0 ) append = this$1.append;
+              if ( replace === void 0 ) replace = this$1.replace;
+
+              var ref = this$1.$router.resolve(to, this$1.$route, append);
+              var route = ref.route;
+              var checkFn = to === this$1.to && append === this$1.append && replace === this$1.replace
+                ? this$1.__checkActivation
+                : noop;
+
+              // vue-router now throwing error if navigating
+              // to the same route that the user is currently at
+              // https://github.com/vuejs/vue-router/issues/2872
+              this$1.$router[replace === true ? 'replace' : 'push'](
+                route,
+                function () { checkFn(true); },
+                function (err) {
+                  if (err && err.name === 'NavigationDuplicated') {
+                    checkFn(true);
+                  }
+                }
+              );
+            };
+
+            this.qListeners.click !== void 0 && this.$emit('click', e, go);
+            e.navigate !== false && go();
+          }
         }
 
         if (keyboard === true) {
@@ -29912,6 +31004,7 @@
         var location = ref.location;
         var route = ref.route;
         var redirected = route.redirectedFrom !== void 0,
+          isSameRouteCheck = isSameRoute(current, route),
           checkFunction = this.exact === true ? isSameRoute : isIncludedRoute,
           params = {
             name: this.name,
@@ -29921,10 +31014,23 @@
             priorityHref: href.length
           };
 
-        checkFunction(current, route) && this.__activateRoute(Object.assign({}, params, {redirected: redirected}));
-        redirected === true && checkFunction(current, Object.assign({}, {path: route.redirectedFrom},
-          location)) && this.__activateRoute(params);
-        this.isActive && this.__activateRoute();
+        if (isSameRouteCheck === true || (this.exact !== true && isIncludedRoute(current, route) === true)) {
+          this.__activateRoute(Object.assign({}, params,
+            {redirected: redirected,
+            // if it's an exact match give higher priority
+            // even if the tab is not marked as exact
+            exact: this.exact === true || isSameRouteCheck === true}));
+        }
+
+        if (
+          redirected === true &&
+          checkFunction(current, Object.assign({}, {path: route.redirectedFrom},
+            location)) === true
+        ) {
+          this.__activateRoute(params);
+        }
+
+        this.isActive === true && this.__activateRoute();
       }
     },
 
@@ -29979,8 +31085,8 @@
     data: function data () {
       var model = __splitDate(
         this.value,
-        this.__getComputedMask(),
-        this.__getComputedLocale(),
+        this.__getMask(),
+        this.__getLocale(),
         this.calendar,
         this.__getDefaultDateModel()
       );
@@ -30026,6 +31132,22 @@
             this.isAM = model.hour < 12;
           }
         }
+      },
+
+      computedMask: function computedMask () {
+        var this$1 = this;
+
+        this.$nextTick(function () {
+          this$1.__updateValue();
+        });
+      },
+
+      computedLocale: function computedLocale () {
+        var this$1 = this;
+
+        this.$nextTick(function () {
+          this$1.__updateValue();
+        });
       }
     },
 
@@ -30037,10 +31159,6 @@
           (this.bordered === true ? " q-time--bordered" : '') +
           (this.square === true ? " q-time--square no-border-radius" : '') +
           (this.flat === true ? " q-time--flat no-shadow" : '')
-      },
-
-      computedMask: function computedMask () {
-        return this.__getComputedMask()
       },
 
       stringModel: function stringModel () {
@@ -30197,11 +31315,16 @@
         this.view = 'Hour';
       },
 
+      __getMask: function __getMask () {
+        return this.calendar !== 'persian' && this.mask !== null
+          ? this.mask
+          : ("HH:mm" + (this.withSeconds === true ? ':ss' : ''))
+      },
+
       __getDefaultDateModel: function __getDefaultDateModel () {
         if (typeof this.defaultDate !== 'string') {
           var date = this.__getCurrentDate();
           date.dateHash = date.year + '/' + pad(date.month) + '/' + pad(date.day);
-
           return date
         }
 
@@ -30277,13 +31400,14 @@
 
       __updateClock: function __updateClock (evt, clockRect, cacheVal) {
         var
-          val,
           pos = position(evt),
           height = Math.abs(pos.top - clockRect.top),
           distance = Math.sqrt(
             Math.pow(Math.abs(pos.top - clockRect.top), 2) +
             Math.pow(Math.abs(pos.left - clockRect.left), 2)
-          ),
+          );
+        var
+          val,
           angle = Math.asin(height / distance) * (180 / Math.PI);
 
         if (pos.top < clockRect.top) {
@@ -30607,18 +31731,11 @@
           return
         }
 
-        this.__updateValue({});
-      },
-
-      __getComputedMask: function __getComputedMask () {
-        return this.calendar !== 'persian' && this.mask !== null
-          ? this.mask
-          : ("HH:mm" + (this.withSeconds === true ? ':ss' : ''))
+        this.__updateValue();
       },
 
       __updateValue: function __updateValue (obj) {
-        var date = Object.assign({}, this.innerModel,
-          obj);
+        var date = Object.assign(Object.assign({}, this.innerModel), obj);
 
         var val = this.calendar === 'persian'
           ? pad(date.hour) + ':' +
@@ -31346,13 +32463,12 @@
 
         var isParent = children.length > 0 || (meta.lazy && meta.lazy !== 'loaded');
 
-        var
-          body = node.body
-            ? this.$scopedSlots[("body-" + (node.body))] || this.$scopedSlots['default-body']
-            : this.$scopedSlots['default-body'],
-          slotScope = header !== void 0 || body !== void 0
-            ? this.__getSlotScope(node, meta, key)
-            : null;
+        var body = node.body
+          ? this.$scopedSlots[("body-" + (node.body))] || this.$scopedSlots['default-body']
+          : this.$scopedSlots['default-body'];
+        var slotScope = header !== void 0 || body !== void 0
+          ? this.__getSlotScope(node, meta, key)
+          : null;
 
         if (body !== void 0) {
           body = h('div', { staticClass: 'q-tree__node-body relative-position' }, [
@@ -32455,11 +33571,25 @@
     return isNaN(depth) ? 0 : depth
   }
 
+  function destroy$4 (el) {
+    var ctx = el.__qclosepopup;
+    if (ctx !== void 0) {
+      el.removeEventListener('click', ctx.handler);
+      el.removeEventListener('keyup', ctx.handlerKey);
+      delete el.__qclosepopup;
+    }
+  }
+
   var ClosePopup = {
     name: 'close-popup',
 
     bind: function bind (el, ref, vnode) {
       var value = ref.value;
+
+      if (el.__qclosepopup !== void 0) {
+        destroy$4(el);
+        el.__qclosepopup_destroyed = true;
+      }
 
       var ctx = {
         depth: getDepth(value),
@@ -32475,10 +33605,6 @@
           isKeyCode(evt, 13) === true && ctx.handler(evt);
         }
       };
-
-      if (el.__qclosepopup !== void 0) {
-        el.__qclosepopup_old = el.__qclosepopup;
-      }
 
       el.__qclosepopup = ctx;
 
@@ -32496,14 +33622,23 @@
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qclosepopup_old || el.__qclosepopup;
-      if (ctx !== void 0) {
-        el.removeEventListener('click', ctx.handler);
-        el.removeEventListener('keyup', ctx.handlerKey);
-        delete el[el.__qclosepopup_old ? '__qclosepopup_old' : '__qclosepopup'];
+      if (el.__qclosepopup_destroyed === void 0) {
+        destroy$4(el);
+      }
+      else {
+        delete el.__qclosepopup_destroyed;
       }
     }
   };
+
+  function destroy$5 (el) {
+    var ctx = el.__qgoback;
+    if (ctx !== void 0) {
+      el.removeEventListener('click', ctx.goBack);
+      el.removeEventListener('keyup', ctx.goBackKey);
+      delete el.__qgoback;
+    }
+  }
 
   var GoBack = {
     name: 'go-back',
@@ -32511,6 +33646,11 @@
     bind: function bind (el, ref, vnode) {
       var value = ref.value;
       var modifiers = ref.modifiers;
+
+      if (el.__qgoback !== void 0) {
+        destroy$5(el);
+        el.__qgoback_destroyed = true;
+      }
 
       var ctx = {
         value: value,
@@ -32538,11 +33678,8 @@
         }
       };
 
-      if (el.__qgoback) {
-        el.__qgoback_old = el.__qgoback;
-      }
-
       el.__qgoback = ctx;
+
       el.addEventListener('click', ctx.goBack);
       el.addEventListener('keyup', ctx.goBackKey);
     },
@@ -32550,33 +33687,1073 @@
     update: function update (el, ref) {
       var value = ref.value;
       var oldValue = ref.oldValue;
-      var modifiers = ref.modifiers;
 
       var ctx = el.__qgoback;
 
-      if (ctx !== void 0) {
-        if (value !== oldValue) {
-          ctx.value = value;
-        }
-
-        if (ctx.single !== modifiers.single) {
-          ctx.single = modifiers.single;
-        }
+      if (ctx !== void 0 && value !== oldValue) {
+        ctx.value = value;
       }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qgoback_old || el.__qgoback;
-      if (ctx !== void 0) {
-        el.removeEventListener('click', ctx.goBack);
-        el.removeEventListener('keyup', ctx.goBackKey);
-        delete el[el.__qgoback_old ? '__qgoback_old' : '__qgoback'];
+      if (el.__qgoback_destroyed === void 0) {
+        destroy$5(el);
+      }
+      else {
+        delete el.__qgoback_destroyed;
+      }
+    }
+  };
+
+  var id = 0;
+  var offsetBase = void 0;
+
+  function getAbsolutePosition (el, resize) {
+    if (offsetBase === void 0) {
+      offsetBase = document.createElement('div');
+      offsetBase.style.cssText = 'position: absolute; left: 0; top: 0';
+      document.body.appendChild(offsetBase);
+    }
+
+    var boundingRect = el.getBoundingClientRect();
+    var baseRect = offsetBase.getBoundingClientRect();
+    var ref = window.getComputedStyle(el);
+    var marginLeft = ref.marginLeft;
+    var marginRight = ref.marginRight;
+    var marginTop = ref.marginTop;
+    var marginBottom = ref.marginBottom;
+    var marginH = parseInt(marginLeft, 10) + parseInt(marginRight, 10);
+    var marginV = parseInt(marginTop, 10) + parseInt(marginBottom, 10);
+
+    return {
+      left: boundingRect.left - baseRect.left,
+      top: boundingRect.top - baseRect.top,
+      width: boundingRect.right - boundingRect.left,
+      height: boundingRect.bottom - boundingRect.top,
+      widthM: boundingRect.right - boundingRect.left + (resize === true ? 0 : marginH),
+      heightM: boundingRect.bottom - boundingRect.top + (resize === true ? 0 : marginV),
+      marginH: resize === true ? marginH : 0,
+      marginV: resize === true ? marginV : 0
+    }
+  }
+
+  function getAbsoluteSize (el) {
+    return {
+      width: el.scrollWidth,
+      height: el.scrollHeight
+    }
+  }
+
+  // firefox rulez
+  var styleEdges = [ 'Top', 'Right', 'Bottom', 'Left' ];
+  var styleBorderRadiuses = [ 'borderTopLeftRadius', 'borderTopRightRadius', 'borderBottomRightRadius', 'borderBottomLeftRadius' ];
+
+  function getComputedStyle$1 (el, props) {
+    var style = window.getComputedStyle(el);
+    var fixed = {};
+    for (var i = 0; i < props.length; i++) {
+      var prop = props[i];
+
+      if (style[prop] === '') {
+        if (prop === 'cssText') {
+          var styleLen = style.length;
+          var val = '';
+
+          for (var i$1 = 0; i$1 < styleLen; i$1++) {
+            val += style[i$1] + ': ' + style[style[i$1]] + '; ';
+          }
+
+          fixed[prop] = val;
+        }
+        else if ([ 'borderWidth', 'borderStyle', 'borderColor' ].indexOf(prop) > -1) {
+          var suffix = prop.replace('border', '');
+          var val$1 = '';
+          for (var j = 0; j < styleEdges.length; j++) {
+            var subProp = 'border' + styleEdges[j] + suffix;
+            val$1 += style[subProp] + ' ';
+          }
+          fixed[prop] = val$1;
+        }
+        else if (prop === 'borderRadius') {
+          var val1 = '';
+          var val2 = '';
+          for (var j$1 = 0; j$1 < styleBorderRadiuses.length; j$1++) {
+            var val$2 = style[styleBorderRadiuses[j$1]].split(' ');
+            val1 += val$2[0] + ' ';
+            val2 += (val$2[1] === void 0 ? val$2[0] : val$2[1]) + ' ';
+          }
+          fixed[prop] = val1 + '/ ' + val2;
+        }
+        else {
+          fixed[prop] = style[prop];
+        }
+      }
+      else {
+        fixed[prop] = style[prop];
+      }
+    }
+
+    return fixed
+  }
+
+  function normalizeElements (opts) {
+    return {
+      from: opts.from,
+      to: opts.to !== void 0
+        ? opts.to
+        : opts.from
+    }
+  }
+
+  function normalizeOptions (options) {
+    if (typeof options === 'number') {
+      options = {
+        duration: options
+      };
+    }
+    else if (typeof options === 'function') {
+      options = {
+        onEnd: options
+      };
+    }
+
+    return Object.assign({}, options,
+
+      {waitFor: options.waitFor === void 0 ? 0 : options.waitFor,
+
+      duration: isNaN(options.duration) === true ? 300 : parseInt(options.duration, 10),
+      easing: typeof options.easing === 'string' && options.easing.length > 0 ? options.easing : 'ease-in-out',
+      delay: isNaN(options.delay) === true ? 0 : parseInt(options.delay, 10),
+      fill: typeof options.fill === 'string' && options.fill.length > 0 ? options.fill : 'none',
+
+      resize: options.resize === true,
+      useCSS: options.useCSS === true,
+      hideFromClone: options.hideFromClone === true,
+      keepToClone: options.keepToClone === true,
+
+      tween: options.tween === true,
+      tweenFromOpacity: isNaN(options.tweenFromOpacity) === true ? 0.6 : parseFloat(options.tweenFromOpacity),
+      tweenToOpacity: isNaN(options.tweenToOpacity) === true ? 0.5 : parseFloat(options.tweenToOpacity)})
+  }
+
+  function getElement (element) {
+    var type = typeof element;
+
+    return type === 'function'
+      ? element()
+      : (
+        type === 'string'
+          ? document.querySelector(element)
+          : element
+      )
+  }
+
+  function isValidElement (element) {
+    return element &&
+      element.ownerDocument === document &&
+      element.parentNode !== null
+  }
+
+  function morph (_options) {
+    var cancel = function () { return false; };
+    var cancelStatus = false;
+    var endElementTo = true;
+
+    var elements = normalizeElements(_options);
+    var options = normalizeOptions(_options);
+
+    var elFrom = getElement(elements.from);
+    if (isValidElement(elFrom) !== true) {
+      // we return a cancel function that return false, meaning the cancel function failed
+      return cancel
+    }
+    // we clean other morphs running on this element
+    typeof elFrom.qMorphCancel === 'function' && elFrom.qMorphCancel();
+
+    var animationFromClone = void 0;
+    var animationFromTween = void 0;
+    var animationToClone = void 0;
+    var animationTo = void 0;
+
+    var elFromParent = elFrom.parentNode;
+    var elFromNext = elFrom.nextElementSibling;
+
+    // we get the dimensions and characteristics
+    // of the parent of the initial element before changes
+    var elFromPosition = getAbsolutePosition(elFrom, options.resize);
+    var ref = getAbsoluteSize(elFromParent);
+    var elFromParentWidthBefore = ref.width;
+    var elFromParentHeightBefore = ref.height;
+    var ref$1 = getComputedStyle$1(elFrom, [ 'borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'backgroundColor', 'transform', 'position', 'cssText' ]);
+    var elFromBorderWidth = ref$1.borderWidth;
+    var elFromBorderStyle = ref$1.borderStyle;
+    var elFromBorderColor = ref$1.borderColor;
+    var elFromBorderRadius = ref$1.borderRadius;
+    var elFromBackground = ref$1.backgroundColor;
+    var elFromTransform = ref$1.transform;
+    var elFromPositioningType = ref$1.position;
+    var elFromCssText = ref$1.cssText;
+    var elFromClassSaved = elFrom.classList.toString();
+    var elFromStyleSaved = elFrom.style.cssText;
+
+    // we make a clone of the initial element and
+    // use it to display until the final element is ready
+    // and to change the occupied space during animation
+    var elFromClone = elFrom.cloneNode(true);
+    var elFromTween = options.tween === true ? elFrom.cloneNode(true) : void 0;
+
+    if (elFromTween !== void 0) {
+      elFromTween.className = elFromTween.classList.toString().split(' ').filter(function (c) { return /^bg-/.test(c) === false; }).join(' ');
+    }
+
+    // if the initial element is not going to be removed do not show the placeholder
+    options.hideFromClone === true && elFromClone.classList.add('q-morph--internal');
+
+    // prevent interaction with placeholder
+    elFromClone.setAttribute('aria-hidden', 'true');
+    elFromClone.style.transition = 'none';
+    elFromClone.style.animation = 'none';
+    elFromClone.style.pointerEvents = 'none';
+    elFromParent.insertBefore(elFromClone, elFromNext);
+
+    // we mark the element with its cleanup function
+    elFrom.qMorphCancel = function () {
+      cancelStatus = true;
+
+      // we clean the clone of the initial element
+      elFromClone.remove();
+      elFromTween !== void 0 && elFromTween.remove();
+
+      options.hideFromClone === true && elFromClone.classList.remove('q-morph--internal');
+
+      // we remove the cleanup function from the element
+      elFrom.qMorphCancel = void 0;
+    };
+
+    // will be called after Vue catches up with the changes done by _options.onToggle() function
+    var calculateFinalState = function () {
+      var elTo = getElement(elements.to);
+      if (cancelStatus === true || isValidElement(elTo) !== true) {
+        typeof elFrom.qMorphCancel === 'function' && elFrom.qMorphCancel();
+
+        return
+      }
+      // we clean other morphs running on this element
+      elFrom !== elTo && typeof elTo.qMorphCancel === 'function' && elTo.qMorphCancel();
+
+      // we hide the final element and the clone of the initial element
+      // we don't hide the final element if we want both it and the animated one visible
+      options.keepToClone !== true && elTo.classList.add('q-morph--internal');
+      elFromClone.classList.add('q-morph--internal');
+
+      // we get the dimensions of the parent of the initial element after changes
+      // the difference is how much we should animate the clone
+      var ref = getAbsoluteSize(elFromParent);
+      var elFromParentWidthAfter = ref.width;
+      var elFromParentHeightAfter = ref.height;
+
+      // we get the dimensions of the parent of the final element before changes
+      var ref$1 = getAbsoluteSize(elTo.parentNode);
+      var elToParentWidthBefore = ref$1.width;
+      var elToParentHeightBefore = ref$1.height;
+
+      // then we show the clone of the initial element if we don't want it hidden
+      options.hideFromClone !== true && elFromClone.classList.remove('q-morph--internal');
+
+      // we mark the element with its cleanup function
+      elTo.qMorphCancel = function () {
+        cancelStatus = true;
+
+        // we clean the clone of the initial element
+        elFromClone.remove();
+        elFromTween !== void 0 && elFromTween.remove();
+
+        options.hideFromClone === true && elFromClone.classList.remove('q-morph--internal');
+
+        // we show the final element
+        options.keepToClone !== true && elTo.classList.remove('q-morph--internal');
+
+        // we remove the cleanup function from the elements
+        elFrom.qMorphCancel = void 0;
+        elTo.qMorphCancel = void 0;
+      };
+
+      // will be called after waitFor (give time to render the final element)
+      var animate = function () {
+        if (cancelStatus === true) {
+          typeof elTo.qMorphCancel === 'function' && elTo.qMorphCancel();
+
+          return
+        }
+
+        // now the animation starts, so we only need the clone
+        // of the initial element as a spacer
+        // we also hide it to calculate the dimensions of the
+        // parent of the final element after the changes
+        if (options.hideFromClone !== true) {
+          elFromClone.classList.add('q-morph--internal');
+          elFromClone.innerHTML = '';
+          elFromClone.style.left = 0;
+          elFromClone.style.right = 'unset';
+          elFromClone.style.top = 0;
+          elFromClone.style.bottom = 'unset';
+          elFromClone.style.transform = 'none';
+        }
+
+        // we show the final element
+        if (options.keepToClone !== true) {
+          elTo.classList.remove('q-morph--internal');
+        }
+
+        // we get the dimensions of the parent of the final element after changes
+        // the difference is how much we should animate the clone
+        var elToParent = elTo.parentNode;
+        var ref = getAbsoluteSize(elToParent);
+        var elToParentWidthAfter = ref.width;
+        var elToParentHeightAfter = ref.height;
+
+        var elToClone = elTo.cloneNode(options.keepToClone);
+        elToClone.setAttribute('aria-hidden', 'true');
+        if (options.keepToClone !== true) {
+          elToClone.style.left = 0;
+          elToClone.style.right = 'unset';
+          elToClone.style.top = 0;
+          elToClone.style.bottom = 'unset';
+          elToClone.style.transform = 'none';
+          elToClone.style.pointerEvents = 'none';
+        }
+        elToClone.classList.add('q-morph--internal');
+
+        // if elFrom is the same as elTo the next element is elFromClone
+        var elToNext = elTo === elFrom && elFromParent === elToParent ? elFromClone : elTo.nextElementSibling;
+        elToParent.insertBefore(elToClone, elToNext);
+
+        var ref$1 = getComputedStyle$1(elTo, [ 'borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'backgroundColor', 'transform', 'position', 'cssText' ]);
+        var elToBorderWidth = ref$1.borderWidth;
+        var elToBorderStyle = ref$1.borderStyle;
+        var elToBorderColor = ref$1.borderColor;
+        var elToBorderRadius = ref$1.borderRadius;
+        var elToBackground = ref$1.backgroundColor;
+        var elToTransform = ref$1.transform;
+        var elToPositioningType = ref$1.position;
+        var elToCssText = ref$1.cssText;
+        var elToClassSaved = elTo.classList.toString();
+        var elToStyleSaved = elTo.style.cssText;
+
+        // we set the computed styles on the element (to be able to remove classes)
+        elTo.style.cssText = elToCssText;
+        elTo.style.transform = 'none';
+        elTo.style.animation = 'none';
+        elTo.style.transition = 'none';
+        // we strip the background classes (background color can no longer be animated if !important is used)
+        elTo.className = elToClassSaved.split(' ').filter(function (c) { return /^bg-/.test(c) === false; }).join(' ');
+
+        var elToPosition = getAbsolutePosition(elTo, options.resize);
+
+        var deltaX = elFromPosition.left - elToPosition.left;
+        var deltaY = elFromPosition.top - elToPosition.top;
+        var scaleX = elFromPosition.width / (elToPosition.width > 0 ? elToPosition.width : 10);
+        var scaleY = elFromPosition.height / (elToPosition.height > 0 ? elToPosition.height : 100);
+
+        var elFromParentWidthDiff = elFromParentWidthBefore - elFromParentWidthAfter;
+        var elFromParentHeightDiff = elFromParentHeightBefore - elFromParentHeightAfter;
+        var elToParentWidthDiff = elToParentWidthAfter - elToParentWidthBefore;
+        var elToParentHeightDiff = elToParentHeightAfter - elToParentHeightBefore;
+
+        var elFromCloneWidth = Math.max(elFromPosition.widthM, elFromParentWidthDiff);
+        var elFromCloneHeight = Math.max(elFromPosition.heightM, elFromParentHeightDiff);
+        var elToCloneWidth = Math.max(elToPosition.widthM, elToParentWidthDiff);
+        var elToCloneHeight = Math.max(elToPosition.heightM, elToParentHeightDiff);
+
+        var elSharedSize = elFrom === elTo &&
+          [ 'absolute', 'fixed' ].includes(elToPositioningType) === false &&
+          [ 'absolute', 'fixed' ].includes(elFromPositioningType) === false;
+
+        // if the final element has fixed position or if a parent
+        // has fixed position we need to animate it as fixed
+        var elToNeedsFixedPosition = elToPositioningType === 'fixed';
+        var parent = elToParent;
+        while (elToNeedsFixedPosition !== true && parent !== document) {
+          elToNeedsFixedPosition = window.getComputedStyle(parent).position === 'fixed';
+          parent = parent.parentNode;
+        }
+
+        // we show the spacer for the initial element
+        if (options.hideFromClone !== true) {
+          elFromClone.style.display = 'block';
+          elFromClone.style.flex = '0 0 auto';
+          elFromClone.style.opacity = 0;
+          elFromClone.style.minWidth = 'unset';
+          elFromClone.style.maxWidth = 'unset';
+          elFromClone.style.minHeight = 'unset';
+          elFromClone.style.maxHeight = 'unset';
+          elFromClone.classList.remove('q-morph--internal');
+        }
+
+        // we show the spacer for the final element
+        if (options.keepToClone !== true) {
+          elToClone.style.display = 'block';
+          elToClone.style.flex = '0 0 auto';
+          elToClone.style.opacity = 0;
+          elToClone.style.minWidth = 'unset';
+          elToClone.style.maxWidth = 'unset';
+          elToClone.style.minHeight = 'unset';
+          elToClone.style.maxHeight = 'unset';
+        }
+        elToClone.classList.remove('q-morph--internal');
+
+        // we apply classes specified by user
+        if (typeof options.classes === 'string') {
+          elTo.className += ' ' + options.classes;
+        }
+
+        // we apply styles specified by user
+        if (typeof options.style === 'string') {
+          elTo.style.cssText += ' ' + options.style;
+        }
+        else if (options.style === Object(options.style)) {
+          for (var prop in options.style) {
+            elTo.style[prop] = options.style[prop];
+          }
+        }
+
+        // we position the morphing element
+        // if we use fixed position for the final element we need to adjust for scroll
+        var documentScroll = elToNeedsFixedPosition === true
+          ? document.documentElement
+          : { scrollLeft: 0, scrollTop: 0 };
+        elTo.style.position = elToNeedsFixedPosition === true ? 'fixed' : 'absolute';
+        elTo.style.left = (elToPosition.left - documentScroll.scrollLeft) + "px";
+        elTo.style.right = 'unset';
+        elTo.style.top = (elToPosition.top - documentScroll.scrollTop) + "px";
+        elTo.style.margin = 0;
+
+        if (options.resize === true) {
+          elTo.style.minWidth = 'unset';
+          elTo.style.maxWidth = 'unset';
+          elTo.style.minHeight = 'unset';
+          elTo.style.maxHeight = 'unset';
+          elTo.style.overflow = 'hidden';
+          elTo.style.overflowX = 'hidden';
+          elTo.style.overflowY = 'hidden';
+        }
+
+        document.body.appendChild(elTo);
+
+        if (elFromTween !== void 0) {
+          elFromTween.style.cssText = elFromCssText;
+          elFromTween.style.transform = 'none';
+          elFromTween.style.animation = 'none';
+          elFromTween.style.transition = 'none';
+
+          elFromTween.style.position = elTo.style.position;
+          elFromTween.style.left = (elFromPosition.left - documentScroll.scrollLeft) + "px";
+          elFromTween.style.right = 'unset';
+          elFromTween.style.top = (elFromPosition.top - documentScroll.scrollTop) + "px";
+          elFromTween.style.margin = 0;
+          elFromTween.style.pointerEvents = 'none';
+
+          if (options.resize === true) {
+            elFromTween.style.minWidth = 'unset';
+            elFromTween.style.maxWidth = 'unset';
+            elFromTween.style.minHeight = 'unset';
+            elFromTween.style.maxHeight = 'unset';
+            elFromTween.style.overflow = 'hidden';
+            elFromTween.style.overflowX = 'hidden';
+            elFromTween.style.overflowY = 'hidden';
+          }
+
+          document.body.appendChild(elFromTween);
+        }
+
+        var commonCleanup = function (aborted) {
+          // we put the element back in it's place
+          // and restore the styles and classes
+          if (elFrom === elTo && endElementTo !== true) {
+            elTo.style.cssText = elFromStyleSaved;
+            elTo.className = elFromClassSaved;
+          }
+          else {
+            elTo.style.cssText = elToStyleSaved;
+            elTo.className = elToClassSaved;
+          }
+          elToClone.parentNode === elToParent && elToParent.insertBefore(elTo, elToClone);
+
+          // we clean the spacers
+          elFromClone.remove();
+          elToClone.remove();
+          elFromTween !== void 0 && elFromTween.remove();
+
+          // cancel will be no longer available
+          cancel = function () { return false; };
+
+          elFrom.qMorphCancel = void 0;
+          elTo.qMorphCancel = void 0;
+
+          // we are ready
+          if (typeof options.onEnd === 'function') {
+            options.onEnd(endElementTo === true ? 'to' : 'from', aborted === true);
+          }
+        };
+
+        if (options.useCSS !== true && typeof elTo.animate === 'function') {
+          var resizeFrom = options.resize === true
+            ? {
+              transform: ("translate(" + deltaX + "px, " + deltaY + "px)"),
+              width: (elFromCloneWidth + "px"),
+              height: (elFromCloneHeight + "px")
+            }
+            : {
+              transform: ("translate(" + deltaX + "px, " + deltaY + "px) scale(" + scaleX + ", " + scaleY + ")")
+            };
+          var resizeTo = options.resize === true
+            ? {
+              width: (elToCloneWidth + "px"),
+              height: (elToCloneHeight + "px")
+            }
+            : {};
+          var resizeFromTween = options.resize === true
+            ? {
+              width: (elFromCloneWidth + "px"),
+              height: (elFromCloneHeight + "px")
+            }
+            : {};
+          var resizeToTween = options.resize === true
+            ? {
+              transform: ("translate(" + (-1 * deltaX) + "px, " + (-1 * deltaY) + "px)"),
+              width: (elToCloneWidth + "px"),
+              height: (elToCloneHeight + "px")
+            }
+            : {
+              transform: ("translate(" + (-1 * deltaX) + "px, " + (-1 * deltaY) + "px) scale(" + (1 / scaleX) + ", " + (1 / scaleY) + ")")
+            };
+          var tweenFrom = elFromTween !== void 0
+            ? { opacity: options.tweenToOpacity }
+            : { backgroundColor: elFromBackground };
+          var tweenTo = elFromTween !== void 0
+            ? { opacity: 1 }
+            : { backgroundColor: elToBackground };
+          animationTo = elTo.animate([
+            Object.assign({}, {margin: 0,
+              borderWidth: elFromBorderWidth,
+              borderStyle: elFromBorderStyle,
+              borderColor: elFromBorderColor,
+              borderRadius: elFromBorderRadius,
+              transformOrigin: '0 0'},
+              resizeFrom,
+              tweenFrom),
+            Object.assign({}, {margin: 0,
+              borderWidth: elToBorderWidth,
+              borderStyle: elToBorderStyle,
+              borderColor: elToBorderColor,
+              borderRadius: elToBorderRadius,
+              transformOrigin: '0 0',
+              transform: elToTransform},
+              resizeTo,
+              tweenTo)
+          ], {
+            duration: options.duration,
+            easing: options.easing,
+            fill: options.fill,
+            delay: options.delay
+          });
+
+          animationFromTween = elFromTween === void 0 ? void 0 : elFromTween.animate([
+            Object.assign({}, {opacity: options.tweenFromOpacity,
+              margin: 0,
+              borderWidth: elFromBorderWidth,
+              borderStyle: elFromBorderStyle,
+              borderColor: elFromBorderColor,
+              borderRadius: elFromBorderRadius,
+              transformOrigin: '0 0',
+              transform: elFromTransform},
+              resizeFromTween),
+            Object.assign({}, {opacity: 0,
+              margin: 0,
+              borderWidth: elToBorderWidth,
+              borderStyle: elToBorderStyle,
+              borderColor: elToBorderColor,
+              borderRadius: elToBorderRadius,
+              transformOrigin: '0 0'},
+              resizeToTween)
+          ], {
+            duration: options.duration,
+            easing: options.easing,
+            fill: options.fill,
+            delay: options.delay
+          });
+
+          animationFromClone = options.hideFromClone === true || elSharedSize === true ? void 0 : elFromClone.animate([
+            {
+              margin: ((elFromParentHeightDiff < 0 ? elFromParentHeightDiff / 2 : 0) + "px " + (elFromParentWidthDiff < 0 ? elFromParentWidthDiff / 2 : 0) + "px"),
+              width: ((elFromCloneWidth + elFromPosition.marginH) + "px"),
+              height: ((elFromCloneHeight + elFromPosition.marginV) + "px")
+            },
+            {
+              margin: 0,
+              width: 0,
+              height: 0
+            }
+          ], {
+            duration: options.duration,
+            easing: options.easing,
+            fill: options.fill,
+            delay: options.delay
+          });
+
+          animationToClone = options.keepToClone === true ? void 0 : elToClone.animate([
+            elSharedSize === true
+              ? {
+                margin: ((elFromParentHeightDiff < 0 ? elFromParentHeightDiff / 2 : 0) + "px " + (elFromParentWidthDiff < 0 ? elFromParentWidthDiff / 2 : 0) + "px"),
+                width: ((elFromCloneWidth + elFromPosition.marginH) + "px"),
+                height: ((elFromCloneHeight + elFromPosition.marginV) + "px")
+              }
+              : {
+                margin: 0,
+                width: 0,
+                height: 0
+              },
+            {
+              margin: ((elToParentHeightDiff < 0 ? elToParentHeightDiff / 2 : 0) + "px " + (elToParentWidthDiff < 0 ? elToParentWidthDiff / 2 : 0) + "px"),
+              width: ((elToCloneWidth + elToPosition.marginH) + "px"),
+              height: ((elToCloneHeight + elToPosition.marginV) + "px")
+            }
+          ], {
+            duration: options.duration,
+            easing: options.easing,
+            fill: options.fill,
+            delay: options.delay
+          });
+
+          var cleanup = function (abort) {
+            animationFromClone !== void 0 && animationFromClone.cancel();
+            animationFromTween !== void 0 && animationFromTween.cancel();
+            animationToClone !== void 0 && animationToClone.cancel();
+            animationTo.cancel();
+
+            animationTo.removeEventListener('finish', cleanup);
+            animationTo.removeEventListener('cancel', cleanup);
+
+            commonCleanup(abort);
+
+            // we clean the animations
+            animationFromClone = void 0;
+            animationFromTween = void 0;
+            animationToClone = void 0;
+            animationTo = void 0;
+          };
+
+          elFrom.qMorphCancel = function () {
+            elFrom.qMorphCancel = void 0;
+            cancelStatus = true;
+            cleanup();
+          };
+          elTo.qMorphCancel = function () {
+            elTo.qMorphCancel = void 0;
+            cancelStatus = true;
+            cleanup();
+          };
+
+          animationTo.addEventListener('finish', cleanup);
+          animationTo.addEventListener('cancel', cleanup);
+
+          cancel = function (abort) {
+            // we are not in a morph that we can cancel
+            if (cancelStatus === true || animationTo === void 0) {
+              return false
+            }
+
+            if (abort === true) {
+              cleanup(true);
+              return true
+            }
+
+            endElementTo = endElementTo !== true;
+
+            animationFromClone !== void 0 && animationFromClone.reverse();
+            animationFromTween !== void 0 && animationFromTween.reverse();
+            animationToClone !== void 0 && animationToClone.reverse();
+            animationTo.reverse();
+
+            return true
+          };
+        }
+        else {
+          var qAnimId = "q-morph-anim-" + (++id);
+          var style = document.createElement('style');
+          var resizeFrom$1 = options.resize === true
+            ? ("\n            transform: translate(" + deltaX + "px, " + deltaY + "px);\n            width: " + elFromCloneWidth + "px;\n            height: " + elFromCloneHeight + "px;\n          ")
+            : ("transform: translate(" + deltaX + "px, " + deltaY + "px) scale(" + scaleX + ", " + scaleY + ");");
+          var resizeTo$1 = options.resize === true
+            ? ("\n            width: " + elToCloneWidth + "px;\n            height: " + elToCloneHeight + "px;\n          ")
+            : '';
+          var resizeFromTween$1 = options.resize === true
+            ? ("\n            width: " + elFromCloneWidth + "px;\n            height: " + elFromCloneHeight + "px;\n          ")
+            : '';
+          var resizeToTween$1 = options.resize === true
+            ? ("\n            transform: translate(" + (-1 * deltaX) + "px, " + (-1 * deltaY) + "px);\n            width: " + elToCloneWidth + "px;\n            height: " + elToCloneHeight + "px;\n          ")
+            : ("transform: translate(" + (-1 * deltaX) + "px, " + (-1 * deltaY) + "px) scale(" + (1 / scaleX) + ", " + (1 / scaleY) + ");");
+          var tweenFrom$1 = elFromTween !== void 0
+            ? ("opacity: " + (options.tweenToOpacity) + ";")
+            : ("background-color: " + elFromBackground + ";");
+          var tweenTo$1 = elFromTween !== void 0
+            ? 'opacity: 1;'
+            : ("background-color: " + elToBackground + ";");
+          var keyframesFromTween = elFromTween === void 0
+            ? ''
+            : ("\n            @keyframes " + qAnimId + "-from-tween {\n              0% {\n                opacity: " + (options.tweenFromOpacity) + ";\n                margin: 0;\n                border-width: " + elFromBorderWidth + ";\n                border-style: " + elFromBorderStyle + ";\n                border-color: " + elFromBorderColor + ";\n                border-radius: " + elFromBorderRadius + ";\n                transform-origin: 0 0;\n                transform: " + elFromTransform + ";\n                " + resizeFromTween$1 + "\n              }\n\n              100% {\n                opacity: 0;\n                margin: 0;\n                border-width: " + elToBorderWidth + ";\n                border-style: " + elToBorderStyle + ";\n                border-color: " + elToBorderColor + ";\n                border-radius: " + elToBorderRadius + ";\n                transform-origin: 0 0;\n                " + resizeToTween$1 + "\n              }\n            }\n          ");
+          var keyframesFrom = options.hideFromClone === true || elSharedSize === true
+            ? ''
+            : ("\n            @keyframes " + qAnimId + "-from {\n              0% {\n                margin: " + (elFromParentHeightDiff < 0 ? elFromParentHeightDiff / 2 : 0) + "px " + (elFromParentWidthDiff < 0 ? elFromParentWidthDiff / 2 : 0) + "px;\n                width: " + (elFromCloneWidth + elFromPosition.marginH) + "px;\n                height: " + (elFromCloneHeight + elFromPosition.marginV) + "px;\n              }\n\n              100% {\n                margin: 0;\n                width: 0;\n                height: 0;\n              }\n            }\n          ");
+          var keyframeToStart = elSharedSize === true
+            ? ("\n            margin: " + (elFromParentHeightDiff < 0 ? elFromParentHeightDiff / 2 : 0) + "px " + (elFromParentWidthDiff < 0 ? elFromParentWidthDiff / 2 : 0) + "px;\n            width: " + (elFromCloneWidth + elFromPosition.marginH) + "px;\n            height: " + (elFromCloneHeight + elFromPosition.marginV) + "px;\n          ")
+            : "\n            margin: 0;\n            width: 0;\n            height: 0;\n          ";
+          var keyframesTo = options.keepToClone === true
+            ? ''
+            : ("\n            @keyframes " + qAnimId + "-to {\n              0% {\n                " + keyframeToStart + "\n              }\n\n              100% {\n                margin: " + (elToParentHeightDiff < 0 ? elToParentHeightDiff / 2 : 0) + "px " + (elToParentWidthDiff < 0 ? elToParentWidthDiff / 2 : 0) + "px;\n                width: " + (elToCloneWidth + elToPosition.marginH) + "px;\n                height: " + (elToCloneHeight + elToPosition.marginV) + "px;\n              }\n            }\n          ");
+          style.innerHTML = "\n          @keyframes " + qAnimId + " {\n            0% {\n              margin: 0;\n              border-width: " + elFromBorderWidth + ";\n              border-style: " + elFromBorderStyle + ";\n              border-color: " + elFromBorderColor + ";\n              border-radius: " + elFromBorderRadius + ";\n              background-color: " + elFromBackground + ";\n              transform-origin: 0 0;\n              " + resizeFrom$1 + "\n              " + tweenFrom$1 + "\n            }\n\n            100% {\n              margin: 0;\n              border-width: " + elToBorderWidth + ";\n              border-style: " + elToBorderStyle + ";\n              border-color: " + elToBorderColor + ";\n              border-radius: " + elToBorderRadius + ";\n              background-color: " + elToBackground + ";\n              transform-origin: 0 0;\n              transform: " + elToTransform + ";\n              " + resizeTo$1 + "\n              " + tweenTo$1 + "\n            }\n          }\n\n          " + keyframesFrom + "\n\n          " + keyframesFromTween + "\n\n          " + keyframesTo + "\n        ";
+          document.head.appendChild(style);
+
+          var animationDirection = 'normal';
+
+          elFromClone.style.animation = (options.duration) + "ms " + (options.easing) + " " + (options.delay) + "ms " + animationDirection + " " + (options.fill) + " " + qAnimId + "-from";
+          if (elFromTween !== void 0) {
+            elFromTween.style.animation = (options.duration) + "ms " + (options.easing) + " " + (options.delay) + "ms " + animationDirection + " " + (options.fill) + " " + qAnimId + "-from-tween";
+          }
+          elToClone.style.animation = (options.duration) + "ms " + (options.easing) + " " + (options.delay) + "ms " + animationDirection + " " + (options.fill) + " " + qAnimId + "-to";
+          elTo.style.animation = (options.duration) + "ms " + (options.easing) + " " + (options.delay) + "ms " + animationDirection + " " + (options.fill) + " " + qAnimId;
+
+          var cleanup$1 = function (ev) {
+            if (ev === Object(ev) && ev.animationName !== qAnimId) {
+              return
+            }
+
+            elTo.removeEventListener('animationend', cleanup$1);
+            elTo.removeEventListener('animationcancel', cleanup$1);
+
+            commonCleanup();
+
+            // we clean the animations
+            style.remove();
+          };
+
+          elFrom.qMorphCancel = function () {
+            elFrom.qMorphCancel = void 0;
+            cancelStatus = true;
+            cleanup$1();
+          };
+          elTo.qMorphCancel = function () {
+            elTo.qMorphCancel = void 0;
+            cancelStatus = true;
+            cleanup$1();
+          };
+
+          elTo.addEventListener('animationend', cleanup$1);
+          elTo.addEventListener('animationcancel', cleanup$1);
+
+          cancel = function (abort) {
+            // we are not in a morph that we can cancel
+            if (cancelStatus === true || !elTo || !elFromClone || !elToClone) {
+              return false
+            }
+
+            if (abort === true) {
+              cleanup$1();
+
+              return true
+            }
+
+            endElementTo = endElementTo !== true;
+
+            animationDirection = animationDirection === 'normal' ? 'reverse' : 'normal';
+
+            elFromClone.style.animationDirection = animationDirection;
+            elFromTween.style.animationDirection = animationDirection;
+            elToClone.style.animationDirection = animationDirection;
+            elTo.style.animationDirection = animationDirection;
+
+            return true
+          };
+        }
+      };
+
+      if (
+        options.waitFor > 0 ||
+        options.waitFor === 'transitionend' ||
+        (options.waitFor === Object(options.waitFor) && typeof options.waitFor.then === 'function')
+      ) {
+        var delayPromise = options.waitFor > 0
+          ? new Promise(function (resolve) { return setTimeout(resolve, options.waitFor); })
+          : (
+            options.waitFor === 'transitionend'
+              ? new Promise(function (resolve) {
+                var timer = setTimeout(function () {
+                  endFn();
+                }, 400);
+
+                var endFn = function (ev) {
+                  clearTimeout(timer);
+
+                  if (elTo) {
+                    elTo.removeEventListener('transitionend', endFn);
+                    elTo.removeEventListener('transitioncancel', endFn);
+                  }
+
+                  resolve();
+                };
+
+                elTo.addEventListener('transitionend', endFn);
+                elTo.addEventListener('transitioncancel', endFn);
+              })
+              : options.waitFor
+          );
+
+        delayPromise
+          .then(animate)
+          .catch(function () {
+            typeof elTo.qMorphCancel === 'function' && elTo.qMorphCancel();
+          });
+      }
+      else {
+        animate();
+      }
+    };
+
+    typeof _options.onToggle === 'function' && _options.onToggle();
+    requestAnimationFrame(calculateFinalState);
+
+    // we return the cancel function
+    // returns:
+    //   false if the cancel cannot be performed (the morph ended already or has not started)
+    //   true else
+    return function (abort) { return cancel(abort); }
+  }
+
+  var morphGroups = {};
+  var props = [
+    'duration', 'delay', 'easing', 'fill',
+    'classes', 'style', 'duration', 'resize',
+    'useCSS', 'hideFromClone', 'keepToClone', 'tween',
+    'tweenFromOpacity', 'tweenToOpacity',
+    'waitFor', 'onEnd'
+  ];
+  var mods = [
+    'resize', 'useCSS', 'hideFromClone', 'keepToClone', 'tween'
+  ];
+
+  function changeClass (ctx, action) {
+    if (ctx.clsAction !== action) {
+      ctx.clsAction = action;
+      ctx.el.classList[action]('q-morph--invisible');
+    }
+  }
+
+  function trigger (group) {
+    if (group.animating === true || group.queue.length < 2) {
+      return
+    }
+
+    var ref = group.queue;
+    var from = ref[0];
+    var to = ref[1];
+
+    group.animating = true;
+    from.animating = true;
+    to.animating = true;
+
+    changeClass(from, 'remove');
+    changeClass(to, 'remove');
+
+    var cancelFn = morph(Object.assign({}, {from: from.el,
+      to: to.el,
+      onToggle: function onToggle () {
+        changeClass(from, 'add');
+        changeClass(to, 'remove');
+      }},
+      to.opts,
+      {onEnd: function onEnd (dir, aborted) {
+        to.opts.onEnd !== void 0 && to.opts.onEnd(dir, aborted);
+
+        if (aborted === true) {
+          return
+        }
+
+        from.animating = false;
+        to.animating = false;
+
+        group.animating = false;
+        group.cancel = void 0;
+        group.queue.shift();
+
+        trigger(group);
+      }}));
+
+    group.cancel = function () {
+      cancelFn(true); // abort
+      group.cancel = void 0;
+    };
+  }
+
+  function updateModifiers$1 (mod, ctx) {
+    var opts = ctx.opts;
+
+    mods.forEach(function (name) {
+      opts[name] = mod[name] === true;
+    });
+  }
+
+  function insertArgs (arg, ctx) {
+    var opts = typeof arg === 'string' && arg.length > 0
+      ? arg.split(':') : [];
+
+    ctx.name = opts[0];
+    ctx.group = opts[1];
+
+    Object.assign(ctx.opts, {
+      duration: isNaN(opts[2]) === true
+        ? 300
+        : parseFloat(opts[2]),
+      waitFor: opts[3]
+    });
+  }
+
+  function updateArgs (arg, ctx) {
+    if (arg.group !== void 0) {
+      ctx.group = arg.group;
+    }
+    if (arg.name !== void 0) {
+      ctx.name = arg.name;
+    }
+
+    var opts = ctx.opts;
+
+    props.forEach(function (name) {
+      if (arg[name] !== void 0) {
+        opts[name] = arg[name];
+      }
+    });
+  }
+
+  function updateModel (name, ctx) {
+    if (ctx.name === name) {
+      var group = morphGroups[ctx.group];
+
+      // if group is not registered
+      if (group === void 0) {
+        morphGroups[ctx.group] = {
+          name: ctx.group,
+          model: name,
+          queue: [ ctx ],
+          animating: false
+        };
+
+        changeClass(ctx, 'remove');
+      }
+      // if model changed
+      else if (group.model !== name) {
+        group.model = name;
+        group.queue.push(ctx);
+
+        if (group.animating === false && group.queue.length === 2) {
+          trigger(group);
+        }
+      }
+
+      return
+    }
+
+    if (ctx.animating === false) {
+      changeClass(ctx, 'add');
+    }
+  }
+
+  function updateValue (ctx, value) {
+    var model;
+
+    if (Object(value) === value) {
+      model = '' + value.model;
+      updateArgs(value, ctx);
+      updateModifiers$1(value, ctx);
+    }
+    else {
+      model = '' + value;
+    }
+
+    if (model !== ctx.model) {
+      ctx.model = model;
+      updateModel(model, ctx);
+    }
+    else if (ctx.animating === false && ctx.clsAction !== void 0) {
+      // ensure HMR
+      ctx.el.classList[ctx.clsAction]('q-morph--invisible');
+    }
+  }
+
+  function destroy$6 (el) {
+    var ctx = el.__qmorph;
+
+    if (ctx !== void 0) {
+      var group = morphGroups[ctx.group];
+
+      if (group !== void 0) {
+        var index = group.queue.indexOf(ctx);
+
+        if (index !== -1) {
+          group.queue = group.queue.filter(function (item) { return item !== ctx; });
+
+          if (group.queue.length === 0) {
+            group.cancel !== void 0 && group.cancel();
+            delete morphGroups[ctx.group];
+          }
+        }
+      }
+
+      if (ctx.clsAction === 'add') {
+        el.classList.remove('q-morph--invisible');
+      }
+
+      delete el.__qmorph;
+    }
+  }
+
+  var Morph = {
+    name: 'morph',
+
+    inserted: function inserted (el, binding) {
+      if (el.__qmorph !== void 0) {
+        destroy$6(el);
+        el.__qmorph_destroyed = true;
+      }
+
+      var ctx = {
+        el: el,
+        animating: false,
+        opts: {}
+      };
+
+      updateModifiers$1(binding.modifiers, ctx);
+      insertArgs(binding.arg, ctx);
+      updateValue(ctx, binding.value);
+
+      el.__qmorph = ctx;
+    },
+
+    update: function update (el, binding) {
+      var ctx = el.__qmorph;
+      ctx !== void 0 && updateValue(ctx, binding.value);
+    },
+
+    unbind: function unbind (el) {
+      if (el.__qmorph_destroyed === void 0) {
+        destroy$6(el);
+      }
+      else {
+        delete el.__qmorph_destroyed;
       }
     }
   };
 
   function objectWithoutProperties (obj, exclude) { var target = {}; for (var k in obj) if (Object.prototype.hasOwnProperty.call(obj, k) && exclude.indexOf(k) === -1) target[k] = obj[k]; return target; }
-
   var defaultCfg$1 = {
     childList: true,
     subtree: true,
@@ -32586,47 +34763,23 @@
     characterDataOldValue: true
   };
 
-  function update$1 (el, ctx, ref) {
-    var ref_modifiers = ref.modifiers;
-    var once = ref_modifiers.once;
-    var rest = objectWithoutProperties( ref_modifiers, ["once"] );
-    var mod = rest;
-    var value = ref.value;
+  function update$1 (el, ctx, value) {
+    ctx.handler = value;
+    ctx.observer !== void 0 && ctx.observer.disconnect();
 
-    var changed;
-
-    ctx.once = once;
-
-    if (ctx.handler !== value) {
-      changed = true;
-      ctx.handler = value;
-    }
-
-    if (ctx.opts === void 0 || isDeepEqual(mod, ctx.mod) === false) {
-      changed = true;
-      ctx.mod = mod;
-      ctx.opts = Object.keys(mod).length === 0
-        ? defaultCfg$1
-        : mod;
-    }
-
-    if (changed === true) {
-      ctx.observer !== void 0 && ctx.observer.disconnect();
-
-      ctx.observer = new MutationObserver(function (list) {
-        if (typeof ctx.handler === 'function') {
-          var res = ctx.handler(list);
-          if (res === false || ctx.once === true) {
-            destroy$1(el);
-          }
+    ctx.observer = new MutationObserver(function (list) {
+      if (typeof ctx.handler === 'function') {
+        var res = ctx.handler(list);
+        if (res === false || ctx.once === true) {
+          destroy$7(el);
         }
-      });
+      }
+    });
 
-      ctx.observer.observe(el, ctx.opts);
-    }
+    ctx.observer.observe(el, ctx.opts);
   }
 
-  function destroy$1 (el) {
+  function destroy$7 (el) {
     var ctx = el.__qmutation;
 
     if (ctx !== void 0) {
@@ -32638,21 +34791,51 @@
   var Mutation = {
     name: 'mutation',
 
-    inserted: function inserted (el, binding) {
-      var ctx = {};
-      update$1(el, ctx, binding);
+    inserted: function inserted (el, ref) {
+      var ref_modifiers = ref.modifiers;
+      var once = ref_modifiers.once;
+      var rest = objectWithoutProperties( ref_modifiers, ["once"] );
+      var mod = rest;
+      var value = ref.value;
+
+      if (el.__qmutation !== void 0) {
+        destroy$7(el);
+        el.__qmutation_destroyed = true;
+      }
+
+      var ctx = {
+        once: once,
+        opts: Object.keys(mod).length === 0
+          ? defaultCfg$1
+          : mod
+      };
+
+      update$1(el, ctx, value);
+
       el.__qmutation = ctx;
     },
 
-    update: function update$1$1 (el, binding) {
+    update: function update$1$1 (el, ref) {
+      var oldValue = ref.oldValue;
+      var value = ref.value;
+
       var ctx = el.__qmutation;
-      ctx !== void 0 && update$1(el, ctx, binding);
+      if (ctx !== void 0 && oldValue !== value) {
+        update$1(el, ctx, value);
+      }
     },
 
-    unbind: destroy$1
+    unbind: function unbind (el) {
+      if (el.__qmutation_destroyed === void 0) {
+        destroy$7(el);
+      }
+      else {
+        delete el.__qmutation_destroyed;
+      }
+    }
   };
 
-  function updateBinding (ctx, ref) {
+  function update$2 (ctx, ref) {
     var value = ref.value;
     var oldValue = ref.oldValue;
 
@@ -32668,11 +34851,25 @@
     }
   }
 
+  function destroy$8 (el) {
+    var ctx = el.__qscrollfire;
+    if (ctx !== void 0) {
+      ctx.scrollTarget.removeEventListener('scroll', ctx.scroll, listenOpts.passive);
+      delete el.__qscrollfire;
+    }
+  }
+
   var ScrollFire = {
     name: 'scroll-fire',
 
-    bind: function bind (el) {
+    inserted: function inserted (el, binding) {
+      if (el.__qscrollfire !== void 0) {
+        destroy$8(el);
+        el.__qscrollfire_destroyed = true;
+      }
+
       var ctx = {
+        scrollTarget: getScrollTarget(el),
         scroll: debounce(function () {
           var containerBottom, elBottom;
 
@@ -32692,35 +34889,28 @@
         }, 25)
       };
 
-      if (el.__qscrollfire) {
-        el.__qscrollfire_old = el.__qscrollfire;
-      }
+      update$2(ctx, binding);
 
       el.__qscrollfire = ctx;
     },
 
-    inserted: function inserted (el, binding) {
-      var ctx = el.__qscrollfire;
-      ctx.scrollTarget = getScrollTarget(el);
-      updateBinding(ctx, binding);
-    },
-
-    update: function update (el, binding) {
+    update: function update$1 (el, binding) {
       if (el.__qscrollfire !== void 0 && binding.value !== binding.oldValue) {
-        updateBinding(el.__qscrollfire, binding);
+        update$2(el.__qscrollfire, binding);
       }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qscrollfire_old || el.__qscrollfire;
-      if (ctx !== void 0) {
-        ctx.scrollTarget.removeEventListener('scroll', ctx.scroll, listenOpts.passive);
-        delete el[el.__qscrollfire_old ? '__qscrollfire_old' : '__qscrollfire'];
+      if (el.__qscrollfire_destroyed === void 0) {
+        destroy$8(el);
+      }
+      else {
+        delete el.__qscrollfire_destroyed;
       }
     }
   };
 
-  function updateBinding$1 (ctx, ref) {
+  function update$3 (ctx, ref) {
     var value = ref.value;
     var oldValue = ref.oldValue;
 
@@ -32735,11 +34925,25 @@
     }
   }
 
+  function destroy$9 (el) {
+    var ctx = el.__qscroll;
+    if (ctx !== void 0) {
+      ctx.scrollTarget.removeEventListener('scroll', ctx.scroll, listenOpts.passive);
+      delete el.__qscroll;
+    }
+  }
+
   var Scroll = {
     name: 'scroll',
 
-    bind: function bind (el) {
+    inserted: function inserted (el, binding) {
+      if (el.__qscroll !== void 0) {
+        destroy$9(el);
+        el.__qscroll_destroyed = true;
+      }
+
       var ctx = {
+        scrollTarget: getScrollTarget(el),
         scroll: function scroll () {
           ctx.handler(
             getScrollPosition(ctx.scrollTarget),
@@ -32748,56 +34952,37 @@
         }
       };
 
-      if (el.__qscroll) {
-        el.__qscroll_old = el.__qscroll;
-      }
+      update$3(ctx, binding);
 
       el.__qscroll = ctx;
     },
 
-    inserted: function inserted (el, binding) {
-      var ctx = el.__qscroll;
-      ctx.scrollTarget = getScrollTarget(el);
-      updateBinding$1(ctx, binding);
-    },
-
-    update: function update (el, binding) {
+    update: function update$1 (el, binding) {
       if (el.__qscroll !== void 0 && binding.oldValue !== binding.value) {
-        updateBinding$1(el.__qscroll, binding);
+        update$3(el.__qscroll, binding);
       }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qscroll_old || el.__qscroll;
-      if (ctx !== void 0) {
-        ctx.scrollTarget.removeEventListener('scroll', ctx.scroll, listenOpts.passive);
-        delete el[el.__qscroll_old ? '__qscroll_old' : '__qscroll'];
+      if (el.__qscroll_destroyed === void 0) {
+        destroy$9(el);
+      }
+      else {
+        delete el.__qscroll_destroyed;
       }
     }
   };
 
-  function update$2 (el, binding) {
-    var assign;
-
+  function destroy$a (el) {
     var ctx = el.__qtouchhold;
-
     if (ctx !== void 0) {
-      if (binding.oldValue !== binding.value) {
-        typeof binding.value !== 'function' && ctx.end();
-        ctx.handler = binding.value;
-      }
+      cleanEvt(ctx, 'main');
+      cleanEvt(ctx, 'temp');
 
-      // duration in ms, touch in pixels, mouse in pixels
-      var data = [600, 5, 7];
+      clearTimeout(ctx.timer);
+      ctx.styleCleanup !== void 0 && ctx.styleCleanup();
 
-      if (typeof binding.arg === 'string' && binding.arg.length) {
-        binding.arg.split(':').forEach(function (val, index) {
-          var v = parseInt(val, 10);
-          v && (data[index] = v);
-        });
-      }
-
-      (assign = data, ctx.duration = assign[0], ctx.touchSensitivity = assign[1], ctx.mouseSensitivity = assign[2]);
+      delete el.__qtouchhold;
     }
   }
 
@@ -32805,6 +34990,13 @@
     name: 'touch-hold',
 
     bind: function bind (el, binding) {
+      var assign;
+
+      if (el.__qtouchhold !== void 0) {
+        destroy$a(el);
+        el.__qtouchhold_destroyed = true;
+      }
+
       var modifiers = binding.modifiers;
 
       // early return, we don't need to do anything
@@ -32813,6 +35005,7 @@
       }
 
       var ctx = {
+        handler: binding.value,
         noop: noop,
 
         mouseStart: function mouseStart (evt) {
@@ -32907,13 +35100,19 @@
         }
       };
 
-      if (el.__qtouchhold) {
-        el.__qtouchhold_old = el.__qtouchhold;
+      // duration in ms, touch in pixels, mouse in pixels
+      var data = [600, 5, 7];
+
+      if (typeof binding.arg === 'string' && binding.arg.length > 0) {
+        binding.arg.split(':').forEach(function (val, index) {
+          var v = parseInt(val, 10);
+          v && (data[index] = v);
+        });
       }
 
-      el.__qtouchhold = ctx;
+      (assign = data, ctx.duration = assign[0], ctx.touchSensitivity = assign[1], ctx.mouseSensitivity = assign[2]);
 
-      update$2(el, binding);
+      el.__qtouchhold = ctx;
 
       modifiers.mouse === true && addEvt(ctx, 'main', [
         [ el, 'mousedown', 'mouseStart', ("passive" + (modifiers.mouseCapture === true ? 'Capture' : '')) ]
@@ -32925,18 +35124,20 @@
       ]);
     },
 
-    update: update$2,
+    update: function update (el, binding) {
+      var ctx = el.__qtouchhold;
+      if (ctx !== void 0 && binding.oldValue !== binding.value) {
+        typeof binding.value !== 'function' && ctx.end();
+        ctx.handler = binding.value;
+      }
+    },
 
     unbind: function unbind (el) {
-      var ctx = el.__qtouchhold_old || el.__qtouchhold;
-      if (ctx !== void 0) {
-        cleanEvt(ctx, 'main');
-        cleanEvt(ctx, 'temp');
-
-        clearTimeout(ctx.timer);
-        ctx.styleCleanup !== void 0 && ctx.styleCleanup();
-
-        delete el[el.__qtouchhold_old ? '__qtouchhold_old' : '__qtouchhold'];
+      if (el.__qtouchhold_destroyed === void 0) {
+        destroy$a(el);
+      }
+      else {
+        delete el.__qtouchhold_destroyed;
       }
     }
   };
@@ -32964,6 +35165,20 @@
       Math.abs(top - origin.top) >= 7
   }
 
+  function destroy$b (el) {
+    var ctx = el.__qtouchrepeat;
+    if (ctx !== void 0) {
+      clearTimeout(ctx.timer);
+
+      cleanEvt(ctx, 'main');
+      cleanEvt(ctx, 'temp');
+
+      ctx.styleCleanup !== void 0 && ctx.styleCleanup();
+
+      delete el.__qtouchrepeat;
+    }
+  }
+
   var TouchRepeat = {
     name: 'touch-repeat',
 
@@ -32971,6 +35186,11 @@
       var modifiers = ref.modifiers;
       var value = ref.value;
       var arg = ref.arg;
+
+      if (el.__qtouchrepeat !== void 0) {
+        destroy$b(el);
+        el.__qtouchrepeat_destroyed = true;
+      }
 
       var keyboard = Object.keys(modifiers).reduce(function (acc, key) {
         if (keyRegex.test(key) === true) {
@@ -33140,10 +35360,6 @@
         }
       };
 
-      if (el.__qtouchrepeat !== void 0) {
-        el.__qtouchrepeat_old = el.__qtouchrepeat;
-      }
-
       el.__qtouchrepeat = ctx;
 
       modifiers.mouse === true && addEvt(ctx, 'main', [
@@ -33160,27 +35376,23 @@
       ]);
     },
 
-    update: function update (el, binding) {
-      var ctx = el.__qtouchrepeat;
+    update: function update (el, ref) {
+      var oldValue = ref.oldValue;
+      var value = ref.value;
 
-      if (ctx !== void 0 && binding.oldValue !== binding.value) {
-        typeof binding.value !== 'function' && ctx.end();
-        ctx.handler = binding.value;
+      var ctx = el.__qtouchrepeat;
+      if (ctx !== void 0 && oldValue !== value) {
+        typeof value !== 'function' && ctx.end();
+        ctx.handler = value;
       }
     },
 
     unbind: function unbind (el) {
-      var ctx = el.__qtouchrepeat_old || el.__qtouchrepeat;
-
-      if (ctx !== void 0) {
-        clearTimeout(ctx.timer);
-
-        cleanEvt(ctx, 'main');
-        cleanEvt(ctx, 'temp');
-
-        ctx.styleCleanup !== void 0 && ctx.styleCleanup();
-
-        delete el[el.__qtouchrepeat_old ? '__qtouchrepeat_old' : '__qtouchrepeat'];
+      if (el.__qtouchrepeat_destroyed === void 0) {
+        destroy$b(el);
+      }
+      else {
+        delete el.__qtouchrepeat_destroyed;
       }
     }
   };
@@ -33192,6 +35404,7 @@
     ClosePopup: ClosePopup,
     GoBack: GoBack,
     Intersection: Intersection,
+    Morph: Morph,
     Mutation: Mutation,
     Ripple: Ripple,
     ScrollFire: ScrollFire,
@@ -33820,11 +36033,12 @@
 
   function get (key, ssr) {
     var
-      result = key ? null : {},
       cookieSource = ssr ? ssr.req.headers : document,
       cookies = cookieSource.cookie ? cookieSource.cookie.split('; ') : [],
+      l = cookies.length;
+    var
+      result = key ? null : {},
       i = 0,
-      l = cookies.length,
       parts,
       name,
       cookie;
@@ -34233,7 +36447,8 @@
     vm,
     uid$3 = 0,
     timeout,
-    props = {},
+    props$1 = {};
+  var
     originalDefaults = {
       delay: 0,
       message: false,
@@ -34254,12 +36469,12 @@
 
       if (isSSR === true) { return }
 
-      props = opts === Object(opts) && opts.ignoreDefaults === true
+      props$1 = opts === Object(opts) && opts.ignoreDefaults === true
         ? Object.assign({}, originalDefaults, opts)
         : Object.assign({}, defaults, opts);
 
-      props.customClass += " text-" + (props.backgroundColor);
-      props.uid = "l_" + (uid$3++);
+      props$1.customClass += " text-" + (props$1.backgroundColor);
+      props$1.uid = "l_" + (uid$3++);
 
       this.isActive = true;
 
@@ -34307,24 +36522,24 @@
             }, [
               this$1.isActive === true ? h('div', {
                 staticClass: 'q-loading fullscreen column flex-center z-max',
-                key: props.uid,
-                class: props.customClass.trim()
+                key: props$1.uid,
+                class: props$1.customClass.trim()
               }, [
-                h(props.spinner, {
+                h(props$1.spinner, {
                   props: {
-                    color: props.spinnerColor,
-                    size: props.spinnerSize
+                    color: props$1.spinnerColor,
+                    size: props$1.spinnerSize
                   }
                 }),
-                (props.message && h('div', {
-                  class: ("text-" + (props.messageColor)),
-                  domProps: ( obj = {}, obj[props.sanitize === true ? 'textContent' : 'innerHTML'] = props.message, obj )
+                (props$1.message && h('div', {
+                  class: ("text-" + (props$1.messageColor)),
+                  domProps: ( obj = {}, obj[props$1.sanitize === true ? 'textContent' : 'innerHTML'] = props$1.message, obj )
                 })) || void 0
               ]) : null
             ])
           }
         });
-      }, props.delay);
+      }, props$1.delay);
     },
 
     hide: function hide () {
@@ -34676,8 +36891,6 @@
   var uid$4 = 0;
   var defaults$1 = {};
 
-  var attrs$2 = { role: 'alert' };
-
   var positionList = [
     'top-left', 'top-right',
     'bottom-left', 'bottom-right',
@@ -34727,7 +36940,7 @@
         this$1.notifs[pos] = [];
 
         var
-          vert = ['left', 'center', 'right'].includes(pos) ? 'center' : (pos.indexOf('top') > -1 ? 'top' : 'bottom'),
+          vert = ['left', 'center', 'right'].includes(pos) === true ? 'center' : (pos.indexOf('top') > -1 ? 'top' : 'bottom'),
           align = pos.indexOf('left') > -1 ? 'start' : (pos.indexOf('right') > -1 ? 'end' : 'center'),
           classes = ['left', 'right'].includes(pos) ? ("items-" + (pos === 'left' ? 'start' : 'end') + " justify-center") : (pos === 'center' ? 'flex-center' : ("items-" + align));
 
@@ -34819,11 +37032,13 @@
         notif.actions = actions.map(function (ref) {
           var handler = ref.handler;
           var noDismiss = ref.noDismiss;
-          var rest = objectWithoutProperties$2( ref, ["handler", "noDismiss"] );
+          var attrs = ref.attrs;
+          var rest = objectWithoutProperties$2( ref, ["handler", "noDismiss", "attrs"] );
           var item = rest;
 
           return ({
           props: Object.assign({}, {flat: true}, item),
+          attrs: attrs,
           on: {
             click: typeof handler === 'function'
               ? function () {
@@ -34852,7 +37067,10 @@
             (notif.multiLine === true ? 'column no-wrap justify-center' : 'row items-center'),
 
           contentClass: 'q-notification__content row items-center' +
-            (notif.multiLine === true ? '' : ' col')
+            (notif.multiLine === true ? '' : ' col'),
+
+          attrs: Object.assign({}, {role: 'alert'},
+            notif.attrs)
         });
 
         if (notif.group === false) {
@@ -35057,7 +37275,7 @@
           notif.actions !== void 0 && child.push(
             h('div', {
               staticClass: meta.actionsClass
-            }, notif.actions.map(function (a) { return h(QBtn, { props: a.props, on: a.on }); }))
+            }, notif.actions.map(function (a) { return h(QBtn, { props: a.props, attrs: a.attrs, on: a.on }); }))
           );
 
           meta.badge > 1 && child.push(
@@ -35073,7 +37291,7 @@
             ref: ("notif_" + (meta.uid)),
             key: meta.uid,
             staticClass: meta.staticClass,
-            attrs: attrs$2
+            attrs: meta.attrs
           }, [
             h('div', { staticClass: meta.wrapperClass }, child)
           ])
@@ -35176,16 +37394,14 @@
   }
 
   function decode$1 (value) {
-    var type, length, source;
-
-    length = value.length;
+    var length = value.length;
     if (length < 9) {
       // then it wasn't encoded by us
       return value
     }
 
-    type = value.substr(0, 8);
-    source = value.substring(9);
+    var type = value.substr(0, 8);
+    var source = value.substring(9);
 
     switch (type) {
       case '__q_date':
@@ -35392,7 +37608,18 @@
     }
   }
 
-  function openWindow (url, reject) {
+  function parseFeatures (winFeatures) {
+    var cfg = Object.assign({ noopener: true }, winFeatures);
+    var feat = [];
+    Object.keys(cfg).forEach(function (key) {
+      if (cfg[key] === true) {
+        feat.push(key);
+      }
+    });
+    return feat.join(',')
+  }
+
+  function openWindow (url, reject, windowFeatures) {
     var open = window.open;
 
     if (Platform.is.cordova === true) {
@@ -35409,7 +37636,7 @@
       return Vue.prototype.$q.electron.shell.openExternal(url)
     }
 
-    var win = open(url, '_blank');
+    var win = open(url, '_blank', parseFeatures(windowFeatures));
 
     if (win) {
       Platform.is.desktop && win.focus();
@@ -35420,7 +37647,7 @@
     }
   }
 
-  function openUrl (url, reject) {
+  function openUrl (url, reject, windowFeatures) {
     if (
       Platform.is.ios === true &&
       window.SafariViewController !== void 0
@@ -35434,13 +37661,13 @@
           );
         }
         else {
-          openWindow(url, reject);
+          openWindow(url, reject, windowFeatures);
         }
       });
       return
     }
 
-    return openWindow(url, reject)
+    return openWindow(url, reject, windowFeatures)
   }
 
 
@@ -35460,6 +37687,7 @@
     frameDebounce: frameDebounce,
     noop: noop,
     openURL: openUrl,
+    morph: morph,
     patterns: patterns,
     scroll: scroll,
     throttle: throttle,

@@ -8,7 +8,7 @@
     <head>
         <link href="//fonts.googleapis.com/css?family=IBM+Plex+Sans:300,400,500,600|Material+Icons" type="text/css" rel="stylesheet">
         {% compress css file base %}
-            <link href="{% static 'vendor/bootstrap@4.1.3/bootstrap.min.css' %}" type="text/css" rel="stylesheet">
+            <link href="{% static 'vendor/bootstrap@4.5.2/bootstrap.min.css' %}" type="text/css" rel="stylesheet">
             <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
             <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
         {% endcompress %}
@@ -69,33 +69,33 @@
             <script src="https://browser.sentry-cdn.com/4.6.4/bundle.min.js" crossorigin="anonymous"></script>
         {% endif %}
         {% compress js file bootstrap %}
-            <script src="{% static 'vendor/jquery@3.3.1/jquery.min.js' %}"></script>
-            <script src="{% static 'vendor/popper.js@1.14.3/popper.min.js' %}"></script>
-            <script src="{% static 'vendor/bootstrap@4.1.3/bootstrap.min.js' %}"></script>
+            <script src="{% static 'vendor/jquery@3.5.1/jquery.min.js' %}"></script>
+            <script src="{% static 'vendor/popper.js@1.16.1/popper.min.js' %}"></script>
+            <script src="{% static 'vendor/bootstrap@4.5.2/bootstrap.min.js' %}"></script>
         {% endcompress %}
         {% compress js file helpers %}
-            <script src="{% static 'vendor/commonmark@0.28.1/commonmark.js' %}"></script>
-            <script src="{% static 'vendor/moment@2.24.0/moment.min.js' %}"></script>
+            <script src="{% static 'vendor/commonmark@0.29.1/commonmark.min.js' %}"></script>
+            <script src="{% static 'vendor/moment@2.27.0/moment.min.js' %}"></script>
             <script src="{% static 'js/__init__.js' %}"></script>
             {% if not debug %}
                 <script src="{% static 'js/sentry.js' %}"></script>
             {% endif %}
         {% endcompress %}
     {% compress js file helpers2 %}
-      <script src="{% static 'vendor/axios@0.19.2/axios.min.js' %}"></script>
-      <script src="{% static 'vendor/underscore@1.9.1/underscore.min.js' %}"></script>
+      <script src="{% static 'vendor/axios@0.20.0/axios.min.js' %}"></script>
+      <script src="{% static 'vendor/underscore@1.10.2/underscore.min.js' %}"></script>
     {% endcompress %}
         {% compress js file vue %}
             {% if debug %}
-              <script src="{% static 'vendor/vue@2.6.11/vue.js' %}"></script>
-              <script src="{% static 'vendor/vuex@3.1.3/vuex.js' %}"></script>
-              <script src="{% static 'vendor/vue-router@3.1.6/vue-router.js' %}"></script>
-              <script src="{% static 'vendor/quasar@1.12.8/quasar.umd.js' %}"></script>
+              <script src="{% static 'vendor/vue@2.6.12/vue.js' %}"></script>
+              <script src="{% static 'vendor/vuex@3.5.1/vuex.js' %}"></script>
+              <script src="{% static 'vendor/vue-router@3.4.3/vue-router.js' %}"></script>
+              <script src="{% static 'vendor/quasar@1.13.1/quasar.umd.js' %}"></script>
             {% else %}
-              <script src="{% static 'vendor/vue@2.6.11/vue.min.js' %}"></script>
-              <script src="{% static 'vendor/vuex@3.1.3/vuex.min.js' %}"></script>
-              <script src="{% static 'vendor/vue-router@3.1.6/vue-router.min.js' %}"></script>
-              <script src="{% static 'vendor/quasar@1.12.8/quasar.umd.min.js' %}"></script>
+              <script src="{% static 'vendor/vue@2.6.12/vue.min.js' %}"></script>
+              <script src="{% static 'vendor/vuex@3.5.1/vuex.min.js' %}"></script>
+              <script src="{% static 'vendor/vue-router@3.4.3/vue-router.min.js' %}"></script>
+              <script src="{% static 'vendor/quasar@1.13.1/quasar.umd.min.js' %}"></script>
             {%endif %}
             <script src="{% static 'js/ajax.js' %}"></script>
             <script src="{% static 'js/helpers.js' %}"></script>
