@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v1.13.1
+ * Quasar Framework v1.13.2
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -12,7 +12,7 @@
 
   Vue = Vue && Object.prototype.hasOwnProperty.call(Vue, 'default') ? Vue['default'] : Vue;
 
-  var version = "1.13.1";
+  var version = "1.13.2";
 
   /* eslint-disable no-useless-escape */
 
@@ -1925,6 +1925,15 @@
       : vm[k]
   }
 
+  function cacheWithFn (vm, key, fn) {
+    if (isSSR === true) { return fn() }
+
+    var k = "__qcache_" + key;
+    return vm[k] === void 0
+      ? (vm[k] = fn())
+      : vm[k]
+  }
+
   function getPropCacheMixin (propName, proxyPropName) {
     var obj;
 
@@ -2511,10 +2520,10 @@
     },
 
     computed: {
-      contentClass: function contentClass () {
+      classes: function classes () {
         var obj;
 
-        return ( obj = {}, obj[("bg-" + (this.color))] = this.color, obj[("text-" + (this.textColor) + " q-chip--colored")] = this.textColor, obj['q-avatar__content--square'] = this.square, obj['rounded-borders'] = this.rounded, obj )
+        return ( obj = {}, obj[("bg-" + (this.color))] = this.color, obj[("text-" + (this.textColor) + " q-chip--colored")] = this.textColor, obj['q-avatar--square'] = this.square, obj['rounded-borders'] = this.rounded, obj )
       },
 
       contentStyle: function contentStyle () {
@@ -2532,11 +2541,11 @@
       return h('div', {
         staticClass: 'q-avatar',
         style: this.sizeStyle,
+        class: this.classes,
         on: Object.assign({}, this.qListeners)
       }, [
         h('div', {
           staticClass: 'q-avatar__content row flex-center overflow-hidden',
-          class: this.contentClass,
           style: this.contentStyle
         }, mergeSlotSafely(icon, this, 'default'))
       ])
@@ -5419,11 +5428,12 @@
       split: Boolean,
       dropdownIcon: String,
 
-      contentClass: [Array, String, Object],
-      contentStyle: [Array, String, Object],
+      contentClass: [ Array, String, Object ],
+      contentStyle: [ Array, String, Object ],
 
       cover: Boolean,
       persistent: Boolean,
+      noRouteDismiss: Boolean,
       autoClose: Boolean,
 
       menuAnchor: {
@@ -5489,6 +5499,7 @@
             cover: this.cover,
             fit: true,
             persistent: this.persistent,
+            noRouteDismiss: this.noRouteDismiss,
             autoClose: this.autoClose,
             anchor: this.menuAnchor,
             self: this.menuSelf,
@@ -5776,7 +5787,7 @@
     render: function render (h) {
       var this$1 = this;
 
-      var child = this.btnOptions.map(function (opt, i) {
+      var child = this.btnOptions.map(function (opt) {
         return h(QBtn, opt.options, opt.slot !== void 0 ? slot(this$1, opt.slot) : void 0)
       });
 
@@ -5796,7 +5807,7 @@
           glossy: this.glossy,
           spread: this.spread
         }
-      }, child)
+      }, mergeSlot(child, this, 'default'))
     }
   });
 
@@ -6648,7 +6659,7 @@
       controlColor: String,
       controlTextColor: String,
 
-      autoplay: [Number, Boolean],
+      autoplay: [ Number, Boolean ],
 
       arrows: Boolean,
       prevIcon: String,
@@ -6657,9 +6668,10 @@
       navigation: Boolean,
       navigationPosition: {
         type: String,
-        validator: function (v) { return ['top', 'right', 'bottom', 'left'].includes(v); }
+        validator: function (v) { return [ 'top', 'right', 'bottom', 'left' ].includes(v); }
       },
       navigationIcon: String,
+      navigationActiveIcon: String,
 
       thumbnails: Boolean
     },
@@ -6698,6 +6710,10 @@
 
       navIcon: function navIcon () {
         return this.navigationIcon || this.$q.iconSet.carousel.navigationIcon
+      },
+
+      navActiveIcon: function navActiveIcon () {
+        return this.navigationActiveIcon || this.navIcon
       },
 
       navigationPositionComputed: function navigationPositionComputed () {
@@ -6756,7 +6772,7 @@
             (this.controlColor !== void 0 ? (" text-" + (this.controlColor)) : '')
         }, [
           h('div', {
-            staticClass: 'q-carousel__navigation-inner flex no-wrap justify-center'
+            staticClass: 'q-carousel__navigation-inner flex flex-center no-wrap'
           }, this.__getAvailablePanels().map(mapping))
         ])
       },
@@ -6767,18 +6783,33 @@
         var node = [];
 
         if (this.navigation === true) {
-          node.push(this.__getNavigationContainer(h, 'buttons', function (panel) {
-            var name = panel.componentOptions.propsData.name;
+          var fn = this.$scopedSlots['navigation-icon'] !== void 0
+            ? this.$scopedSlots['navigation-icon']
+            : function (opts) { return h(QBtn, {
+                key: 'nav' + opts.name,
+                class: ("q-carousel__navigation-icon q-carousel__navigation-icon--" + (opts.active === true ? '' : 'in') + "active"),
+                props: opts.btnProps,
+                on: cache(this$1, 'nav#' + opts.name, { click: opts.onClick })
+              }); };
 
-            return h(QBtn, {
-              key: name,
-              class: ("q-carousel__navigation-icon q-carousel__navigation-icon--" + (name === this$1.value ? '' : 'in') + "active"),
-              props: Object.assign({}, {icon: this$1.navIcon,
-                size: 'sm'},
-                this$1.controlProps),
-              on: cache(this$1, 'nav#' + name, { click: function () { this$1.goTo(name); } })
+          var maxIndex = this.panels.length - 1;
+          node.push(
+            this.__getNavigationContainer(h, 'buttons', function (panel, index) {
+              var name = panel.componentOptions.propsData.name;
+              var active = this$1.panelIndex === index;
+
+              return fn({
+                index: index,
+                maxIndex: maxIndex,
+                name: name,
+                active: active,
+                btnProps: Object.assign({}, {icon: active === true ? this$1.navActiveIcon : this$1.navIcon,
+                  size: 'sm'},
+                  this$1.controlProps),
+                onClick: function () { this$1.goTo(name); }
+              })
             })
-          }));
+          );
         }
         else if (this.thumbnails === true) {
           var color = this.controlColor !== void 0
@@ -6799,25 +6830,34 @@
           }));
         }
 
-        if (this.arrows === true) {
-          node.push(
-            h('div', {
-              staticClass: ("q-carousel__control q-carousel__arrow q-carousel__prev-arrow q-carousel__prev-arrow--" + (this.direction) + " absolute flex flex-center")
-            }, [
-              h(QBtn, {
-                props: Object.assign({}, {icon: this.arrowIcons[0]}, this.controlProps),
-                on: cache(this, 'prev', { click: this.previous })
-              })
-            ]),
-            h('div', {
-              staticClass: ("q-carousel__control q-carousel__arrow q-carousel__next-arrow q-carousel__next-arrow--" + (this.direction) + " absolute flex flex-center")
-            }, [
-              h(QBtn, {
-                props: Object.assign({}, {icon: this.arrowIcons[1]}, this.controlProps),
-                on: cache(this, 'next', { click: this.next })
-              })
-            ])
-          );
+        if (this.arrows === true && this.panelIndex >= 0) {
+          if (this.infinite === true || this.panelIndex > 0) {
+            node.push(
+              h('div', {
+                key: 'prev',
+                staticClass: ("q-carousel__control q-carousel__arrow q-carousel__prev-arrow q-carousel__prev-arrow--" + (this.direction) + " absolute flex flex-center")
+              }, [
+                h(QBtn, {
+                  props: Object.assign({}, {icon: this.arrowIcons[0]}, this.controlProps),
+                  on: cache(this, 'prev', { click: this.previous })
+                })
+              ])
+            );
+          }
+
+          if (this.infinite === true || this.panelIndex < this.panels.length - 1) {
+            node.push(
+              h('div', {
+                key: 'next',
+                staticClass: ("q-carousel__control q-carousel__arrow q-carousel__next-arrow q-carousel__next-arrow--" + (this.direction) + " absolute flex flex-center")
+              }, [
+                h(QBtn, {
+                  props: Object.assign({}, {icon: this.arrowIcons[1]}, this.controlProps),
+                  on: cache(this, 'next', { click: this.next })
+                })
+              ])
+            );
+          }
         }
 
         return mergeSlot(node, this, 'control')
@@ -11695,6 +11735,8 @@
         validator: yearMonthValidator
       },
 
+      noUnset: Boolean,
+
       firstDayOfWeek: [ String, Number ],
       todayBtn: Boolean,
       minimal: Boolean,
@@ -13082,6 +13124,10 @@
       },
 
       __removeFromModel: function __removeFromModel (date) {
+        if (this.noUnset === true) {
+          return
+        }
+
         var model = null;
 
         if (this.multiple === true && Array.isArray(this.value) === true) {
@@ -17141,6 +17187,36 @@
       : (parent === document ? document.body : parent).contains(el.parentNode)
   }
 
+  function createRange (node, chars, range) {
+    if (!range) {
+      range = document.createRange();
+      range.selectNode(node);
+      range.setStart(node, 0);
+    }
+
+    if (chars.count === 0) {
+      range.setEnd(node, chars.count);
+    }
+    else if (chars.count > 0) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.textContent.length < chars.count) {
+          chars.count -= node.textContent.length;
+        }
+        else {
+          range.setEnd(node, chars.count);
+          chars.count = 0;
+        }
+      }
+      else {
+        for (var lp = 0; chars.count !== 0 && lp < node.childNodes.length; lp++) {
+          range = createRange(node.childNodes[lp], chars, range);
+        }
+      }
+    }
+
+    return range
+  }
+
   var urlRegex = /^https?:\/\//;
 
   var Caret = function Caret (el, vm) {
@@ -17228,6 +17304,44 @@
     else {
       sel.selectAllChildren(this.el);
       sel.collapseToEnd();
+    }
+  };
+
+  Caret.prototype.savePosition = function savePosition () {
+    var charCount = -1, node;
+    var
+      selection = document.getSelection(),
+      parentEl = this.el.parentNode;
+
+    if (selection.focusNode && isChildOf(selection.focusNode, parentEl)) {
+      node = selection.focusNode;
+      charCount = selection.focusOffset;
+
+      while (node && node !== parentEl) {
+        if (node !== this.el && node.previousSibling) {
+          node = node.previousSibling;
+          charCount += node.textContent.length;
+        }
+        else {
+          node = node.parentNode;
+        }
+      }
+    }
+
+    this.savedPos = charCount;
+  };
+
+  Caret.prototype.restorePosition = function restorePosition () {
+    if (this.savedPos >= 0) {
+      var
+        selection = window.getSelection(),
+        range = createRange(this.el, { count: this.savedPos });
+
+      if (range) {
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
     }
   };
 
@@ -17745,7 +17859,7 @@
 
     data: function data () {
       return {
-        editWatcher: true,
+        lastEmit: this.value,
         editLinkUrl: null,
         isViewingSource: false
       }
@@ -17753,24 +17867,21 @@
 
     watch: {
       value: function value (v) {
-        if (this.editWatcher === true) {
-          this.__setContent(v);
-        }
-        else {
-          this.editWatcher = true;
+        if (this.lastEmit !== v) {
+          this.__setContent(v, true);
         }
       }
     },
 
     methods: {
       __onInput: function __onInput () {
-        if (this.editWatcher === true && this.$refs.content !== void 0) {
-          var val = this.isViewingSource
+        if (this.$refs.content !== void 0) {
+          var val = this.isViewingSource === true
             ? this.$refs.content.innerText
             : this.$refs.content.innerHTML;
 
           if (val !== this.value) {
-            this.editWatcher = false;
+            this.lastEmit = val;
             this.$emit('input', val);
           }
         }
@@ -17878,13 +17989,18 @@
         return this.$refs.content
       },
 
-      __setContent: function __setContent (v) {
+      __setContent: function __setContent (v, restorePosition) {
         if (this.$refs.content !== void 0) {
-          if (this.isViewingSource) {
-            this.$refs.content.innerText = v;
+          if (restorePosition === true) {
+            this.caret.savePosition();
           }
-          else {
-            this.$refs.content.innerHTML = v;
+
+          var prop = "inner" + (this.isViewingSource === true ? 'Text' : 'HTML');
+          this.$refs.content[prop] = v;
+
+          if (restorePosition === true) {
+            this.caret.restorePosition();
+            this.refreshToolbar();
           }
         }
       }
@@ -17907,15 +18023,13 @@
       var toolbars;
 
       if (this.hasToolbar) {
-        var bars = [];
-
-        bars.push(
+        var bars = [
           h('div', {
             key: 'qedt_top',
             staticClass: 'q-editor__toolbar row no-wrap scroll-x',
             class: this.toolbarBackgroundClass
           }, getToolbar(h, this))
-        );
+        ];
 
         this.editLinkUrl !== null && bars.push(
           h('div', {
@@ -22793,13 +22907,18 @@
 
       directives: function directives () {
         if (this.disable !== true) {
+          var modifiers = {
+            down: true,
+            mightPrevent: true
+          };
+
+          if (this.noMouse !== true) {
+            modifiers.mouse = true;
+          }
+
           return [{
             name: 'touch-pan',
-            modifiers: {
-              down: true,
-              mightPrevent: true,
-              mouse: this.noMouse !== true
-            },
+            modifiers: modifiers,
             value: this.__pull
           }]
         }
@@ -23814,6 +23933,16 @@
       barClass: function barClass () {
         return "q-scrollarea__bar--" + (this.dirProps.classSuffix) +
           (this.thumbHidden === true ? ' q-scrollarea__bar--invisible' : '')
+      },
+
+      thumbDirectives: function thumbDirectives () {
+        var obj;
+
+        return [{
+          name: 'touch-pan',
+          modifiers: ( obj = {}, obj[ this.horizontal === true ? 'horizontal' : 'vertical' ] = true, obj.prevent = true, obj.mouse = true, obj.mouseAllDir = true, obj ),
+          value: this.__panThumb
+        }]
       }
     },
 
@@ -23832,6 +23961,13 @@
           : setScrollPosition;
 
         fn(this.$refs.target, offset, duration);
+      },
+
+      setScrollPercentage: function setScrollPercentage (percentage, duration) {
+        this.setScrollPosition(
+          percentage * (this.scrollSize - this.containerSize),
+          duration
+        );
       },
 
       __updateContainer: function __updateContainer (ref) {
@@ -23984,17 +24120,7 @@
           style: this.style,
           class: this.thumbClass,
           attrs: ariaHidden,
-          directives: cache(this, 'thumb#' + this.horizontal, [{
-            name: 'touch-pan',
-            modifiers: {
-              vertical: this.horizontal !== true,
-              horizontal: this.horizontal,
-              prevent: true,
-              mouse: true,
-              mouseAllDir: true
-            },
-            value: this.__panThumb
-          }])
+          directives: this.thumbDirectives
         })
       ])
     },
@@ -24796,7 +24922,9 @@
       },
 
       fieldClass: function fieldClass () {
-        return ("q-select q-field--auto-height q-select--with" + (this.useInput !== true ? 'out' : '') + "-input q-select--with" + (this.useChips !== true ? 'out' : '') + "-chips")
+        return "q-select q-field--auto-height q-select--with" + (this.useInput !== true ? 'out' : '') + "-input" +
+          " q-select--with" + (this.useChips !== true ? 'out' : '') + "-chips" +
+          " q-select--" + (this.multiple === true ? 'multiple' : 'single')
       },
 
       computedInputClass: function computedInputClass () {
@@ -26241,10 +26369,13 @@
 
       var
         content = [],
-        left = this.$scopedSlots[this.langDir.right] !== void 0,
-        right = this.$scopedSlots[this.langDir.left] !== void 0,
-        up = this.$scopedSlots.bottom !== void 0,
-        down = this.$scopedSlots.top !== void 0;
+        slots = {
+          left: this.$scopedSlots[this.langDir.right] !== void 0,
+          right: this.$scopedSlots[this.langDir.left] !== void 0,
+          up: this.$scopedSlots.bottom !== void 0,
+          down: this.$scopedSlots.top !== void 0
+        },
+        dirs = Object.keys(slots).filter(function (key) { return slots[key] === true; });
 
       slotsDef.forEach(function (slot) {
         var dir = slot[0];
@@ -26267,19 +26398,25 @@
           ref: 'content',
           key: 'content',
           staticClass: 'q-slide-item__content',
-          directives: left === true || right === true || up === true || down === true ? [{
-            name: 'touch-pan',
-            value: this.__pan,
-            modifiers: {
-              left: left,
-              right: right,
-              up: up,
-              down: down,
-              prevent: true,
-              stop: true,
-              mouse: true
-            }
-          }] : null
+          directives: dirs.length > 0
+            ? cacheWithFn(this, 'dir#' + dirs.join(''), function () {
+              var modifiers = {
+                prevent: true,
+                stop: true,
+                mouse: true
+              };
+
+              dirs.forEach(function (dir) {
+                modifiers[dir] = true;
+              });
+
+              return [{
+                name: 'touch-pan',
+                value: this$1.__pan,
+                modifiers: modifiers
+              }]
+            })
+            : null
         }, slot(this, 'default'))
       );
 
@@ -28569,6 +28706,18 @@
         var obj, obj$1;
 
         return ( obj$1 = {}, obj$1[this.side] = ( obj = {}, obj[this.prop] = this.__getCSSValue(this.value), obj ), obj$1 )
+      },
+
+      separatorDirectives: function separatorDirectives () {
+        var obj;
+
+        if (this.disable !== true) {
+          return [{
+            name: 'touch-pan',
+            value: this.__pan,
+            modifiers: ( obj = {}, obj[ this.horizontal === true ? 'vertical' : 'horizontal' ] = true, obj.prevent = true, obj.stop = true, obj.mouse = true, obj.mouseAllDir = true, obj )
+          }]
+        }
       }
     },
 
@@ -28644,18 +28793,7 @@
         }, [
           h('div', {
             staticClass: 'absolute-full q-splitter__separator-area',
-            directives: this.disable === true ? void 0 : cache(this, 'dir#' + this.horizontal, [{
-              name: 'touch-pan',
-              value: this.__pan,
-              modifiers: {
-                horizontal: this.horizontal !== true,
-                vertical: this.horizontal,
-                prevent: true,
-                stop: true,
-                mouse: true,
-                mouseAllDir: true
-              }
-            }])
+            directives: this.separatorDirectives
           }, slot(this, 'separator'))
         ]),
 
@@ -29118,7 +29256,7 @@
           else if (this.title) {
             child.push(
               h('div', { staticClass: 'q-table__control' }, [
-                h('div', { staticClass: 'q-table__title' }, this.title)
+                h('div', { staticClass: 'q-table__title', class: this.titleClass }, this.title)
               ])
             );
           }
@@ -30518,6 +30656,7 @@
         default: 'grey-8'
       },
 
+      titleClass: [String, Array, Object],
       tableStyle: [String, Array, Object],
       tableClass: [String, Array, Object],
       tableHeaderStyle: [String, Array, Object],
@@ -31259,6 +31398,18 @@
           )
       },
 
+      hourSnappingGrid: function hourSnappingGrid () {
+        return this.__getSnapGrid(this.hourInSelection, 24)
+      },
+
+      minuteSnappingGrid: function minuteSnappingGrid () {
+        return this.__getSnapGrid(this.minuteInSelection, 60)
+      },
+
+      secondSnappingGrid: function secondSnappingGrid () {
+        return this.__getSnapGrid(this.secondInSelection, 60)
+      },
+
       positions: function positions () {
         var start, end, offset = 0, step = 1, inSel;
 
@@ -31313,6 +31464,53 @@
         this.__updateValue(Object.assign({}, this.__getCurrentDate(),
           this.__getCurrentTime()));
         this.view = 'Hour';
+      },
+
+      __getSnapGrid: function __getSnapGrid (inSel, count) {
+        if (inSel === void 0) {
+          return
+        }
+
+        var snappingGrid = [].concat( Array(count).keys() ).map(inSel);
+
+        var consecutiveGaps = (count - 1) - snappingGrid.lastIndexOf(true);
+        if (consecutiveGaps === -1) {
+          return
+        }
+
+        for (var i = 0; i < count; i++) {
+          if (snappingGrid[i] === true) {
+            if (consecutiveGaps) {
+              if (consecutiveGaps > 1) {
+                var sideCount = Math.floor(consecutiveGaps / 2);
+
+                var previousVal = ((i - consecutiveGaps - 1) + count) % count;
+                var previousValStart = ((i - consecutiveGaps) + count) % count;
+                for (var j = 0, h = previousValStart; j < sideCount; j++, (h = (previousValStart + j + count) % count)) {
+                  snappingGrid[h] = previousVal;
+                }
+
+                var currentVal = i;
+                var currentValStart = ((i - sideCount) + count) % count;
+                for (var j$1 = 0, h$1 = currentValStart; j$1 < sideCount; j$1++, (h$1 = (currentValStart + j$1 + count) % count)) {
+                  snappingGrid[h$1] = currentVal;
+                }
+              } else {
+                var previousPosition = ((i - 1) + count) % count;
+                snappingGrid[previousPosition] = previousPosition;
+              }
+
+              consecutiveGaps = 0;
+            }
+
+            snappingGrid[i] = i;
+          }
+          else if (snappingGrid[i] === false) {
+            consecutiveGaps++;
+          }
+        }
+
+        return snappingGrid
       },
 
       __getMask: function __getMask () {
@@ -31437,12 +31635,19 @@
           else if (this.isAM === false && val !== 12) {
             val += 12;
           }
+
+          if (this.hourSnappingGrid !== void 0) {
+            val = this.hourSnappingGrid[val];
+          }
         }
         else {
-          val = Math.round(angle / 6);
+          val = Math.round(angle / 6) % 60;
 
-          if (val === 60) {
-            val = 0;
+          if (this.view === 'Minute' && this.minuteSnappingGrid !== void 0) {
+            val = this.minuteSnappingGrid[val];
+          }
+          else if (this.view === 'Second' && this.secondSnappingGrid !== void 0) {
+            val = this.secondSnappingGrid[val];
           }
         }
 

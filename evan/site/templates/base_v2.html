@@ -8,7 +8,7 @@
   <head>
     <link href="//fonts.googleapis.com/css?family=IBM+Plex+Sans:300,400,500,600|Material+Icons" type="text/css" rel="stylesheet">
     {% compress css file base %}
-      <link href="{% static 'vendor/quasar@1.13.1/quasar.min.css' %}" type="text/css" rel="stylesheet">
+      <link href="{% static 'vendor/quasar@1.13.2/quasar.min.css' %}" type="text/css" rel="stylesheet">
       <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
       <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
     {% endcompress %}
@@ -29,7 +29,7 @@
     {% endif %}
     {% block head_scripts %}{% endblock %}
   </head>
-  <body class="bg-grey-2">
+  <body class="bg-grey-1">
     <noscript>
       <div class="p-5 bg-light-yellow text-center mb-5">
         <img class="logo flipped" src="{% static 'images/evan.svg' %}">
@@ -54,7 +54,7 @@
           </q-page>
         </q-page-container>
       {% endblock %}
-      <q-footer class="bg-grey-2 text-grey-8 q-pa-xl">
+      <q-footer class="bg-grey-1 text-grey-8 q-pa-xl">
         <div class="row justify-between text-caption">
           <div class="col">
             <p>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener" class="inherit">Department of Electronics and Information Systems (ELIS), Ghent University</a></p>
@@ -100,12 +100,12 @@
         <script src="{% static 'vendor/vue@2.6.12/vue.js' %}"></script>
         <script src="{% static 'vendor/vuex@3.5.1/vuex.js' %}"></script>
         <script src="{% static 'vendor/vue-router@3.4.3/vue-router.js' %}"></script>
-        <script src="{% static 'vendor/quasar@1.13.1/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/quasar@1.13.2/quasar.umd.js' %}"></script>
       {% else %}
         <script src="{% static 'vendor/vue@2.6.12/vue.min.js' %}"></script>
         <script src="{% static 'vendor/vuex@3.5.1/vuex.min.js' %}"></script>
         <script src="{% static 'vendor/vue-router@3.4.3/vue-router.min.js' %}"></script>
-        <script src="{% static 'vendor/quasar@1.13.1/quasar.umd.min.js' %}"></script>
+        <script src="{% static 'vendor/quasar@1.13.2/quasar.umd.min.js' %}"></script>
       {%endif %}
       <script src="{% static 'js/ajax.js' %}"></script>
       <script src="{% static 'js/helpers.js' %}"></script>
