@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
 
+from evan.functions import send_task
 from .metadata import Metadata
 
 
@@ -62,6 +63,7 @@ class Profile(models.Model):
 def post_save_user(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+        send_task("evan.tasks.users.update_affiliation", (instance.id,))
     else:
         instance.profile.updated_at = timezone.now()
         instance.profile.save()
