@@ -1,0 +1,67 @@
+{% extends 'layout_v2.html' %}
+
+{% load compress %}
+{% load static %}
+
+
+{% block header %}
+  <q-header bordered class="bg-grey-2 text-dark q-pl-sm">
+    <q-toolbar>
+      <q-toolbar-title>
+        <strong>{{ event.name }}</strong>
+      </q-toolbar-title>
+    </q-toolbar>
+  </q-header>
+{% endblock %}
+
+{% block drawer %}{% endblock %}
+
+{% block page %}
+  <div class="row q-col-gutter-md q-mt-sm">
+
+    <div class="col-12 col-md-8 col-lg-6">
+      <q-card flat class="q-pa-lg">
+
+        <h5 class="q-mt-none q-mb-sm text-weight-bold">#{{ registration.event.hashtag }} payment</h5>
+        <p class="q-mt-none q-mb-none text-grey-8">Registration ID: <samp>{{ registration.uuid }}</samp></p>
+        <p class="q-mt-none q-mb-xl text-grey-8">On behalf of: {{ registration.user.profile.name }}</p>
+
+        {% if registration.is_paid %}
+          <p>Your registration is fully paid.</p>
+          {% if registration.paid > 0 %}
+            <p><a target="_blank" href="{{ registration.get_receipt_url }}" class="btn btn-outline-secondary">
+             <i class="material-icons mr-2">get_app</i>Download receipt</a></p>
+          {% endif %}
+        {% else %}
+          {% if not registration.invoice_requested %}
+            <div class="clearfix">
+              <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> for {{ registration.user.profile.name }}'s "{{ registration.event }}" registration. Once the payment is complete {{ registration.user.first_name }} will be able to download a receipt &mdash;no invoice&mdash;:</p>
+              {% if registration.paid > 0 %}
+                <p>You have already paid <strong>{{ registration.paid }} EUR</strong>.</p>
+              {% endif %}
+              <img src="{% static 'images/ingenico.svg' %}" class="float-right logo mt-2">
+              <form method="post" action="{{ ingenico_url }}">
+                {% for key, value in ingenico_parameters.items %}
+                  <input type="hidden" name="{{ key }}" value="{{ value }}">
+                {% endfor %}
+                <q-btn unelevated color="primary" type="submit" icon="vpn_key" label="Pay"></q-btn>
+              </form>
+            </div>
+          {% endif %}
+        {% endif %}
+
+      </q-card>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block scripts %}
+{% compress js inline %}
+  <script type="text/javascript">
+    new Vue({
+      el: '#vue'
+    });
+  </script>
+{% endcompress %}
+{% endblock %}

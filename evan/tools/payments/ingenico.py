@@ -77,9 +77,84 @@ class Ingenico:
 
         return ingenico_parameters
 
-    def validate_query_parameters(self, query_parameters: QueryDict) -> None:
+    @classmethod
+    def validate_out_parameters(cls, qs: QueryDict, *, outsalt: str) -> bool:
         """Check if the URL parameters have been tampered.
         """
-        parameters = query_parameters.dict()
+
+        parameters = qs.dict()
         shasign = parameters.pop("SHASIGN", None)
-        return self.hash_parameters(parameters) == shasign
+
+        string_to_hash = ""
+        sha_out_params = {  # https://shared.ecom-psp.com/v2/docs/guides/e-Commerce/SHA-OUT_params.txt
+            "AAVADDRESS",
+            "AAVCHECK",
+            "AAVMAIL",
+            "AAVNAME",
+            "AAVPHONE",
+            "AAVZIP",
+            "ACCEPTANCE",
+            "ALIAS",
+            "AMOUNT",
+            "BIC",
+            "BIN",
+            "BRAND",
+            "CARDNO",
+            "CCCTY",
+            "CN",
+            "COLLECTOR_BIC",
+            "COLLECTOR_IBAN",
+            "COMPLUS",
+            "CREATION_STATUS",
+            "CREDITDEBIT",
+            "CURRENCY",
+            "CVCCHECK",
+            "DCC_COMMPERCENTAGE",
+            "DCC_CONVAMOUNT",
+            "DCC_CONVCCY",
+            "DCC_EXCHRATE",
+            "DCC_EXCHRATESOURCE",
+            "DCC_EXCHRATETS",
+            "DCC_INDICATOR",
+            "DCC_MARGINPERCENTAGE",
+            "DCC_VALIDHOURS",
+            "DEVICEID",
+            "DIGESTCARDNO",
+            "ECI",
+            "ED",
+            "EMAIL",
+            "ENCCARDNO",
+            "FXAMOUNT",
+            "FXCURRENCY",
+            "IP",
+            "IPCTY",
+            "MANDATEID",
+            "MOBILEMODE",
+            "NBREMAILUSAGE",
+            "NBRIPUSAGE",
+            "NBRIPUSAGE_ALLTX",
+            "NBRUSAGE",
+            "NCERROR",
+            "ORDERID",
+            "PAYID",
+            "PAYIDSUB",
+            "PAYMENT_REFERENCE",
+            "PM",
+            "SCO_CATEGORY",
+            "SCORING",
+            "SEQUENCETYPE",
+            "SIGNDATE",
+            "STATUS",
+            "SUBBRAND",
+            "SUBSCRIPTION_ID",
+            "TICKET",
+            "TRXDATE",
+            "VC"
+        }
+
+        for key in sorted(parameters):
+            ku = key.upper()
+            if ku in sha_out_params and parameters[key]:
+                string_to_hash += f"{ku}={parameters[key]}{outsalt}"
+
+        return shasign == sha512(string_to_hash.encode("utf-8")).hexdigest().upper()

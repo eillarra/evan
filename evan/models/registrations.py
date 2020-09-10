@@ -1,10 +1,12 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
+from hashlib import sha256
 
 from evan.functions import send_task
 from .fees import Fee
@@ -85,8 +87,14 @@ class Registration(models.Model):
     def get_payment_url(self) -> str:
         return reverse("registration:payment", args=[self.uuid])
 
+    def get_payment_delegated_url(self) -> str:
+        return reverse("registration:payment_delegated", args=[self.uuid, self.secret])
+
     def get_payment_result_url(self) -> str:
         return reverse("registration:payment_result", args=[self.uuid])
+
+    def get_payment_delegated_result_url(self) -> str:
+        return reverse("registration:payment_delegated_result", args=[self.uuid])
 
     def get_receipt_url(self) -> str:
         return reverse("registration:receipt", args=[self.uuid])
@@ -109,6 +117,10 @@ class Registration(models.Model):
     def remaining_fee(self):
         coupon_discount = self.coupon.value if self.coupon else 0
         return self.total_fee - self.paid - self.paid_via_invoice - coupon_discount
+
+    @property
+    def secret(self) -> str:
+        return sha256(f"{self.uuid}{settings.SECRET_KEY}".encode("utf-8")).hexdigest()
 
     @property
     def total_fee(self):

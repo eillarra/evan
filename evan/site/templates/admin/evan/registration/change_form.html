@@ -1,11 +1,15 @@
 {% extends "admin/change_form.html" %}
 
+
 {% block object-tools-items %}
-    {% if receipt_url %}
-        <li><a href="{{ receipt_url }}" target="_blank">Receipt</a></li>
-    {% endif %}
-    {% if has_letter %}
-        <li><a href="{% url 'admin:registration_pdf_letter' object_id %}" target="_blank">Invitation Letter</a></li>
-    {% endif %}
-    {{ block.super }}
+  {% if receipt_url %}
+    <li><a href="{{ receipt_url }}" target="_blank">Receipt</a></li>
+  {% endif %}
+  {% if has_letter %}
+    <li><a href="{% url 'admin:registration_pdf_letter' object_id %}" target="_blank">Invitation Letter</a></li>
+  {% endif %}
+  {% if payment_delegated_url %}
+    <li><a href="{{ payment_delegated_url }}" class="viewsitelink" target="_blank">Delegated payment</a></li>
+  {% endif %}
+  {{ block.super }}
 {% endblock %}

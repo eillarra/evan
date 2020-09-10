@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
 
@@ -65,26 +66,14 @@ class RegistrationView(generic.DetailView):
         return context
 
 
-class RegistrationPaymentView(generic.TemplateView):
-    """
-    Perform payments using `payment.ugent.be` or coupons.
-    """
-
-    template_name = "app/registrations/payment/registration_payment_form.html"
-    registration = ""
-
+class RegistrationPaymentBaseView(generic.TemplateView):
     def get_object(self, queryset=None) -> Registration:
         if not hasattr(self, "object"):
             self.object = get_object_or_404(Registration, uuid=self.kwargs.get("uuid"))
         return self.object
 
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        registration = self.get_object()
-        if not registration.editable_by_user(request.user):
-            messages.error(request, "You don't have the necessary permissions to update this registration.")
-            raise PermissionDenied
-        return super().dispatch(request, *args, **kwargs)
+    def get_ingenico_result_url(self) -> str:
+        raise NotImplementedError
 
     def get_context_data(self, **kwargs):
         registration = self.get_object()
@@ -96,14 +85,33 @@ class RegistrationPaymentView(generic.TemplateView):
         ingenico_parameters = {
             "AMOUNT": registration.remaining_fee,
             "ORDERID": registration.id,
-            "RESULTURL": registration.get_payment_result_url(),
+            "RESULTURL": self.get_ingenico_result_url(),
         }
         context = super().get_context_data(**kwargs)
         context["registration"] = registration
         context["event"] = registration.event
         context["ingenico_url"] = ingenico.get_url()
-        context["ingenico_parameters"] = ingenico.process_parameters(ingenico_parameters, self.request.user)
+        context["ingenico_parameters"] = ingenico.process_parameters(ingenico_parameters, registration.user)
         return context
+
+
+class RegistrationPaymentView(RegistrationPaymentBaseView):
+    """
+    Perform payments using `payment.ugent.be` or coupons.
+    """
+
+    template_name = "app/registrations/payment/registration_payment_form.html"
+
+    def get_ingenico_result_url(self) -> str:
+        return self.get_object().get_payment_result_url()
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        registration = self.get_object()
+        if not registration.editable_by_user(request.user):
+            messages.error(request, "You don't have the necessary permissions to update this registration.")
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         """
@@ -128,43 +136,73 @@ class RegistrationPaymentView(generic.TemplateView):
         return redirect(registration.get_payment_url())
 
 
-class RegistrationPaymentResultView(generic.TemplateView):
+class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
+    """
+    Allows third parties to pay for a registration, without login.
+    """
+
+    template_name = "app/registrations/payment/registration_payment_delegated_form.html"
+
+    def get_ingenico_result_url(self) -> str:
+        return self.get_object().get_payment_delegated_result_url()
+
+    def dispatch(self, request, *args, **kwargs):
+        registration = self.get_object()
+        if registration.secret != kwargs.get("secret"):
+            messages.error(request, "You don't have access to this registration.")
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+
+class RegistrationPaymentResultBaseView(generic.TemplateView):
     """
     Perform actions depending on the result of the payment process.
     """
 
-    @method_decorator(login_required)
+    def get_object(self, queryset=None) -> Registration:
+        if not hasattr(self, "object"):
+            self.object = get_object_or_404(Registration, uuid=self.kwargs.get("uuid"))
+        return self.object
+
     def dispatch(self, request, *args, **kwargs):
-        registration = get_object_or_404(Registration, uuid=self.kwargs.get("uuid"))
+        registration = self.get_object()
         status = request.GET.get("STATUS")
 
         # Success
         if status in Ingenico.SUCCESS_STATUSES:
-            registration.paid = registration.paid + int(request.GET.get("AMOUNT"))
-            registration.save()
-            messages.success(request, "Your payment was succesful.")
-            """
-            if Ingenico(salt=registration.event.ingenico_salt).validate_query_parameters(request.GET):
-                registration.paid = registration.paid + int(request.GET.get('AMOUNT'))
+            if Ingenico.validate_out_parameters(request.GET, outsalt=registration.event.ingenico_salt):
+                registration.paid = registration.paid + int(request.GET.get("AMOUNT"))
                 registration.save()
-                messages.success(request, 'Your payment was succesful.')
+                messages.success(request, "Your payment was succesful.")
             else:
-                messages.error(request, 'Invalid query parameters.')
-            """
+                messages.error(request, "Invalid query parameters.")
+
         # Exception
         elif status in Ingenico.EXCEPTION_STATUSES:
             messages.warning(
                 request, "We will revise your payment and let you know when it is authorized.",
             )
+
         # Decline
         elif status in Ingenico.DECLINE_STATUSES:
             messages.error(request, "Your payment was declined.")
+
         # Cancel
         elif status in Ingenico.CANCEL_STATUSES:
             messages.warning(request, "Your payment has been canceled.")
 
         # ...and redirect
-        return redirect(registration.get_payment_url())
+        return redirect(self.get_redirect_url())
+
+
+class RegistrationPaymentResultView(RegistrationPaymentResultBaseView):
+    def get_redirect_url(self) -> str:
+        return self.get_object().get_payment_url()
+
+
+class RegistrationPaymentDelegatedResultView(RegistrationPaymentResultBaseView):
+    def get_redirect_url(self) -> str:
+        return reverse("done")
 
 
 class RegistrationInvoiceRequestView(generic.RedirectView):

@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% load static %}
+
+
+{% block content %}
+  <div class="p-5 text-center mb-5">
+    <a href="{% url 'homepage' %}"><img class="logo" src="{% static 'images/evan.svg' %}"></a>
+    <h2 class="mt-4 text-secondary">We have processed your request</h2>
+    {% if messages %}
+      <ul class="mt-3 list-unstyled">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+{% endblock %}
