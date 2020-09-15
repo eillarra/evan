@@ -45,6 +45,7 @@ class Event(models.Model):
 
     SUPPORTED_CURRENCIES = (("EUR", "Euro"),)  # https://stripe.com/docs/currencies
 
+    is_virtual = models.BooleanField(default=False)
     code = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=32)
     full_name = models.CharField(max_length=160)
@@ -64,11 +65,12 @@ class Event(models.Model):
     allows_invoices = models.BooleanField(default=True)
     test_mode = models.BooleanField(default=True, editable=False)
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
-    badge = models.TextField(null=True, blank=True, default="{}")
     signature = models.TextField(null=True, blank=True)
 
+    custom_fields = models.JSONField(default=dict)
+    extra_data = models.JSONField(null=True, blank=True, default=dict)
+
     registrations_count = models.PositiveIntegerField(default=0)
-    custom_fields = models.TextField(default="{}")
 
     acl = GenericRelation("evan.Permission")
 

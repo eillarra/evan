@@ -22,7 +22,7 @@
         </div>
         {% endverbatim %}
             <div class="mb-3">
-                <a target="_blank" :href="'{% url 'event:badges' event.code %}?order_by='+event.badge.order_by" class="mr-4">
+                <a target="_blank" :href="'{% url 'event:badges' event.code %}?order_by='+event.extra_data.badge.order_by" class="mr-4">
                     <span><i class="material-icons mr-2">&#xE0BA;</i>Download badges</span>
                 </a>
                 <a target="_blank" href="{% url 'event:registrations_sheet' event.code %}">

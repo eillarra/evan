@@ -2,7 +2,6 @@ from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
 from evan.models import Event, Day, Fee, ImportantDate, validate_event_dates
-from .generic import JsonField
 from .paper import PaperSerializer
 from .session import SessionSerializer
 from .topic import TopicSerializer
@@ -34,6 +33,7 @@ class ImportantDateSerializer(serializers.ModelSerializer):
 class EventSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
     country = CountryField(country_dict=True, read_only=True)
+    registration_early_deadline = serializers.DateTimeField(allow_null=True)
     is_active = serializers.BooleanField(read_only=True)
     is_closed = serializers.BooleanField(read_only=True)
     is_open_for_registration = serializers.BooleanField(read_only=True)
@@ -47,10 +47,10 @@ class EventSerializer(serializers.ModelSerializer):
     topics = TopicSerializer(many=True, read_only=True)
     tracks = TrackSerializer(many=True, read_only=True)
     venues = VenueSerializer(many=True, read_only=True)
-    badge = JsonField()
     href_registration = serializers.URLField(source="get_registration_url", read_only=True)
 
-    custom_fields = JsonField(read_only=True)
+    custom_fields = serializers.JSONField(read_only=True)
+    extra_data = serializers.JSONField()
 
     class Meta:
         model = Event

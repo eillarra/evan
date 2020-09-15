@@ -22,14 +22,6 @@ class CountryField(BaseCountryField):
         }
 
 
-class JsonField(BaseCountryField):
-    def to_internal_value(self, data):
-        return json.dumps(data)
-
-    def to_representation(self, obj):
-        return json.loads(obj)
-
-
 class MetadataListField(serializers.CharField):
     metadata = None
 

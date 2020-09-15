@@ -45,12 +45,12 @@
                 <table class="standard">
                   <tr>
                     <td>
-                      <div class="top band" :style="{background: event.badge.color}">
+                      <div class="top band" :style="{background: event.extra_data.badge.color}">
                         <span>{{ event.name }}</span>
                       </div>
                       <h2 class="name">{{ user.first_name }} {{ user.last_name }}</h2>
                       <h5 class="affiliation">{{ user.profile.affiliation }}, {{ countryName }}</h5>
-                      <div class="bottom band" :style="{background: event.badge.color}">
+                      <div class="bottom band" :style="{background: event.extra_data.badge.color}">
                         <span>{{ event.dates }}, {{ event.city }}</span>
                       </div>
                     </td>

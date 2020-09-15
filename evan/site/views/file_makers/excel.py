@@ -55,8 +55,24 @@ class RegistrationsOverview(ModelExcelWriter):
                 "data": [
                     ["uuid", "email", "first_name", "last_name", "affiliation", "country", "dietary_requirements"]
                 ],
-            }
+            },
+            {
+                "title": "Custom fields",
+                "data": [["uuid", "email", "first_name", "last_name", "affiliation", "country"]],
+            },
         ]
+
+        custom_fields = []
+
+        for obj in qs:
+            for k in obj.custom_data.keys():
+                if k not in custom_fields:
+                    custom_fields.append(k)
+
+        if custom_fields:
+            sheets[3]["data"][0] = sheets[3]["data"][0] + custom_fields
+        else:
+            del sheets[3]
 
         for obj in qs:
             sheets[0]["data"].append(
@@ -104,5 +120,24 @@ class RegistrationsOverview(ModelExcelWriter):
                     str(obj.user.profile.dietary),
                 ]
             )
+
+            if custom_fields:
+                custom_data = []
+
+                for f in custom_fields:
+                    v = obj.custom_data[f] if f in obj.custom_data else None
+                    custom_data.append(str(v) if type(v) in {dict, list} else v)
+
+                sheets[3]["data"].append(
+                    [
+                        str(obj.uuid),
+                        obj.user.email,
+                        obj.user.first_name,
+                        obj.user.last_name,
+                        obj.user.profile.affiliation,
+                        obj.user.profile.country.name,
+                    ]
+                    + custom_data
+                )
 
         return sheets

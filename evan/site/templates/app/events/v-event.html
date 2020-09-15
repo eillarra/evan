@@ -91,16 +91,16 @@
             <div class="col-12 col-md-6">
                 <div class="form-group">
                     <label>Badge color <small class="text-danger">*</small></label>
-                    <input v-model="event.badge.color" @input="update" type="text" class="form-control" pattern="#[a-fA-F\d]{6}">
+                    <input v-model="event.extra_data.badge.color" @input="update" type="text" class="form-control" pattern="#[a-fA-F\d]{6}">
                     <small class="form-text text-muted">Color in six-digit hexadecimal format. <a target="_blank" href="https://en.wikipedia.org/wiki/Web_colors">Learn more</a>.</small>
                 </div>
                 <div class="form-group">
                     <label>Sorting <small class="text-danger">*</small></label>
-                    <select v-model="event.badge.order_by" @change="update" class="form-control">
+                    <select v-model="event.extra_data.badge.order_by" @change="update" class="form-control">
                         <option value="first_name">By first name</option>
                         <option value="last_name">By last name</option>
                     </select>
-                    <small class="form-text text-muted">When printing all the badges they will be ordered by `attendee.{{ event.badge.order_by }}`.</small>
+                    <small class="form-text text-muted">When printing all the badges they will be ordered by `attendee.{{ event.extra_data.badge.order_by }}`.</small>
                 </div>
             </div>
             <div class="col-12 col-md-6">
@@ -109,14 +109,14 @@
                     <table class="standard">
                         <tr>
                             <td>
-                                <div class="top band" :style="{background: event.badge.color}">
+                                <div class="top band" :style="{background: event.extra_data.badge.color}">
                                     <span>{{ event.name }}</span>
                                 </div>
                                 {% endverbatim %}
                                 <h2 class="name">{{ user.first_name }} {{ user.last_name }}</h2>
                                 <h6 class="affiliation">{{ user.profile.affiliation }}, {{ user.profile.country.name }}</h6>
                                 {% verbatim %}
-                                <div class="bottom band" :style="{background: event.badge.color}">
+                                <div class="bottom band" :style="{background: event.extra_data.badge.color}">
                                     <span>{{ dates }}, {{ event.city }}, <span class="nowrap">{{ event.country.name }}</span></span>
                                 </div>
                             </td>
