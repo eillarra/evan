@@ -105,7 +105,7 @@
               <div>
                 <q-input v-if="field.type == 'text'"
                   v-model="registration.custom_data[field.id]"
-                  filled dense class="q-mb-lg"></q-input>
+                  filled dense autogrow class="q-mb-lg"></q-input>
                 <text-list v-else-if="field.type == 'text_list'"
                   v-model="registration.custom_data[field.id]"
                   :fields="field.fields" class="q-mb-md"></text-list>
