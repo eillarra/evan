@@ -103,7 +103,9 @@
                 {% endfor %}
                 <q-btn unelevated color="primary" type="submit" icon="vpn_key" label="Pay"></q-btn>
               </form>
-              <p class="q-mt-xl q-mb-none text-sm text-grey-8"><i class="material-icons q-mr-sm">account_balance</i> <strong>Payment with invoice</strong>:<br>if you need an official invoice with VAT you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request it here</a> and pay via bank transfer.</p>
+              {% if event.allows_invoices %}
+                <p class="q-mt-xl q-mb-none text-sm text-grey-8"><i class="material-icons q-mr-sm">account_balance</i> <strong>Payment with invoice</strong>:<br>if you need an official invoice with VAT you can <a href="{% url 'registration:invoice_request' registration.uuid %}">request it here</a> and pay via bank transfer.</p>
+              {% endif %}
             </div>
           {% endif %}
         {% endif %}

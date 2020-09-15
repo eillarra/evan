@@ -61,6 +61,7 @@ class Event(models.Model):
 
     wbs_element = models.CharField(max_length=32, null=True, blank=True)
     ingenico_salt = models.CharField(max_length=200, null=True, blank=True)
+    allows_invoices = models.BooleanField(default=True)
     test_mode = models.BooleanField(default=True, editable=False)
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     badge = models.TextField(null=True, blank=True, default="{}")

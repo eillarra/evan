@@ -217,6 +217,9 @@ class RegistrationInvoiceRequestView(generic.RedirectView):
         if not registration.editable_by_user(request.user):
             messages.error(request, "You don't have the necessary permissions to update this registration.")
             raise PermissionDenied
+        if not registration.event.allows_invoices:
+            messages.error(request, "We cannot issue invoices for this event.")
+            raise PermissionDenied
         registration.invoice_requested = True
         registration.save()
         PaymentReminderEmail(instance=registration).send()

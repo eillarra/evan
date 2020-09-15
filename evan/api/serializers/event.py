@@ -37,6 +37,7 @@ class EventSerializer(serializers.ModelSerializer):
     is_active = serializers.BooleanField(read_only=True)
     is_closed = serializers.BooleanField(read_only=True)
     is_open_for_registration = serializers.BooleanField(read_only=True)
+    allows_invoices = serializers.BooleanField(read_only=True)
     days = DaySerializer(many=True, read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
     dates = ImportantDateSerializer(many=True, read_only=True)
