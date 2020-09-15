@@ -1,7 +1,7 @@
 from celery.decorators import task
 from typing import List
 
-from evan.tools.mailer import send_email
+from evan.services.mailer import send_email
 
 
 @task(rate_limit="2/m")

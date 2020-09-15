@@ -1,6 +1,6 @@
 from django.db import models
 
-from evan.tools.geocoding import geocode
+from evan.services.geocoding import geocode
 
 
 class Venue(models.Model):

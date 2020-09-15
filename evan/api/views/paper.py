@@ -1,14 +1,11 @@
-import pyexcel as pe
+# import pyexcel as pe
 
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.viewsets import GenericViewSet
 
-from rest_framework.response import Response
-
-from evan.models import Event, Paper
+from evan.models import Paper
 from ..permissions import EventRelatedObjectPermission
 from ..serializers import PaperSerializer
 from ..viewsets import EventRelatedCreateOnlyViewSet
@@ -20,6 +17,8 @@ class PapersViewSet(EventRelatedCreateOnlyViewSet):
 
     @action(detail=False, methods=["POST"], parser_classes=(FormParser, MultiPartParser))
     def upload(self, request, *args, **kwargs):
+        pass
+        """
         event = Event.objects.get(code=kwargs.get("code"))
         bulk_papers = []
 
@@ -39,6 +38,7 @@ class PapersViewSet(EventRelatedCreateOnlyViewSet):
 
         Paper.objects.bulk_create(bulk_papers)
         return Response(PaperSerializer(event.papers.all(), many=True, context={"request": request}).data)
+    """
 
 
 class PaperViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):

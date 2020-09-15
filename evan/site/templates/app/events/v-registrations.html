@@ -25,8 +25,8 @@
                 <a target="_blank" :href="'{% url 'event:badges' event.code %}?order_by='+event.badge.order_by" class="mr-4">
                     <span><i class="material-icons mr-2">&#xE0BA;</i>Download badges</span>
                 </a>
-                <a target="_blank" href="{% url 'event:registrations_csv' event.code %}">
-                    <span><i class="material-icons mr-2">&#xE02F;</i>Download CSV</span>
+                <a target="_blank" href="{% url 'event:registrations_sheet' event.code %}">
+                    <span><i class="material-icons mr-2">&#xE02F;</i>Download Excel</span>
                 </a>
             </div>
         {% verbatim %}

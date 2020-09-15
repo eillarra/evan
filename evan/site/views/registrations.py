@@ -9,8 +9,8 @@ from django.views import generic
 
 from evan.models import Event, Registration, Coupon
 from evan.site.emails.registrations import PaymentReminderEmail
-from evan.site.pdfs.registrations import CertificatePdfMaker, ReceiptPdfMaker
-from evan.tools.payments.ingenico import Ingenico
+from evan.site.views.file_makers.pdf import CertificatePdfMaker, ReceiptPdfMaker
+from evan.services.payments.ingenico import Ingenico
 
 
 class RegistrationRedirectView(generic.DetailView):

@@ -5,10 +5,9 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import generic
 from os import environ
-from typing import List
 
-from evan.models import Event, Registration
-from evan.tools.csv import ModelCsvWriter
+from evan.models import Event
+from evan.site.views.file_makers.excel import RegistrationsOverview
 
 
 class EventView(generic.DetailView):
@@ -61,38 +60,8 @@ class EventBadgesPdf(EventView):
         """
 
 
-class RegistrationCsvWriter(ModelCsvWriter):
-    model = Registration
-    custom_fields = ("affiliation", "email", "dietary")
-    exclude = ("id", "updated_at", "letter", "accompanying_persons", "payments", "logs")
-    metadata_fields = ()
-
-    @staticmethod
-    def get_user_display(obj) -> str:
-        return obj.user.profile.name
-
-    @staticmethod
-    def get_affiliation_display(obj) -> str:
-        return obj.user.profile.affiliation
-
-    @staticmethod
-    def get_email_display(obj) -> str:
-        return obj.user.email
-
-    @staticmethod
-    def get_dietary_display(obj) -> str:
-        return obj.user.profile.dietary
-
-    @staticmethod
-    def get_days_display(obj) -> List[str]:
-        return [str(day.date) for day in obj.days.all()]
-
-    @staticmethod
-    def get_sessions_display(obj) -> List[str]:
-        return [f"{session.title} ({session.date})" for session in obj.sessions.all()]
-
-
-class EventRegistrationsCsv(EventView):
+class EventSpreadsheet(EventView):
     def get(self, request, *args, **kwargs):
-        queryset = self.get_object().registrations.select_related("user__profile").all()
-        return RegistrationCsvWriter(filename="registrations.csv", queryset=queryset).response
+        return RegistrationsOverview(
+            filename=f"{self.get_object().code}.xlsx", queryset=self.get_object().registrations
+        ).response

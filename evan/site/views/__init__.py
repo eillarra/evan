@@ -2,7 +2,7 @@
 
 from .errors import *
 
-from .events import EventView, EventBadgesPdf, EventRegistrationsCsv
+from .events import EventView, EventBadgesPdf, EventSpreadsheet
 from .registrations import (
     RegistrationRedirectView,
     RegistrationView,

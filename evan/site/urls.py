@@ -15,7 +15,7 @@ event_patterns = (
                 [
                     path("", views.EventView.as_view(), name="app"),
                     path("files/badges.pdf", views.EventBadgesPdf.as_view(), name="badges"),
-                    path("files/registrations.csv", views.EventRegistrationsCsv.as_view(), name="registrations_csv"),
+                    path("files/overview.xlsx", views.EventSpreadsheet.as_view(), name="registrations_sheet"),
                 ]
             ),
         ),
