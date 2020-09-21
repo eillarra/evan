@@ -1,3 +1,5 @@
+import json
+
 from typing import Dict, List
 
 from evan.services.excel import ModelExcelWriter
@@ -126,7 +128,7 @@ class RegistrationsOverview(ModelExcelWriter):
 
                 for f in custom_fields:
                     v = obj.custom_data[f] if f in obj.custom_data else None
-                    custom_data.append(str(v) if type(v) in {dict, list} else v)
+                    custom_data.append(json.dumps(v) if type(v) in {dict, list} else v)
 
                 sheets[3]["data"].append(
                     [
