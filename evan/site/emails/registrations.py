@@ -10,6 +10,7 @@ class RegistrationEmail(TemplateEmail):
     def get_context_data(self):
         return {
             "user_name": self.instance.user.profile.name,
+            "event_allows_invoices": self.instance.event.allows_invoices,
             "event_name": self.instance.event.name,
             "event_city": self.instance.event.city,
             "event_url": self.instance.event.get_absolute_url(),

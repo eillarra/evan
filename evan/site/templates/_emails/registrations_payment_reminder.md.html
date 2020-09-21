@@ -9,13 +9,13 @@ Dear {{ user_name }},
 This is a reminder to complete your payment for {{ event_name }}.
 
 ---------------
-
-{% if not invoice_requested %}You will find instructions for the payment on this page:
+{% if not invoice_requested %}
+You will find instructions for the payment on this page:
 https://evan.ugent.be{{ payment_url }}
 
-If you have a received a coupon from the Organization, you can also validate it there.
-
-If you would prefer to pay via invoice, please contact <evan@ugent.be> with the following invoice details:{% else %}We've noticed that you would like to pay your registration fee by invoice.
+If you have a received a coupon from the Organization, you can also validate it there.{% endif %}
+{% if event_allows_invoices %}
+{% if not invoice_requested %}If you would prefer to pay via invoice, please contact <evan@ugent.be> with the following invoice details:{% else %}We've noticed that you would like to pay your registration fee by invoice.
 Can you please send us the following invoice details to <evan@ugent.be>:{% endif %}
 
 - In case we need to send the invoice to your institution:
@@ -26,7 +26,7 @@ Can you please send us the following invoice details to <evan@ugent.be>:{% endi
 - In case we need to send the invoice to you personally:
   - Name and title
   - Home address
-
+{% endif %}
 Please contact us if you have problems with the payment.
 If you can't pay in advance you will have to pay at the event to be admitted and get your badge.
 {% endblock %}
