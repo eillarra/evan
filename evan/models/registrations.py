@@ -73,7 +73,7 @@ class Registration(models.Model):
         return f"{self.uuid} ({self.user})"
 
     def editable_by_user(self, user) -> bool:
-        return self.user_id == user.id and not self.event.is_closed
+        return self.user_id == user.id
 
     def viewable_by_user(self, user) -> bool:
         return self.user_id == user.id

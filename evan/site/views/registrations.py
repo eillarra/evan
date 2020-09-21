@@ -58,6 +58,9 @@ class RegistrationView(generic.DetailView):
             )
             raise PermissionDenied
 
+        if registration.event.is_closed:
+            return redirect(reverse("dashboard"))
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
