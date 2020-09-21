@@ -13,10 +13,11 @@ class CertificatePdfMaker:
     def make_pdf(self):
         reg = self.registration
         event = reg.event
+        where = "virtually" if event.is_virtual else f"in {event.city}, {event.country.name}"
         intro = f"""
 On behalf of the {event.name} organizing committee, I would hereby like to confirm that **{reg.user.profile.name}**
 — {reg.user.profile.affiliation} — attended {event}
-from {date_filter(event.start_date)} to {date_filter(event.end_date)} in {event.city}, {event.country.name}.
+from {date_filter(event.start_date)} to {date_filter(event.end_date)}, {where}.
 """
         signature = f"""
 More information about this event can be found on:\u0020\u0020
@@ -29,17 +30,20 @@ Sincerely yours,
         with Pdf() as pdf:
             pdf.add_text(date_filter(timezone.now()), "p_right")
             pdf.add_spacer(1.5)
-            pdf.add_text(f"Certificate of attendance", "h3")
+            pdf.add_text("Certificate of attendance", "h3")
             pdf.add_text(f"ID: {reg.uuid}", "p_small")
             pdf.add_spacer(0.5)
             pdf.add_text("To Whom It May Concern,")
             pdf.add_text(intro, "p", "markdown")
-            pdf.add_text(f"{reg.user.profile.name} attended the following sessions:")
-            for session in reg.sessions.select_related("track"):
-                if not session.is_social_event:
-                    track = f"*{session.track}:* " if session.track else ""
-                    t = f'- {track}"{session.title}" ({date_filter(session.date, "N j")})'
-                    pdf.add_text(t, "p", "markdown")
+
+            if reg.sessions.count():
+                pdf.add_text(f"{reg.user.profile.name} attended the following sessions:")
+                for session in reg.sessions.select_related("track"):
+                    if not session.is_social_event:
+                        track = f"*{session.track}:* " if session.track else ""
+                        t = f'- {track}"{session.title}" ({date_filter(session.date, "N j")})'
+                        pdf.add_text(t, "p", "markdown")
+
             pdf.add_text(signature, "p", "markdown")
             pdf.add_spacer(1.5)
             pdf.add_text(event.signature, "p", "markdown")
@@ -142,7 +146,7 @@ Sincerely yours,
         with Pdf() as pdf:
             pdf.add_text(date_filter(timezone.now()), "p_right")
             pdf.add_spacer(1.5)
-            pdf.add_text(f"Receipt", "h3")
+            pdf.add_text("Receipt", "h3")
             pdf.add_text(f"ID: {reg.uuid}", "p_small")
             pdf.add_spacer(0.5)
             pdf.add_text("To Whom It May Concern,")
