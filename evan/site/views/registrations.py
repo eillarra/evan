@@ -53,9 +53,7 @@ class RegistrationView(generic.DetailView):
         registration = self.get_object()
 
         if not registration.editable_by_user(request.user):
-            messages.error(
-                request, "You don't have the necessary permissions to update this registration.",
-            )
+            messages.error(request, "You don't have the necessary permissions to update this registration.")
             raise PermissionDenied
 
         if registration.event.is_closed:
@@ -127,13 +125,9 @@ class RegistrationPaymentView(RegistrationPaymentBaseView):
             registration.save()
             messages.success(request, "Your coupon has been correctly applied.")
         except Coupon.DoesNotExist:
-            messages.error(
-                request, "Please check your coupon code. We can't find the one you've introduced.",
-            )
+            messages.error(request, "Please check your coupon code. We can't find the one you've introduced.")
         except IntegrityError:
-            messages.error(
-                request, "Sorry but the coupon you have introduced has already been used.",
-            )
+            messages.error(request, "Sorry but the coupon you have introduced has already been used.")
         except Exception as e:
             messages.error(request, "Error %s (%s)" % (e.message, type(e).__name__))
         return redirect(registration.get_payment_url())
@@ -182,9 +176,7 @@ class RegistrationPaymentResultBaseView(generic.TemplateView):
 
         # Exception
         elif status in Ingenico.EXCEPTION_STATUSES:
-            messages.warning(
-                request, "We will revise your payment and let you know when it is authorized.",
-            )
+            messages.warning(request, "We will revise your payment and let you know when it is authorized.")
 
         # Decline
         elif status in Ingenico.DECLINE_STATUSES:

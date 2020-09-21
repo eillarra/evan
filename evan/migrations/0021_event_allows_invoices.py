@@ -6,13 +6,9 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0020_auto_20200716_1022'),
+        ("evan", "0020_auto_20200716_1022"),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='event',
-            name='allows_invoices',
-            field=models.BooleanField(default=True),
-        ),
+        migrations.AddField(model_name="event", name="allows_invoices", field=models.BooleanField(default=True),),
     ]

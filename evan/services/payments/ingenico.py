@@ -149,7 +149,7 @@ class Ingenico:
             "SUBSCRIPTION_ID",
             "TICKET",
             "TRXDATE",
-            "VC"
+            "VC",
         }
 
         for key in sorted(parameters):
