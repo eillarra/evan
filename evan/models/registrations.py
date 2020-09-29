@@ -54,7 +54,7 @@ class Registration(models.Model):
         indexes = [
             models.Index(fields=["uuid"]),
         ]
-        ordering = ("-created_at",)
+        ordering = ("-id",)
         unique_together = ("event", "user")
 
     def save(self, *args, **kwargs):
