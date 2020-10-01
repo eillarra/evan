@@ -20,8 +20,8 @@ django-dnt==1.0
 django-libsass==0.8
 django-recaptcha==2.0.6
 django-redis==4.12.1
-django==3.1.1
-djangorestframework==3.11.1
+django==3.1.2
+djangorestframework==3.12.1
 drf-writable-nested==0.6.1
 et-xmlfile==1.0.1
 gunicorn==20.0.4
@@ -42,14 +42,14 @@ python3-openid==3.2.0
 pytz==2020.1
 rcssmin==1.0.6
 redis==3.5.3; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'
-reportlab==3.5.49
+reportlab==3.5.51
 requests-oauthlib==1.3.0
 requests==2.24.0
 rjsmin==1.1.0
-sentry-sdk==0.17.5
+sentry-sdk==0.18.0
 six==1.15.0; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
 sqlparse==0.3.1; python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'
-stripe==2.51.0
+stripe==2.54.0
 svglib==0.9.0
 tinycss2==1.0.2; python_version >= '3.5'
 tld==0.12.2

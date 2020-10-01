@@ -77,7 +77,7 @@ ROOT_URLCONF = "evan.urls"
 WSGI_APPLICATION = "evan.wsgi.app"
 
 
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 db = urlparse(os.environ.get("DATABASE_URL"))
 DATABASES = {
@@ -93,14 +93,14 @@ DATABASES = {
 
 
 # Time zones
-# https://docs.djangoproject.com/en/2.2/topics/i18n/timezones/
+# https://docs.djangoproject.com/en/dev/topics/i18n/timezones/
 
 USE_TZ = True
 TIME_ZONE = "Europe/Brussels"
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/2.2/topics/i18n/
+# https://docs.djangoproject.com/en/dev/topics/i18n/
 
 LANGUAGE_CODE = "en"
 USE_I18N = False
@@ -110,7 +110,7 @@ FIRST_DAY_OF_WEEK = 1
 
 
 # Security
-# https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
 
 # CSRF / Cookie
 
@@ -173,7 +173,7 @@ REST_FRAMEWORK = {
 }
 
 
-# https://docs.djangoproject.com/en/2.2/topics/templates/
+# https://docs.djangoproject.com/en/dev/topics/templates/
 
 TEMPLATES = [
     {
@@ -209,8 +209,8 @@ COUNTRIES_OVERRIDE = {
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
-# https://docs.djangoproject.com/en/2.2/howto/static-files/deployment/
+# https://docs.djangoproject.com/en/dev/howto/static-files/
+# https://docs.djangoproject.com/en/dev/howto/static-files/deployment/
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(SITE_ROOT, "www", "static")
@@ -228,13 +228,13 @@ COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 
 
 # File uploads
-# https://docs.djangoproject.com/en/2.2/topics/http/file-uploads/
+# https://docs.djangoproject.com/en/dev/topics/http/file-uploads/
 
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 
 # http://stackoverflow.com/questions/24071290/
-# https://docs.djangoproject.com/en/2.2/ref/settings/#media-root
+# https://docs.djangoproject.com/en/dev/ref/settings/#media-root
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT, "www", "media")

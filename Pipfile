@@ -7,7 +7,7 @@ name = "pypi"
 python_version = "3.8"
 
 [packages]
-celery = "*"
+celery = "==4.4.7"
 commonmark = "*"
 coreapi = "*"
 django = "*"

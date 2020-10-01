@@ -16,7 +16,7 @@ except Exception:
     pass
 
 
-# https://docs.djangoproject.com/en/2.2/topics/cache/
+# https://docs.djangoproject.com/en/dev/topics/cache/
 
 CACHES = {
     "default": {
@@ -28,7 +28,7 @@ CACHES = {
 CACHE_MIDDLEWARE_SECONDS = 20
 
 
-# https://docs.djangoproject.com/en/2.2/topics/email/
+# https://docs.djangoproject.com/en/dev/topics/email/
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

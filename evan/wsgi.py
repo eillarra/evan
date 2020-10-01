@@ -1,4 +1,4 @@
-# https://docs.djangoproject.com/en/2.1/howto/deployment/wsgi/
+# https://docs.djangoproject.com/en/dev/howto/deployment/wsgi/
 
 import os
 import sentry_sdk

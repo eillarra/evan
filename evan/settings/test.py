@@ -8,17 +8,17 @@ ALLOWED_HOSTS = ("localhost",)
 INTERNAL_IPS = ("127.0.0.1",)
 
 
-# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
+# https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": "dev.db"}}
 
 
-# https://docs.djangoproject.com/en/3.0/topics/cache/
+# https://docs.djangoproject.com/en/dev/topics/cache/
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
 
-# https://docs.djangoproject.com/en/3.0/topics/email/
+# https://docs.djangoproject.com/en/dev/topics/email/
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
