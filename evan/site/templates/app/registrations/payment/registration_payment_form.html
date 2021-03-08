@@ -1,4 +1,4 @@
-{% extends 'layout_v2.html' %}
+{% extends 'layout.html' %}
 
 {% load compress %}
 {% load static %}
@@ -17,7 +17,7 @@
 
 {% block drawer %}
   <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md"
-    content-class="bg-grey-2 q-pt-xl q-pl-sm text-weight-medium" :width="220">
+    content-class="bg-grey-2 q-pt-xl q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area class="fit">
       <q-list dense>
         <q-item clickable tag="a" href="{{ registration.get_absolute_url }}#/registration/">
@@ -39,7 +39,7 @@
           <q-item-section>Event</q-item-section>
         </q-item>
       </q-list>
-      <q-separator spaced="lg"></q-separator>
+      <q-separator spaced="md"></q-separator>
       <q-list dense>
         <q-item active clickable tag="a" href="#">
           <q-item-section avatar>

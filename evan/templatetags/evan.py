@@ -14,7 +14,7 @@ def active(request, patterns):
             try:
                 if pattern == request.resolver_match.url_name:
                     return "active"
-            except Exception as e:
+            except Exception:
                 return ""
     return ""
 

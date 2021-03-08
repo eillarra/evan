@@ -18,9 +18,7 @@ Vue.component('marked', {
       default: ''
     }
   },
-  template: '' +
-    '<div class="marked" v-html="compiledMarkdown"></div>' +
-  '',
+  template: '<div class="marked" v-html="compiledMarkdown"></div>',
   computed: {
     compiledMarkdown: function () {
       if (!this.text || this.text == '') return this.text;
@@ -42,7 +40,7 @@ Vue.directive('tooltip', function (el, binding) {
 
 Vue.component('a-div', {
     props: ['href'],
-    template: '<div @click="goTo" class="pointer"><slot></slot></div>',
+    template: '<div @click="goTo" class="cursor-pointer"><slot></slot></div>',
     methods: {
         goTo: function () {
             var w = window.open(this.href, '_self');
@@ -186,7 +184,7 @@ Vue.component('search-box', {
         '<div>' +
             '<div class="input-group">' +
                 '<input v-model="q" type="text" class="form-control" :placeholder="placeholder">' +
-                '<div class="input-group-append dropdown pointer">' +
+                '<div class="input-group-append dropdown cursor-pointer">' +
                     '<span v-show="q" class="input-group-text">' +
                         '<i @click="q = \'\'" class="material-icons text-secondary">&#xE5CD;</i>' +
                     '</span>' +

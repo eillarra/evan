@@ -15,7 +15,7 @@ class Image(models.Model):
     image = models.FileField("Image", upload_to=FOLDER, null=True, blank=True)
     position = models.PositiveSmallIntegerField(default=0)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="images")
-    object_id = models.PositiveIntegerField()
+    object_id = models.IntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
@@ -35,7 +35,7 @@ class Content(models.Model):
     event = models.ForeignKey("evan.Event", related_name="contents", on_delete=models.CASCADE)
     key = models.CharField(max_length=32)
     value = models.TextField(null=True, blank=True)
-
+    marked = models.BooleanField(default=True)
     notes = models.CharField(max_length=255, blank=True)
     images = GenericRelation("evan.Image")
 

@@ -17,65 +17,32 @@ $small-breakpoint: 576px;
 $medium-breakpoint: 768px;
 $large-breakpoint: 992px;
 
-$bootstrap-border-color: #dee2e6;
-
 
 [v-cloak] {
-    display: none !important;
+  display: none !important;
 }
 
 body {
-    font-family: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 15px;
-    font-weight: $font-weight-normal;
-}
-
-.pointer,
-.btn {
-    cursor: pointer;
+  font-family: "IBM Plex Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  font-weight: $font-weight-normal;
 }
 
 @media (min-width: 1280px) {
-    .container {
-        max-width: 1280px;
-    }
-}
-
-.ha-100 {
-    position: absolute;
-    bottom: 0;
-    top: 0;
-    width: 93%;
-}
-
-.msg-bar {
-    border-bottom: 0.5rem solid white;
+  .container {
+    max-width: 1280px;
+  }
 }
 
 
 /* Colors & logo */
 
-.logo {
-    width: 110px;
-    max-width: 100%;
+.bg-evan {
+  background-color: $primary-color;
+}
 
-    &.logo-md {
-        width: 70px;
-        max-width: 70px;
-    }
-
-    &.logo-sm {
-        width: 30px;
-        max-width: 30px;
-    }
-
-    &.flipped {
-        transform: rotate(180deg);
-        -moz-filter: grayscale(1);
-        -ms-filter: grayscale(1);
-        -o-filter: grayscale(1);
-        filter: grayscale(1);
-    }
+.q-item .flag-sprite {
+  margin-left: 1px;
 }
 
 
@@ -89,12 +56,17 @@ h2, h3 {
 h6 {
   text-transform: uppercase;
   font-size: smaller;
+  line-height: normal;
+}
+
+.q-item.q-router-link--active {
+  background: #e6f1fc;
 }
 
 a {
   color: $primary-color;
 
-  .router-link-active > & {
+  .q-item.q-router-link--active > & {
     font-weight: bold;
     color: $font-color;
   }
@@ -113,26 +85,39 @@ a {
   }
 }
 
-.material-icons {
-    font-size: 1.1em;
-    vertical-align: -17.5%;
+.text-caption {
+  line-height: 1.35;
 
-    &.in {
-        vertical-align: -20%;
-    }
+  .material-icons {
+    font-size: 14px;
+  }
+}
+
+.q-table tbody td.min-width {
+  width: 16px;
+}
+
+.q-td .material-icons,
+.text-caption .material-icons {
+  vertical-align: sub;
+}
+
+.q-field__messages {
+  line-height: 1.2;
+}
+
+.evan-ma-none {
+  margin: 0 !important;
 }
 
 
 /* Footer */
 
 .list-inline-item:not(:last-child) {
-    margin-right: 1.5rem;
+  margin-right: 1.5rem;
 }
 
 
-@import '_badges.scss';
 @import '_forms.scss';
 @import '_marked.scss';
-@import '_navbar.scss';
 @import '_stripe.scss';
-@import '_tables.scss';

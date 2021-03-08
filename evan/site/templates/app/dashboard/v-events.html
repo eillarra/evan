@@ -1,0 +1,19 @@
+{% load static %}
+
+
+<script type="text/x-template" id="v-events">
+{% verbatim %}
+  <div v-cloak>
+    <q-card flat class="q-pa-lg">
+      <display-5>Event management</display-5>
+      <q-table dense row-key="code" :data="events" :columns="table.columns" :pagination.sync="table.pagination" @row-click="openUrl">
+        <template v-slot:body-cell-href="props">
+          <q-td>
+            <q-icon name="outbond" color="primary"></q-icon>
+          </q-td>
+        </template>
+      </q-table>
+    </q-card>
+  </div>
+{% endverbatim %}
+</script>

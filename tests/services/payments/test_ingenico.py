@@ -2,7 +2,7 @@ import pytest
 
 from django.http import QueryDict
 
-from evan.tools.payments.ingenico import Ingenico
+from evan.services.payments.ingenico import Ingenico
 
 
 @pytest.mark.parametrize(

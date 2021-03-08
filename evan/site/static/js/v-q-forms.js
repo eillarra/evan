@@ -5,12 +5,12 @@ var FormStore = new Vuex.Store({
   },
   mutations: {
     setOptions: function (state, options) {
-      state.options = options;
+      state.options = Object.freeze(options);
     },
     fetchMetadata: _.debounce(function (state) {
       if (!state.metadata.length) {
-        api().getMetadata().then(function (res) {
-          state.metadata = res;
+        Evan.api.request('get', '/api/v1/metadata/').then(function (res) {
+          state.metadata = Object.freeze(res.data);
         });
       }
     }, 150)
@@ -64,11 +64,11 @@ var SelectElement = FormElement.extend({
       default: 'Label'
     }
   },
-  template: '' +
-    '<div>' +
-      '<q-select dense options-dense filled v-model="mutable" :options="options" :option-value="optionValue" :option-label="optionLabel" :label="label"></q-select>' +
-    '</div>' +
-  '',
+  template: `
+    <div>
+      <q-select dense options-dense filled v-model="mutable" :options="options" :option-value="optionValue" :option-label="optionLabel" :label="label"></q-select>
+    </div>
+  `,
   computed: {
     mutable: {
       get: function () {
@@ -152,11 +152,11 @@ Vue.component('metadata-select', MetadataElement.extend({
       default: 'Country'
     }
   },
-  template: '' +
-    '<div>' +
-      '<q-select dense options-dense filled v-model="mutable" :options="options" option-value="id" option-label="value" :label="label"></q-select>' +
-    '</div>' +
-  '',
+  template: `
+    <div>
+      <q-select dense options-dense filled v-model="mutable" :options="options" option-value="id" option-label="value" :label="label"></q-select>
+    </div>
+  `,
   computed: {
     mutable: {
       get: function () {

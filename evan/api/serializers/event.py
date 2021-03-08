@@ -2,11 +2,10 @@ from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
 from evan.models import Event, Day, Fee, ImportantDate, validate_event_dates
-from .paper import PaperSerializer
-from .session import SessionSerializer
-from .topic import TopicSerializer
-from .track import TrackSerializer
-from .venue import VenueSerializer
+from .sessions import SessionSerializer
+from .topics import TopicSerializer
+from .tracks import TrackSerializer
+from .venues import VenueSerializer
 
 
 class DaySerializer(serializers.ModelSerializer):
@@ -22,12 +21,20 @@ class FeeSerializer(serializers.ModelSerializer):
 
 
 class ImportantDateSerializer(serializers.ModelSerializer):
-    date_display = serializers.CharField(read_only=True)
     is_past = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = ImportantDate
         exclude = ("event",)
+
+
+class EventListSerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
+    href = serializers.URLField(source="get_absolute_url", read_only=True)
+
+    class Meta:
+        model = Event
+        fields = ("id", "code", "name", "full_name", "start_date", "end_date", "url", "href")
 
 
 class EventSerializer(serializers.ModelSerializer):
@@ -42,15 +49,14 @@ class EventSerializer(serializers.ModelSerializer):
     fees = FeeSerializer(many=True, read_only=True)
     dates = ImportantDateSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
-    papers = PaperSerializer(many=True, read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
     tracks = TrackSerializer(many=True, read_only=True)
     venues = VenueSerializer(many=True, read_only=True)
     href_registration = serializers.URLField(source="get_registration_url", read_only=True)
 
+    main_config = serializers.JSONField()
     custom_fields = serializers.JSONField(read_only=True)
-    extra_data = serializers.JSONField()
 
     class Meta:
         model = Event

@@ -23,7 +23,6 @@ class Session(models.Model):
     summary = models.TextField(null=True, blank=True)
     topics = models.ManyToManyField("evan.Topic", blank=True, related_name="sessions")
     website = models.URLField(null=True, blank=True)
-    image = models.FileField(upload_to="public/sympo/activity", null=True, blank=True)
     max_attendees = models.PositiveSmallIntegerField(default=0, help_text="Leave on `0` for non limiting.")
     extra_attendees_fee = models.PositiveSmallIntegerField(default=0)
     is_private = models.BooleanField(default=False)

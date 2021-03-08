@@ -1,4 +1,4 @@
-<script type="text/x-template" id="{{ id }}">
+<script type="text/x-template" id="v-event">
 {% verbatim %}
   <div v-cloak v-if="event" class="row q-col-gutter-md">
 
@@ -6,12 +6,8 @@
       <q-card flat class="q-pa-lg">
 
         <div class="q-gutter-md float-right">
-          <q-btn outline
-            size="sm" icon="search" color="light-blue" label="Twitter"
-            type="a" :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener"></q-btn>
-          <q-btn outline
-            size="sm" icon="open_in_new" color="primary" label="Website"
-            type="a" :href="event.website" target="_blank" rel="noopener"></q-btn>
+          <q-btn outline size="sm" icon="search" color="light-blue" label="Twitter" type="a" :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener"></q-btn>
+          <q-btn outline size="sm" icon="open_in_new" color="primary" label="Website" type="a" :href="event.website" target="_blank" rel="noopener"></q-btn>
         </div>
 
         <h5 class="q-mt-none q-mb-lg text-weight-bold">Event information</h5>

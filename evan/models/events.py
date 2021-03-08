@@ -67,8 +67,8 @@ class Event(models.Model):
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(null=True, blank=True)
 
+    main_config = models.JSONField(null=True, blank=True, default=dict)
     custom_fields = models.JSONField(default=dict)
-    extra_data = models.JSONField(null=True, blank=True, default=dict)
 
     registrations_count = models.PositiveIntegerField(default=0)
 
@@ -81,6 +81,7 @@ class Event(models.Model):
             models.Index(fields=["code"]),
             models.Index(fields=["start_date", "end_date"]),
         ]
+        ordering = ("-start_date",)
 
     def __str__(self) -> str:
         return self.name
@@ -177,12 +178,6 @@ class ImportantDate(models.Model):
 
     def __str__(self) -> str:
         return self.note
-
-    def date_display(self) -> str:
-        if self.end_date:
-            pattern = "-j, Y" if self.date.month == self.end_date.month else " - N j, Y"
-            return "{0}{1}".format(date_filter(self.date, "N j"), date_filter(self.end_date, pattern))
-        return date_filter(self.date, "N j, Y")
 
     def is_past(self) -> bool:
         if self.end_date:

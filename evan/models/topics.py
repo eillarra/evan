@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils.text import slugify
-from typing import List
 
 
 class Topic(models.Model):

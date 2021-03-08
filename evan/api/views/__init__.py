@@ -1,12 +1,11 @@
 # flake8: noqa
 
 from .contents import *
-from .event import *
+from .events import *
 from .metadata import *
-from .paper import *
-from .registration import *
-from .session import *
-from .topic import *
-from .track import *
-from .user import *
-from .venue import *
+from .registrations import *
+from .sessions import *
+from .topics import *
+from .tracks import *
+from .users import *
+from .venues import *

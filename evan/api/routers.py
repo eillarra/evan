@@ -7,15 +7,14 @@ class Router(DefaultRouter):
     def __init__(self, version="v1"):
         super().__init__()
 
-        self.schema_title = "Evan API {0}".format(version)
+        self.schema_title = f"Evan API {version}"
 
         self.register(r"metadata", views.MetadataViewSet, basename="metadata")
-        self.register(r"users", views.UserViewSet, basename="user")
+        self.register(r"user", views.UserViewSet, basename="user")
 
         self.register(r"events", views.EventViewSet, basename="event")
         self.register(r"events/(?P<code>[\w-]+)/contents", views.ContentsViewSet, basename="contents")
         self.register(r"events/(?P<code>[\w-]+)/coupons", views.CouponsViewSet, basename="coupons")
-        self.register(r"events/(?P<code>[\w-]+)/papers", views.PapersViewSet, basename="papers")
         self.register(r"events/(?P<code>[\w-]+)/registrations", views.RegistrationsViewSet, basename="registrations")
         self.register(r"events/(?P<code>[\w-]+)/rooms", views.RoomsViewSet, basename="rooms")
         self.register(r"events/(?P<code>[\w-]+)/sessions", views.SessionsViewSet, basename="sessions")
@@ -25,8 +24,8 @@ class Router(DefaultRouter):
 
         self.register(r"events/(?P<code>[\w-]+)/register", views.RegistrationCreateViewSet, basename="register")
 
+        self.register(r"contents", views.ContentViewSet, basename="content")
         self.register(r"coupons", views.CouponViewSet, basename="coupon")
-        self.register(r"papers", views.PaperViewSet, basename="paper")
         self.register(r"registrations", views.RegistrationViewSet, basename="registration")
         self.register(r"rooms", views.RoomViewSet, basename="room")
         self.register(r"sessions", views.SessionViewSet, basename="session")

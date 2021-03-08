@@ -10,8 +10,10 @@ class ImageSerializer(serializers.ModelSerializer):
 
 
 class ContentSerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name="v1:content-detail")
     images = ImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Content
-        exclude = ("id", "event", "notes")
+        read_only = ("key", "marked", "notes")
+        exclude = ("id", "event")

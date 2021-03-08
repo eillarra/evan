@@ -14,7 +14,7 @@ SITE_ROOT = os.path.join(PACKAGE_ROOT, "site")
 
 DEBUG = True
 
-ADMINS = (("eillarra", "eillarra@ugent.be"),)
+ADMINS = (('eillarra', 'eneko.illarramendi@ugent.be'),)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "DJANGO_SECRET_KEY")
 SITE_ID = int(os.environ.get("SITE_ID", 1))
 
@@ -130,6 +130,14 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "dashboard"
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.BCryptPasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+]
 
 ACCOUNT_ACTIVATION_DAYS = 7
 AUTH_PASSWORD_VALIDATORS = [

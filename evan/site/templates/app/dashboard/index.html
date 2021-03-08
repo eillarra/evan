@@ -1,0 +1,230 @@
+{% extends 'layout.html' %}
+
+{% load compress %}
+{% load static %}
+
+
+{% block head_title %}Dashboard - {{ block.super }}{% endblock %}
+
+{% block header %}
+  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+    <q-toolbar>
+      <q-btn flat @click="visibleDrawer = !visibleDrawer" round dense icon="menu"></q-btn>
+      <q-toolbar-title>
+        <evan-logo fill="#1d1d1d" :width="70"></evan-logo>
+      </q-toolbar-title>
+    </q-toolbar>
+  </q-header>
+{% endblock %}
+
+{% block drawer %}
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md"
+    content-class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
+    <q-scroll-area class="fit">
+      <q-list dense>
+        <q-item-label header>Dashboard</q-item-label>
+        <q-item clickable :to="{name: 'events'}">
+          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+          <q-item-section>Your events</q-item-section>
+        </q-item>
+        <q-item clickable :to="{name: 'registrations'}">
+          <q-item-section avatar><q-icon name="recent_actors"></q-icon></q-item-section>
+          <q-item-section>Your registrations</q-item-section>
+        </q-item>
+      </q-list>
+      <q-list dense>
+        <q-item-label header>Account</q-item-label>
+        <q-item clickable :to="{name: 'profile'}">
+          <q-item-section avatar><q-icon name="account_circle"></q-icon></q-item-section>
+          <q-item-section>Your profile</q-item-section>
+        </q-item>
+        <q-item tag="a" href="{% url 'account_change_password' %}">
+          <q-item-section avatar><q-icon name="vpn_key"></q-icon></q-item-section>
+          <q-item-section>Password</q-item-section>
+        </q-item>
+        <q-item tag="a" href="{% url 'account_email' %}">
+          <q-item-section avatar><q-icon name="email"></q-icon></q-item-section>
+          <q-item-section>Emails</q-item-section>
+        </q-item>
+        <q-item tag="a" href="{% url 'socialaccount_connections' %}">
+          <q-item-section avatar><q-icon name="extension"></q-icon></q-item-section>
+          <q-item-section>Social accounts</q-item-section>
+        </q-item>
+      </q-list>
+    </q-scroll-area>
+  </q-drawer>
+{% endblock %}
+
+{% block page %}
+  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-events="{% url 'v1:user-events' %}" data-url-registrations="{% url 'v1:user-registrations' %}"></div>
+  <div is="router-view" class="q-pt-lg"></div>
+{% endblock %}
+
+{% block vue_templates %}
+  {% include './v-events.html' %}
+  {% include './v-registrations.html' %}
+  {% include '../_shared_views/v-profile.html' %}
+{% endblock %}
+
+{% block scripts %}
+{% compress js file dashboard %}
+  <script src="{% static 'js/components/tables.js' %}"></script>
+  <script src="{% static 'js/views/profile.js' %}"></script>
+  <script type="text/javascript">
+    var VARS = document.querySelector('#vars').dataset;
+
+    var Store = new Vuex.Store({
+      state: {
+        user: null,
+        events: [],
+        registrations: []
+      },
+      mutations: {
+        getEvents: function (state) {
+          Evan.api.request('get', VARS.urlEvents).then(function (res) {
+            state.events = res.data;
+          });
+        },
+        getRegistrations: function (state) {
+          Evan.api.request('get', VARS.urlRegistrations).then(function (res) {
+            state.registrations = Object.freeze(res.data.map(function (obj) {
+              return Evan.map.registration(obj);
+            }));
+          });
+        },
+        getUser: function (state) {
+          Evan.api.request('get', VARS.urlUser).then(function (res) {
+            state.user = res.data;
+          });
+        }
+      }
+    });
+
+    var EventsView = {
+      template: '#v-events',
+      data: function () {
+        return {
+          table: {
+            columns: [
+              {
+                name: 'href',
+                field: 'href',
+                sortable: false,
+                align: 'left',
+                label: null,
+              },
+              {
+                name: 'code',
+                field: 'code',
+                sortable: true,
+                align: 'left',
+                label: 'Code',
+              },
+              {
+                name: 'name',
+                field: 'name',
+                sortable: true,
+                align: 'left',
+                label: 'Name'
+              },
+              {
+                name: 'full_name',
+                field: 'full_name',
+                sortable: false,
+                align: 'left',
+                label: null
+              },
+              {
+                name: 'start_date',
+                field: 'start_date',
+                sortable: true,
+                align: 'left',
+                label: 'Start'
+              },
+              {
+                name: 'end_date',
+                field: 'end_date',
+                sortable: true,
+                align: 'left',
+                label: 'End'
+              },
+            ],
+            pagination: {
+              rowsPerPage: 25
+            },
+            filter: null
+          }
+        }
+      },
+      computed: _.extend(
+        Vuex.mapState(['events']), {
+      }),
+      methods: {
+        openUrl: function (e, row) {
+          Quasar.utils.openURL(row.href);
+        }
+      },
+      created: function () {
+        this.$store.commit('getEvents');
+      }
+    };
+
+    var RegistrationsView = {
+      template: '#v-registrations',
+      props: ['uuid'],
+      computed: _.extend(
+        Vuex.mapState(['registrations']), {
+      }),
+      created: function () {
+        this.$store.commit('getRegistrations');
+      }
+    };
+
+    var Router = new VueRouter({
+      routes: [
+        {
+          path: '/',
+          redirect: {name: 'events'}
+        },
+        {
+          name: 'events',
+          path: '/events/',
+          pathToRegexpOptions: {strict: true},
+          component: EventsView
+        },
+        {
+          name: 'profile',
+          path: '/profile/',
+          pathToRegexpOptions: {strict: true},
+          component: ProfileView
+        },
+        {
+          name: 'registrations',
+          path: '/registrations/:uuid?/',
+          pathToRegexpOptions: {strict: true},
+          component: RegistrationsView,
+          props: function (route) {
+            return {
+              uuid: route.params.uuid
+            };
+          }
+        }
+      ]
+    });
+
+    new Vue({
+      el: '#vue',
+      store: Store,
+      router: Router,
+      data: function () {
+        return {
+          visibleDrawer: true
+        };
+      },
+      created: function () {
+        this.$store.commit('getUser');
+      }
+    });
+  </script>
+{% endcompress %}
+{% endblock %}

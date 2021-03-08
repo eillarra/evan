@@ -5,7 +5,6 @@ from .coupons import *
 from .events import *
 from .fees import *
 from .metadata import *
-from .papers import *
 from .payments import *
 from .permissions import *
 from .registrations import *

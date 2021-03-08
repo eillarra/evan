@@ -1,25 +1,7 @@
-import json
-
-from django.utils.encoding import force_text
-from django_countries.serializer_fields import CountryField as BaseCountryField
 from rest_framework import serializers
 from rest_framework.relations import RelatedField
 
 from evan.models import Metadata, get_cached_metadata, get_cached_metadata_queryset
-
-
-class CountryField(BaseCountryField):
-    def to_representation(self, obj):
-        code = obj.code
-        if not code:
-            return ""
-        if not self.country_dict:
-            return code
-        return {
-            "code": code,
-            "name": force_text(obj.name),
-            "flag_css": force_text(obj.flag_css),
-        }
 
 
 class MetadataListField(serializers.CharField):

@@ -22,5 +22,5 @@ class Permission(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, related_name="perms", on_delete=models.CASCADE,)
     level = models.PositiveSmallIntegerField(db_index=True, choices=LEVEL_CHOICES)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="perms")
-    object_id = models.PositiveIntegerField()
+    object_id = models.IntegerField()
     content_object = GenericForeignKey("content_type", "object_id")

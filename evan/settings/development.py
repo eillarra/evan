@@ -18,12 +18,7 @@ except Exception:
 
 # https://docs.djangoproject.com/en/dev/topics/cache/
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
-    }
-}
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 CACHE_MIDDLEWARE_SECONDS = 20
 

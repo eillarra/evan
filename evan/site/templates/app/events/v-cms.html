@@ -1,0 +1,30 @@
+<script type="text/x-template" id="v-cms">
+{% verbatim %}
+  <div class="col-12">
+    <q-card flat class="q-pa-lg">
+      <display-5>Content management</display-5>
+      <evan-editor :obj="selectedObj">
+        <div v-if="selectedObj" class="q-gutter-md">
+          <q-input filled dense v-model="selectedObj.key" readonly label="Key"></q-input>
+          <evan-markdown v-if="selectedObj.marked" v-model="selectedObj.value" label="Content"></evan-markdown>
+          <q-input v-else filled dense v-model="selectedObj.value" label="Content" type="textarea" autogrow></q-input>
+        </div>
+      </evan-editor>
+      <q-markup-table v-if="contents.length" dense flat>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="text-left">Key</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="obj in contents" :key="obj.key" @click.prevent="selectedObj = obj" class="cursor-pointer">
+            <td class="min-width"><q-icon name="edit" color="primary" /></td>
+            <td class="text-left">{{ obj.key }}</td>
+          </tr>
+        </tbody>
+      </q-markup-table>
+    </q-card>
+  </div>
+{% endverbatim %}
+</script>

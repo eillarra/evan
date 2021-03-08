@@ -44,7 +44,7 @@ class Profile(models.Model):
     objects = ProfileManager()
 
     def __str__(self) -> str:
-        return f"{self.name}, {self.affiliation}"
+        return f"{self.name}, {self.affiliation if self.affiliation else '-'}"
 
     @property
     def email(self) -> str:

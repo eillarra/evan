@@ -18,11 +18,11 @@ Update dependencies (and manually update `requirements.txt`):
 
 ### Running tests
 
-    $ pytest --cov=eva --cov-report=term
+    $ pytest --cov=evan --cov-report=term
 
 ### Run Celery
 
-    $ celery worker -B -A eva
+    $ celery worker -B -A evan
 
 ### Style guide
 

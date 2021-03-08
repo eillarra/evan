@@ -1,4 +1,4 @@
-<script type="text/x-template" id="{{ id }}">
+<script type="text/x-template" id="v-registration">
 {% verbatim %}
   <div v-cloak v-if="event && registration" class="row q-col-gutter-md">
 
@@ -19,9 +19,7 @@
         <p>Please select the appropriate fee. Students might be required to present some kind of identification. <strong class="text-orange">*</strong></p>
 
         <div v-for="fee in fees" class="custom-control custom-radio my-1">
-          <q-radio
-            v-model="registration.fee_type" :val="fee.type"
-            :label="fee.notes + ' (' + fee.value + ' EUR)'"></q-radio>
+          <q-radio v-model="registration.fee_type" :val="fee.type" :label="fee.notes + ' (' + fee.value + ' EUR)'"></q-radio>
         </div>
 
         <div v-if="!replaceMainForm">
@@ -106,14 +104,8 @@
                 <q-input v-if="field.type == 'text'"
                   v-model="registration.custom_data[field.id]"
                   filled dense autogrow class="q-mb-lg"></q-input>
-                <text-list v-else-if="field.type == 'text_list'"
-                  v-model="registration.custom_data[field.id]"
-                  :fields="field.fields" class="q-mb-md"></text-list>
-                <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'"
-                  v-model="registration.custom_data[field.id]"
-                  :options="field.options"
-                  :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'"
-                  class="q-mb-md"></q-option-group>
+                <evan-text-list v-else-if="field.type == 'text_list'" v-model="registration.custom_data[field.id]" :fields="field.fields" class="q-mb-md"></evan-text-list>
+                <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'" v-model="registration.custom_data[field.id]" :options="field.options" :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'" class="q-mb-md"></q-option-group>
                 <q-item v-else-if="field.type == 'checkbox'" class="q-pl-none">
                   <q-item-section avatar class="q-px-none">
                     <q-checkbox v-model="registration.custom_data[field.id]"
@@ -131,10 +123,7 @@
         </div>
 
         <div class="q-mt-xl">
-          <q-btn unelevated
-            @click.prevent="save"
-            :disabled="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'"
-            label="Save registration"></q-btn>
+          <q-btn unelevated @click.prevent="save" :disabled="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" label="Save registration"></q-btn>
           <p class="q-mt-md text-orange" v-show="!formIsValid">
             <i class="material-icons q-mr-sm">block</i>
             <span v-if="feeIsOneDay && registration.days.length > 1">You can only attend one of the days of the event.</span>
@@ -172,15 +161,10 @@
         </q-item>
         <q-item>
           <q-item-section>
-            <q-btn v-if="registration.isPaid"
-              outline icon="info" color="primary" label="View payment info" class="full-width"
-              type="a" :href="registration.href_payment"></q-btn>
+            <q-btn v-if="registration.isPaid" outline icon="info" color="primary" label="View payment info" class="full-width" type="a" :href="registration.href_payment"></q-btn>
             <span v-else>
-              <q-btn v-if="!registration.invoice_requested"
-                outline icon="credit_card" color="green" label="Proceed with payment" class="full-width"
-                type="a" :href="registration.href_payment"></q-btn>
-              <q-btn v-else disabled
-                outline icon="info" color="dark" label="Invoice is being prepared" class="full-width"></q-btn>
+              <q-btn v-if="!registration.invoice_requested" outline icon="credit_card" color="green" label="Proceed with payment" class="full-width" type="a" :href="registration.href_payment"></q-btn>
+              <q-btn v-else disabled outline icon="info" color="dark" label="Invoice is being prepared" class="full-width"></q-btn>
             </span>
           </q-item-section>
         </q-item>

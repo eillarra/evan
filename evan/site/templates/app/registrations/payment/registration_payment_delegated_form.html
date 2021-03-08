@@ -1,4 +1,4 @@
-{% extends 'layout_v2.html' %}
+{% extends 'layout.html' %}
 
 {% load compress %}
 {% load static %}
@@ -35,7 +35,7 @@
         {% else %}
           {% if not registration.invoice_requested %}
             <div class="clearfix">
-              <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> for {{ registration.user.profile.name }}'s "{{ registration.event }}" registration. Once the payment is complete {{ registration.user.first_name }} will be able to download a receipt &mdash;no invoice&mdash;:</p>
+              <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> for {{ registration.user.profile.name }}'s "{{ registration.event }}" registration. Once the payment is complete {{ registration.user.first_name }} will be able to download a receipt <strong>&mdash;no invoice&mdash;</strong>:</p>
               {% if registration.paid > 0 %}
                 <p>You have already paid <strong>{{ registration.paid }} EUR</strong>.</p>
               {% endif %}

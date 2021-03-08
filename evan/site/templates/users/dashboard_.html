@@ -1,0 +1,84 @@
+{% extends 'layout_old.html' %}
+
+{% load static %}
+
+
+{% block head_title %}{{ user.username }} - {{ block.super }}{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <div class="row pt-5">
+            <div class="col-12 col-md-3 col-lg-2 mb-4 pr-lg-5">
+                <a href="{% url 'homepage' %}">
+                    <img class="d-flex mr-3 logo mb-5" src="{% static 'images/evan.svg' %}">
+                </a>
+                {% include './_submenu.html' %}
+            </div>
+            <div class="col-12 col-md-9 col-lg-10">
+                <h4 class="text-secondary mb-4">{{ user }}</h4>
+                {% if events.count > 0 %}
+                    <h5 class="mt-5">Event management</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th class="pl-0">Event</th>
+                                <th></th>
+                                <th class="sm"></th>
+                            </tr>
+                        </thead>
+                        {% for event in events %}
+                            <tr>
+                                <td class="pl-0">{{ event.name }}</td>
+                                <td>{{ event.full_name }}</td>
+                                <td class="pr-0 pl-4"><a href="{{ event.get_absolute_url }}" class="btn btn-sm btn-outline-secondary"><i class="material-icons">settings</i> Management</a></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+                {% if registrations.count > 0 %}
+                    <h5 class="mt-5">My registrations</h5>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th class="pl-0">Event</th>
+                                <th class="">Registration ID</th>
+                                <th class="sm">Date</th>
+                                <th class="sm"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for registration in registrations %}
+                            <tr>
+                                <td class="pl-0">{{ registration.event.name }}</td>
+                                <td class="text-nowrap">
+                                    <samp class="mr-2"><small>{{ registration.uuid }}</small></samp>
+                                    {% if registration.is_paid %}
+                                        <span class="badge badge-success">Paid</span>
+                                    {% else %}
+                                        <span class="badge badge-warning text-white">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-nowrap">{{ registration.created_at }}</td>
+                                <td class="pr-0 pl-4 text-right text-nowrap">
+                                    {% if registration.event.is_closed %}
+                                        {% if registration.is_paid_online %}
+                                            <a href="{{ registration.get_receipt_url }}" class="btn btn-sm btn-outline-secondary mr-2" target="_blank"><i class="material-icons">receipt</i> Receipt</a>
+                                        {% endif %}
+                                        <a href="{{ registration.get_certificate_url }}" class="btn btn-sm btn-outline-primary" target="_blank"><i class="material-icons">description</i> Certificate</a>
+                                    {% else %}
+                                        <a href="{{ registration.get_absolute_url }}" class="btn btn-sm btn-secondary"><i class="material-icons">edit</i> Update</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+                {% if sessions.count > 0 %}
+                    {{ sessions }}<br>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

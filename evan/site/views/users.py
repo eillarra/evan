@@ -6,7 +6,7 @@ from evan.models import Event, Session, Registration
 
 
 class DashboardView(generic.TemplateView):
-    template_name = "users/dashboard.html"
+    template_name = "app/dashboard/index.html"
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
