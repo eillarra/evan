@@ -244,8 +244,8 @@
       computed: _.extend(
         Vuex.mapState(['event']), {
         dates: function () {
-          var start = moment(this.event.days[0].date);
-          var end = moment(this.event.days[this.event.days.length - 1].date);
+          var start = this.event.start;
+          var end = this.event.end;
 
           return (start.isSame(end, 'day'))
             ? start.format('MMMM D, YYYY')
@@ -255,7 +255,8 @@
             );
         },
         open: function () {
-          return moment(this.event.registration_deadline).isAfter();
+          return moment(this.event.registration_start_date).isSameOrBefore(moment(), 'day')
+              && moment(this.event.registration_deadline).isAfter();
         }
       }),
       watch: {

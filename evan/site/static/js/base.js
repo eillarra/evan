@@ -39,6 +39,8 @@ var Evan = {
       return obj;
     },
     event: function (obj) {
+      obj.start = moment(obj.start_date);
+      obj.end = moment(obj.end_date);
       return obj;
     },
     registration: function (obj) {

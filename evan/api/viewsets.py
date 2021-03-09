@@ -4,7 +4,7 @@ from rest_framework.schemas import AutoSchema
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event
-from .permissions import EventRelatedPermission
+from .permissions import EventRelatedPermission, EventRelatedViewOnlyPermission
 from .schema import event_code_field
 
 
@@ -33,5 +33,5 @@ class EventRelatedCreateOnlyViewSet(EventCreateModelMixin, GenericViewSet):
 
 
 class EventRelatedListOnlyViewSet(EventListModelMixin, GenericViewSet):
-    permission_classes = (EventRelatedPermission,)
+    permission_classes = (EventRelatedViewOnlyPermission,)
     schema = AutoSchema(manual_fields=[event_code_field])

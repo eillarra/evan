@@ -31,6 +31,11 @@ class EventRelatedPermission(IsAuthenticated):
         return False
 
 
+class EventRelatedViewOnlyPermission:
+    def has_permission(self, request, view):
+        return request.method in SAFE_METHODS
+
+
 class EventRelatedObjectPermission(IsAuthenticated):
     allow_delete = True
 

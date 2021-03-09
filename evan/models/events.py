@@ -48,7 +48,7 @@ class Event(models.Model):
     is_virtual = models.BooleanField(default=False)
     code = models.CharField(max_length=32, unique=True)
     name = models.CharField(max_length=32)
-    full_name = models.CharField(max_length=160)
+    full_name = models.CharField(max_length=200)
     city = models.CharField(max_length=160)
     country = CountryField()
     presentation = models.TextField(null=True, blank=True)

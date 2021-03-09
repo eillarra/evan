@@ -43,7 +43,7 @@
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
           <q-item-section>Event</q-item-section>
         </q-item>
-        <q-item clickable :to="{name: 'event'}">
+        <q-item v-if="registration && !registrationIsNew" clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="groups"></q-icon></q-item-section>
           <q-item-section>Attendees</q-item-section>
         </q-item>
