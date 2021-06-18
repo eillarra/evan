@@ -1,16 +1,16 @@
-<script type="text/x-template" id="v-venues">
+<script type="text/x-template" id="v-tracks">
 {% verbatim %}
   <div v-cloak v-if="event">
 
-    <q-card flat class="q-pa-lg">
+    <q-card flat class="full-height q-pa-lg">
       <div class="row no-wrap q-mb-sm">
-        <display-5>Venues & rooms</display-5>
+        <display-5>Tracks</display-5>
         <q-space />
         <div>
-          <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add venue" />
+          <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add track" />
         </div>
       </div>
-      <q-table dense row-key="id" :data="venues" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
+      <q-table dense row-key="id" :data="tracks" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
         <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter"></evan-no-data>
@@ -28,11 +28,9 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" size="lg" :save-event-name="saveEventName">
+    <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj" class="q-gutter-md">
-        <q-input filled dense v-model="tmpObj.name" label="Venue name" type="text"></q-input>
-        <q-input filled dense v-model="tmpObj.city" label="City" type="text"></q-input>
-        <evan-markdown v-model="tmpObj.presentation" label="Presentation"></evan-markdown>
+        <q-input filled dense v-model="tmpObj.name" label="Track" type="text"></q-input>
       </div>
     </evan-editor>
 

@@ -10,16 +10,16 @@
         <display-5>Coupons</display-5>
         <q-space />
         <div>
-          <q-btn no-caps outline rounded @click="openDialog" color="primary" label="Add coupon" />
+          <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add coupon" />
         </div>
       </div>
-      <q-input filled dense v-model="query" placeholder="Search by code, notes..." class="q-mb-md">
+      <q-input filled dense v-model="query" placeholder="Search by code, notes..." type="search" class="q-mb-md">
         <template v-slot:append>
           <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
           <q-icon name="search" />
         </template>
       </q-input>
-      <q-table dense row-key="id" :data="extendedCoupons" :columns="table.columns" :pagination.sync="table.pagination" :filter="query" @row-click="function (e, row) { tmpObj = row }">
+      <q-table dense row-key="id" :data="extendedCoupons" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { tmpObj = row }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter"></evan-no-data>
         </template>

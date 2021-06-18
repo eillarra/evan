@@ -1,25 +1,30 @@
 <script type="text/x-template" id="v-sessions">
 {% verbatim %}
-  <div>
+  <div v-cloak v-if="event">
+
     <q-card flat class="q-pa-lg">
       <display-5>Sessions</display-5>
-      <evan-editor :obj="selectedObj">
-        <div v-if="selectedObj" class="q-gutter-md">
-          <evan-datepicker v-model="selectedObj.date" label="Date *"></evan-datepicker>
-          <q-input filled dense v-model="selectedObj.title" label="Title *" />
-          <evan-markdown v-model="selectedObj.summary" label="Summary"></evan-markdown>
-          <q-input filled dense v-model="selectedObj.website" label="External website" type="url" />
-        </div>
-      </evan-editor>
       <table v-if="event">
         <tbody>
-          <tr v-for="obj in event.sessions" :key="obj.id">
+          <tr v-for="obj in sessions" :key="obj.id">
             <td>{{ obj.id }}</td>
-            <td><a href="#" @click.prevent="selectedObj = obj">{{ obj.title }}</a></td>
+            <td><a href="#" @click.prevent="tmpObj = obj">{{ obj.title }}</a></td>
+            <td>
+              <a v-if="!event.is_closed" @click.stop="remove(obj)"><evan-remove-icon /></a>
+            </td>
           </tr>
         </tbody>
       </table>
     </q-card>
+
+    <evan-editor :obj="tmpObj" size="lg">
+      <div v-if="tmpObj" class="q-gutter-md">
+        <evan-datepicker v-model="tmpObj.date" label="Date *"></evan-datepicker>
+        <q-input filled dense v-model="tmpObj.title" label="Title *" />
+        <evan-markdown v-model="tmpObj.summary" label="Summary"></evan-markdown>
+        <q-input filled dense v-model="tmpObj.website" label="External website" type="url" />
+      </div>
+    </evan-editor>
   </div>
 {% endverbatim %}
 </script>

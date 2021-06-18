@@ -24,7 +24,7 @@ var Evan = {
     create: function (url, obj, responseCallback, customMsg) {
       this.request('post', url, obj).then(function (res) {
         if (responseCallback) responseCallback(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(url) + ' created.');
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(res.data.url || url) + ' created.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
@@ -47,13 +47,6 @@ var Evan = {
     }
   },
   map: {
-    coupon: function (obj) {
-      obj._q = [
-        obj.code,
-        obj.notes,
-      ].join(' ').toLowerCase();
-      return obj;
-    },
     event: function (obj) {
       if (!_.has(obj.custom_data, 'dates')) obj.custom_data.dates = [];
       else obj.custom_data.dates.sort(function (a, b) {

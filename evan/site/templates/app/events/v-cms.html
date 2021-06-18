@@ -1,6 +1,6 @@
 <script type="text/x-template" id="v-cms">
 {% verbatim %}
-  <div>
+  <div v-cloak v-if="event">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
@@ -22,7 +22,7 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" :auto-update="true">
+    <evan-editor :obj="tmpObj" size="lg" :auto-update="true">
       <div v-if="tmpObj" class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.key" readonly label="Key"></q-input>
         <evan-markdown v-if="tmpObj.marked" v-model="tmpObj.value" label="Content"></evan-markdown>

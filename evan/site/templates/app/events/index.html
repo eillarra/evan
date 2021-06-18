@@ -31,7 +31,7 @@
           <q-item-section>Important dates</q-item-section>
         </q-item>
         <q-item v-if="!event.is_virtual" clickable :to="{name: 'venues'}">
-          <q-item-section avatar><q-icon name="place"></q-icon></q-item-section>
+          <q-item-section avatar><q-icon name="pin_drop"></q-icon></q-item-section>
           <q-item-section>Venues & rooms</q-item-section>
         </q-item>
         <q-item clickable :to="{name: 'taxonomy'}">
@@ -70,8 +70,12 @@
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}"  data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}"></div>
+  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
   <div is="router-view" class="q-pt-lg"></div>
+  <div class="row q-col-gutter-lg items-stretch q-pt-lg">
+    <div is="router-view" name="left" class="col-12 col-md-6"></div>
+    <div is="router-view" name="right" class="col-12 col-md-6"></div>
+  </div>
 {% endblock %}
 
 {% block vue_templates %}
@@ -82,7 +86,8 @@
   {% include './v-registrations.html' %}
   {% include './v-sessions.html' %}
   {% include './v-stats.html' %}
-  {% include './v-taxonomy.html' %}
+  {% include './v-topics.html' %}
+  {% include './v-tracks.html' %}
   {% include './v-venues.html' %}
 {% endblock %}
 
@@ -96,13 +101,18 @@
     var Store = new Vuex.Store({
       state: {
         event: null,
-        registrations: [],
+        registrations: null,
         contents: [],
-        coupons: []
+        coupons: [],
+        sessions: [],
+        topics: [],
+        tracks: [],
+        venues: []
       },
       getters: {
         used_coupons: function (state) {
-          if (!state.registrations.length) return null;
+          if (state.registrations === null) return null;
+          if (!state.registrations.length) return new Set();
           return new Set(_.pluck(_.pluck(state.registrations.filter(function (obj) {
               return obj.coupon !== null;
             }), 'coupon'), 'id'));
@@ -116,14 +126,17 @@
         },
         getCoupons: function (state) {
           Evan.api.request('get', VARS.urlCoupons).then(function (res) {
-            state.coupons = res.data.map(function (obj) {
-              return Evan.map.coupon(obj);
-            });
+            state.coupons = res.data;
           });
         },
         getEvent: function (state) {
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
             state.event = Evan.map.event(res.data);
+            state.sessions = _.clone(state.event.sessions);
+            state.topics = _.clone(state.event.topics);
+            state.tracks = _.clone(state.event.tracks);
+            state.venues = _.clone(state.event.venues);
+            Quasar.plugins.Loading.hide();
           });
         },
         getRegistrations: function (state) {
@@ -139,16 +152,63 @@
             }, 45000);
           });
         },
-        updateCoupons: function (state, payload) {
-          if (payload.action == 'add') state.coupons.push(Evan.map.coupon(payload.obj));
-          else if (payload.action == 'remove') state.coupons = _.without(state.coupons, _.findWhere(state.coupons, {
-            id: payload.obj.id
-          }));
+        update: function (state, payload) {
+          if (payload.action == 'add') state[payload.var].push(payload.obj);
+          else if (payload.action == 'remove') {
+            state[payload.var] = _.without(state[payload.var], _.findWhere(state[payload.var], {
+              id: payload.obj.id
+            }));
+          }
         }
       }
     });
 
+    var EventRelatedMixin = {
+      data: function () {
+        return {
+          tmpObj: null,
+          createUrl: null,
+          stateVar: null,
+          saveEventName: null
+        }
+      },
+      methods: {
+        clearObj: function () {
+          this.tmpObj = null;
+        },
+        createOrUpdate: function (obj) {
+          if (_.has(obj, 'id')) Evan.api.update(obj);
+          else {
+            var self = this;
+            Evan.api.create(this.createUrl, obj, function (res) {
+              self.$store.commit('update', {var: self.stateVar, action: 'add', obj: res.data});
+            });
+          }
+        },
+        remove: function (obj) {
+          var self = this;
+          this.$q.dialog({
+            message: 'Are you sure you want to delete this item?',
+            cancel: true
+          }).onOk(function () {
+            Evan.api.remove(obj, function (res) {
+              self.$store.commit('update', {var: self.stateVar, action: 'remove', obj: obj});
+            });
+          });
+        }
+      },
+      created: function () {
+        this.$root.$on(this.saveEventName, this.createOrUpdate);
+        this.$root.$on('evan-editor-hide', this.clearObj);
+      },
+      beforeDestroy: function () {
+        this.$root.$off(this.saveEventName);
+        this.$root.$off('evan-editor-hide', this.clearObj);
+      }
+    }
+
     var CmsView = {
+      template: '#v-cms',
       data: function () {
         return {
           tmpObj: null,
@@ -175,7 +235,6 @@
           }
         }
       },
-      template: '#v-cms',
       computed: _.extend(
         Vuex.mapState(['event', 'contents']), {
       }),
@@ -195,11 +254,13 @@
 
     var CouponsView = {
       template: '#v-coupons',
+      mixins: [EventRelatedMixin],
       data: function () {
         return {
+          createUrl: VARS.urlCoupons,
+          stateVar: 'coupons',
           saveEventName: 'evan-save-coupon',
-          showDialog: false,
-          tmpObj: null,
+          //
           query: this.q || '',
           table: {
             columns: [
@@ -259,39 +320,15 @@
         }
       }),
       methods: {
-        clearObj: function () {
-          this.tmpObj = null;
-        },
-        openDialog: function () {
+        addObj: function () {
           this.tmpObj = {
             value: 100,
             notes: 'Custom notes'
           };
-        },
-        createOrUpdate: function (obj) {
-          if (_.has(obj, 'id')) Evan.api.update(obj);
-          else {
-            var store = this.$store;
-            Evan.api.create(VARS.urlCoupons, obj, function (res) {
-              store.commit('updateCoupons', {action: 'add', obj: res.data});
-            }, 'Coupon created.');
-          }
-        },
-        remove: function (obj) {
-          var store = this.$store;
-          Evan.api.remove(obj, function (res) {
-            store.commit('updateCoupons', {action: 'remove', obj: obj});
-          });
         }
       },
       created: function () {
         this.$store.commit('getCoupons');
-        this.$root.$on(this.saveEventName, this.createOrUpdate);
-        this.$root.$on('evan-editor-hide', this.clearObj);
-      },
-      beforeDestroy: function () {
-        this.$root.$off(this.saveEventName);
-        this.$root.$off('evan-editor-hide', this.clearObj);
       }
     };
 
@@ -379,7 +416,7 @@
         clearObj: function () {
           this.tmpObj = null;
         },
-        openDialog: function () {
+        addObj: function () {
           this.tmpObj = {
             start_date: moment().format('YYYY-MM-DD'),
             end_date: null,
@@ -392,8 +429,14 @@
           Evan.api.update(this.event, null, 'Dates updates.');
         },
         remove: function (key) {
-          this.event.custom_data.dates.splice(key, 1);  // key is idx in this case
-          Evan.api.update(this.event, null, 'Dates updates.');
+          var self = this;
+          this.$q.dialog({
+            message: 'Are you sure you want to delete this item?',
+            cancel: true
+          }).onOk(function () {
+            self.event.custom_data.dates.splice(key, 1);  // key is idx in this case
+            Evan.api.update(self.event, null, 'Dates updates.');
+          });
         }
       },
       created: function () {
@@ -468,27 +511,166 @@
     };
 
     var SessionsView = {
+      template: '#v-sessions',
+      mixins: [EventRelatedMixin],
       data: function () {
         return {
-          selectedObj: null,
+          createUrl: VARS.urlSessions,
+          stateVar: 'sessions',
+          saveEventName: 'evan-save-session',
+          //
         }
       },
-      template: '#v-sessions',
+      computed: _.extend(
+        Vuex.mapState(['event', 'sessions']), {
+      })
+    };
+
+    var StatsView = {
+      template: '#v-stats',
       computed: _.extend(
         Vuex.mapState(['event']), {
       })
     };
 
-    var StatsView = {
-      template: '#v-stats'
+    var TopicsView = {
+      template: '#v-topics',
+      mixins: [EventRelatedMixin],
+      data: function () {
+        return {
+          createUrl: VARS.urlTopics,
+          stateVar: 'topics',
+          saveEventName: 'evan-save-topic',
+          //
+          table: {
+            columns: [
+              {
+                name: 'edit',
+                field: 'edit',
+              },
+              {
+                name: 'name',
+                field: 'name',
+                align: 'left',
+                label: 'Name'
+              },
+              {
+                name: 'remove',
+                field: 'remove'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'name',
+              descending: false
+            }
+          }
+        }
+      },
+      computed: _.extend(
+        Vuex.mapState(['event', 'topics']), {
+      }),
+      methods: {
+        addObj: function () {
+          this.tmpObj = {
+            name: null
+          };
+        }
+      }
     };
 
-    var TaxonomyView = {
-      template: '#v-taxonomy'
+    var TracksView = {
+      template: '#v-tracks',
+      mixins: [EventRelatedMixin],
+      data: function () {
+        return {
+          createUrl: VARS.urlTracks,
+          stateVar: 'tracks',
+          saveEventName: 'evan-save-track',
+          //
+          table: {
+            columns: [
+              {
+                name: 'edit',
+                field: 'edit',
+              },
+              {
+                name: 'name',
+                field: 'name',
+                align: 'left',
+                label: 'Name'
+              },
+              {
+                name: 'remove',
+                field: 'remove'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'name',
+              descending: false
+            }
+          }
+        }
+      },
+      computed: _.extend(
+        Vuex.mapState(['event', 'tracks']), {
+      }),
+      methods: {
+        addObj: function () {
+          this.tmpObj = {
+            name: null
+          };
+        }
+      }
     };
 
     var VenuesView = {
-      template: '#v-venues'
+      template: '#v-venues',
+      mixins: [EventRelatedMixin],
+      data: function () {
+        return {
+          createUrl: VARS.urlVenues,
+          stateVar: 'venues',
+          saveEventName: 'evan-save-venue',
+          //
+          table: {
+            columns: [
+              {
+                name: 'edit',
+                field: 'edit',
+              },
+              {
+                name: 'name',
+                field: 'name',
+                align: 'left',
+                label: 'Venue name'
+              },
+              {
+                name: 'remove',
+                field: 'remove'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'name',
+              descending: false
+            }
+          }
+        }
+      },
+      computed: _.extend(
+        Vuex.mapState(['event', 'venues']), {
+      }),
+      methods: {
+        addObj: function () {
+          this.tmpObj = {
+            name: null,
+            city: null,
+            presentation: null
+          };
+        }
+      }
     };
 
     var Router = new VueRouter({
@@ -564,7 +746,10 @@
           name: 'taxonomy',
           path: '/taxonomy/',
           pathToRegexpOptions: {strict: true},
-          component: TaxonomyView
+          components: {
+            left: TracksView,
+            right: TopicsView
+          }
         },
         {
           name: 'venues',
@@ -584,8 +769,9 @@
           visibleDrawer: true
         };
       },
-      computed: Vuex.mapState(['user', 'event']),
+      computed: Vuex.mapState(['event']),
       created: function () {
+        this.$q.loading.show();
         this.$store.commit('getEvent');
         this.$store.commit('getRegistrations');
       }

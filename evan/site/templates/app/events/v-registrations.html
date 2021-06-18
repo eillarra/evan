@@ -4,6 +4,7 @@
 <script type="text/x-template" id="v-registrations">
 {% verbatim %}
   <div v-cloak v-if="event">
+
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
         <display-5>Registrations</display-5>
@@ -19,6 +20,7 @@
       </div>
       <evan-registrations-table :data="items" :uuid="uuid"></evan-registrations-table>
     </q-card>
+
   </div>
 {% endverbatim %}
 </script>

@@ -1,15 +1,17 @@
 <script type="text/x-template" id="v-dates">
 {% verbatim %}
-  <div v-if="event">
+  <div v-cloak v-if="event">
+
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
         <display-5>Important dates</display-5>
         <q-space />
         <div>
-          <q-btn no-caps outline rounded @click="openDialog" color="primary" label="Add date" />
+          <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add date" />
         </div>
       </div>
       <q-table dense row-key="key" :data="dates" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
+        <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter"></evan-no-data>
         </template>
@@ -24,12 +26,13 @@
           </q-td>
         </template>
         <template v-slot:body-cell-remove="props">
-          <q-td auto-width :props="props">
-            <a @click.stop="remove(props.row.key)"><evan-remove-icon /></a>
+          <q-td auto-width :props="props" @click.stop="remove(props.row.key)">
+            <evan-remove-icon />
           </q-td>
         </template>
       </q-table>
     </q-card>
+
     <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj">
         <div class="q-col-gutter-md row items-center q-mb-md">
@@ -42,6 +45,7 @@
         </div>
       </div>
     </evan-editor>
+
   </div>
 {% endverbatim %}
 </script>

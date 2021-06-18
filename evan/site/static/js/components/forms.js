@@ -11,6 +11,10 @@ Vue.component('evan-editor', {
     obj: {
       type: Object,
       default: null
+    },
+    size: {
+      type: String,
+      default: 'sm'
     }
   },
   data: function () {
@@ -20,7 +24,7 @@ Vue.component('evan-editor', {
   },
   template: `
     <q-dialog v-model="showDialog" @show="dialogVisible = true">
-      <q-layout view="Lhh lpR fff" container class="bg-white" style="width: 800px; max-width: 95vw;">
+      <q-layout view="Lhh lpR fff" container class="bg-white" style="max-width: 95vw;" :style="{'width': sizePx}">
         <q-footer bordered class="bg-white text-dark">
           <q-card-actions align="right" class="q-py-md q-px-lg">
             <q-btn flat v-close-popup label="Close" color="grey-8" />
@@ -39,6 +43,13 @@ Vue.component('evan-editor', {
     </q-dialog>
   `,
   computed: {
+    sizePx: function () {
+      return {
+        'sm': '400px',
+        'md': '650px',
+        'lg': '900px'
+      }[this.size] || '400px';
+    },
     showDialog: {
       get: function () {
         return this.obj != null;
@@ -216,8 +227,7 @@ Vue.component('evan-markdown', {
   },
   props: {
     value: {
-      type: String,
-      required: true
+      type: String
     },
     label: {
       type: String,
