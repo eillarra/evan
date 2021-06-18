@@ -433,7 +433,7 @@
         },
         createOrUpdate: function (obj) {
           if (!_.has(obj, 'key')) { this.event.custom_data.dates.push(this.tmpObj); }
-          Evan.api.update(this.event, null, 'Dates updates.');
+          Evan.api.update(this.event, null, 'Dates updated.');
         },
         remove: function (key) {
           var self = this;
@@ -442,7 +442,7 @@
             cancel: true
           }).onOk(function () {
             self.event.custom_data.dates.splice(key, 1);  // key is idx in this case
-            Evan.api.update(self.event, null, 'Dates updates.');
+            Evan.api.update(self.event, null, 'Dates updated.');
           });
         }
       },
