@@ -21,10 +21,26 @@ var Evan = {
         headers: headers
       });
     },
-    update: function (obj, responseCallback) {
+    create: function (url, obj, responseCallback, customMsg) {
+      this.request('post', url, obj).then(function (res) {
+        if (responseCallback) responseCallback(res);
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(url) + ' created.');
+      }).catch(function (error) {
+        Evan.utils.notifyApiError(error);
+      });
+    },
+    update: function (obj, responseCallback, customMsg) {
       this.request('put', obj.url, obj).then(function (res) {
         if (responseCallback) responseCallback(res);
-        Evan.utils.notifySuccess(modelFromUrl(obj.url) + ' updated.');
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.url) + ' updated.');
+      }).catch(function (error) {
+        Evan.utils.notifyApiError(error);
+      });
+    },
+    remove: function (obj, responseCallback, customMsg) {
+      this.request('delete', obj.url).then(function (res) {
+        if (responseCallback) responseCallback(res);
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.url) + ' deleted.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
@@ -39,6 +55,10 @@ var Evan = {
       return obj;
     },
     event: function (obj) {
+      if (!_.has(obj.custom_data, 'dates')) obj.custom_data.dates = [];
+      else obj.custom_data.dates.sort(function (a, b) {
+        return moment(a.start_date) - moment(b.start_date);
+      });
       obj.start = moment(obj.start_date);
       obj.end = moment(obj.end_date);
       return obj;

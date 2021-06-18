@@ -22,7 +22,7 @@ Vue.component('display-3', {
 });
 
 Vue.component('display-5', {
-  template: '<h6 class="q-mt-none q-mb-lg text-weight-bold"><slot></slot></h6>'
+  template: '<h6 class="q-mt-sm q-mb-lg text-weight-bold"><slot></slot></h6>'
 });
 
 Vue.component('marked', {
@@ -39,6 +39,45 @@ Vue.component('marked', {
       return CommonMarkWriter.render(CommonMarkReader.parse(this.text));
     }
   }
+});
+
+Vue.component('evan-no-data', {
+  props: {
+    message: {
+      type: String,
+      required: true
+    },
+    filter: {
+      type: String,
+      default: ''
+    }
+  },
+  template: `
+    <div class="full-width text-center q-pa-xl text-grey-6">
+      <q-icon size="6em" :name="filter ? 'search_off' : 'layers_clear'" />
+      <h5>{{ message }}</h5>
+    </div>
+  `
+});
+
+Vue.component('evan-edit-icon', {
+  template: `
+    <q-icon name="drive_file_rename_outline" color="primary" class="cursor-pointer" />
+  `
+});
+
+Vue.component('evan-remove-icon', {
+  template: `
+    <q-icon name="cancel" color="red-12" class="cursor-pointer" />
+  `
+});
+
+Vue.component('evan-yes-chip', {
+  template: '<q-chip square color="positive" text-color="white" size="xs" icon="check" class="evan-chip">Yes</q-chip>'
+});
+
+Vue.component('evan-no-chip', {
+  template: '<q-chip square outline color="grey-6" size="xs" icon="close" class="evan-chip">No</q-chip>'
 });
 
 Vue.component('evan-logo', {

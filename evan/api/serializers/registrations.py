@@ -33,7 +33,7 @@ class RegistrationSerializer(WritableNestedModelSerializer):
 
     class Meta:
         model = Registration
-        exclude = ("id", "event", "saldo", "days", "sessions")
+        exclude = ("id", "event", "saldo", "sessions")
         read_only_fields = ("id", "uuid", "event", "created_at", "updated_at")
 
 

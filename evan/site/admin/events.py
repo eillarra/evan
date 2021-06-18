@@ -3,14 +3,8 @@ from django.db.models import Count
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 
-from evan.models import Event, Fee, ImportantDate
+from evan.models import Event, Fee
 from .generic import PermissionsInline
-
-
-class ImportantDatesInline(admin.TabularInline):
-    model = ImportantDate
-    classes = ("collapse",)
-    extra = 0
 
 
 class FeesInline(admin.TabularInline):
@@ -38,7 +32,6 @@ class EventAdmin(admin.ModelAdmin):
     readonly_fields = ("registrations_count",)
     inlines = (
         FeesInline,
-        ImportantDatesInline,
         PermissionsInline,
     )
 

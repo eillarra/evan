@@ -1,5 +1,13 @@
 Vue.component('evan-editor', {
   props: {
+    autoUpdate: {
+      type: Boolean,
+      default: false
+    },
+    saveEventName: {
+      type: String,
+      default: 'evan-editor-save-obj'
+    },
     obj: {
       type: Object,
       default: null
@@ -7,17 +15,17 @@ Vue.component('evan-editor', {
   },
   data: function () {
     return {
-      dialog: false
+      dialogVisible: false,
     };
   },
   template: `
-    <q-dialog v-model="dialog" full-height>
-      <q-layout view="Lhh lpR fff" container class="bg-white" style="width: 760px; max-width: 90vw;">
+    <q-dialog v-model="showDialog" @show="dialogVisible = true">
+      <q-layout view="Lhh lpR fff" container class="bg-white" style="width: 800px; max-width: 95vw;">
         <q-footer bordered class="bg-white text-dark">
           <q-card-actions align="right" class="q-py-md q-px-lg">
-            <q-btn v-close-popup flat label="Close" color="grey-8" />
+            <q-btn flat v-close-popup label="Close" color="grey-8" />
             <q-space />
-            <q-btn unelevated @click="update" label="Update" color="primary" class="q-px-md" />
+            <q-btn unelevated v-close-popup @click="save" label="Save" color="primary" class="q-px-md" />
           </q-card-actions>
         </q-footer>
         <q-page-container>
@@ -30,18 +38,26 @@ Vue.component('evan-editor', {
       </q-layout>
     </q-dialog>
   `,
-  methods: {
-    update: function () {
-      Evan.api.update(this.obj);
+  computed: {
+    showDialog: {
+      get: function () {
+        return this.obj != null;
+      },
+      set: function (val) {
+        if (this.dialogVisible) {
+          this.dialogVisible = false;
+          this.$root.$emit('evan-editor-hide');
+        }
+      }
     }
   },
-  watch: {
-    'obj': function (val) {
-      if (val != null) this.dialog = true;
-    },
-    'dialog': function (val) {
-      if (val == false) this.value = null;
-    },
+  methods: {
+    save: function () {
+      if (this.autoUpdate && this.obj.url) {
+        Evan.api.update(this.obj);
+      }
+      this.$root.$emit(this.saveEventName, this.obj);
+    }
   }
 });
 

@@ -9,7 +9,7 @@
 {% block header %}
   <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
     <q-toolbar>
-      <q-btn flat @click="visibleDrawer = !visibleDrawer" round dense icon="menu"></q-btn>
+      <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
         <strong>{{ event.name }}</strong>
       </q-toolbar-title>

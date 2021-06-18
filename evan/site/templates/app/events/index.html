@@ -9,7 +9,7 @@
 {% block header %}
   <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
     <q-toolbar>
-      <q-btn flat @click="visibleDrawer = !visibleDrawer" round dense icon="menu"></q-btn>
+      <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
         <strong>{{ event.name }}</strong>
       </q-toolbar-title>
@@ -19,14 +19,18 @@
 
 {% block drawer %}
   <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" content-class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
-    <q-scroll-area class="fit">
+    <q-scroll-area v-if="event" class="fit">
       <q-list dense>
         <q-item-label header>Event management</q-item-label>
         <q-item clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
           <q-item-section>Event</q-item-section>
         </q-item>
-        <q-item v-if="event && !event.is_virtual" clickable :to="{name: 'venues'}">
+        <q-item clickable :to="{name: 'dates'}">
+          <q-item-section avatar><q-icon name="event"></q-icon></q-item-section>
+          <q-item-section>Important dates</q-item-section>
+        </q-item>
+        <q-item v-if="!event.is_virtual" clickable :to="{name: 'venues'}">
           <q-item-section avatar><q-icon name="place"></q-icon></q-item-section>
           <q-item-section>Venues & rooms</q-item-section>
         </q-item>
@@ -35,7 +39,7 @@
           <q-item-section>Tracks & topics</q-item-section>
         </q-item>
         <q-item clickable :to="{name: 'sessions'}">
-          <q-item-section avatar><q-icon name="event_available"></q-icon></q-item-section>
+          <q-item-section avatar><q-icon name="view_week"></q-icon></q-item-section>
           <q-item-section>Sessions</q-item-section>
         </q-item>
         <q-item clickable :to="{name: 'coupons'}">
@@ -43,7 +47,7 @@
           <q-item-section>Coupons</q-item-section>
         </q-item>
       </q-list>
-      <q-list dense v-if="event && event.main_config.cms">
+      <q-list dense v-if="event.main_config.cms">
         <q-item-label header>Website</q-item-label>
         <q-item clickable :to="{name: 'cms'}">
           <q-item-section avatar><q-icon name="wysiwyg"></q-icon></q-item-section>
@@ -73,6 +77,7 @@
 {% block vue_templates %}
   {% include './v-cms.html' %}
   {% include './v-coupons.html' %}
+  {% include './v-dates.html' %}
   {% include './v-event.html' %}
   {% include './v-registrations.html' %}
   {% include './v-sessions.html' %}
@@ -90,17 +95,20 @@
 
     var Store = new Vuex.Store({
       state: {
-        user: null,
         event: null,
         registrations: [],
         contents: [],
-        coupons: [],
-        used_coupons: new Set()
+        coupons: []
+      },
+      getters: {
+        used_coupons: function (state) {
+          if (!state.registrations.length) return null;
+          return new Set(_.pluck(_.pluck(state.registrations.filter(function (obj) {
+              return obj.coupon !== null;
+            }), 'coupon'), 'id'));
+        }
       },
       mutations: {
-        getUser: function (state) {
-
-        },
         getContents: function (state) {
           Evan.api.request('get', VARS.urlContents).then(function (res) {
             state.contents = res.data;
@@ -114,24 +122,28 @@
           });
         },
         getEvent: function (state) {
-          var self = this;
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
             state.event = Evan.map.event(res.data);
-
-            setTimeout(function () {
-              self.commit('getEvent');
-            }, 45000);
           });
         },
         getRegistrations: function (state) {
+          var self = this;
+
           Evan.api.request('get', VARS.urlRegistrations).then(function (res) {
             state.registrations = Object.freeze(res.data.map(function (obj) {
               return Evan.map.registration(obj);
             }));
-            state.used_coupons = Object.freeze(new Set(_.pluck(_.pluck(res.data.filter(function (obj) {
-              return obj.coupon !== null;
-            }), 'coupon'), 'code')));
+
+            setTimeout(function () {
+              self.commit('getRegistrations');
+            }, 45000);
           });
+        },
+        updateCoupons: function (state, payload) {
+          if (payload.action == 'add') state.coupons.push(Evan.map.coupon(payload.obj));
+          else if (payload.action == 'remove') state.coupons = _.without(state.coupons, _.findWhere(state.coupons, {
+            id: payload.obj.id
+          }));
         }
       }
     });
@@ -139,15 +151,45 @@
     var CmsView = {
       data: function () {
         return {
-          selectedObj: null,
+          tmpObj: null,
+          table: {
+            columns: [
+              {
+                name: 'edit',
+                field: 'edit',
+              },
+              {
+                name: 'key',
+                field: 'key',
+                sortable: true,
+                align: 'left',
+                label: 'Key',
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'key',
+              descending: false
+            },
+            filter: null
+          }
         }
       },
       template: '#v-cms',
       computed: _.extend(
         Vuex.mapState(['event', 'contents']), {
       }),
+      methods: {
+        clearObj: function () {
+          this.tmpObj = null;
+        }
+      },
       created: function () {
         this.$store.commit('getContents');
+        this.$root.$on('evan-editor-hide', this.clearObj);
+      },
+      beforeDestroy: function () {
+        this.$root.$off('evan-editor-hide', this.clearObj);
       }
     };
 
@@ -155,22 +197,27 @@
       template: '#v-coupons',
       data: function () {
         return {
+          saveEventName: 'evan-save-coupon',
           showDialog: false,
+          tmpObj: null,
           query: this.q || '',
           table: {
             columns: [
               {
+                name: 'edit',
+                field: 'edit',
+              },
+              {
                 name: 'code',
                 field: 'code',
                 sortable: true,
-                label: 'Code',
                 align: 'left',
+                label: 'Code',
               },
               {
                 name: 'value',
                 field: 'value',
                 sortable: true,
-                align: 'left',
                 label: 'Value'
               },
               {
@@ -184,58 +231,178 @@
                 name: 'used',
                 align: 'center',
                 label: 'Used'
-              }
+              },
+              {
+                name: 'remove',
+                field: 'remove',
+              },
             ],
             pagination: {
-              rowsPerPage: 25
+              rowsPerPage: 25,
+              sortBy: 'notes',
+              descending: false
             },
             filter: null
           }
         }
       },
       computed: _.extend(
-        Vuex.mapState(['event', 'coupons', 'used_coupons']), {
-        items: function () {
-          var res = this.coupons.sort(function (a, b) {
-            return Evan.utils.sortText(a.notes, b.notes);
-          });
-
-          if (this.query == '') return res;
-          var qs = this.query.toLowerCase().split(' ');
-
-          return res.filter(function (obj) {
-            return _.every(qs, function (q) {
-              return obj._q.indexOf(q) !== -1;
-            });
+        Vuex.mapGetters(['used_coupons']),
+        Vuex.mapState(['event', 'coupons']), {
+        extendedCoupons: function () {
+          var uc = this.used_coupons;
+          if (uc === null) return [];
+          return this.coupons.map(function (obj) {
+            obj.used = uc.has(obj.id);
+            return obj;
           });
         }
       }),
       methods: {
-        create: function () {
-          /*var self = this;
-          self.$store.commit('startSaving', 'Creating new coupon...');
-          ajax().post($('#vars').data('url-coupons'), self.coupon).done(function (res) {
-              self.coupons.push(res);
-              self.coupon = {value: 0, notes: ''};
-              self.$store.commit('endSaving', 'Created!');
-          }).fail(function (err) {
-              self.$store.commit('parseError', err);
-          });*/
+        clearObj: function () {
+          this.tmpObj = null;
         },
-        handleSave: function (coupon) {
-          Evan.api.update(coupon);
+        openDialog: function () {
+          this.tmpObj = {
+            value: 100,
+            notes: 'Custom notes'
+          };
         },
-        destroy: function (coupon) {
-          /*var self = this;
-          ajax().delete(coupon.url).done(function (res) {
-              self.$store.commit('set', ['coupons', _.reject(self.coupons, function (obj) {
-                  return coupon.id == obj.id;
-              })]);
-          });*/
+        createOrUpdate: function (obj) {
+          if (_.has(obj, 'id')) Evan.api.update(obj);
+          else {
+            var store = this.$store;
+            Evan.api.create(VARS.urlCoupons, obj, function (res) {
+              store.commit('updateCoupons', {action: 'add', obj: res.data});
+            }, 'Coupon created.');
+          }
+        },
+        remove: function (obj) {
+          var store = this.$store;
+          Evan.api.remove(obj, function (res) {
+            store.commit('updateCoupons', {action: 'remove', obj: obj});
+          });
         }
       },
       created: function () {
         this.$store.commit('getCoupons');
+        this.$root.$on(this.saveEventName, this.createOrUpdate);
+        this.$root.$on('evan-editor-hide', this.clearObj);
+      },
+      beforeDestroy: function () {
+        this.$root.$off(this.saveEventName);
+        this.$root.$off('evan-editor-hide', this.clearObj);
+      }
+    };
+
+    var DatesView = {
+      template: '#v-dates',
+      data: function () {
+        return {
+          saveEventName: 'evan-save-date',
+          tmpDates: [],
+          tmpObj: null,
+          formatOptions: [
+            {
+              label: 'Show full date',
+              value: 'date'
+            },
+            {
+              label: 'Show date range',
+              value: 'range'
+            },
+            {
+              label: 'Show month only',
+              value: 'month'
+            },
+          ],
+          table: {
+            columns: [
+              {
+                name: 'edit',
+                field: 'edit',
+              },
+              {
+                name: 'start_date',
+                field: 'start_date',
+                sortable: true,
+                align: 'left',
+                label: 'Date',
+              },
+              {
+                name: 'end_date',
+                field: 'end_date',
+                align: 'left',
+                label: 'End date'
+              },
+              {
+                name: 'label',
+                field: 'label',
+                align: 'left',
+                label: 'Label'
+              },
+              {
+                name: 'format',
+                field: 'format',
+                align: 'left',
+                label: 'Format'
+              },
+              {
+                name: 'remove',
+                field: 'remove'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'start_date',
+              descending: false
+            }
+          }
+        };
+      },
+      computed: _.extend(
+        Vuex.mapState(['event']), {
+        dates: function () {
+          if (!this.event) return [];
+          return this.event.custom_data.dates.sort(function (a, b) {
+            return Evan.utils.sortText(a.start_date, b.start_date);
+          }).map(function (obj, idx) {
+            obj.key = idx;
+            return obj;
+          });
+        },
+        formatDict: function () {
+          return _.indexBy(this.formatOptions, 'value');
+        }
+      }),
+      methods: {
+        clearObj: function () {
+          this.tmpObj = null;
+        },
+        openDialog: function () {
+          this.tmpObj = {
+            start_date: moment().format('YYYY-MM-DD'),
+            end_date: null,
+            label: 'Custom label',
+            format: 'month'
+          };
+        },
+        createOrUpdate: function (obj) {
+          if (!_.has(obj, 'key')) { this.event.custom_data.dates.push(this.tmpObj); }
+          Evan.api.update(this.event, null, 'Dates updates.');
+        },
+        remove: function (key) {
+          this.event.custom_data.dates.splice(key, 1);  // key is idx in this case
+          Evan.api.update(this.event, null, 'Dates updates.');
+        }
+      },
+      created: function () {
+        this.$root.$on(this.saveEventName, this.createOrUpdate);
+        this.$root.$on('evan-editor-hide', this.clearObj);
+      },
+      beforeDestroy: function () {
+        this.$root.$off(this.saveEventName);
+        this.$root.$off('evan-editor-hide', this.clearObj);
       }
     };
 
@@ -325,6 +492,10 @@
     };
 
     var Router = new VueRouter({
+      /*scrollBehavior: function (to, from) {
+        if (from.name.startsWith('session')) return;
+        return {x: 0, y: 0};
+      },*/
       routes: [
         {
           path: '/',
@@ -346,6 +517,12 @@
               q: route.query.q
             };
           }
+        },
+        {
+          name: 'dates',
+          path: '/dates/',
+          pathToRegexpOptions: {strict: true},
+          component: DatesView
         },
         {
           name: 'event',
@@ -409,7 +586,6 @@
       },
       computed: Vuex.mapState(['user', 'event']),
       created: function () {
-        this.$store.commit('getUser');
         this.$store.commit('getEvent');
         this.$store.commit('getRegistrations');
       }

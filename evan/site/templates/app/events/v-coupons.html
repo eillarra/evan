@@ -6,60 +6,54 @@
   <div v-cloak v-if="event">
 
     <q-card flat class="q-pa-lg">
-      <div class="row no-wrap q-mb-lg">
+      <div class="row no-wrap q-mb-sm">
         <display-5>Coupons</display-5>
         <q-space />
-        <q-input filled dense v-model="query" placeholder="Search code, notes..." class="col-12 col-md-6">
-          <template v-slot:append>
-            <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
-            <q-icon name="search" />
-            <!--<q-icon name="filter_list" />-->
-          </template>
-        </q-input>
-        <q-btn outline color="primary" icon="add_circle" label="New coupon" size="sm" class="q-ml-md" @click="showDialog = true" />
+        <div>
+          <q-btn no-caps outline rounded @click="openDialog" color="primary" label="Add coupon" />
+        </div>
       </div>
-      <q-table dense row-key="code" :data="items" :columns="table.columns" :pagination.sync="table.pagination">
-        <template v-slot:body="props">
-          <q-tr :props="props">
-            <q-td key="code" :props="props"><samp><small>{{ props.row.code }}</small></samp></q-td>
-            <q-td key="value" :props="props">
-              <span v-if="used_coupons.has(props.row.code)">€ {{ props.row.value }}</span>
-              <div v-else>
-                <span>€ {{ props.row.value }} <q-icon name="edit" size="11px" color="grey-5" class="q-ml-xs" /></span>
-                <q-popup-edit v-model="props.row.value" title="Update value" buttons label-set="Save" @save="handleSave(props.row)">
-                  <q-input type="number" v-model="props.row.value" prefix="€" dense autofocus />
-                </q-popup-edit>
-              </div>
-            </q-td>
-            <q-td key="notes" :props="props" class="full-width">
-              <span>{{ props.row.notes }} <q-icon name="edit" size="11px" color="grey-5" class="q-ml-xs" /></span>
-              <q-popup-edit v-model="props.row.notes" title="Update notes" buttons label-set="Save" @save="handleSave(props.row)">
-                <q-input type="text" v-model="props.row.notes" dense autofocus />
-              </q-popup-edit>
-            </q-td>
-            <q-td key="used" :props="props">
-              <q-badge v-if="used_coupons.has(props.row.code)" color="positive">
-                <q-icon name="done" class="q-mr-xs" />Yes</q-badge>
-              <q-badge v-else outline color="grey">
-                <q-icon name="close" class="q-mr-xs" />No</q-badge>
-            </q-td>
-          </q-tr>
+      <q-input filled dense v-model="query" placeholder="Search by code, notes..." class="q-mb-md">
+        <template v-slot:append>
+          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
+          <q-icon name="search" />
+        </template>
+      </q-input>
+      <q-table dense row-key="id" :data="extendedCoupons" :columns="table.columns" :pagination.sync="table.pagination" :filter="query" @row-click="function (e, row) { tmpObj = row }">
+        <template v-slot:no-data="{ icon, message, filter }">
+          <evan-no-data :message="message" :filter="filter"></evan-no-data>
+        </template>
+        <template v-slot:body-cell-edit="props">
+          <q-td auto-width :props="props">
+            <evan-edit-icon />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-code="props">
+          <q-td auto-width :props="props">
+            <samp><small>{{ props.row.code }}</small></samp>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-used="props">
+          <q-td auto-width :props="props" class="items-center">
+            <evan-yes-chip v-if="props.row.used" />
+            <evan-no-chip v-else />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-remove="props">
+          <q-td auto-width :props="props">
+            <a v-if="!props.row.used" @click.stop="remove(props.row)"><evan-remove-icon /></a>
+          </q-td>
         </template>
       </q-table>
     </q-card>
 
-    <q-dialog v-model="showDialog">
-      <q-card style="width: 500px">
-        <q-card-section>
-          <h6 class="q-my-none text-weight-bold">Create new coupon</h6>
-        </q-card-section>
-        <q-card-actions class="q-pa-md">
-          <q-btn unelevated label="Create new coupon" color="primary" v-close-popup />
-          <q-space />
-          <q-btn flat label="Close" color="grey" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
+      <div v-if="tmpObj" class="q-gutter-md">
+        <q-input v-show="tmpObj.code" filled dense v-model="tmpObj.code" readonly label="Code"></q-input>
+        <q-input filled dense v-model.number="tmpObj.value" label="Coupon value" type="number"></q-input>
+        <q-input filled dense v-model="tmpObj.notes" label="Notes" type="textarea" autogrow></q-input>
+      </div>
+    </evan-editor>
 
   </div>
 {% endverbatim %}

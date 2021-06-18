@@ -26,7 +26,6 @@ class Registration(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     event = models.ForeignKey("evan.Event", related_name="registrations", on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), related_name="registrations", on_delete=models.CASCADE)
-    days = models.ManyToManyField("evan.Day", related_name="registrations", blank=True)
     sessions = models.ManyToManyField("evan.Session", related_name="registrations", blank=True)
 
     visa_requested = models.BooleanField(default=False)

@@ -6,7 +6,13 @@
   <div v-cloak v-if="event">
 
     <q-card flat class="q-pa-lg">
-      <display-5>Event information</display-5>
+      <div class="row no-wrap q-mb-sm">
+        <display-5>Event information</display-5>
+        <q-space />
+        <a v-if="event.website" :href="event.website" target="_blank">
+          <q-btn no-caps outline rounded color="primary" label="Open website" />
+        </a>
+      </div>
       <div class="q-col-gutter-md row items-start q-mb-md">
         <q-input filled dense v-model="event.code" readonly label="Evan ID" class="col-12 col-sm-4"></q-input>
         <evan-datepicker v-model="event.start_date" label="Start date *" class="col-12 col-sm-4"></evan-datepicker>
@@ -15,7 +21,7 @@
       <div class="q-col-gutter-md row items-start q-mb-md">
         <evan-datepicker v-model="event.registration_start_date" label="Registration start date *" class="col-12 col-sm-4"></evan-datepicker>
         <evan-datepicker v-model="event.registration_early_deadline" label="Registration early deadline" :allow-null="true" :with-time="true" hint="Needed if you have early registration fees." class="col-12 col-sm-4"></evan-datepicker>
-        <evan-datepicker v-model="event.registration_deadline" label="Registration deadline *" :with-time="true" class="col-12 col-sm-4" :hint="(open) ? 'Registrations open.' : 'Registrations closed.'" :hint-class="(open) ? 'text-bold text-positive' : 'text-bold text-red-5'"></evan-datepicker>
+        <evan-datepicker v-model="event.registration_deadline" label="Registration deadline *" :with-time="true" class="col-12 col-sm-4" :hint="(open) ? 'Registrations open.' : 'Registrations closed.'" :hint-class="(open) ? 'text-bold text-positive' : 'text-bold text-red-12'"></evan-datepicker>
       </div>
       <div class="q-col-gutter-lg row q-mb-md" :class="{'q-mt-lg': $q.screen.gt.sm}">
         <div class="col-12 col-md-6">

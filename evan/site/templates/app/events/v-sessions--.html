@@ -12,7 +12,7 @@
                 <div class="dropdown-menu dropdown-menu-right p-3 w-75">
                     <p class="text-sm mb-1"><strong>Are you sure?</strong></p>
                     <p class="text-sm">Deleting a session will remove it from all registrations. <strong v-if="event.is_open_for_registration">Registrations started on "{{ event.registration_start_date }}".</strong></p>
-                    <button @click.prevent="destroy(session.id)" class="btn btn-sm btn-danger pointer">Delete session</button>
+                    <button @click.prevent="destroy(session.id)" class="btn btn-sm btn-danger cursor-pointer">Delete session</button>
                 </div>
             </div>
             <h4 class="text-secondary mb-4">Session on {{ session.day }}<br><em>{{ session.title }}</em></h4>
@@ -113,7 +113,7 @@
             <hr>
             <label>Invite organizers</label>
             <input type="email" class="form-control" placeholder="Organizer's email">
-            <button class="btn btn-sm btn-outline-secondary pointer mt-2">Invite</button>
+            <button class="btn btn-sm btn-outline-secondary cursor-pointer mt-2">Invite</button>
         </div>
         <div v-else>
             <h1 class="text-warning">404 Not Found</h1>

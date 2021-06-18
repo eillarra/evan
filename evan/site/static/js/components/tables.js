@@ -110,7 +110,7 @@ Vue.component('evan-registrations-table', {
         </template>
       </q-table>
       <q-dialog v-model="showDialog" @show="dialogVisible = true">
-        <q-card v-if="registration" style="width: 500px">
+        <q-card flat v-if="registration" style="width: 500px">
           <q-card-section>
             <display-5 class="evan-ma-none">Registration</display-5>
             <p><samp>{{ registration.uuid }}</samp></p>

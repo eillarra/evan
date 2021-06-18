@@ -67,8 +67,9 @@ class Event(models.Model):
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(null=True, blank=True)
 
-    main_config = models.JSONField(null=True, blank=True, default=dict)
+    custom_data = models.JSONField(default=dict)
     custom_fields = models.JSONField(default=dict)
+    main_config = models.JSONField(default=dict)
 
     registrations_count = models.PositiveIntegerField(default=0)
 
@@ -143,43 +144,3 @@ class Event(models.Model):
     @cached_property
     def json_badge(self):
         return json.loads(self.badge)
-
-
-class Day(models.Model):
-    """
-    Event days: useful for registrations.
-    """
-
-    event = models.ForeignKey(Event, related_name="days", on_delete=models.CASCADE)
-    date = models.DateField()
-    name = models.CharField(max_length=190)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=["event", "date"]),
-        ]
-        ordering = ("date",)
-
-    def __str__(self) -> str:
-        return f'{self.name} ({date_filter(self.date, "D, N j")})'
-
-    def clean(self) -> None:
-        validate_event_day(self)
-
-
-class ImportantDate(models.Model):
-    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="dates")
-    date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
-    note = models.CharField(max_length=250)
-
-    class Meta:
-        ordering = ("date",)
-
-    def __str__(self) -> str:
-        return self.note
-
-    def is_past(self) -> bool:
-        if self.end_date:
-            return self.end_date < timezone.now().date()
-        return self.date < timezone.now().date()
