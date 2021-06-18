@@ -2,11 +2,15 @@ Vue.component('evan-editor', {
   props: {
     saveEventName: {
       type: String,
-      default: 'evan-editor-save-obj'
+      required: true
     },
     obj: {
       type: Object,
       default: null
+    },
+    objKey: {
+      type: String,
+      default: 'id'
     },
     size: {
       type: String,
@@ -19,23 +23,18 @@ Vue.component('evan-editor', {
     };
   },
   template: `
-    <q-dialog v-model="showDialog" @show="dialogVisible = true">
-      <q-layout view="Lhh lpR fff" container class="bg-white" style="max-width: 95vw;" :style="{'width': sizePx}">
-        <q-footer bordered class="bg-white text-dark">
-          <q-card-actions align="right" class="q-py-md q-px-lg">
-            <q-btn flat v-close-popup label="Close" color="grey-8" />
-            <q-space />
-            <q-btn unelevated v-close-popup @click="save" label="Save" color="primary" class="q-px-md" />
-          </q-card-actions>
-        </q-footer>
-        <q-page-container>
-          <q-page>
-            <q-card-section v-if="obj" class="q-pa-lg">
-              <slot></slot>
-            </q-card-section>
-          </q-page>
-        </q-page-container>
-      </q-layout>
+    <q-dialog position="top" v-model="showDialog" @show="dialogVisible = true">
+      <q-card v-if="obj" style="max-width: 95vw;" :style="{'width': sizePx}">
+        <q-card-section class="scroll q-pa-lg" style="min-height: 250px; max-height: 75vh;">
+          <slot></slot>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="right" class="q-py-md q-px-lg">
+          <q-btn flat v-close-popup label="Close" color="grey-8" />
+          <q-space />
+          <q-btn unelevated v-close-popup @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
+        </q-card-actions>
+      </q-card>
     </q-dialog>
   `,
   computed: {

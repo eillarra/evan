@@ -3,7 +3,13 @@
   <div v-cloak v-if="event">
 
     <q-card flat class="q-pa-lg">
-      <display-5>Sessions</display-5>
+      <div class="row no-wrap q-mb-sm">
+        <display-5>Sessions</display-5>
+        <q-space />
+        <div>
+          <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add session" />
+        </div>
+      </div>
       <table v-if="event">
         <tbody>
           <tr v-for="obj in sessions" :key="obj.id">
@@ -17,7 +23,7 @@
       </table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" size="lg">
+    <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj" class="q-gutter-md">
         <evan-datepicker v-model="tmpObj.date" label="Date *"></evan-datepicker>
         <q-input filled dense v-model="tmpObj.title" label="Title *" />

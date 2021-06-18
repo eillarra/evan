@@ -33,7 +33,7 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
+    <evan-editor :obj="tmpObj" obj-key="key" :save-event-name="saveEventName">
       <div v-if="tmpObj">
         <div class="q-col-gutter-md row items-center q-mb-md">
           <evan-datepicker v-model="tmpObj.start_date" label="Start date *" class="col-12 col-sm-6"></evan-datepicker>

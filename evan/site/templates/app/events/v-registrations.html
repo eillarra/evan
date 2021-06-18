@@ -8,16 +8,17 @@
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
         <display-5>Registrations</display-5>
-        <q-space></q-space>
-        <q-input filled dense v-model="query" placeholder="Search ID, attendee name, affiliation, country..." class="col-12 col-md-6">
-          <template v-slot:append>
-            <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
-            <q-icon name="search"></q-icon>
-          </template>
-        </q-input>
-        <q-btn outline type="a" href="{% endverbatim %}{% url 'event:registrations_sheet' event.code %}{% verbatim %}" target="_blank" color="primary" icon="article" label="Overview" size="sm" class="q-ml-md"></q-btn>
-        <!--<q-btn v-if="!event.is_virtual" outline color="primary" icon="account_box" label="Badges" size="sm" class="q-ml-md"></q-btn>-->
+        <q-space />
+        <div>
+          <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:registrations_sheet' event.code %}{% verbatim %}" target="_blank" color="primary" label="Download overview"></q-btn>
+        </div>
       </div>
+      <q-input filled dense v-model="query" placeholder="Search by ID, attendee name, affiliation, country..." type="search" class="q-mb-md">
+        <template v-slot:append>
+          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
+          <q-icon name="search" />
+        </template>
+      </q-input>
       <evan-registrations-table :data="items" :uuid="uuid"></evan-registrations-table>
     </q-card>
 

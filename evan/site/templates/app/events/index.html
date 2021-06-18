@@ -70,7 +70,7 @@
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
+  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
   <div is="router-view" class="q-pt-lg"></div>
   <div class="row q-col-gutter-lg items-stretch q-pt-lg">
     <div is="router-view" name="left" class="col-12 col-md-6"></div>
@@ -530,7 +530,15 @@
       },
       computed: _.extend(
         Vuex.mapState(['event', 'sessions']), {
-      })
+      }),
+      methods: {
+        addObj: function () {
+          this.tmpObj = {
+            title: null,
+            summary: null
+          };
+        }
+      }
     };
 
     var StatsView = {
