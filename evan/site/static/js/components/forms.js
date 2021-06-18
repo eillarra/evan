@@ -25,7 +25,7 @@ Vue.component('evan-editor', {
   template: `
     <q-dialog position="top" v-model="showDialog" @show="dialogVisible = true">
       <q-card v-if="obj" style="max-width: 95vw;" :style="{'width': sizePx}">
-        <q-card-section class="scroll q-pa-lg" style="min-height: 250px; max-height: 75vh;">
+        <q-card-section class="scroll q-px-lg q-py-xl" style="min-height: 250px; max-height: 75vh;">
           <slot></slot>
         </q-card-section>
         <q-separator />
