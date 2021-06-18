@@ -1,9 +1,5 @@
 Vue.component('evan-editor', {
   props: {
-    autoUpdate: {
-      type: Boolean,
-      default: false
-    },
     saveEventName: {
       type: String,
       default: 'evan-editor-save-obj'
@@ -64,9 +60,6 @@ Vue.component('evan-editor', {
   },
   methods: {
     save: function () {
-      if (this.autoUpdate && this.obj.url) {
-        Evan.api.update(this.obj);
-      }
       this.$root.$emit(this.saveEventName, this.obj);
     }
   }

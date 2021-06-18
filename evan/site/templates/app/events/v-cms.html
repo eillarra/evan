@@ -10,7 +10,7 @@
           <q-btn no-caps outline rounded color="primary" label="Open website" />
         </a>
       </div>
-      <q-table dense row-key="key" :data="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
+      <q-table dense row-key="key" :data="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter"></evan-no-data>
         </template>
@@ -22,7 +22,7 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" size="lg" :auto-update="true">
+    <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj" class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.key" readonly label="Key"></q-input>
         <evan-markdown v-if="tmpObj.marked" v-model="tmpObj.value" label="Content"></evan-markdown>

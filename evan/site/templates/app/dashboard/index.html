@@ -109,9 +109,6 @@
               {
                 name: 'href',
                 field: 'href',
-                sortable: false,
-                align: 'left',
-                label: null,
               },
               {
                 name: 'code',
@@ -128,31 +125,27 @@
                 label: 'Name'
               },
               {
-                name: 'full_name',
-                field: 'full_name',
-                sortable: false,
-                align: 'left',
-                label: null
-              },
-              {
                 name: 'start_date',
                 field: 'start_date',
                 sortable: true,
                 align: 'left',
-                label: 'Start'
+                label: 'Start',
+                classes:'q-table--col-auto-width'
               },
               {
                 name: 'end_date',
                 field: 'end_date',
                 sortable: true,
                 align: 'left',
-                label: 'End'
+                label: 'End',
+                classes:'q-table--col-auto-width'
               },
             ],
             pagination: {
-              rowsPerPage: 25
-            },
-            filter: null
+              rowsPerPage: 25,
+              sortBy: 'start_date',
+              descending: true
+            }
           }
         }
       },

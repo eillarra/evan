@@ -11,8 +11,13 @@
           <evan-no-data :message="message" :filter="filter"></evan-no-data>
         </template>
         <template v-slot:body-cell-href="props">
-          <q-td>
+          <q-td auto-width>
             <q-icon name="outbond" color="primary"></q-icon>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-code="props">
+          <q-td auto-width :props="props">
+            <samp><small>{{ props.row.code }}</small></samp>
           </q-td>
         </template>
       </q-table>

@@ -10,7 +10,7 @@
           <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add venue" />
         </div>
       </div>
-      <q-table dense row-key="id" :data="venues" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
+      <q-table dense row-key="id" :data="venues" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter"></evan-no-data>
@@ -28,7 +28,7 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" size="lg" :save-event-name="saveEventName">
+    <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj" class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.name" label="Venue name" type="text"></q-input>
         <q-input filled dense v-model="tmpObj.city" label="City" type="text"></q-input>

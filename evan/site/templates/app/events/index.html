@@ -153,8 +153,13 @@
           });
         },
         update: function (state, payload) {
-          if (payload.action == 'add') state[payload.var].push(payload.obj);
-          else if (payload.action == 'remove') {
+          if (payload.action == 'add') {
+            state[payload.var].push(payload.obj);
+          } else if (payload.action == 'update') {
+            Object.assign(_.findWhere(state[payload.var], {
+              id: payload.obj.id
+            }), payload.obj);
+          } else if (payload.action == 'remove') {
             state[payload.var] = _.without(state[payload.var], _.findWhere(state[payload.var], {
               id: payload.obj.id
             }));
@@ -176,10 +181,17 @@
         clearObj: function () {
           this.tmpObj = null;
         },
+        cloneObj: function (obj) {
+          this.tmpObj = _.clone(obj);
+        },
         createOrUpdate: function (obj) {
-          if (_.has(obj, 'id')) Evan.api.update(obj);
-          else {
-            var self = this;
+          var self = this;
+
+          if (_.has(obj, 'url')) {
+            Evan.api.update(obj, function (res) {
+              self.$store.commit('update', {var: self.stateVar, action: 'update', obj: res.data});
+            });
+          } else {
             Evan.api.create(this.createUrl, obj, function (res) {
               self.$store.commit('update', {var: self.stateVar, action: 'add', obj: res.data});
             });
@@ -209,9 +221,12 @@
 
     var CmsView = {
       template: '#v-cms',
+      mixins: [EventRelatedMixin],
       data: function () {
         return {
-          tmpObj: null,
+          stateVar: 'contents',
+          saveEventName: 'evan-save-content',
+          //
           table: {
             columns: [
               {
@@ -230,25 +245,15 @@
               rowsPerPage: 0,
               sortBy: 'key',
               descending: false
-            },
-            filter: null
+            }
           }
         }
       },
       computed: _.extend(
         Vuex.mapState(['event', 'contents']), {
       }),
-      methods: {
-        clearObj: function () {
-          this.tmpObj = null;
-        }
-      },
       created: function () {
         this.$store.commit('getContents');
-        this.$root.$on('evan-editor-hide', this.clearObj);
-      },
-      beforeDestroy: function () {
-        this.$root.$off('evan-editor-hide', this.clearObj);
       }
     };
 
@@ -266,20 +271,21 @@
             columns: [
               {
                 name: 'edit',
-                field: 'edit',
+                field: 'edit'
               },
               {
                 name: 'code',
                 field: 'code',
                 sortable: true,
                 align: 'left',
-                label: 'Code',
+                label: 'Code'
               },
               {
                 name: 'value',
                 field: 'value',
                 sortable: true,
-                label: 'Value'
+                label: 'Value',
+                classes:'q-table--col-auto-width'
               },
               {
                 name: 'notes',
@@ -295,15 +301,14 @@
               },
               {
                 name: 'remove',
-                field: 'remove',
+                field: 'remove'
               },
             ],
             pagination: {
               rowsPerPage: 25,
               sortBy: 'notes',
               descending: false
-            },
-            filter: null
+            }
           }
         }
       },
@@ -357,7 +362,13 @@
             columns: [
               {
                 name: 'edit',
-                field: 'edit',
+                field: 'edit'
+              },
+              {
+                name: 'label',
+                field: 'label',
+                align: 'left',
+                label: 'Label'
               },
               {
                 name: 'start_date',
@@ -365,18 +376,14 @@
                 sortable: true,
                 align: 'left',
                 label: 'Date',
+                classes:'q-table--col-auto-width'
               },
               {
                 name: 'end_date',
                 field: 'end_date',
                 align: 'left',
-                label: 'End date'
-              },
-              {
-                name: 'label',
-                field: 'label',
-                align: 'left',
-                label: 'Label'
+                label: 'End date',
+                classes:'q-table--col-auto-width'
               },
               {
                 name: 'format',
@@ -546,7 +553,7 @@
             columns: [
               {
                 name: 'edit',
-                field: 'edit',
+                field: 'edit'
               },
               {
                 name: 'name',
@@ -592,7 +599,7 @@
             columns: [
               {
                 name: 'edit',
-                field: 'edit',
+                field: 'edit'
               },
               {
                 name: 'name',

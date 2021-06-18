@@ -21,7 +21,7 @@
           </q-td>
         </template>
         <template v-slot:body-cell-format="props">
-          <q-td :props="props">
+          <q-td auto-width :props="props">
             {{ formatDict[props.row.format].label }}
           </q-td>
         </template>
