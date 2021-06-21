@@ -21,25 +21,25 @@ var Evan = {
         headers: headers
       });
     },
-    create: function (url, obj, responseCallback, customMsg) {
+    create: function (url, obj, callbackFn, customMsg) {
       this.request('post', url, obj).then(function (res) {
-        if (responseCallback) responseCallback(res);
+        if (callbackFn) callbackFn(res);
         Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(res.data.url || url) + ' created.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
     },
-    update: function (obj, responseCallback, customMsg) {
+    update: function (obj, callbackFn, customMsg) {
       this.request('put', obj.url, obj).then(function (res) {
-        if (responseCallback) responseCallback(res);
+        if (callbackFn) callbackFn(res);
         Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.url) + ' updated.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
     },
-    remove: function (obj, responseCallback, customMsg) {
+    remove: function (obj, callbackFn, customMsg) {
       this.request('delete', obj.url).then(function (res) {
-        if (responseCallback) responseCallback(res);
+        if (callbackFn) callbackFn(res);
         Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.url) + ' deleted.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
@@ -74,6 +74,22 @@ var Evan = {
     }
   },
   utils: {
+    confirmAction: function (msg, callbackFn) {
+      Quasar.plugins.Dialog.create({
+        title: 'Confirm action',
+        message: msg,
+        class: 'evan-confirm-dialog q-pa-sm',
+        focus: 'none',
+        cancel: {
+          'flat': true,
+          'color': 'grey-8'
+        },
+        ok: {
+          'unelevated': true,
+          'color': 'primary'
+        }
+      }).onOk(callbackFn);
+    },
     notifyApiError: function (error) {
       var types = {
         400: 'warning',

@@ -40,9 +40,10 @@
           </q-td>
         </template>
         <template v-slot:body-cell-remove="props">
-          <q-td auto-width :props="props">
-            <a v-if="!props.row.used" @click.stop="remove(props.row)"><evan-remove-icon /></a>
+          <q-td v-if="!props.row.used" auto-width :props="props" @click.stop="remove(props.row)">
+            <evan-remove-icon />
           </q-td>
+          <q-td v-else auto-width></q-td>
         </template>
       </q-table>
     </q-card>
@@ -50,7 +51,7 @@
     <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj" class="q-gutter-md">
         <q-input v-show="tmpObj.code" filled dense v-model="tmpObj.code" readonly label="Code"></q-input>
-        <q-input filled dense v-model.number="tmpObj.value" label="Coupon value" type="number"></q-input>
+        <q-input filled dense v-model.number="tmpObj.value" label="Coupon value" type="number" prefix="€"></q-input>
         <q-input filled dense v-model="tmpObj.notes" label="Notes" type="textarea" autogrow></q-input>
       </div>
     </evan-editor>

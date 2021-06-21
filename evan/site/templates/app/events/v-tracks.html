@@ -21,9 +21,10 @@
           </q-td>
         </template>
         <template v-slot:body-cell-remove="props">
-          <q-td auto-width :props="props">
-            <a v-if="!event.is_closed" @click.stop="remove(props.row)"><evan-remove-icon /></a>
+          <q-td v-if="!event.is_closed" auto-width :props="props" @click.stop="remove(props.row)">
+            <evan-remove-icon />
           </q-td>
+          <q-td v-else auto-width></q-td>
         </template>
       </q-table>
     </q-card>

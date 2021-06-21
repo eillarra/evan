@@ -1,0 +1,19 @@
+<script type="text/x-template" id="v-abstracts">
+{% verbatim %}
+  <div v-cloak v-if="event && event.main_config.abstracts">
+
+    <q-card flat class="q-pa-lg">
+      <div class="row no-wrap q-mb-sm">
+        <display-5>Paper abstracts</display-5>
+      </div>
+      <q-input filled dense v-model="query" placeholder="Search by ID, author, title..." type="search" class="q-mb-md">
+        <template v-slot:append>
+          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
+          <q-icon name="search" />
+        </template>
+      </q-input>
+    </q-card>
+
+  </div>
+{% endverbatim %}
+</script>

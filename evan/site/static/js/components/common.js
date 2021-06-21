@@ -68,7 +68,7 @@ Vue.component('evan-edit-icon', {
 
 Vue.component('evan-remove-icon', {
   template: `
-    <q-icon name="cancel" color="red-12" class="cursor-pointer" />
+    <q-icon name="backspace" color="red-12" class="cursor-pointer" />
   `
 });
 

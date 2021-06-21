@@ -47,7 +47,7 @@
           <q-item-section>Coupons</q-item-section>
         </q-item>
       </q-list>
-      <q-list dense v-if="event.main_config.cms">
+      <q-list v-if="event.main_config.cms" dense>
         <q-item-label header>Website</q-item-label>
         <q-item clickable :to="{name: 'cms'}">
           <q-item-section avatar><q-icon name="wysiwyg"></q-icon></q-item-section>
@@ -56,14 +56,18 @@
       </q-list>
       <q-list dense>
         <q-item-label header>Overview</q-item-label>
+        <q-item clickable :to="{name: 'analytics'}">
+          <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
+          <q-item-section>Analytics</q-item-section>
+        </q-item>
         <q-item clickable :to="{name: 'registrations'}">
-          <q-item-section avatar><q-icon name="recent_actors"></q-icon></q-item-section>
+          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
           <q-item-section>Registrations</q-item-section>
         </q-item>
-        <!--<q-item clickable :to="{name: 'stats'}">
-          <q-item-section avatar><q-icon name="query_stats"></q-icon></q-item-section>
-          <q-item-section>Stats</q-item-section>
-        </q-item>-->
+        <q-item v-if="event.main_config.abstracts" clickable :to="{name: 'abstracts'}">
+          <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
+          <q-item-section>Paper abstracts</q-item-section>
+        </q-item>
       </q-list>
     </q-scroll-area>
   </q-drawer>
@@ -79,13 +83,14 @@
 {% endblock %}
 
 {% block vue_templates %}
+  {% include './v-abstracts.html' %}
+  {% include './v-analytics.html' %}
   {% include './v-cms.html' %}
   {% include './v-coupons.html' %}
   {% include './v-dates.html' %}
   {% include './v-event.html' %}
   {% include './v-registrations.html' %}
   {% include './v-sessions.html' %}
-  {% include './v-stats.html' %}
   {% include './v-topics.html' %}
   {% include './v-tracks.html' %}
   {% include './v-venues.html' %}
@@ -101,9 +106,10 @@
     var Store = new Vuex.Store({
       state: {
         event: null,
-        registrations: null,
+        abstracts: [],
         contents: [],
         coupons: [],
+        registrations: null,
         sessions: [],
         topics: [],
         tracks: [],
@@ -149,7 +155,7 @@
 
             setTimeout(function () {
               self.commit('getRegistrations');
-            }, 45000);
+            }, 60000);
           });
         },
         update: function (state, payload) {
@@ -167,6 +173,21 @@
         }
       }
     });
+
+    var QueryMixin = {
+      props: ['q'],
+      data: function () {
+        return {
+          query: this.q || ''
+        }
+      },
+      watch: {
+        query: function (val, oldVal) {
+          if (val != '') this.$router.replace({query: {q: val}});
+          else this.$router.replace({query: {q: undefined}});
+        }
+      }
+    }
 
     var EventRelatedMixin = {
       data: function () {
@@ -199,10 +220,7 @@
         },
         remove: function (obj) {
           var self = this;
-          this.$q.dialog({
-            message: 'Are you sure you want to delete this item?',
-            cancel: true
-          }).onOk(function () {
+          Evan.utils.confirmAction('Are you sure you want to delete this item?', function () {
             Evan.api.remove(obj, function (res) {
               self.$store.commit('update', {var: self.stateVar, action: 'remove', obj: obj});
             });
@@ -218,6 +236,21 @@
         this.$root.$off('evan-editor-hide', this.clearObj);
       }
     }
+
+    var AbstractsView = {
+      template: '#v-abstracts',
+      mixins: [QueryMixin],
+      computed: _.extend(
+        Vuex.mapState(['event']), {
+      })
+    };
+
+    var AnalyticsView = {
+      template: '#v-analytics',
+      computed: _.extend(
+        Vuex.mapState(['event']), {
+      })
+    };
 
     var CmsView = {
       template: '#v-cms',
@@ -259,14 +292,13 @@
 
     var CouponsView = {
       template: '#v-coupons',
-      mixins: [EventRelatedMixin],
+      mixins: [QueryMixin, EventRelatedMixin],
       data: function () {
         return {
           createUrl: VARS.urlCoupons,
           stateVar: 'coupons',
           saveEventName: 'evan-save-coupon',
           //
-          query: this.q || '',
           table: {
             columns: [
               {
@@ -437,10 +469,7 @@
         },
         remove: function (key) {
           var self = this;
-          this.$q.dialog({
-            message: 'Are you sure you want to delete this item?',
-            cancel: true
-          }).onOk(function () {
+          Evan.utils.confirmAction('Are you sure you want to delete this item?', function () {
             self.event.custom_data.dates.splice(key, 1);  // key is idx in this case
             Evan.api.update(self.event, null, 'Dates updated.');
           });
@@ -489,11 +518,11 @@
 
     var RegistrationsView = {
       template: '#v-registrations',
-      props: ['q', 'uuid'],
+      mixins: [QueryMixin],
+      props: ['uuid'],
       data: function () {
         return {
-          dialogVisible: false,
-          query: this.q || ''
+          dialogVisible: false
         }
       },
       computed: _.extend(
@@ -508,18 +537,12 @@
             });
           });
         }
-      }),
-      watch: {
-        query: function (val, oldVal) {
-          if (val != '') this.$router.replace({query: {q: val}});
-          else this.$router.replace({query: {q: undefined}});
-        }
-      }
+      })
     };
 
     var SessionsView = {
       template: '#v-sessions',
-      mixins: [EventRelatedMixin],
+      mixins: [QueryMixin, EventRelatedMixin],
       data: function () {
         return {
           createUrl: VARS.urlSessions,
@@ -539,13 +562,6 @@
           };
         }
       }
-    };
-
-    var StatsView = {
-      template: '#v-stats',
-      computed: _.extend(
-        Vuex.mapState(['event']), {
-      })
     };
 
     var TopicsView = {
@@ -699,6 +715,18 @@
           redirect: {name: 'event'}
         },
         {
+          name: 'abstracts',
+          path: '/abstracts/',
+          pathToRegexpOptions: {strict: true},
+          component: AbstractsView
+        },
+        {
+          name: 'analytics',
+          path: '/analytics/',
+          pathToRegexpOptions: {strict: true},
+          component: AnalyticsView
+        },
+        {
           name: 'cms',
           path: '/cms/',
           pathToRegexpOptions: {strict: true},
@@ -750,12 +778,6 @@
               id: +route.params.uuid
             };
           }
-        },
-        {
-          name: 'stats',
-          path: '/stats/',
-          pathToRegexpOptions: {strict: true},
-          component: StatsView
         },
         {
           name: 'taxonomy',
