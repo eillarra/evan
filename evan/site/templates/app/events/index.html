@@ -100,6 +100,7 @@
 {% compress js file app_events2 %}
   <script src="{% static 'js/components/forms.js' %}"></script>
   <script src="{% static 'js/components/tables.js' %}"></script>
+  <script src="{% static 'js/views/mixins.js' %}"></script>
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
@@ -116,7 +117,17 @@
         venues: []
       },
       getters: {
-        used_coupons: function (state) {
+        topicsSorted: function (state) {
+          return state.topics.sort(function (a, b) {
+            return Evan.utils.sortText(a.name, b.name);
+          });
+        },
+        tracksSorted: function (state) {
+          return state.tracks.sort(function (a, b) {
+            return Evan.utils.sortText(a.name, b.name);
+          });
+        },
+        usedCoupons: function (state) {
           if (state.registrations === null) return null;
           if (!state.registrations.length) return new Set();
           return new Set(_.pluck(_.pluck(state.registrations.filter(function (obj) {
@@ -174,69 +185,6 @@
       }
     });
 
-    var QueryMixin = {
-      props: ['q'],
-      data: function () {
-        return {
-          query: this.q || ''
-        }
-      },
-      watch: {
-        query: function (val, oldVal) {
-          if (val != '') this.$router.replace({query: {q: val}});
-          else this.$router.replace({query: {q: undefined}});
-        }
-      }
-    }
-
-    var EventRelatedMixin = {
-      data: function () {
-        return {
-          tmpObj: null,
-          createUrl: null,
-          stateVar: null,
-          saveEventName: null
-        }
-      },
-      methods: {
-        clearObj: function () {
-          this.tmpObj = null;
-        },
-        cloneObj: function (obj) {
-          this.tmpObj = _.clone(obj);
-        },
-        createOrUpdate: function (obj) {
-          var self = this;
-
-          if (_.has(obj, 'url')) {
-            Evan.api.update(obj, function (res) {
-              self.$store.commit('update', {var: self.stateVar, action: 'update', obj: res.data});
-            });
-          } else {
-            Evan.api.create(this.createUrl, obj, function (res) {
-              self.$store.commit('update', {var: self.stateVar, action: 'add', obj: res.data});
-            });
-          }
-        },
-        remove: function (obj) {
-          var self = this;
-          Evan.utils.confirmAction('Are you sure you want to delete this item?', function () {
-            Evan.api.remove(obj, function (res) {
-              self.$store.commit('update', {var: self.stateVar, action: 'remove', obj: obj});
-            });
-          });
-        }
-      },
-      created: function () {
-        this.$root.$on(this.saveEventName, this.createOrUpdate);
-        this.$root.$on('evan-editor-hide', this.clearObj);
-      },
-      beforeDestroy: function () {
-        this.$root.$off(this.saveEventName);
-        this.$root.$off('evan-editor-hide', this.clearObj);
-      }
-    }
-
     var AbstractsView = {
       template: '#v-abstracts',
       mixins: [QueryMixin],
@@ -264,14 +212,14 @@
             columns: [
               {
                 name: 'edit',
-                field: 'edit',
+                field: 'edit'
               },
               {
                 name: 'key',
                 field: 'key',
                 sortable: true,
                 align: 'left',
-                label: 'Key',
+                label: 'Key'
               }
             ],
             pagination: {
@@ -317,7 +265,10 @@
                 field: 'value',
                 sortable: true,
                 label: 'Value',
-                classes:'q-table--col-auto-width'
+                classes:'q-table--col-auto-width',
+                format: function (val, row) {
+                  return '€ ' + val;
+                }
               },
               {
                 name: 'notes',
@@ -345,10 +296,10 @@
         }
       },
       computed: _.extend(
-        Vuex.mapGetters(['used_coupons']),
+        Vuex.mapGetters(['usedCoupons']),
         Vuex.mapState(['event', 'coupons']), {
         extendedCoupons: function () {
-          var uc = this.used_coupons;
+          var uc = this.usedCoupons;
           if (uc === null) return [];
           return this.coupons.map(function (obj) {
             obj.used = uc.has(obj.id);
@@ -548,17 +499,83 @@
           createUrl: VARS.urlSessions,
           stateVar: 'sessions',
           saveEventName: 'evan-save-session',
+          confirmRemoveMsg: 'Are you sure you want to delete this session? Deleting a session will remove it from all registrations.',
           //
+          table: {
+            columns: [
+              {
+                name: 'edit',
+                field: 'edit'
+              },
+              {
+                name: 'start_at',
+                field: 'start_at',
+                sortable: true,
+                align: 'left',
+                label: 'Start',
+                classes:'q-table--col-auto-width'
+              },
+              {
+                name: 'duration',
+                field: 'duration',
+                align: 'left',
+                label: 'Duration',
+                classes:'q-table--col-auto-width'
+              },
+              {
+                name: 'title',
+                field: 'title',
+                sortable: true,
+                align: 'left',
+                label: 'Title'
+              },
+              {
+                name: 'track',
+                field: 'trackName',
+                sortable: true,
+                align: 'left',
+                label: 'Track'
+              },
+              {
+                name: 'remove',
+                field: 'remove'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'start_at',
+              descending: false
+            }
+          }
         }
       },
       computed: _.extend(
-        Vuex.mapState(['event', 'sessions']), {
+        Vuex.mapGetters(['topicsSorted', 'tracksSorted']),
+        Vuex.mapState(['event', 'sessions', 'topics', 'tracks']), {
+        extendedSessions: function () {
+          var td = this.tracksDict;
+          return this.sessions.map(function (obj) {
+            obj.startAt = moment(obj.start_at);
+            obj.endAt = moment(obj.end_at);
+            obj.duration = moment.duration(obj.endAt.diff(obj.startAt));
+            obj.trackName = _.has(td, obj.track) ? td[obj.track].name : null;
+            return obj;
+          }).sort(function (a, b) {
+            return a.startAt.diff(b.startAt) || Evan.utils.sortText(a.title, b.title);
+          });
+        },
+        tracksDict: function () {
+          return _.indexBy(this.tracks, 'id');
+        }
       }),
       methods: {
         addObj: function () {
           this.tmpObj = {
+            is_social_event: false,
+            max_attendees: 0,
             title: null,
-            summary: null
+            summary: null,
+            topics: []
           };
         }
       }

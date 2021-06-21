@@ -16,5 +16,6 @@ class SessionSerializer(serializers.ModelSerializer):
             event = Event.objects.get(code=self.context["view"].kwargs.get("code"))
         else:
             event = self.instance.event
-        validate_date(data["date"], event)
+        validate_date(data["start_at"].date(), event)
+        validate_date(data["end_at"].date(), event)
         return data

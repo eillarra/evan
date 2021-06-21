@@ -10,23 +10,70 @@
           <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add session" />
         </div>
       </div>
-      <table v-if="event">
-        <tbody>
-          <tr v-for="obj in sessions" :key="obj.id">
-            <td>{{ obj.id }}</td>
-            <td><a href="#" @click.prevent="tmpObj = obj">{{ obj.title }}</a></td>
-            <td>
-              <a v-if="!event.is_closed" @click.stop="remove(obj)"><evan-remove-icon /></a>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <q-input filled dense v-model="query" placeholder="Search by title, track..." type="search" class="q-mb-md">
+        <template v-slot:append>
+          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
+          <q-icon name="search" />
+        </template>
+      </q-input>
+      <q-table dense row-key="id" :data="extendedSessions" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+        <template v-slot:no-data="{ icon, message, filter }">
+          <evan-no-data :message="message" :filter="filter"></evan-no-data>
+        </template>
+        <template v-slot:body-cell-edit="props">
+          <q-td auto-width :props="props">
+            <evan-edit-icon />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-start_at="props">
+          <q-td auto-width :props="props">{{ props.row.startAt.format('ddd MMM D, LT') }}</q-td>
+        </template>
+        <template v-slot:body-cell-duration="props">
+          <q-td auto-width :props="props">{{ props.row.duration }}</q-td>
+        </template>
+        <template v-slot:body-cell-remove="props">
+          <q-td v-if="!event.is_closed" auto-width :props="props" @click.stop="remove(props.row)">
+            <evan-remove-icon />
+          </q-td>
+          <q-td v-else auto-width></q-td>
+        </template>
+      </q-table>
     </q-card>
 
     <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
       <div v-if="tmpObj" class="q-gutter-md">
-        <evan-datepicker v-model="tmpObj.date" label="Date *"></evan-datepicker>
         <q-input filled dense v-model="tmpObj.title" label="Title *" />
+        <div class="row q-col-gutter-md q-ma-none">
+          <evan-datepicker :with-time="true" v-model="tmpObj.start_at" label="Start *" class="col-12 col-md"></evan-datepicker>
+          <evan-datepicker :with-time="true" v-model="tmpObj.end_at" label="End *" class="col-12 col-md"></evan-datepicker>
+          <q-input filled dense readonly v-model="tmpObj.duration" label="Duration" class="col-12 col-md" />
+        </div>
+        <div class="row q-col-gutter-md q-ma-none">
+          <q-field filled stack-label label="Mark here if this is a social event..." class="col-12 col-md">
+            <template v-slot:control>
+              <q-checkbox v-model="tmpObj.is_social_event" label="Social event" size="xs" @input="tmpObj.track = null" />
+            </template>
+          </q-field>
+          <q-field v-show="!tmpObj.is_social_event && tracks.length" filled stack-label label="...or choose a track (optional)" class="col-12 col-md-8">
+            <template v-slot:control>
+              <div class="q-gutter-sm">
+                <q-radio v-for="track in tracksSorted" :key="track.id" v-model="tmpObj.track" :val="track.id" :label="track.name" size="xs" />
+              </div>
+            </template>
+          </q-field>
+        </div>
+        <q-field v-if="topics.length" filled stack-label label="Topics">
+          <template v-slot:control>
+            <div class="q-gutter-sm">
+              <q-checkbox v-for="topic in topicsSorted" :key="topic.id" v-model="tmpObj.topics" :val="topic.id" :label="topic.name" size="xs" />
+            </div>
+          </template>
+        </q-field>
+        <div class="row q-col-gutter-md q-ma-none">
+          <q-input filled dense v-model.number="tmpObj.room" label="Room *" class="col-12 col-md" />
+          <q-input filled dense v-model.number="tmpObj.max_attendees" label="Max. attendees" type="number" hint="Leave as `0` if there is no limit." class="col-12 col-md" />
+          <q-input v-if="tmpObj.is_social_event" filled dense v-model.number="tmpObj.extra_attendees_fee" label="Extra attendees fee" type="number" prefix="€" hint="It will be applied to accompanying persons." class="col-12 col-md" />
+        </div>
         <evan-markdown v-model="tmpObj.summary" label="Summary"></evan-markdown>
         <q-input filled dense v-model="tmpObj.website" label="External website" type="url" />
       </div>

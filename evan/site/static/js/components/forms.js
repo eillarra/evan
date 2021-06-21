@@ -176,7 +176,7 @@ Vue.component('evan-datepicker', {
               </q-date>
             </q-popup-proxy>
           </q-icon>
-          <q-icon v-if="withTime" name="access_time" class="cursor-pointer" size="xs">
+          <q-icon v-if="withTime" name="access_time" class="cursor-pointer q-ml-sm" size="xs">
             <q-popup-proxy transition-show="scale" transition-hide="scale">
               <q-time v-model="mutable" :mask="mask" format24h>
                 <div class="row items-center justify-end">

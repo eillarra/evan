@@ -115,6 +115,10 @@ a {
 }
 
 .evan-confirm-dialog {
+  .q-dialog__title {
+    font-weight: 300;
+  }
+
   .q-card__actions {
     justify-content: space-between !important;
     padding-left: 16px;
