@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     {% compress css file base %}
-      <link href="{% static 'vendor/quasar@1.14.7/quasar.min.css' %}" type="text/css" rel="stylesheet">
+      <link href="{% static 'vendor/quasar@1.15.21/quasar.min.css' %}" type="text/css" rel="stylesheet">
       <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
       <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
     {% endcompress %}
@@ -24,6 +24,7 @@
       <meta name="twitter:dnt" content="on">
     {% endif %}
     {% block structured_data %}{% endblock %}
+    <script src="{% static 'vendor/quasar@1.15.21/quasar.ie.polyfills.umd.min.js' %}"></script>
     {% if not debug %}
       <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.css" />
       <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js"></script>
@@ -55,7 +56,7 @@
           </q-page>
         </q-page-container>
       {% endblock %}
-      <q-footer class="bg-grey-1 text-grey-8 q-pa-lg" :class="{'q-pa-xl': $q.screen.gt.xs}">
+      <q-footer class="bg-grey-1 text-grey-8 q-pa-lg" :class="{'q-px-xl': $q.screen.gt.xs}">
         <div class="row justify-between text-caption">
           <div class="col-12 col-md">
             <p>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener" class="inherit">Department of Electronics and Information Systems (ELIS), Ghent University</a></p>
@@ -92,13 +93,12 @@
         <script src="{% static 'vendor/vue@2.6.14/vue.js' %}"></script>
         <script src="{% static 'vendor/vuex@3.6.2/vuex.js' %}"></script>
         <script src="{% static 'vendor/vue-router@3.5.1/vue-router.js' %}"></script>
-        <script src="{% static 'vendor/quasar@1.14.7/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/quasar@1.15.21/quasar.umd.js' %}"></script>
       {% else %}
-        <script src="{% static 'vendor/quasar@1.14.7/quasar.ie.polyfills.umd.min.js' %}"></script>
         <script src="{% static 'vendor/vue@2.6.14/vue.min.js' %}"></script>
         <script src="{% static 'vendor/vuex@3.6.2/vuex.min.js' %}"></script>
         <script src="{% static 'vendor/vue-router@3.5.1/vue-router.min.js' %}"></script>
-        <script src="{% static 'vendor/quasar@1.14.7/quasar.umd.min.js' %}"></script>
+        <script src="{% static 'vendor/quasar@1.15.21/quasar.umd.min.js' %}"></script>
       {%endif %}
     {% endcompress %}
     {% compress js file evan %}
@@ -111,7 +111,6 @@
     {% block extra_scripts %}{% endblock %}
     {% block scripts %}{% endblock %}
     {% if not debug %}
-      <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js"></script>
       {% compress js inline %}
         <script>
           window.addEventListener('load', function() {
