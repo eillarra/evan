@@ -63,19 +63,12 @@ var Evan = {
       obj.total_fees = obj.base_fee + obj.extra_fees + obj.manual_extra_fees;
       obj.total_paid = ((obj.coupon) ? obj.coupon.value : 0) + obj.paid + obj.paid_via_invoice;
       obj.is_paid = obj.total_paid >= obj.total_fees;
-      obj._q = [
-        obj.uuid,
-        obj.user.email,
-        obj.user_name,
-        obj.user_affiliation,
-        (obj.user.profile.country) ? obj.user.profile.country.name : ''
-      ].join(' ').toLowerCase();
       return obj;
     }
   },
   utils: {
     confirmAction: function (msg, callbackFn) {
-      Quasar.plugins.Dialog.create({
+      Quasar.Dialog.create({
         title: 'Confirm action',
         message: msg,
         class: 'evan-confirm-dialog q-pa-sm',
@@ -114,7 +107,7 @@ var Evan = {
         msg = error.response.data.message || null;
       }
 
-      Quasar.plugins.Notify.create({
+      Quasar.Notify.create({
         timeout: 5000,
         type: types[error.response.status] || 'warning',
         message: msg,
@@ -123,11 +116,18 @@ var Evan = {
       })
     },
     notifySuccess: function (msg) {
-      Quasar.plugins.Notify.create({
+      Quasar.Notify.create({
         timeout: 2500,
         message: msg,
         icon: null
       })
+    },
+    registerComponents: function (app, collectionList) {
+      _.each(collectionList, function (componentCollection) {
+        _.each(componentCollection, function (config, componentName) {
+          app.component(componentName, config);
+        });
+      });
     },
     sortText: function (a, b) {
       var a = a.toLowerCase();

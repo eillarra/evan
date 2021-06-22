@@ -3,7 +3,7 @@
 
 <script type="text/x-template" id="v-coupons">
 {% verbatim %}
-  <div v-cloak v-if="event">
+  <div v-if="event">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
@@ -19,9 +19,9 @@
           <q-icon name="search" />
         </template>
       </q-input>
-      <q-table dense row-key="id" :data="extendedCoupons" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table dense row-key="id" :rows="extendedCoupons" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
-          <evan-no-data :message="message" :filter="filter"></evan-no-data>
+          <evan-no-data :message="message" :filter="filter" />
         </template>
         <template v-slot:body-cell-edit="props">
           <q-td auto-width :props="props">
@@ -49,7 +49,7 @@
     </q-card>
 
     <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
-      <div v-if="tmpObj" class="q-gutter-md">
+      <div class="q-gutter-md">
         <q-input v-show="tmpObj.code" filled dense v-model="tmpObj.code" readonly label="Code"></q-input>
         <q-input filled dense v-model.number="tmpObj.value" label="Coupon value" type="number" prefix="€"></q-input>
         <q-input filled dense v-model="tmpObj.notes" label="Notes" type="textarea" autogrow></q-input>

@@ -13,14 +13,17 @@
       <q-toolbar-title>
         <strong>{{ event.name }}</strong>
       </q-toolbar-title>
+      <q-space></q-space>
+      <evan-user-menu username="{{ user }}"></evan-user-menu>
     </q-toolbar>
   </q-header>
 {% endblock %}
 
 {% block drawer %}
-  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" content-class="bg-grey-1 q-pt-xl q-pl-sm text-weight-medium" :width="250">
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area class="fit">
       <q-list dense>
+        <q-item-label header>Registration</q-item-label>
         <q-item clickable :to="{name: 'registration'}">
           <q-item-section avatar><q-icon name="assignment_turned_in"></q-icon></q-item-section>
           <q-item-section>Registration</q-item-section>
@@ -37,16 +40,16 @@
           </q-item-section>
         </q-item>
       </q-list>
-      <q-separator spaced="md"></q-separator>
       <q-list dense>
+        <q-item-label header>Overview</q-item-label>
         <q-item clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
           <q-item-section>Event</q-item-section>
         </q-item>
-        <q-item v-if="registration && !registrationIsNew" clickable :to="{name: 'event'}">
+        <!--<q-item v-if="registration && !registrationIsNew" clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="groups"></q-icon></q-item-section>
           <q-item-section>Attendees</q-item-section>
-        </q-item>
+        </q-item>-->
       </q-list>
     </q-scroll-area>
   </q-drawer>
@@ -54,7 +57,7 @@
 
 {% block page %}
   <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}"></div>
-  <div is="router-view" class="q-pt-lg"></div>
+  <router-view class="q-pt-lg"></router-view>
 {% endblock %}
 
 {% block vue_templates %}
@@ -71,7 +74,7 @@
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
-    var Store = new Vuex.Store({
+    var Store = Vuex.createStore({
       state: {
         firstDay: null,
         user: null,
@@ -97,7 +100,6 @@
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
             state.event = Object.freeze(Evan.map.event(res.data));
             state.replaceMainForm = _.has(res.data.custom_fields, "replace") && res.data.custom_fields.replace;
-            state.firstDay = res.data.days[0];
 
             setTimeout(function () {
               self.commit('getEvent');
@@ -114,10 +116,11 @@
           } else {
             state.registration = {
               fee_type: null,
-              days: [],
               sessions: [],
               accompanying_persons: [],
-              custom_data: {}
+              custom_data: {
+                days: []
+              }
             };
           }
         },
@@ -140,6 +143,24 @@
       template: '#v-event',
       computed: _.extend(
         Vuex.mapState(['event']), {
+        dates: function () {
+          if (!this.event.custom_data.dates || !this.event.custom_data.dates.length) return [];
+
+          return this.event.custom_data.dates.map(function (d) {
+            d.startDate = moment(d.start_date);
+            if (d.format == 'range' && d.end_date) {
+              d.formatted = d.startDate.format('MMM D') + '-' + moment(d.end_date).format('D, Y');
+            } else {
+              d.formatted = d.startDate.format({
+                'date': 'MMM D, Y',
+                'month': 'MMM Y'
+              }[d.format] || 'MMMM Y');
+            }
+            return d;
+          }).sort(function (a, b) {
+            return a.startDate.diff(b.startDate);
+          });
+        }
       }),
     };
 
@@ -382,7 +403,8 @@
       }
     };
 
-    var Router = new VueRouter({
+    var Router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
       routes: [
         {
           path: '/',
@@ -426,10 +448,7 @@
       }
     });
 
-    new Vue({
-      el: '#vue',
-      store: Store,
-      router: Router,
+    var app = Vue.createApp({
       data: function () {
         return {
           visibleDrawer: true
@@ -443,6 +462,13 @@
         this.$store.commit('getUser');
       }
     });
+
+    Evan.utils.registerComponents(app, [EvanCommonComponents, EvanFormComponents]);
+
+    app.use(Store);
+    app.use(Router);
+    app.use(Quasar);
+    app.mount('#vue');
   </script>
 {% endcompress %}
 {% endblock %}

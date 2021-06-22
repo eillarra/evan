@@ -3,13 +3,13 @@
 
 <script type="text/x-template" id="v-event">
 {% verbatim %}
-  <div v-cloak v-if="event">
+  <div v-if="event">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
         <display-5>Event information</display-5>
         <q-space />
-        <a v-if="event.website" :href="event.website" target="_blank">
+        <a v-if="event.website" :href="event.website" target="_blank" rel="noopener">
           <q-btn no-caps outline rounded color="primary" label="Open website" />
         </a>
       </div>
@@ -50,7 +50,7 @@
             <q-separator inset />
             <q-card-section>
               <span v-if="event.website">
-                <a :href="event.website" target="_blank" class="inherit text-primary">
+                <a :href="event.website" target="_blank" rel="noopener" class="inherit text-primary">
                   <q-icon name="link" class="q-mr-sm" />Website: <strong>{{ event.website }}</strong></a>
                 <br>
               </span>

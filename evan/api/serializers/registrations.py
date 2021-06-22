@@ -2,6 +2,7 @@ from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from evan.models import Coupon, Person, Registration
+from .events import EventListSerializer
 from .generic import MetadataField
 from .users import UserSerializer
 
@@ -47,3 +48,11 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
 
     def get_extra_fees(self, obj):
         return obj.event.social_event_bundle_fee * obj.accompanying_persons.count()
+
+
+class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
+    event = EventListSerializer(read_only=True)
+
+    class Meta(RegistrationSerializer.Meta):
+        model = Registration
+        exclude = ("id", "saldo")

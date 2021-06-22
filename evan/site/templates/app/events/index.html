@@ -13,12 +13,14 @@
       <q-toolbar-title>
         <strong>{{ event.name }}</strong>
       </q-toolbar-title>
+      <q-space></q-space>
+      <evan-user-menu username="{{ user }}"></evan-user-menu>
     </q-toolbar>
   </q-header>
 {% endblock %}
 
 {% block drawer %}
-  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" content-class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area v-if="event" class="fit">
       <q-list dense>
         <q-item-label header>Event management</q-item-label>
@@ -75,10 +77,10 @@
 
 {% block page %}
   <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
-  <div is="router-view" class="q-pt-lg"></div>
+  <router-view class="q-pt-lg"></router-view>
   <div class="row q-col-gutter-lg items-stretch q-pt-lg">
-    <div is="router-view" name="left" class="col-12 col-md-6"></div>
-    <div is="router-view" name="right" class="col-12 col-md-6"></div>
+    <router-view name="left" class="col-12 col-md-6"></router-view>
+    <router-view name="right" class="col-12 col-md-6"></router-view>
   </div>
 {% endblock %}
 
@@ -97,20 +99,19 @@
 {% endblock %}
 
 {% block scripts %}
-{% compress js file app_events2 %}
+{% compress js file app_events %}
   <script src="{% static 'js/components/forms.js' %}"></script>
-  <script src="{% static 'js/components/tables.js' %}"></script>
   <script src="{% static 'js/views/mixins.js' %}"></script>
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
-    var Store = new Vuex.Store({
+    var Store = Vuex.createStore({
       state: {
         event: null,
         abstracts: [],
         contents: [],
         coupons: [],
-        registrations: null,
+        registrations: [],
         sessions: [],
         topics: [],
         tracks: [],
@@ -128,7 +129,6 @@
           });
         },
         usedCoupons: function (state) {
-          if (state.registrations === null) return null;
           if (!state.registrations.length) return new Set();
           return new Set(_.pluck(_.pluck(state.registrations.filter(function (obj) {
               return obj.coupon !== null;
@@ -153,7 +153,7 @@
             state.topics = _.clone(state.event.topics);
             state.tracks = _.clone(state.event.tracks);
             state.venues = _.clone(state.event.venues);
-            Quasar.plugins.Loading.hide();
+            Quasar.Loading.hide();
           });
         },
         getRegistrations: function (state) {
@@ -211,8 +211,7 @@
           table: {
             columns: [
               {
-                name: 'edit',
-                field: 'edit'
+                name: 'edit'
               },
               {
                 name: 'key',
@@ -228,7 +227,7 @@
               descending: false
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapState(['event', 'contents']), {
@@ -250,8 +249,7 @@
           table: {
             columns: [
               {
-                name: 'edit',
-                field: 'edit'
+                name: 'edit'
               },
               {
                 name: 'code',
@@ -283,8 +281,7 @@
                 label: 'Used'
               },
               {
-                name: 'remove',
-                field: 'remove'
+                name: 'remove'
               },
             ],
             pagination: {
@@ -293,14 +290,13 @@
               descending: false
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapGetters(['usedCoupons']),
         Vuex.mapState(['event', 'coupons']), {
         extendedCoupons: function () {
           var uc = this.usedCoupons;
-          if (uc === null) return [];
           return this.coupons.map(function (obj) {
             obj.used = uc.has(obj.id);
             return obj;
@@ -344,8 +340,7 @@
           table: {
             columns: [
               {
-                name: 'edit',
-                field: 'edit'
+                name: 'edit'
               },
               {
                 name: 'label',
@@ -375,8 +370,7 @@
                 label: 'Format'
               },
               {
-                name: 'remove',
-                field: 'remove'
+                name: 'remove'
               }
             ],
             pagination: {
@@ -427,12 +421,12 @@
         }
       },
       created: function () {
-        this.$root.$on(this.saveEventName, this.createOrUpdate);
-        this.$root.$on('evan-editor-hide', this.clearObj);
+        EventEmitter.on(this.saveEventName, this.createOrUpdate);
+        EventEmitter.on('evan-editor-hide', this.clearObj);
       },
-      beforeDestroy: function () {
-        this.$root.$off(this.saveEventName);
-        this.$root.$off('evan-editor-hide', this.clearObj);
+      beforeUnmount: function () {
+        EventEmitter.off(this.saveEventName);
+        EventEmitter.off('evan-editor-hide', this.clearObj);
       }
     };
 
@@ -469,12 +463,66 @@
 
     var RegistrationsView = {
       template: '#v-registrations',
-      mixins: [QueryMixin],
+      mixins: [QueryMixin, EventRelatedMixin],
       props: ['uuid'],
       data: function () {
         return {
-          dialogVisible: false
-        }
+          table: {
+            columns: [
+              {
+                name: 'view'
+              },
+              {
+                name: 'uuid',
+                field: 'uuid',
+                sortable: true,
+                label: 'ID',
+                align: 'left',
+              },
+              {
+                name: 'user_name',
+                field: 'user_name',
+                sortable: true,
+                align: 'left',
+                label: 'Attendee'
+              },
+              {
+                name: 'user_affiliation',
+                field: 'user_affiliation',
+                sortable: true,
+                align: 'left',
+                label: 'Affiliation'
+              },
+              {
+                name: 'created_at',
+                field: 'created_at',
+                sortable: true,
+                align: 'left',
+                label: 'Date'
+              },
+              {
+                name: 'visa_status',
+                align: 'center',
+                label: 'Visa'
+              },
+              {
+                name: 'invoice_status',
+                align: 'center',
+                label: 'Invoice'
+              },
+              {
+                name: 'payment_status',
+                align: 'center',
+                label: 'Paid'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 25,
+              sortBy: 'created_at',
+              descending: true
+            }
+          }
+        };
       },
       computed: _.extend(
         Vuex.mapState(['event', 'registrations']), {
@@ -504,8 +552,7 @@
           table: {
             columns: [
               {
-                name: 'edit',
-                field: 'edit'
+                name: 'edit'
               },
               {
                 name: 'start_at',
@@ -537,8 +584,7 @@
                 label: 'Track'
               },
               {
-                name: 'remove',
-                field: 'remove'
+                name: 'remove'
               }
             ],
             pagination: {
@@ -547,7 +593,7 @@
               descending: false
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapGetters(['topicsSorted', 'tracksSorted']),
@@ -593,8 +639,7 @@
           table: {
             columns: [
               {
-                name: 'edit',
-                field: 'edit'
+                name: 'edit'
               },
               {
                 name: 'name',
@@ -603,8 +648,7 @@
                 label: 'Name'
               },
               {
-                name: 'remove',
-                field: 'remove'
+                name: 'remove'
               }
             ],
             pagination: {
@@ -613,7 +657,7 @@
               descending: false
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapState(['event', 'topics']), {
@@ -639,8 +683,7 @@
           table: {
             columns: [
               {
-                name: 'edit',
-                field: 'edit'
+                name: 'edit'
               },
               {
                 name: 'name',
@@ -649,8 +692,7 @@
                 label: 'Name'
               },
               {
-                name: 'remove',
-                field: 'remove'
+                name: 'remove'
               }
             ],
             pagination: {
@@ -659,7 +701,7 @@
               descending: false
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapState(['event', 'tracks']), {
@@ -686,7 +728,6 @@
             columns: [
               {
                 name: 'edit',
-                field: 'edit',
               },
               {
                 name: 'name',
@@ -695,8 +736,7 @@
                 label: 'Venue name'
               },
               {
-                name: 'remove',
-                field: 'remove'
+                name: 'remove'
               }
             ],
             pagination: {
@@ -705,7 +745,7 @@
               descending: false
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapState(['event', 'venues']), {
@@ -721,11 +761,8 @@
       }
     };
 
-    var Router = new VueRouter({
-      /*scrollBehavior: function (to, from) {
-        if (from.name.startsWith('session')) return;
-        return {x: 0, y: 0};
-      },*/
+    var Router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
       routes: [
         {
           path: '/',
@@ -786,13 +823,12 @@
         },
         {
           name: 'sessions',
-          path: '/sessions/:id?/',
+          path: '/sessions/',
           pathToRegexpOptions: {strict: true},
           component: SessionsView,
           props: function (route) {
             return {
-              q: route.query.q,
-              id: +route.params.uuid
+              q: route.query.q
             };
           }
         },
@@ -814,10 +850,7 @@
       ]
     });
 
-    new Vue({
-      el: '#vue',
-      store: Store,
-      router: Router,
+    var app = Vue.createApp({
       data: function () {
         return {
           visibleDrawer: true
@@ -830,6 +863,13 @@
         this.$store.commit('getRegistrations');
       }
     });
+
+    Evan.utils.registerComponents(app, [EvanCommonComponents, EvanFormComponents]);
+
+    app.use(Store);
+    app.use(Router);
+    app.use(Quasar);
+    app.mount('#vue');
   </script>
 {% endcompress %}
 {% endblock %}

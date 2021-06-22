@@ -1,7 +1,7 @@
 # flake8: noqa
 
 from .contents import *
-from .event import *
+from .events import *
 from .metadata import *
 from .payments import *
 from .registrations import *

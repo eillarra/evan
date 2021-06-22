@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v2.0.0-beta.19
+ * Quasar Framework v2.0.0
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -20,13 +20,9 @@
    *                              (needs runtime detection)
    */
 
-  let isRuntimeSsrPreHydration = vue.ref(
-    (
+  const isRuntimeSsrPreHydration = vue.ref(
       false 
-    )
-  );
-
-  let iosEmulated = false;
+    );
   let iosCorrection;
 
   function getMatch (userAgent, platformMatch) {
@@ -322,7 +318,7 @@
   };
 
   {
-    iosEmulated = client.is.ios === true
+    client.is.ios === true
       && window.navigator.vendor.toLowerCase().indexOf('apple') === -1;
 
     if (isRuntimeSsrPreHydration.value === true) {
@@ -1427,7 +1423,7 @@
   }
 
   var installQuasar = function (parentApp, opts = {}) {
-      const $q = { version: '2.0.0-beta.19' };
+      const $q = { version: '2.0.0' };
 
       if (globalConfigIsFrozen === false) {
         if (opts.config !== void 0) {
@@ -3126,69 +3122,6 @@
     }
   }
 
-  const modifiersAll = {
-    left: true,
-    right: true,
-    up: true,
-    down: true,
-    horizontal: true,
-    vertical: true
-  };
-
-  const directionList = Object.keys(modifiersAll);
-
-  modifiersAll.all = true;
-
-  function getModifierDirections (mod) {
-    const dir = {};
-
-    for (const direction of directionList) {
-      if (mod[ direction ] === true) {
-        dir[ direction ] = true;
-      }
-    }
-
-    if (Object.keys(dir).length === 0) {
-      return modifiersAll
-    }
-
-    if (dir.horizontal === true) {
-      dir.left = dir.right = true;
-    }
-    else if (dir.left === true && dir.right === true) {
-      dir.horizontal = true;
-    }
-
-    if (dir.vertical === true) {
-      dir.up = dir.down = true;
-    }
-    else if (dir.up === true && dir.down === true) {
-      dir.vertical = true;
-    }
-
-    if (dir.horizontal === true && dir.vertical === true) {
-      dir.all = true;
-    }
-
-    return dir
-  }
-
-  const getTouchTarget = iosEmulated !== true && (
-    client.is.ios === true
-    || window.navigator.vendor.toLowerCase().indexOf('apple') > -1
-  )
-    ? () => document
-    : target => target;
-
-  function shouldStart (evt, ctx) {
-    return ctx.event === void 0
-      && evt.target !== void 0
-      && evt.target.draggable !== true
-      && typeof ctx.handler === 'function'
-      && evt.target.nodeName.toUpperCase() !== 'INPUT'
-      && (evt.qClonedBy === void 0 || evt.qClonedBy.indexOf(ctx.uid) === -1)
-  }
-
   const { passiveCapture } = listenOpts;
 
   let
@@ -3356,7 +3289,7 @@
           touchTarget !== null && cleanup();
           touchTarget = rootRef.value;
 
-          localTouchTargetEl = getTouchTarget(e.target);
+          localTouchTargetEl = e.target;
           localTouchTargetEl.addEventListener('touchcancel', onPressEnd, passiveCapture);
           localTouchTargetEl.addEventListener('touchend', onPressEnd, passiveCapture);
         }
@@ -3646,7 +3579,7 @@
           proxy.hide(evt);
           anchorEl.value.classList.add('non-selectable');
 
-          const target = getTouchTarget(evt.target);
+          const target = evt.target;
           addEvt(anchorEvents, 'anchor', [
             [ target, 'touchmove', 'mobileCleanup', 'passive' ],
             [ target, 'touchend', 'mobileCleanup', 'passive' ],
@@ -5682,6 +5615,62 @@
     }
   });
 
+  const modifiersAll = {
+    left: true,
+    right: true,
+    up: true,
+    down: true,
+    horizontal: true,
+    vertical: true
+  };
+
+  const directionList = Object.keys(modifiersAll);
+
+  modifiersAll.all = true;
+
+  function getModifierDirections (mod) {
+    const dir = {};
+
+    for (const direction of directionList) {
+      if (mod[ direction ] === true) {
+        dir[ direction ] = true;
+      }
+    }
+
+    if (Object.keys(dir).length === 0) {
+      return modifiersAll
+    }
+
+    if (dir.horizontal === true) {
+      dir.left = dir.right = true;
+    }
+    else if (dir.left === true && dir.right === true) {
+      dir.horizontal = true;
+    }
+
+    if (dir.vertical === true) {
+      dir.up = dir.down = true;
+    }
+    else if (dir.up === true && dir.down === true) {
+      dir.vertical = true;
+    }
+
+    if (dir.horizontal === true && dir.vertical === true) {
+      dir.all = true;
+    }
+
+    return dir
+  }
+
+  function shouldStart (evt, ctx) {
+    return ctx.event === void 0
+      && evt.target !== void 0
+      && evt.target.draggable !== true
+      && typeof ctx.handler === 'function'
+      && evt.target.nodeName.toUpperCase() !== 'INPUT'
+      && (evt.qClonedBy === void 0 || evt.qClonedBy.indexOf(ctx.uid) === -1)
+  }
+
   function parseArg (arg) {
     // delta (min velocity -- dist / time)
     // mobile min distance on first move
@@ -5712,8 +5701,6 @@
           const ctx = {
             handler: value,
             sensitivity: parseArg(arg),
-
-            modifiers: modifiers,
             direction: getModifierDirections(modifiers),
 
             noop,
@@ -5730,7 +5717,7 @@
 
             touchStart (evt) {
               if (shouldStart(evt, ctx)) {
-                const target = getTouchTarget(evt.target);
+                const target = evt.target;
                 addEvt(ctx, 'temp', [
                   [ target, 'touchmove', 'move', 'notPassiveCapture' ],
                   [ target, 'touchcancel', 'end', 'notPassiveCapture' ],
@@ -5914,16 +5901,16 @@
           ]);
         },
 
-        updated (el, mod) {
+        updated (el, bindings) {
           const ctx = el.__qtouchswipe;
 
           if (ctx !== void 0) {
-            if (mod.oldValue !== mod.value) {
-              typeof mod.value !== 'function' && ctx.end();
-              ctx.handler = mod.value;
+            if (bindings.oldValue !== bindings.value) {
+              typeof bindings.value !== 'function' && ctx.end();
+              ctx.handler = bindings.value;
             }
 
-            ctx.direction = getModifierDirections(mod);
+            ctx.direction = getModifierDirections(bindings.modifiers);
           }
         },
 
@@ -7721,8 +7708,9 @@
             },
 
             touchStart (evt) {
+              console.log('touchStart');
               if (shouldStart(evt, ctx)) {
-                const target = getTouchTarget(evt.target);
+                const target = evt.target;
 
                 addEvt(ctx, 'temp', [
                   [ target, 'touchmove', 'move', 'notPassiveCapture' ],
@@ -7939,16 +7927,16 @@
           ]);
         },
 
-        updated (el, mod) {
+        updated (el, bindings) {
           const ctx = el.__qtouchpan;
 
           if (ctx !== void 0) {
-            if (mod.oldValue !== mod.value) {
+            if (bindings.oldValue !== bindings.value) {
               typeof value !== 'function' && ctx.end();
-              ctx.handler = mod.value;
+              ctx.handler = bindings.value;
             }
 
-            ctx.direction = getModifierDirections(mod);
+            ctx.direction = getModifierDirections(bindings.modifiers);
           }
         },
 
@@ -8781,7 +8769,7 @@
           skipEmit !== true && emit('update:modelValue', name);
           if (
             setCurrent === true
-            || props[ 'onUpdate:modelValue' ] !== void 0
+            || props[ 'onUpdate:modelValue' ] === void 0
           ) {
             animate(currentModel.value, name);
             currentModel.value = name;
@@ -8807,6 +8795,11 @@
       }
 
       function updateContainer (domSize) {
+        // it can be called faster than component being initialized
+        // so we need to protect against that case
+        // (one example of such case is the docs release notes page)
+        if (domProps.value === void 0 || contentRef.value === null) { return }
+
         const
           size = domSize[ domProps.value.container ],
           scrollSize = Math.min(
@@ -9140,6 +9133,7 @@
       + (props.icon && props.label && $tabs.tabProps.value.inlineLabel === false ? ' q-tab--full' : '')
       + (props.noCaps === true || $tabs.tabProps.value.noCaps === true ? ' q-tab--no-caps' : '')
       + (props.disable === true ? ' disabled' : ' q-focusable q-hoverable cursor-pointer')
+      + (routerProps !== void 0 && routerProps.linkClass.value !== '' ? ` ${ routerProps.linkClass.value }` : '')
     );
 
     const innerClass = vue.computed(() =>
@@ -12639,7 +12633,7 @@
 
       function emitImmediately (reason) {
         const date = daysModel.value[ 0 ] !== void 0 && daysModel.value[ 0 ].dateHash !== null
-          ? daysModel.value[ 0 ]
+          ? { ...daysModel.value[ 0 ] }
           : { ...viewModel.value }; // inherit day, hours, minutes, milliseconds...
 
         // nextTick required because of animation delay in viewModel
@@ -15026,7 +15020,7 @@
           clearSelection();
           document.body.classList.add('non-selectable');
 
-          const target = getTouchTarget(anchorEl.value);
+          const target = anchorEl.value;
           const evts = [ 'touchmove', 'touchcancel', 'touchend', 'click' ]
             .map(e => ([ target, e, '__delayHide', 'passiveCapture' ]));
 
@@ -17898,10 +17892,12 @@
     return function renderField () {
       return vue.h('label', {
         ref: state.rootRef,
-        class: [
-          classes.value,
-          attrs.class
-        ],
+        class: state.inheritAttrs !== true
+          ? [
+              classes.value,
+              attrs.class
+            ]
+          : classes.value,
         style: attrs.style,
         ...attributes.value
       }, [
@@ -18312,55 +18308,88 @@
       function addFilesToQueue (e, fileList) {
         const files = processFiles(e, fileList, innerValue.value, isAppending.value);
 
-        files !== void 0 && emitValue(
+        // if nothing to do...
+        if (files === void 0) { return }
+
+        // protect against input @change being called in a loop
+        // like it happens on Safari, so don't emit same thing:
+        if (
+          props.multiple === true
+            ? props.modelValue && files.every(f => innerValue.value.includes(f))
+            : props.modelValue === files[ 0 ]
+        ) {
+          return
+        }
+
+        emitValue(
           isAppending.value === true
             ? innerValue.value.concat(files)
             : files
         );
       }
 
+      function getFiller () {
+        return [
+          vue.h('input', {
+            class: [ props.inputClass, 'q-file__filler' ],
+            style: props.inputStyle,
+            tabindex: -1
+          })
+        ]
+      }
+
       function getSelection () {
         if (slots.file !== void 0) {
-          return innerValue.value.map(
-            (file, index) => slots.file({ index, file, ref: this })
-          )
+          return innerValue.value.length === 0
+            ? getFiller()
+            : innerValue.value.map(
+              (file, index) => slots.file({ index, file, ref: this })
+            )
         }
 
         if (slots.selected !== void 0) {
-          return slots.selected({ files: innerValue.value, ref: this })
+          return innerValue.value.length === 0
+            ? getFiller()
+            : slots.selected({ files: innerValue.value, ref: this })
         }
 
         if (props.useChips === true) {
-          return innerValue.value.map((file, i) => vue.h(QChip, {
-            key: 'file-' + i,
-            removable: state.editable.value,
-            dense: true,
-            textColor: props.color,
-            tabindex: props.tabindex,
-            onRemove: () => { removeAtIndex(i); }
-          }, () => vue.h('span', {
-            class: 'ellipsis',
-            textContent: file.name
-          })))
+          return innerValue.value.length === 0
+            ? getFiller()
+            : innerValue.value.map((file, i) => vue.h(QChip, {
+              key: 'file-' + i,
+              removable: state.editable.value,
+              dense: true,
+              textColor: props.color,
+              tabindex: props.tabindex,
+              onRemove: () => { removeAtIndex(i); }
+            }, () => vue.h('span', {
+              class: 'ellipsis',
+              textContent: file.name
+            })))
         }
 
-        return [
-          vue.h('div', {
-            class: props.inputClass,
-            style: props.inputStyle,
-            textContent: props.displayValue !== void 0
-              ? props.displayValue
-              : selectedString.value
-          })
-        ]
+        const textContent = props.displayValue !== void 0
+          ? props.displayValue
+          : selectedString.value;
+
+        return textContent.length > 0
+          ? [
+              vue.h('div', {
+                class: props.inputClass,
+                style: props.inputStyle,
+                textContent
+              })
+            ]
+          : getFiller()
       }
 
       function getInput () {
         const data = {
           ref: inputRef,
-          class: 'q-field__input fit absolute-full cursor-pointer',
           ...inputAttrs.value,
           ...formDomProps.value,
+          class: 'q-field__input fit absolute-full cursor-pointer',
           onChange: addFilesToQueue
         };
 
@@ -18372,6 +18401,7 @@
       }
 
       Object.assign(state, {
+        inheritAttrs: true,
         fieldClass: { value: 'q-file q-field--auto-height' },
         emitValue,
         hasValue,
@@ -18411,7 +18441,8 @@
       // expose public methods
       Object.assign(proxy, {
         removeAtIndex,
-        removeFile
+        removeFile,
+        getNativeElement: () => inputRef.value
       });
 
       return useField(state)
@@ -19019,6 +19050,7 @@
   const crossoriginValues = [ 'anonymous', 'use-credentials' ];
   const loadingValues = [ 'eager', 'lazy' ];
   const fitValues = [ 'cover', 'fill', 'contain', 'none', 'scale-down' ];
+  const defaultRatio = 16 / 9;
 
   var QImg = vue.defineComponent({
     name: 'QImg',
@@ -19029,11 +19061,14 @@
       src: String,
       srcset: String,
       sizes: String,
+
       alt: String,
       crossorigin: {
         type: String,
         validator: val => crossoriginValues.includes(val)
       },
+      draggable: Boolean,
+
       loading: {
         type: String,
         default: 'lazy',
@@ -19041,6 +19076,10 @@
       },
       width: String,
       height: String,
+      initialRatio: {
+        type: [ Number, String ],
+        default: defaultRatio
+      },
 
       placeholderSrc: String,
 
@@ -19054,7 +19093,7 @@
         default: '50% 50%'
       },
 
-      imgClass: [ Array, String, Object ],
+      imgClass: String,
       imgStyle: Object,
 
       noSpinner: Boolean,
@@ -19067,8 +19106,8 @@
 
     emits: [ 'load', 'error' ],
 
-    setup (props, { slots, emit }) {
-      const naturalRatio = vue.ref(0.5);
+    setup (props, { slots, attrs, emit }) {
+      const naturalRatio = vue.ref(props.initialRatio);
       const ratioStyle = useRatio(props, naturalRatio);
 
       let loadTimer;
@@ -19093,7 +19132,8 @@
       }));
 
       const imgClass = vue.computed(() =>
-        `q-img__image q-img__image--with${ props.noTransition === true ? 'out' : '' }-transition`
+        `q-img__image ${ props.imgClass !== void 0 ? props.imgClass + ' ' : '' }`
+        + `q-img__image--with${ props.noTransition === true ? 'out' : '' }-transition`
       );
 
       const imgStyle = vue.computed(() => ({
@@ -19189,6 +19229,7 @@
 
         const data = {
           key: 'img_' + index,
+          ...attrs,
           class: imgClass.value,
           style: imgStyle.value,
           crossorigin: props.crossorigin,
@@ -19196,6 +19237,7 @@
           width: props.width,
           loading: props.loading,
           'aria-hidden': 'true',
+          draggable: props.draggable,
           ...img
         };
 
@@ -20596,7 +20638,7 @@
       const showing = vue.ref(isRuntimeSsrPreHydration.value === true ? props.ssrPrerender : false);
 
       const intersectionProps = vue.computed(() => (
-        props.margin !== void 0 || props.threshold !== void 0
+        props.root !== void 0 || props.margin !== void 0 || props.threshold !== void 0
           ? {
               handler: trigger,
               cfg: {
@@ -31369,21 +31411,23 @@
     emits: useTabEmits,
 
     setup (props, { slots, emit }) {
-      const exact = vue.computed(() => props.exact);
-      const { hasLink, linkTag, linkProps, linkRoute, navigateToLink, linkIsExactActive, linkIsActive } = useRouterLink();
+      const rData = useRouterLink();
 
       const { renderTab, $tabs } = useTab(
         props,
         slots,
         emit,
-        { exact, hasLink, navigateToLink, linkRoute, linkIsExactActive, linkIsActive }
+        {
+          exact: vue.computed(() => props.exact),
+          ...rData
+        }
       );
 
-      vue.watch(() => props.name + props.exact + (linkRoute.value || {}).href, () => {
+      vue.watch(() => props.name + props.exact + (rData.linkRoute.value || {}).href, () => {
         $tabs.verifyRouteModel();
       });
 
-      return () => renderTab(linkTag.value, linkProps.value)
+      return () => renderTab(rData.linkTag.value, rData.linkProps.value)
     }
   });
 
@@ -35505,7 +35549,7 @@
 
             touchStart (evt) {
               if (evt.target !== void 0 && typeof ctx.handler === 'function') {
-                const target = getTouchTarget(evt.target);
+                const target = evt.target;
                 addEvt(ctx, 'temp', [
                   [ target, 'touchmove', 'move', 'passiveCapture' ],
                   [ target, 'touchcancel', 'end', 'notPassiveCapture' ],
@@ -35715,7 +35759,7 @@
 
             touchStart (evt) {
               if (evt.target !== void 0 && typeof ctx.handler === 'function') {
-                const target = getTouchTarget(evt.target);
+                const target = evt.target;
                 addEvt(ctx, 'temp', [
                   [ target, 'touchmove', 'move', 'passiveCapture' ],
                   [ target, 'touchcancel', 'end', 'notPassiveCapture' ],
@@ -36604,9 +36648,7 @@
 
   const Plugin$3 = {
     install ({ $q, ssrContext }) {
-      {
-        $q.cookies = this;
-      }
+      $q.cookies = this;
     }
   };
 
@@ -38302,7 +38344,7 @@
   });
 
   var index_umd = {
-    version: '2.0.0-beta.19',
+    version: '2.0.0',
     install (app, opts) {
       installQuasar(app, {
         components,

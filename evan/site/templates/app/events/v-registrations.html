@@ -3,7 +3,7 @@
 
 <script type="text/x-template" id="v-registrations">
 {% verbatim %}
-  <div v-cloak v-if="event">
+  <div v-if="event">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
@@ -13,14 +13,106 @@
           <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:registrations_sheet' event.code %}{% verbatim %}" target="_blank" color="primary" label="Download overview"></q-btn>
         </div>
       </div>
-      <q-input filled dense v-model="query" placeholder="Search by ID, attendee name, affiliation, country..." type="search" class="q-mb-md">
+      <q-input filled dense v-model="query" placeholder="Search by ID, attendee name, affiliation..." type="search" class="q-mb-md">
         <template v-slot:append>
           <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
           <q-icon name="search" />
         </template>
       </q-input>
-      <evan-registrations-table :data="items" :uuid="uuid"></evan-registrations-table>
+      <q-table dense row-key="uuid" :rows="registrations" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+        <template v-slot:no-data="{ icon, message, filter }">
+          <evan-no-data :message="message" :filter="filter" />
+        </template>
+        <template v-slot:body-cell-view="props">
+          <q-td auto-width :props="props">
+            <q-icon name="add_circle" color="primary" />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-uuid="props">
+          <q-td auto-width :props="props">
+            <samp><small>{{ props.row.uuid }}</small></samp>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-created_at="props">
+          <q-td auto-width :props="props">{{ props.row.date }}</q-td>
+        </template>
+        <template v-slot:body-cell-visa_status="props">
+          <q-td auto-width :props="props" class="items-center">
+            <span v-if="props.row.visa_requested">
+              <evan-yes-chip v-if="props.row.visa_sent" />
+              <evan-yes-chip v-else color="orange-5" icon="radio_button_unchecked" />
+            </span>
+            <evan-no-chip v-else />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-invoice_status="props">
+          <q-td auto-width :props="props" class="items-center">
+            <span v-if="props.row.invoice_requested">
+              <evan-yes-chip v-if="props.row.invoice_sent" />
+              <evan-yes-chip v-else color="orange-5" icon="radio_button_unchecked" />
+            </span>
+            <evan-no-chip v-else />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-payment_status="props">
+          <q-td auto-width :props="props" class="items-center">
+            <evan-yes-chip v-if="props.row.is_paid" />
+            <evan-no-chip v-else />
+          </q-td>
+        </template>
+      </q-table>
     </q-card>
+
+    <evan-editor size="md" position="standard" :obj="tmpObj">
+      <q-list dense>
+        <q-item>
+          <q-item-section avatar><q-icon name="tag"></q-icon></q-item-section>
+          <q-item-section><samp><small>{{ tmpObj.uuid }}</small></samp></q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="schedule"></q-icon></q-item-section>
+          <q-item-section>{{ tmpObj.date }}</q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="accessibility_new"></q-icon></q-item-section>
+          <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="email"></q-icon></q-item-section>
+          <q-item-section>{{ tmpObj.user.email }}</q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="business"></q-icon></q-item-section>
+          <q-item-section>{{ tmpObj.user_affiliation }}</q-item-section>
+        </q-item>
+        <q-separator v-if="tmpObj.user.profile.country" inset="item" />
+        <q-item v-if="tmpObj.user.profile.country">
+          <q-item-section avatar>
+            <country-flag :code="tmpObj.user.profile.country.code"></country-flag>
+          </q-item-section>
+          <q-item-section>{{ tmpObj.user.profile.country.name }}</q-item-section>
+        </q-item>
+        <q-separator v-if="tmpObj.invoice_requested" inset="item"></q-separator>
+        <q-item v-if="tmpObj.invoice_requested">
+          <q-item-section avatar><q-icon name="grading" :color="(tmpObj.invoice_sent) ? 'positive' : 'orange-7'"></q-icon></q-item-section>
+          <q-item-section v-if="tmpObj.invoice_sent" class="text-positive text-bold">Invoice sent</q-item-section>
+          <q-item-section v-else class="text-orange-7 text-bold">Invoice requested (not sent)</q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item v-if="tmpObj.is_paid">
+          <q-item-section avatar><q-icon name="done_outline" color="positive"></q-icon></q-item-section>
+          <q-item-section class="text-positive text-bold">Paid</q-item-section>
+        </q-item>
+        <q-item v-else>
+          <q-item-section avatar><q-icon name="radio_button_unchecked" color="orange-7"></q-icon></q-item-section>
+          <q-item-section class="text-orange-7 text-bold">Pending payment</q-item-section>
+        </q-item>
+      </q-list>
+    </evan-editor>
 
   </div>
 {% endverbatim %}

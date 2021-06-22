@@ -1,6 +1,6 @@
 <script type="text/x-template" id="v-registration">
 {% verbatim %}
-  <div v-cloak v-if="event && registration" class="row q-col-gutter-md">
+  <div v-if="event && registration" class="row q-col-gutter-lg">
 
     <div class="col-12 col-md-9 col-lg-8">
       <q-card flat class="q-pa-lg">
@@ -11,7 +11,7 @@
         <div v-else>
           <h5 class="q-mt-none q-mb-lg text-weight-bold">Register now for #{{ event.hashtag }}</h5>
           <q-banner v-if="event.registration_early_deadline" rounded dense class="bg-grey-2 text-grey-8">
-            Early registration deadline: {{ event.registration_early_deadline | moment }} ({{ event.registration_early_deadline | moment('YYYY-MM-DDTHH:mm:ssZ') }})
+            Early registration deadline: {{ event.registration_early_deadline }} ({{ event.registration_early_deadline }})
           </q-banner>
         </div>
 
@@ -35,19 +35,19 @@
             <div v-if="showSessionsByDay">
               <nav>
                 <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                  <a class="nav-item nav-link pointer" v-for="day in event.days" :key:="day.id" @click="selectedDate = day.date" :class="{'active': day.date == selectedDate}">{{ day.date | moment('ddd') }}</a>
+                  <a class="nav-item nav-link pointer" v-for="day in event.days" :key:="day.id" @click="selectedDate = day.date" :class="{'active': day.date == selectedDate}">{{ day.date }}</a>
                 </div>
               </nav>
               <div class="border border-top-0 rounded-bottom bg-white p-3">
                 <div v-for="session in regularSessions" :key="session.id" v-show="session.date == selectedDate" class="custom-control custom-checkbox my-1">
-                  <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
-                  <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link></label>
+                  <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
+                  <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
                 </div>
               </div>
             </div>
             <div v-else>
               <div v-for="session in regularSessions" :key="session.id" class="custom-control custom-checkbox my-1">
-                <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
+                <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
                 <label class="custom-control-label" :for="'session' + session.id">{{ session.niceDate }}: {{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
               </div>
             </div>
@@ -55,8 +55,8 @@
           <div v-if="feeIncludesSocialEvents">
             <h6 class="q-mb-sm">Choose the social events you would like to attend</h6>
             <div v-for="session in socialEvents" :key="session.id" class="custom-control custom-checkbox my-1">
-              <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id">
-              <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} ({{ session.date | moment('dddd') }}) </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
+              <input type="checkbox" v-model="registration.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
+              <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} ({{ session.date }}) </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
             </div>
             <h6 class="q-mb-sm">Accompanying persons<small v-if="event.social_event_bundle_fee > 0" class="text-info d-block mt-1">Accompanying persons can attend the social event(s) for an extra fee of <strong>{{ event.social_event_bundle_fee }} EUR</strong> per person.</small></h6>
             <p v-if="!registration.accompanying_persons.length" class="text-sm">
@@ -89,7 +89,7 @@
             <hr class="my-4">
             <h6 class="q-mb-sm">Days you will attend (automatic)<small class="text-danger">*</small><small class="text-info d-block mt-1" v-if="feeIsOneDay" :class="{'text-danger': feeIsOneDay && registration.days.length > 1}">You have selected the one day fee. You can only attend one of the days of the event.</small></h6>
             <div v-for="day in event.days" class="custom-control custom-checkbox custom-control-inline my-1">
-              <input type="checkbox" v-model="registration.days" :value="day.id" class="custom-control-input" :id="'day' + day.id" disabled>
+              <input type="checkbox" v-model="registration.days" :value="day.id" class="custom-control-input" :id="'day' + day.id" disabled />
               <label class="custom-control-label" :for="'day' + day.id">{{ day.niceDate }}<span v-if="day.name">: {{ day.name }}</span></label>
             </div>
           </div>
@@ -146,7 +146,7 @@
         <q-item>
           <q-item-section>
             <q-item-label>Last updated</q-item-label>
-            <q-item-label caption>{{ registration.updated_at | moment('YYYY-MM-DDTHH:mm:ssZ') }}</q-item-label>
+            <q-item-label caption>{{ registration.updated_at }}</q-item-label>
           </q-item-section>
         </q-item>
         <q-item>

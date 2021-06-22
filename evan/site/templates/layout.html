@@ -3,6 +3,15 @@
 {% load compress %}
 
 
+{% block header %}
+  <q-header class="bg-grey-1 text-dark q-pl-sm">
+    <q-toolbar>
+      <q-space></q-space>
+      <evan-user-menu username="{{ user }}"></evan-user-menu>
+    </q-toolbar>
+  </q-header>
+{% endblock %}
+
 {% block page %}
   <div class="q-pl-lg">
     {% block content %}{% endblock %}
@@ -12,9 +21,16 @@
 {% block scripts %}
 {% compress js inline %}
   <script type="text/javascript">
-    new Vue({
-      el: '#vue'
+    var app = Vue.createApp({
+      data: function () {
+        return {
+          visibleDrawer: true
+        };
+      }
     });
+    Evan.utils.registerComponents(app, [EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
   </script>
 {% endcompress %}
 {% endblock %}

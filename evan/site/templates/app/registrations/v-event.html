@@ -1,20 +1,35 @@
 <script type="text/x-template" id="v-event">
 {% verbatim %}
-  <div v-cloak v-if="event" class="row q-col-gutter-md">
+  <div v-if="event" class="row q-col-gutter-lg items-stretch">
 
-    <div class="col-12 col-md-9 col-lg-8">
-      <q-card flat class="q-pa-lg">
-
-        <div class="q-gutter-md float-right">
-          <q-btn outline size="sm" icon="search" color="light-blue" label="Twitter" type="a" :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener"></q-btn>
-          <q-btn outline size="sm" icon="open_in_new" color="primary" label="Website" type="a" :href="event.website" target="_blank" rel="noopener"></q-btn>
+    <div class="col-12 col-md-8">
+      <q-card flat class="q-pa-lg full-height">
+        <div class="row no-wrap">
+          <display-5>Event information</display-5>
+          <q-space />
+          <a v-if="event.website" :href="event.website" target="_blank" rel="noopener" class="q-mr-sm">
+            <q-btn no-caps outline rounded color="primary" label="Open website"></q-btn>
+          </a>
+          <a v-if="event.website" :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" rel="noopener">
+            <q-btn no-caps outline rounded color="light-blue" label="Twitter"></q-btn>
+          </a>
         </div>
-
-        <h5 class="q-mt-none q-mb-lg text-weight-bold">Event information</h5>
-        <h5>{{ event.name }}: {{ event.full_name }}</h5>
-
+        <h5 class="q-my-md">{{ event.name }}: {{ event.full_name }}</h5>
         <marked :text="event.presentation" class="q-mt-lg"></marked>
+      </q-card>
+    </div>
 
+    <div v-if="dates.length" class="col-12 col-md">
+      <q-card flat class="q-pa-lg full-height">
+        <display-5>Important dates</display-5>
+        <q-list class="q-mt-sm">
+          <q-item v-for="date in dates" class="evan-px-none">
+            <q-item-section>
+              <q-item-label caption>{{ date.formatted }}</q-item-label>
+              <q-item-label>{{ date.label }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
       </q-card>
     </div>
 

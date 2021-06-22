@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     {% compress css file base %}
-      <link href="{% static 'vendor/quasar@1.15.21/quasar.min.css' %}" type="text/css" rel="stylesheet">
+      <link href="{% static 'vendor/quasar@2.0.0/quasar.prod.css' %}" type="text/css" rel="stylesheet">
       <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
       <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
     {% endcompress %}
@@ -24,7 +24,6 @@
       <meta name="twitter:dnt" content="on">
     {% endif %}
     {% block structured_data %}{% endblock %}
-    <script src="{% static 'vendor/quasar@1.15.21/quasar.ie.polyfills.umd.min.js' %}"></script>
     {% if not debug %}
       <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.css" />
       <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js"></script>
@@ -39,42 +38,44 @@
         <p class="mt-3">Evan requires your browser to have <a href="http://enable-javascript.com/">JavaScript enabled</a>.</p>
       </div>
     </noscript>
-    <q-layout id="vue" view="hHh LpR lff" v-cloak>
-      {% block header %}{% endblock %}
-      {% block drawer %}{% endblock %}
-      {% block page_container %}
-        <q-page-container>
-          <q-page :class="{'q-py-sm q-px-lg': $q.screen.gt.sm, 'bg-white q-pa-none': $q.screen.lt.md}">
-            {% if messages %}
-              {% for message in messages %}
-                <q-banner inline-actions class="bg-yellow-2" role="alert">
-                  <span>{{ message }}</span>
-                </q-banner>
-              {% endfor %}
-            {% endif %}
-            {% block page %}{% endblock %}
-          </q-page>
-        </q-page-container>
-      {% endblock %}
-      <q-footer class="bg-grey-1 text-grey-8 q-pa-lg" :class="{'q-px-xl': $q.screen.gt.xs}">
-        <div class="row justify-between text-caption">
-          <div class="col-12 col-md">
-            <p>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener" class="inherit">Department of Electronics and Information Systems (ELIS), Ghent University</a></p>
-          </div>
-          <div class="col-12 col-md" :class="{'text-right': $q.screen.gt.sm}">
-            <div class="q-gutter-x-md">
-              <!--<div>
-                <a href="{% url 'terms' %}">Terms</a>
-              </div>-->
-              <a href="{% url 'privacy' %}" class="inherit">Privacy</a>
-              <a href="{% url 'disclaimer' %}" class="inherit">Disclaimer</a>
-              <a href="mailto:{{ CONTACT_EMAIL }}" class="inherit">
-                <q-icon name="alternate_email" class="q-mr-xs"></q-icon>Contact</a>
+    <div id="vue" v-cloak>
+      <q-layout view="hHh LpR lff">
+        {% block header %}{% endblock %}
+        {% block drawer %}{% endblock %}
+        {% block page_container %}
+          <q-page-container>
+            <q-page :class="{'q-py-sm q-px-lg': $q.screen.gt.sm, 'bg-white q-pa-none': $q.screen.lt.md}">
+              {% if messages %}
+                {% for message in messages %}
+                  <q-banner inline-actions class="bg-yellow-2" role="alert">
+                    <span>{{ message }}</span>
+                  </q-banner>
+                {% endfor %}
+              {% endif %}
+              {% block page %}{% endblock %}
+            </q-page>
+          </q-page-container>
+        {% endblock %}
+        <q-footer class="bg-grey-1 text-grey-8 q-pa-lg" :class="{'q-px-xl': $q.screen.gt.xs}">
+          <div class="row justify-between text-caption">
+            <div class="col-12 col-md">
+              <p>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener" class="inherit">Department of Electronics and Information Systems (ELIS), Ghent University</a></p>
+            </div>
+            <div class="col-12 col-md" :class="{'text-right': $q.screen.gt.sm}">
+              <div class="q-gutter-x-md">
+                <!--<div>
+                  <a href="{% url 'terms' %}">Terms</a>
+                </div>-->
+                <a href="{% url 'privacy' %}" class="inherit">Privacy</a>
+                <a href="{% url 'disclaimer' %}" class="inherit">Disclaimer</a>
+                <a href="mailto:{{ CONTACT_EMAIL }}" class="inherit">
+                  <q-icon name="alternate_email" class="q-mr-xs"></q-icon>Contact</a>
+              </div>
             </div>
           </div>
-        </div>
-      </q-footer>
-    </q-layout>
+        </q-footer>
+      </q-layout>
+    </div>
     {% block vue_templates %}{% endblock %}
     {% if not debug %}
       <script src="https://browser.sentry-cdn.com/5.19.2/bundle.min.js" crossorigin="anonymous"></script>
@@ -83,29 +84,28 @@
     {% endif %}
     {% compress js file helpers %}
       <script src="{% static 'vendor/axios@0.21.1/axios.min.js' %}"></script>
-      <script src="{% static 'vendor/underscore@1.13.1/underscore.umd.min.js' %}"></script>
       <script src="{% static 'vendor/commonmark@0.29.3/commonmark.min.js' %}"></script>
       <script src="{% static 'vendor/moment@2.29.1/moment.min.js' %}"></script>
       <script src="{% static 'vendor/moment-range@4.0.2/moment-range.min.js' %}"></script>
+      <script src="{% static 'vendor/tiny-emitter@2.1.0/tinyemitter.min.js' %}"></script>
+      <script src="{% static 'vendor/underscore@1.13.1/underscore.umd.min.js' %}"></script>
     {% endcompress %}
     {% compress js file vue %}
       {% if debug %}
-        <script src="{% static 'vendor/vue@2.6.14/vue.js' %}"></script>
-        <script src="{% static 'vendor/vuex@3.6.2/vuex.js' %}"></script>
-        <script src="{% static 'vendor/vue-router@3.5.1/vue-router.js' %}"></script>
-        <script src="{% static 'vendor/quasar@1.15.21/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.1.1/vue.global.js' %}"></script>
+        <script src="{% static 'vendor/vuex@4.0.2/vuex.global.js' %}"></script>
+        <script src="{% static 'vendor/vue-router@4.0.10/vue-router.global.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.0.0/quasar.umd.js' %}"></script>
       {% else %}
-        <script src="{% static 'vendor/vue@2.6.14/vue.min.js' %}"></script>
-        <script src="{% static 'vendor/vuex@3.6.2/vuex.min.js' %}"></script>
-        <script src="{% static 'vendor/vue-router@3.5.1/vue-router.min.js' %}"></script>
-        <script src="{% static 'vendor/quasar@1.15.21/quasar.umd.min.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.1.1/vue.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/vuex@4.0.2/vuex.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/vue-router@4.0.10/vue-router.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.0.0/quasar.umd.prod.js' %}"></script>
       {%endif %}
     {% endcompress %}
     {% compress js file evan %}
       <script src="{% static 'js/base.js' %}"></script>
       <script src="{% static 'js/helpers.js' %}"></script>
-      <script src="{% static 'js/v-shared.js' %}"></script>
-      <script src="{% static 'js/v-q-forms.js' %}"></script>
       <script src="{% static 'js/components/common.js' %}"></script>
     {% endcompress %}
     {% block extra_scripts %}{% endblock %}

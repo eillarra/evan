@@ -1,25 +1,14 @@
-{% extends 'layout.html' %}
+{% extends 'layout_simple.html' %}
 
 
-{% block head_title %}{{ block.super }}{% endblock %}
-
-{% block page %}
-  <div class="row q-mx-lg">
-    <div class="col-12 col-md-7 col-lg-6 q-mb-lg">
-      <div class="q-mt-xl">
-        <a href="{% url 'homepage' %}">
-          <evan-logo></evan-logo>
-        </a>
-      </div>
-      <h3 class="text-h5 q-my-lg"><strong>Evan</strong> is an event assistant that helps you collect registration fees, manage attendees, organize your website and track the real-time status of your event.</h3>
-      <div class="q-gutter-md">
-        {% if user.is_authenticated %}
-          <q-btn type="a" href="{% url 'dashboard' %}" unelevated color="primary" icon="donut_large" label="My dashboard"></q-btn>
-        {% else %}
-          <q-btn type="a" href="{% url 'account_signup' %}" unelevated color="primary" icon="edit" label="Sign up"></q-btn>
-          <q-btn type="a" href="{% url 'account_login' %}" outline color="primary" label="Log in"></q-btn>
-        {% endif %}
-      </div>
-    </div>
+{% block content %}
+  <h3 class="text-h5 q-my-lg"><strong>Evan</strong> is an event assistant that helps you collect registration fees, manage attendees, organize your website and track the real-time status of your event.</h3>
+  <div class="q-gutter-md">
+    {% if user.is_authenticated %}
+      <q-btn type="a" href="{% url 'dashboard' %}" unelevated color="primary" icon="donut_large" label="My dashboard"></q-btn>
+    {% else %}
+      <q-btn type="a" href="{% url 'account_signup' %}" unelevated color="primary" icon="edit" label="Sign up"></q-btn>
+      <q-btn type="a" href="{% url 'account_login' %}" outline color="primary" label="Log in"></q-btn>
+    {% endif %}
   </div>
 {% endblock %}

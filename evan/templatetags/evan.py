@@ -13,7 +13,7 @@ def active(request, patterns):
         for pattern in patterns.split(","):
             try:
                 if pattern == request.resolver_match.url_name:
-                    return "active"
+                    return "active q-router-link--active"
             except Exception:
                 return ""
     return ""

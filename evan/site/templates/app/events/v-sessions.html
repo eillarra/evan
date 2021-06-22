@@ -1,6 +1,6 @@
 <script type="text/x-template" id="v-sessions">
 {% verbatim %}
-  <div v-cloak v-if="event">
+  <div v-if="event">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
@@ -16,9 +16,9 @@
           <q-icon name="search" />
         </template>
       </q-input>
-      <q-table dense row-key="id" :data="extendedSessions" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table dense row-key="id" :rows="extendedSessions" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
-          <evan-no-data :message="message" :filter="filter"></evan-no-data>
+          <evan-no-data :message="message" :filter="filter" />
         </template>
         <template v-slot:body-cell-edit="props">
           <q-td auto-width :props="props">
@@ -41,7 +41,7 @@
     </q-card>
 
     <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
-      <div v-if="tmpObj" class="q-gutter-md">
+      <div class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.title" label="Title *" />
         <div class="row q-col-gutter-md q-ma-none">
           <evan-datepicker :with-time="true" v-model="tmpObj.start_at" label="Start *" class="col-12 col-md"></evan-datepicker>
@@ -51,21 +51,23 @@
         <div class="row q-col-gutter-md q-ma-none">
           <q-field filled stack-label label="Mark here if this is a social event..." class="col-12 col-md">
             <template v-slot:control>
-              <q-checkbox v-model="tmpObj.is_social_event" label="Social event" size="xs" @input="tmpObj.track = null" />
+              <div class="q-mt-sm">
+                <q-checkbox v-model="tmpObj.is_social_event" label="Social event" size="xs" @input="tmpObj.track = null" />
+              </div>
             </template>
           </q-field>
           <q-field v-show="!tmpObj.is_social_event && tracks.length" filled stack-label label="...or choose a track (optional)" class="col-12 col-md-8">
             <template v-slot:control>
-              <div class="q-gutter-sm">
-                <q-radio v-for="track in tracksSorted" :key="track.id" v-model="tmpObj.track" :val="track.id" :label="track.name" size="xs" />
+              <div class="q-gutter-x-sm q-mt-sm">
+                <q-radio v-for="track in tracksSorted" v-model="tmpObj.track" :val="track.id" :label="track.name" size="xs" />
               </div>
             </template>
           </q-field>
         </div>
         <q-field v-if="topics.length" filled stack-label label="Topics">
           <template v-slot:control>
-            <div class="q-gutter-sm">
-              <q-checkbox v-for="topic in topicsSorted" :key="topic.id" v-model="tmpObj.topics" :val="topic.id" :label="topic.name" size="xs" />
+            <div class="q-gutter-x-sm q-mt-sm">
+              <q-checkbox v-for="topic in topicsSorted" v-model="tmpObj.topics" :val="topic.id" :label="topic.name" size="xs" />
             </div>
           </template>
         </q-field>

@@ -5,7 +5,7 @@
 
 
 {% block header %}
-  <q-header bordered class="bg-grey-2 text-dark q-pl-sm">
+  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
     <q-toolbar>
       <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
@@ -16,15 +16,21 @@
 {% endblock %}
 
 {% block drawer %}
-  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md"
-    content-class="bg-grey-2 q-pt-xl q-pl-sm text-weight-medium" :width="250">
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area class="fit">
       <q-list dense>
+        <q-item-label header>Registration</q-item-label>
         <q-item clickable tag="a" href="{{ registration.get_absolute_url }}#/registration/">
           <q-item-section avatar>
             <q-icon name="assignment_turned_in"></q-icon>
           </q-item-section>
           <q-item-section>Registration</q-item-section>
+        </q-item>
+        <q-item active clickable tag="a" href="#">
+          <q-item-section avatar>
+            <q-icon name="credit_card"></q-icon>
+          </q-item-section>
+          <q-item-section>Payment</q-item-section>
         </q-item>
         <q-item clickable tag="a" href="{{ registration.get_absolute_url }}#/profile/">
           <q-item-section avatar>
@@ -32,20 +38,14 @@
           </q-item-section>
           <q-item-section>Your profile</q-item-section>
         </q-item>
+      </q-list>
+      <q-list dense>
+        <q-item-label header>Overview</q-item-label>
         <q-item clickable tag="a" href="{{ registration.get_absolute_url }}#/event/">
           <q-item-section avatar>
             <q-icon name="widgets"></q-icon>
           </q-item-section>
           <q-item-section>Event</q-item-section>
-        </q-item>
-      </q-list>
-      <q-separator spaced="md"></q-separator>
-      <q-list dense>
-        <q-item active clickable tag="a" href="#">
-          <q-item-section avatar>
-            <q-icon name="credit_card"></q-icon>
-          </q-item-section>
-          <q-item-section>Payment</q-item-section>
         </q-item>
       </q-list>
     </q-scroll-area>
@@ -96,7 +96,7 @@
           {% else %}
             <div class="clearfix">
               <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> online using our secure payment server. Once the payment is complete you will be able to download a receipt <strong>&mdash;no invoice&mdash;</strong>:</p>
-              <img src="{% static 'images/ingenico.svg' %}" class="float-right logo mt-2">
+              <img src="{% static 'images/ingenico.svg' %}" class="float-right mini-logo q-mt-sm">
               <form method="post" action="{{ ingenico_url }}">
                 {% for key, value in ingenico_parameters.items %}
                   <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -119,8 +119,7 @@
 {% block scripts %}
 {% compress js inline %}
   <script type="text/javascript">
-    new Vue({
-      el: '#vue',
+    var app = Vue.createApp({
       data: function () {
         return {
           visibleDrawer: true,
@@ -128,6 +127,9 @@
         };
       }
     });
+    Evan.utils.registerComponents(app, [EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
   </script>
 {% endcompress %}
 {% endblock %}

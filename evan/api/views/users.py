@@ -6,7 +6,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event, Permission, Registration
 from ..permissions import UserPermission
-from ..serializers import EventListSerializer, RegistrationSerializer, UserSerializer
+from ..serializers import EventListSerializer, AuthRegistrationRetrieveSerializer, UserSerializer
 
 
 class UserViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
@@ -24,7 +24,7 @@ class UserViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         self.queryset = Event.objects.filter(acl__user_id=request.user.id, acl__level__gte=Permission.ADMIN)
         return ListModelMixin.list(self, request, *args, **kwargs)
 
-    @action(detail=False, pagination_class=None, serializer_class=RegistrationSerializer)
+    @action(detail=False, pagination_class=None, serializer_class=AuthRegistrationRetrieveSerializer)
     @never_cache
     def registrations(self, request, *args, **kwargs):
         self.queryset = Registration.objects.filter(user_id=request.user.id)

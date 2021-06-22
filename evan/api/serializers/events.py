@@ -17,10 +17,11 @@ class FeeSerializer(serializers.ModelSerializer):
 class EventListSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
     href = serializers.URLField(source="get_absolute_url", read_only=True)
+    country = CountryField(country_dict=True, read_only=True)
 
     class Meta:
         model = Event
-        fields = ("id", "code", "name", "full_name", "start_date", "end_date", "url", "href")
+        fields = ("id", "code", "name", "full_name", "start_date", "end_date", "url", "href", "city", "country")
 
 
 class EventSerializer(serializers.ModelSerializer):

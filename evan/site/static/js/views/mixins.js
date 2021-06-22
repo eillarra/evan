@@ -54,11 +54,11 @@ var EventRelatedMixin = {
     }
   },
   created: function () {
-    this.$root.$on(this.saveEventName, this.createOrUpdate);
-    this.$root.$on('evan-editor-hide', this.clearObj);
+    EventEmitter.on(this.saveEventName, this.createOrUpdate);
+    EventEmitter.on('evan-editor-hide', this.clearObj);
   },
-  beforeDestroy: function () {
-    this.$root.$off(this.saveEventName);
-    this.$root.$off('evan-editor-hide', this.clearObj);
+  beforeUnmount: function () {
+    EventEmitter.off(this.saveEventName);
+    EventEmitter.off('evan-editor-hide', this.clearObj);
   }
 };

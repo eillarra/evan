@@ -1,6 +1,6 @@
 <script type="text/x-template" id="v-dates">
 {% verbatim %}
-  <div v-cloak v-if="event">
+  <div v-if="event">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
@@ -10,10 +10,10 @@
           <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add date" />
         </div>
       </div>
-      <q-table dense row-key="key" :data="dates" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
+      <q-table dense row-key="key" :rows="dates" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
         <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
-          <evan-no-data :message="message" :filter="filter"></evan-no-data>
+          <evan-no-data :message="message" :filter="filter" />
         </template>
         <template v-slot:body-cell-edit="props">
           <q-td auto-width :props="props">
@@ -32,15 +32,13 @@
     </q-card>
 
     <evan-editor :obj="tmpObj" obj-key="key" :save-event-name="saveEventName">
-      <div v-if="tmpObj">
-        <div class="q-col-gutter-md row items-center q-mb-md">
-          <evan-datepicker v-model="tmpObj.start_date" label="Start date *" class="col-12 col-sm-6"></evan-datepicker>
-          <evan-datepicker v-model="tmpObj.end_date" label="End date " class="col-12 col-sm-6"></evan-datepicker>
-        </div>
-        <div class="q-gutter-md q-mt-none">
-          <q-input filled dense v-model="tmpObj.label" label="Label *" class="col-12 col-sm-4"></q-input>
-          <q-select filled dense v-model="tmpObj.format" emit-value map-options :options="formatOptions"label="Format" class="col-12 col-sm-3"></q-select>
-        </div>
+      <div class="row q-col-gutter-md items-center q-mb-md">
+        <evan-datepicker v-model="tmpObj.start_date" label="Start date *" class="col-12 col-sm-6"></evan-datepicker>
+        <evan-datepicker v-model="tmpObj.end_date" label="End date" class="col-12 col-sm-6"></evan-datepicker>
+      </div>
+      <div class="q-gutter-md q-mt-none">
+        <q-input filled dense v-model="tmpObj.label" label="Label *" class="col-12 col-sm-4"></q-input>
+        <q-select filled dense v-model="tmpObj.format" emit-value map-options :options="formatOptions" label="Format" class="col-12 col-sm-3"></q-select>
       </div>
     </evan-editor>
 

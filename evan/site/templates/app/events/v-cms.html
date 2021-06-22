@@ -1,18 +1,18 @@
 <script type="text/x-template" id="v-cms">
 {% verbatim %}
-  <div v-cloak v-if="event && event.main_config.cms">
+  <div v-if="event && event.main_config.cms">
 
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
         <display-5>Content management</display-5>
         <q-space />
-        <a v-if="event && event.website" :href="event.website" target="_blank">
+        <a v-if="event && event.website" :href="event.website" target="_blank" rel="noopener">
           <q-btn no-caps outline rounded color="primary" label="Open website" />
         </a>
       </div>
-      <q-table dense row-key="key" :data="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table dense row-key="key" :rows="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
-          <evan-no-data :message="message" :filter="filter"></evan-no-data>
+          <evan-no-data :message="message" :filter="filter" />
         </template>
         <template v-slot:body-cell-edit="props">
           <q-td auto-width :props="props">
@@ -23,7 +23,7 @@
     </q-card>
 
     <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
-      <div v-if="tmpObj" class="q-gutter-md">
+      <div class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.key" readonly label="Key"></q-input>
         <evan-markdown v-if="tmpObj.marked" v-model="tmpObj.value" label="Content"></evan-markdown>
         <q-input v-else filled dense v-model="tmpObj.value" label="Content" type="textarea" autogrow></q-input>

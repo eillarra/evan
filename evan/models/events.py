@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
@@ -140,7 +138,3 @@ class Event(models.Model):
         if not hasattr(self, "_fees"):
             self._fees = {(f[0], f[1]): f[2] for f in self.fees.values_list("type", "is_early", "value")}
         return self._fees
-
-    @cached_property
-    def json_badge(self):
-        return json.loads(self.badge)

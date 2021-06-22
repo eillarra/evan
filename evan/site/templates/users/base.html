@@ -1,20 +1,61 @@
-{% extends 'layout_old.html' %}
+{% extends 'layout.html' %}
 
+{% load evan %}
 {% load static %}
 
 
-{% block main %}
-    <div class="container">
-        <div class="row pt-5">
-            <div class="col-12 col-md-3 col-lg-2 mb-4 pr-lg-5">
-                <a href="{% url 'homepage' %}">
-                    <img class="d-flex mr-3 logo mb-5" src="{% static 'images/evan.svg' %}">
-                </a>
-                {% include './_submenu.html' %}
-            </div>
-            <div class="col-12 col-md-7 col-lg-4 account-form">
-                {% block content %}{% endblock %}
-            </div>
-        </div>
-    </div>
+{% block head_title %}{{ event.name }} - {{ block.super }}{% endblock %}
+
+{% block header %}
+  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+    <q-toolbar>
+      <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
+      <q-toolbar-title>
+        <evan-logo fill="#1d1d1d" :width="70"></evan-logo>
+      </q-toolbar-title>
+      <q-space></q-space>
+      <evan-user-menu username="{{ user }}"></evan-user-menu>
+    </q-toolbar>
+  </q-header>
+{% endblock %}
+
+{% block drawer %}
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
+    <q-scroll-area class="fit">
+      <q-list dense>
+        <q-item-label header>Dashboard</q-item-label>
+        <q-item clickable tag="a" href="{% url 'dashboard' %}#/events/">
+          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+          <q-item-section>Your events</q-item-section>
+        </q-item>
+        <q-item clickable tag="a" href="{% url 'dashboard' %}#/registrations/">
+          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
+          <q-item-section>Your registrations</q-item-section>
+        </q-item>
+      </q-list>
+      <q-list dense>
+        <q-item-label header>Account</q-item-label>
+        <q-item clickable tag="a" href="{% url 'dashboard' %}#/profile/">
+          <q-item-section avatar><q-icon name="account_circle"></q-icon></q-item-section>
+          <q-item-section>Your profile</q-item-section>
+        </q-item>
+        <q-item tag="a" href="{% url 'account_change_password' %}" class="{% active request 'account_change_password,account_set_password' %}">
+          <q-item-section avatar><q-icon name="vpn_key"></q-icon></q-item-section>
+          <q-item-section>Password</q-item-section>
+        </q-item>
+        <q-item tag="a" href="{% url 'account_email' %}" class="{% active request 'account_email' %}">
+          <q-item-section avatar><q-icon name="email"></q-icon></q-item-section>
+          <q-item-section>Emails</q-item-section>
+        </q-item>
+        <q-item tag="a" href="{% url 'socialaccount_connections' %}" class="{% active request 'socialaccount_connections' %}">
+          <q-item-section avatar><q-icon name="extension"></q-icon></q-item-section>
+          <q-item-section>Social accounts</q-item-section>
+        </q-item>
+      </q-list>
+    </q-scroll-area>
+  </q-drawer>
+{% endblock %}
+
+{% block page %}
+  {% block content %}{% endblock %}
 {% endblock %}

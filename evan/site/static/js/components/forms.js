@@ -1,257 +1,305 @@
-Vue.component('evan-editor', {
-  props: {
-    saveEventName: {
-      type: String,
-      required: true
-    },
-    obj: {
-      type: Object,
-      default: null
-    },
-    objKey: {
-      type: String,
-      default: 'id'
-    },
-    size: {
-      type: String,
-      default: 'sm'
+var FormStore = Vuex.createStore({
+  state: {
+    options: null,
+    metadata: []
+  },
+  mutations: {
+    getMetadata: _.debounce(function (state) {
+      if (!state.metadata.length) {
+        Evan.api.request('get', '/api/v1/metadata/').then(function (res) {
+          state.metadata = Object.freeze(res.data);
+        });
+      }
+    }, 150),
+    setOptions: function (state, options) {
+      state.options = Object.freeze(options);
     }
   },
-  data: function () {
-    return {
-      dialogVisible: false,
-    };
-  },
-  template: `
-    <q-dialog position="top" v-model="showDialog" @show="dialogVisible = true">
-      <q-card v-if="obj" style="max-width: 95vw;" :style="{'width': sizePx}">
-        <q-card-section class="scroll q-px-lg q-py-xl" style="min-height: 250px; max-height: 75vh;">
-          <slot></slot>
-        </q-card-section>
-        <q-separator />
-        <q-card-actions align="right" class="q-py-md q-px-lg">
-          <q-btn flat v-close-popup label="Close" color="grey-8" />
-          <q-space />
-          <q-btn unelevated v-close-popup @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-  `,
-  computed: {
-    sizePx: function () {
-      return {
-        'sm': '400px',
-        'md': '650px',
-        'lg': '900px'
-      }[this.size] || '400px';
+  getters: {
+    requiredFields: function (state) {
+      if (!state.options) return null;
+      if (_.has(state.options.actions, 'POST')) return _.keys(state.options.actions.POST);
+      if (_.has(state.options.actions, 'PUT')) return _.keys(state.options.actions.PUT);
+      return null;
     },
-    showDialog: {
-      get: function () {
-        return this.obj != null;
+    fields: function (state) {
+      if (!state.options) return null;
+      if (_.has(state.options.actions, 'POST')) return state.options.actions.POST;
+      if (_.has(state.options.actions, 'PUT')) return state.options.actions.PUT;
+      return null;
+    },
+    metadataDict: function (state) {
+      return _.indexBy(state.metadata, 'id');
+    }
+  }
+});
+
+
+var EvanFormComponents = {
+
+  'evan-editor': {
+    data: function () {
+      return {
+        dialogVisible: false,
+      };
+    },
+    props: {
+      saveEventName: {
+        type: String,
+        default: null
       },
-      set: function (val) {
-        if (this.dialogVisible) {
-          this.dialogVisible = false;
-          this.$root.$emit('evan-editor-hide');
+      obj: {
+        type: Object,
+        default: null
+      },
+      objKey: {
+        type: String,
+        default: 'id'
+      },
+      position: {
+        type: String,
+        default: 'top'
+      },
+      size: {
+        type: String,
+        default: 'sm'
+      }
+    },
+    template: `
+      <q-dialog :position="position" v-model="showDialog" @show="dialogVisible = true">
+        <q-card v-if="obj" style="max-width: 95vw;" :style="{'width': sizePx}">
+          <q-card-section class="scroll q-px-lg q-py-xl" style="min-height: 250px; max-height: 75vh;">
+            <slot></slot>
+          </q-card-section>
+          <q-separator />
+          <q-card-actions align="right" class="q-py-md q-px-lg">
+            <q-btn flat v-close-popup label="Close" color="grey-8" />
+            <q-space />
+            <q-btn v-if="saveEventName" unelevated v-close-popup @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+    `,
+    computed: {
+      sizePx: function () {
+        return {
+          'sm': '400px',
+          'md': '550px',
+          'lg': '900px'
+        }[this.size] || '400px';
+      },
+      showDialog: {
+        get: function () {
+          return this.obj != null;
+        },
+        set: function (val) {
+          if (this.dialogVisible) {
+            this.dialogVisible = false;
+            EventEmitter.emit('evan-editor-hide');
+          }
         }
       }
+    },
+    methods: {
+      save: function () {
+        EventEmitter.emit(this.saveEventName, this.obj);
+      }
     }
   },
-  methods: {
-    save: function () {
-      this.$root.$emit(this.saveEventName, this.obj);
-    }
-  }
-});
 
-Vue.component('evan-text-list', {
-  props: {
-    addText: {
-      type: String,
-      default: 'Add'
+  'evan-text-list': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        stack: []
+      };
     },
-    fields: {
-      type: Array,
-      default: function () {
-        return [];
-      }
-    },
-    value: {
-      type: Array,
-      default: function () {
-        return [];
-      }
-    }
-  },
-  data: function () {
-    return {
-      stack: []
-    };
-  },
-  template: `
-    <div class="q-mb-lg">
-      <input v-model="mutable" type="hidden" />
-      <div v-for="el in value" class="row q-col-gutter-xs q-mb-sm items-center">
-        <div v-for="field in fields" class="col">
-          <q-input filled dense v-model="el[field.id]" :label="field.label"></q-input>
-        </div>
-        <div class="col-1 text-center">
-          <a href @click.prevent="removeFromStack(el)" class="text-pink"><q-icon name="close"></q-icon></a>
-        </div>
-      </div>
-      <q-btn outline @click="addToStack" size="sm" color="green" icon="add" :label="addText"></q-btn>
-    </div>
-  `,
-  computed: {
-    mutable: {
-      get: function () {
-        return this.value;
+    props: {
+      addText: {
+        type: String,
+        default: 'Add'
       },
-      set: function (val) {
-        this.$emit('input', val);
+      fields: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
+      modelValue: {
+        type: Array,
+        default: function () {
+          return [];
+        }
       }
-    }
-  },
-  methods: {
-    addToStack: function () {
-      this.stack.push({
-        'id': '',
-        'title': '',
-      });
-      this.$emit('input', this.stack);
     },
-    removeFromStack: function (item) {
-      this.stack = _.without(this.stack, item);
-      this.$emit('input', this.stack);
-    }
-  },
-  mounted: function () {
-    this.stack = this.value;
-  }
-});
-
-Vue.component('evan-datepicker', {
-  data: function () {
-    return {
-      mutable: null
-    }
-  },
-  props: {
-    value: {
-      type: String,
-      required: false
-    },
-    label: {
-      type: String,
-      required: true
-    },
-    hint: {
-      type: [String, Boolean],
-      default: false
-    },
-    hintClass: {
-      type: [String],
-      default: ''
-    },
-    withTime: {
-      type: Boolean,
-      default: false
-    },
-    allowNull: {
-      type: Boolean,
-      default: false
-    }
-  },
-  template: `
-    <div>
-      <input v-model="mutable" type="hidden" />
-      <q-input filled dense :bottom-slots="hint !== false" v-model="mutable" :label="label">
-        <template v-slot:append>
-          <q-icon name="event" class="cursor-pointer" size="xs">
-            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-              <q-date v-model="mutable" :mask="mask">
-                <div class="row items-center justify-end">
-                  <q-btn v-close-popup label="Close" color="primary" flat />
-                </div>
-              </q-date>
-            </q-popup-proxy>
-          </q-icon>
-          <q-icon v-if="withTime" name="access_time" class="cursor-pointer q-ml-sm" size="xs">
-            <q-popup-proxy transition-show="scale" transition-hide="scale">
-              <q-time v-model="mutable" :mask="mask" format24h>
-                <div class="row items-center justify-end">
-                  <q-btn v-close-popup label="Close" color="primary" flat />
-                </div>
-              </q-time>
-            </q-popup-proxy>
-          </q-icon>
-          <q-icon v-if="allowNull" name="cancel" @click="mutable = null" class="cursor-pointer q-ml-sm" size="xs" />
-        </template>
-        <template v-if="hint" v-slot:hint>
-          <div :class="hintClass">{{ hint }}</div>
-        </template>
-      </q-input>
-    </div>
-  `,
-  computed: {
-    mask: function () {
-      return (this.withTime)
-        ? 'YYYY-MM-DDTHH:mm'
-        : 'YYYY-MM-DD';
-    }
-  },
-  watch: {
-    'mutable': function (val) {
-      this.$emit('input', val);
-    }
-  },
-  created: function () {
-    this.mutable = this.value;
-  }
-});
-
-Vue.component('evan-markdown', {
-  data: function () {
-    return {
-      split: 50,
-      mutable: null
-    }
-  },
-  props: {
-    value: {
-      type: String
-    },
-    label: {
-      type: String,
-      default: 'Text'
-    }
-  },
-  template: `
-    <div>
-      <q-splitter v-model="split" :horizontal="$q.screen.lt.md" :limits="[40, 80]">
-        <template v-slot:before>
-          <div class="q-pb-lg" :class="{'q-pr-md': !$q.screen.lt.md, 'q-pb-md': $q.screen.lt.md}">
-            <q-input filled dense v-model="mutable" :label="label" type="textarea" autogrow bottom-slots>
-              <template v-slot:hint>
-                <div>You can use Markdown to format your text; you can find more information about the <a href="https://commonmark.org/help/" target="_blank" rel="noopener">Markdown syntax here</a>.</div>
-              </template>
-            </q-input>
+    template: `
+      <div class="q-mb-lg">
+        <input v-model="mutable" type="hidden" />
+        <div v-for="el in stack" class="row q-col-gutter-xs q-mb-sm items-center">
+          <div v-for="field in fields" class="col">
+            <q-input filled dense v-model="el[field.id]" :label="field.label"></q-input>
           </div>
-        </template>
-        <template v-slot:after>
-          <div :class="{'q-pl-md': !$q.screen.lt.md, 'q-pt-md': $q.screen.lt.md}">
-            <marked :text="mutable" class="text-body2"></marked>
+          <div class="col-1 text-center">
+            <evan-remove-icon @click.prevent="removeFromStack(el)" />
           </div>
-        </template>
-      </q-splitter>
-    </div>
-  `,
-  watch: {
-    'mutable': function (val) {
-      this.$emit('input', val);
+        </div>
+        <q-btn outline @click="addToStack" size="sm" color="green" icon="add" :label="addText"></q-btn>
+      </div>
+    `,
+    computed: {
+      mutable: {
+        get: function () {
+          return this.modelValue;
+        },
+        set: function (val) {
+          this.$emit('update:modelValue', val);
+        }
+      }
+    },
+    methods: {
+      addToStack: function () {
+        this.stack.push({
+          'id': '',
+          'title': '',
+        });
+        this.$emit('update:modelValue', this.stack);
+      },
+      removeFromStack: function (item) {
+        this.stack = _.without(this.stack, item);
+        this.$emit('update:modelValue', this.stack);
+      }
+    },
+    created: function () {
+      this.stack = this.modelValue;
     }
   },
-  created: function () {
-    this.mutable = this.value;
+
+  'evan-datepicker': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        mutable: null
+      };
+    },
+    props: {
+      modelValue: {
+        type: String,
+        required: false
+      },
+      label: {
+        type: String,
+        required: true
+      },
+      hint: {
+        type: [String, Boolean],
+        default: false
+      },
+      hintClass: {
+        type: [String],
+        default: ''
+      },
+      withTime: {
+        type: Boolean,
+        default: false
+      },
+      allowNull: {
+        type: Boolean,
+        default: false
+      }
+    },
+    template: `
+      <div>
+        <input v-model="mutable" type="hidden" />
+        <q-input filled dense :bottom-slots="hint !== false" v-model="mutable" :label="label">
+          <template v-slot:append>
+            <q-icon name="event" class="cursor-pointer" size="xs">
+              <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                <q-date v-model="mutable" :mask="mask">
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-icon>
+            <q-icon v-if="withTime" name="access_time" class="cursor-pointer q-ml-sm" size="xs">
+              <q-popup-proxy transition-show="scale" transition-hide="scale">
+                <q-time v-model="mutable" :mask="mask" format24h>
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-time>
+              </q-popup-proxy>
+            </q-icon>
+            <q-icon v-if="allowNull" name="cancel" @click="mutable = null" class="cursor-pointer q-ml-sm" size="xs" />
+          </template>
+          <template v-if="hint" v-slot:hint>
+            <div :class="hintClass">{{ hint }}</div>
+          </template>
+        </q-input>
+      </div>
+    `,
+    computed: {
+      mask: function () {
+        return (this.withTime)
+          ? 'YYYY-MM-DDTHH:mm'
+          : 'YYYY-MM-DD';
+      }
+    },
+    watch: {
+      'mutable': function (val) {
+        this.$emit('update:modelValue', val);
+      }
+    },
+    created: function () {
+      this.mutable = this.modelValue;
+    }
+  },
+
+  'evan-markdown': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        split: 50,
+        mutable: null
+      };
+    },
+    props: {
+      modelValue: {
+        type: String
+      },
+      label: {
+        type: String,
+        default: 'Text'
+      }
+    },
+    template: `
+      <div>
+        <q-splitter v-model="split" :horizontal="$q.screen.lt.md" :limits="[40, 80]">
+          <template v-slot:before>
+            <div class="q-pb-lg" :class="{'q-pr-md': !$q.screen.lt.md, 'q-pb-md': $q.screen.lt.md}">
+              <q-input filled dense v-model="mutable" :label="label" type="textarea" autogrow bottom-slots>
+                <template v-slot:hint>
+                  <div>You can use Markdown to format your text; you can find more information about the <a href="https://commonmark.org/help/" target="_blank" rel="noopener">Markdown syntax here</a>.</div>
+                </template>
+              </q-input>
+            </div>
+          </template>
+          <template v-slot:after>
+            <div :class="{'q-pl-md': !$q.screen.lt.md, 'q-pt-md': $q.screen.lt.md}">
+              <marked :text="mutable" class="text-body2"></marked>
+            </div>
+          </template>
+        </q-splitter>
+      </div>
+    `,
+    watch: {
+      'mutable': function (val) {
+        this.$emit('update:modelValue', val);
+      }
+    },
+    created: function () {
+      this.mutable = this.modelValue;
+    }
   }
-});
+
+};

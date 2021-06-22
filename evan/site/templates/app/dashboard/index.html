@@ -13,13 +13,14 @@
       <q-toolbar-title>
         <evan-logo fill="#1d1d1d" :width="70"></evan-logo>
       </q-toolbar-title>
+      <q-space></q-space>
+      <evan-user-menu username="{{ user }}"></evan-user-menu>
     </q-toolbar>
   </q-header>
 {% endblock %}
 
 {% block drawer %}
-  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md"
-    content-class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area class="fit">
       <q-list dense>
         <q-item-label header>Dashboard</q-item-label>
@@ -28,7 +29,7 @@
           <q-item-section>Your events</q-item-section>
         </q-item>
         <q-item clickable :to="{name: 'registrations'}">
-          <q-item-section avatar><q-icon name="recent_actors"></q-icon></q-item-section>
+          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
           <q-item-section>Your registrations</q-item-section>
         </q-item>
       </q-list>
@@ -57,7 +58,7 @@
 
 {% block page %}
   <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-events="{% url 'v1:user-events' %}" data-url-registrations="{% url 'v1:user-registrations' %}"></div>
-  <div is="router-view" class="q-pt-lg"></div>
+  <router-view class="q-pt-lg"></router-view>
 {% endblock %}
 
 {% block vue_templates %}
@@ -68,12 +69,12 @@
 
 {% block scripts %}
 {% compress js file dashboard %}
-  <script src="{% static 'js/components/tables.js' %}"></script>
+  <script src="{% static 'js/views/mixins.js' %}"></script>
   <script src="{% static 'js/views/profile.js' %}"></script>
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
-    var Store = new Vuex.Store({
+    var Store = Vuex.createStore({
       state: {
         user: null,
         events: [],
@@ -95,6 +96,7 @@
         getUser: function (state) {
           Evan.api.request('get', VARS.urlUser).then(function (res) {
             state.user = res.data;
+            Quasar.Loading.hide();
           });
         }
       }
@@ -102,20 +104,20 @@
 
     var EventsView = {
       template: '#v-events',
+      mixins: [QueryMixin],
       data: function () {
         return {
           table: {
             columns: [
               {
-                name: 'href',
-                field: 'href',
+                name: 'href'
               },
               {
                 name: 'code',
                 field: 'code',
                 sortable: true,
                 align: 'left',
-                label: 'Code',
+                label: 'Code'
               },
               {
                 name: 'name',
@@ -147,33 +149,81 @@
               descending: true
             }
           }
-        }
+        };
       },
       computed: _.extend(
         Vuex.mapState(['events']), {
       }),
       methods: {
         openUrl: function (e, row) {
-          Quasar.utils.openURL(row.href);
+          Quasar.openURL(row.href);
         }
-      },
-      created: function () {
-        this.$store.commit('getEvents');
       }
     };
 
     var RegistrationsView = {
       template: '#v-registrations',
-      props: ['uuid'],
+      mixins: [QueryMixin],
+      data: function () {
+        return {
+          table: {
+            columns: [
+              {
+                name: 'href'
+              },
+              {
+                name: 'uuid',
+                field: 'uuid',
+                sortable: true,
+                label: 'ID',
+                align: 'left',
+              },
+              {
+                name: 'event_name',
+                field: 'event_name',
+                sortable: true,
+                label: 'Event',
+                align: 'left',
+              },
+              {
+                name: 'created_at',
+                field: 'created_at',
+                sortable: true,
+                align: 'left',
+                label: 'Date'
+              },
+              {
+                name: 'payment_status',
+                align: 'center',
+                label: 'Paid'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 25,
+              sortBy: 'created_at',
+              descending: true
+            }
+          }
+        };
+      },
       computed: _.extend(
         Vuex.mapState(['registrations']), {
+        items: function () {
+          return this.registrations.map(function (obj) {
+            obj.event_name = obj.event.name;
+            return obj;
+          });
+        }
       }),
-      created: function () {
-        this.$store.commit('getRegistrations');
+      methods: {
+        openUrl: function (e, row) {
+          Quasar.openURL(row.href);
+        }
       }
     };
 
-    var Router = new VueRouter({
+    var Router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
       routes: [
         {
           path: '/',
@@ -205,19 +255,26 @@
       ]
     });
 
-    new Vue({
-      el: '#vue',
-      store: Store,
-      router: Router,
+    var app = Vue.createApp({
       data: function () {
         return {
           visibleDrawer: true
         };
       },
       created: function () {
+        this.$q.loading.show();
         this.$store.commit('getUser');
+        this.$store.commit('getEvents');
+        this.$store.commit('getRegistrations');
       }
     });
+
+    Evan.utils.registerComponents(app, [EvanCommonComponents]);
+
+    app.use(Store);
+    app.use(Router);
+    app.use(Quasar);
+    app.mount('#vue');
   </script>
 {% endcompress %}
 {% endblock %}
