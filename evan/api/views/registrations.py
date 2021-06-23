@@ -32,9 +32,7 @@ class CouponViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
 
 
 class RegistrationsViewSet(EventRelatedViewSet):
-    queryset = Registration.objects.select_related("coupon", "user__profile").prefetch_related(
-        "user__profile__dietary", "user__profile__gender"
-    )
+    queryset = Registration.objects.select_related("coupon", "user__profile")
     serializer_class = RegistrationRetrieveSerializer
 
     def list(self, request, *args, **kwargs):

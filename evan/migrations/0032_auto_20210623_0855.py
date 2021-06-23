@@ -23,7 +23,6 @@ def migrate_metadata(apps, schema_editor):
     }
 
     for p in Person.objects.all():
-        print(metadata[p.dietary_id] if p.dietary_id else None)
         p.custom_data = {"dietary": metadata[p.dietary_id] if p.dietary_id else None}
         p.save()
 

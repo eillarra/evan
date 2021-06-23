@@ -7,9 +7,7 @@ from evan.services.excel import ModelExcelWriter
 
 class RegistrationsOverview(ModelExcelWriter):
     def get_sheets(self) -> List[Dict]:
-        qs = self.queryset.select_related("user__profile", "coupon").prefetch_related(
-            "user__profile__dietary", "sessions"
-        )
+        qs = self.queryset.select_related("user__profile", "coupon").prefetch_related("sessions")
 
         sheets = [
             {
@@ -119,7 +117,7 @@ class RegistrationsOverview(ModelExcelWriter):
                     obj.user.last_name,
                     obj.user.profile.affiliation,
                     obj.user.profile.country.name,
-                    str(obj.user.profile.dietary),
+                    obj.user.profile.custom_data.dietary,
                 ]
             )
 
