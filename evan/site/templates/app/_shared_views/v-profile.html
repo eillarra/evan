@@ -1,10 +1,8 @@
-{% load static %}
-
-
 <script type="text/x-template" id="v-profile">
 {% verbatim %}
-  <div v-cloak v-if="user" class="row q-col-gutter-md">
+  <div v-if="user" class="row q-col-gutter-lg">
     <div class="col-12 col-md-9 col-lg-8">
+
       <q-card flat class="q-pa-lg">
         <display-5>Your profile</display-5>
         <p>Please update your name and affiliation: this might be shared with other participants.</p>
@@ -14,23 +12,24 @@
         <div class="q-col-gutter-md row items-start q-mb-md">
           <q-input filled dense v-model="user.first_name" label="First name *" class="col-12 col-sm-4"></q-input>
           <q-input filled dense v-model="user.last_name" label="Last name *" class="col-12 col-sm-4"></q-input>
-          <metadata-select v-model.number="user.profile.gender" type="gender" label="Gender" class="col-12 col-sm-4"></metadata-select>
+          <q-select filled dense emit-value map-options v-model="user.profile.custom_data.gender" :options="genderOptions" label="Gender" class="col-12 col-sm-4" />
         </div>
         <div class="q-col-gutter-md row items-start q-mb-md">
           <q-input filled dense v-model="user.profile.affiliation" label="Affiliation" class="col-12 col-sm-4"></q-input>
           <q-input filled dense v-model="user.profile.position" label="Position" class="col-12 col-sm-8"></q-input>
         </div>
         <div class="q-col-gutter-md row items-start q-mb-lg">
-          <country-select v-model="user.profile.country" field="profile.children.country" label="Country *" class="col-12 col-sm-4"></country-select>
+          <!--<country-select v-model="user.profile.country" field="profile.children.country" label="Country *" class="col-12 col-sm-4"></country-select>-->
         </div>
         <p>The following information will only be used to provide you with a better experience in case a physical event is organized. We will <strong>never</strong> share your personal information with third parties.</p>
         <div class="q-col-gutter-md row items-start q-mb-lg">
-          <metadata-select v-model.number="user.profile.dietary" type="meal_preference" label="Dietary requirements" class="col-12 col-sm-6"></metadata-select>
+          <q-select filled dense emit-value map-options v-model="user.profile.custom_data.dietary" :options="dietaryOptions" label="Dietary requirements" class="col-12 col-sm-6" />
         </div>
         <div class="q-mt-xl">
           <q-btn unelevated :disabled="!user.first_name || !user.last_name" @click.prevent="update(user)" color="primary" label="Save profile"></q-btn>
         </div>
       </q-card>
+
     </div>
   </div>
 {% endverbatim %}

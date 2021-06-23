@@ -4,13 +4,11 @@ from drf_writable_nested import UniqueFieldsMixin, NestedUpdateMixin, WritableNe
 from rest_framework import serializers
 
 from evan.models import Profile
-from .generic import MetadataField
 
 
 class ProfileSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
     country = CountryField(country_dict=True, allow_null=True)
-    dietary = MetadataField(allow_null=True)
-    gender = MetadataField(allow_null=True)
+    custom_data = serializers.JSONField()
 
     class Meta:
         model = Profile

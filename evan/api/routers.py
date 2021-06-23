@@ -9,7 +9,6 @@ class Router(DefaultRouter):
 
         self.schema_title = f"Evan API {version}"
 
-        self.register(r"metadata", views.MetadataViewSet, basename="metadata")
         self.register(r"user", views.UserViewSet, basename="user")
 
         self.register(r"events", views.EventViewSet, basename="event")

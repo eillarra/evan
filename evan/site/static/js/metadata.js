@@ -1,0 +1,30 @@
+var EvanMetadata = {
+  options: {
+    gender: {
+      female: 'Female',
+      male: 'Male',
+      non_binary: 'Non-binary'
+    },
+    dietary: {
+      none: 'No special requirements',
+      vegetarian: 'Vegetarian',
+      vegan: 'Vegan',
+      kosher: 'Kosher',
+      muslim: 'Muslim',
+      intolerant_gluten: '[Intolerant] Gluten',
+      intolerant_lactose: '[Intolerant] Lactose',
+      allergic_crustaceans: '[Allergic] Crustaceans',
+      allergic_peanuts: '[Allergic] Peanuts'
+    }
+  },
+  getQuasarOptions: function (metadata) {
+    var out = [];
+    _.each(this.options[metadata], function (val, key) {
+      out.push({
+        'value': key,
+        'label': val
+      });
+    });
+    return out;
+  }
+};

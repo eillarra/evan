@@ -2,7 +2,6 @@
 
 from .contents import *
 from .events import *
-from .metadata import *
 from .payments import *
 from .registrations import *
 from .sessions import *

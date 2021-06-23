@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 from evan.models import Coupon, Person, Registration
 from .events import EventListSerializer
-from .generic import MetadataField
 from .users import UserSerializer
 
 
@@ -17,7 +16,7 @@ class CouponSerializer(serializers.ModelSerializer):
 
 
 class PersonSerializer(serializers.ModelSerializer):
-    dietary = MetadataField()
+    custom_data = serializers.JSONField()
 
     class Meta:
         model = Person

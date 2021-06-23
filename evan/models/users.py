@@ -6,7 +6,6 @@ from django.utils import timezone
 from django_countries.fields import CountryField
 
 from evan.functions import send_task
-from .metadata import Metadata
 
 
 class ProfileManager(models.Manager):
@@ -19,27 +18,13 @@ class Profile(models.Model):
     A user profile complements the base User model with extra information.
     """
 
-    user = models.OneToOneField(get_user_model(), primary_key=True, related_name="profile", on_delete=models.CASCADE,)
-    gender = models.ForeignKey(
-        Metadata,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        limit_choices_to={"type": Metadata.GENDER},
-        related_name="profile_" + Metadata.GENDER,
-    )
-    dietary = models.ForeignKey(
-        Metadata,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        limit_choices_to={"type": Metadata.MEAL_PREFERENCE},
-        related_name="profile_" + Metadata.MEAL_PREFERENCE,
-    )
+    user = models.OneToOneField(get_user_model(), primary_key=True, related_name="profile", on_delete=models.CASCADE)
     position = models.CharField(max_length=190, null=True, blank=True)
     affiliation = models.CharField(max_length=190, null=True, blank=True)
     country = CountryField()
     updated_at = models.DateTimeField(auto_now=True)
+
+    custom_data = models.JSONField(default=dict)
 
     objects = ProfileManager()
 

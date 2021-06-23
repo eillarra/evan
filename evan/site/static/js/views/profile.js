@@ -1,5 +1,11 @@
 var ProfileView = {
   template: '#v-profile',
+  data: function () {
+    return {
+      genderOptions: EvanMetadata.getQuasarOptions('gender'),
+      dietaryOptions: EvanMetadata.getQuasarOptions('dietary')
+    }
+  },
   computed: _.extend(
     Vuex.mapState(['user']), {
     countryName: function () {

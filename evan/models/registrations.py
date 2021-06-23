@@ -10,7 +10,6 @@ from hashlib import sha256
 
 from evan.functions import send_task
 from .fees import Fee
-from .metadata import Metadata
 
 
 class RegistrationManager(models.Manager):
@@ -183,14 +182,7 @@ class Person(models.Model):
 
     registration = models.ForeignKey(Registration, related_name="accompanying_persons", on_delete=models.CASCADE)
     name = models.CharField(max_length=190)
-    dietary = models.ForeignKey(
-        Metadata,
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        limit_choices_to={"type": Metadata.MEAL_PREFERENCE},
-        related_name="person_" + Metadata.MEAL_PREFERENCE,
-    )
+    custom_data = models.JSONField(default=dict)
 
 
 @receiver(post_save, sender=Person)
