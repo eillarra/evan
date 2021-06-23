@@ -1,40 +1,3 @@
-var FormStore = Vuex.createStore({
-  state: {
-    options: null,
-    metadata: []
-  },
-  mutations: {
-    getMetadata: _.debounce(function (state) {
-      if (!state.metadata.length) {
-        Evan.api.request('get', '/api/v1/metadata/').then(function (res) {
-          state.metadata = Object.freeze(res.data);
-        });
-      }
-    }, 150),
-    setOptions: function (state, options) {
-      state.options = Object.freeze(options);
-    }
-  },
-  getters: {
-    requiredFields: function (state) {
-      if (!state.options) return null;
-      if (_.has(state.options.actions, 'POST')) return _.keys(state.options.actions.POST);
-      if (_.has(state.options.actions, 'PUT')) return _.keys(state.options.actions.PUT);
-      return null;
-    },
-    fields: function (state) {
-      if (!state.options) return null;
-      if (_.has(state.options.actions, 'POST')) return state.options.actions.POST;
-      if (_.has(state.options.actions, 'PUT')) return state.options.actions.PUT;
-      return null;
-    },
-    metadataDict: function (state) {
-      return _.indexBy(state.metadata, 'id');
-    }
-  }
-});
-
-
 var EvanFormComponents = {
 
   'evan-editor': {
@@ -183,8 +146,7 @@ var EvanFormComponents = {
     },
     props: {
       modelValue: {
-        type: String,
-        required: false
+        type: String
       },
       label: {
         type: String,
@@ -299,6 +261,62 @@ var EvanFormComponents = {
     },
     created: function () {
       this.mutable = this.modelValue;
+    }
+  },
+
+  'evan-country-select': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        storageKey: 'evan_countries',
+        countries: null,
+        mutable: null
+      };
+    },
+    props: {
+      modelValue: {
+        type: Object
+      }
+    },
+    template: `
+      <q-select dense filled v-model="mutable" :options="options" label="Country" option-value="code"
+        option-label="name" />
+    `,
+    computed: {
+      options: function () {
+        var c = [];
+        if (!this.countries) return c;
+
+        _.each(this.countries, function (val, key) {
+          c.push({
+            code: key,
+            name: val
+          });
+        });
+
+        return c;
+      }
+    },
+    methods: {
+      getCountries: function () {
+        var self = this;
+
+        Evan.api.request('get', '/api/countries/').then(function (res) {
+          self.countries = res.data;
+          Quasar.SessionStorage.set(self.storageKey, res.data);
+        });
+      }
+    },
+    watch: {
+      'mutable': function (val) {
+        this.$emit('update:modelValue', val);
+      }
+    },
+    created: function () {
+      this.mutable = this.modelValue;
+      this.countries = Quasar.SessionStorage.getItem(this.storageKey);
+
+      if (!this.countries) this.getCountries();
     }
   }
 

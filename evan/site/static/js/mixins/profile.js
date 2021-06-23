@@ -1,10 +1,9 @@
-var ProfileView = {
-  template: '#v-profile',
+var ProfileMixin = {
   data: function () {
     return {
       genderOptions: EvanMetadata.getQuasarOptions('gender'),
       dietaryOptions: EvanMetadata.getQuasarOptions('dietary')
-    }
+    };
   },
   computed: _.extend(
     Vuex.mapState(['user']), {

@@ -101,7 +101,8 @@
 {% block scripts %}
 {% compress js file app_events %}
   <script src="{% static 'js/components/forms.js' %}"></script>
-  <script src="{% static 'js/views/mixins.js' %}"></script>
+  <script src="{% static 'js/mixins/event_related.js' %}"></script>
+  <script src="{% static 'js/mixins/query.js' %}"></script>
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 

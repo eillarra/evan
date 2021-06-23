@@ -117,7 +117,7 @@ class RegistrationsOverview(ModelExcelWriter):
                     obj.user.last_name,
                     obj.user.profile.affiliation,
                     obj.user.profile.country.name,
-                    obj.user.profile.custom_data.dietary,
+                    obj.user.profile.custom_data["dietary"] if "dietary" in obj.user.profile.custom_data else None,
                 ]
             )
 

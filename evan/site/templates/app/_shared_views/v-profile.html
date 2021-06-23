@@ -19,7 +19,7 @@
           <q-input filled dense v-model="user.profile.position" label="Position" class="col-12 col-sm-8"></q-input>
         </div>
         <div class="q-col-gutter-md row items-start q-mb-lg">
-          <!--<country-select v-model="user.profile.country" field="profile.children.country" label="Country *" class="col-12 col-sm-4"></country-select>-->
+          <evan-country-select v-model="user.profile.country" class="col-12 col-sm-4" />
         </div>
         <p>The following information will only be used to provide you with a better experience in case a physical event is organized. We will <strong>never</strong> share your personal information with third parties.</p>
         <div class="q-col-gutter-md row items-start q-mb-lg">
