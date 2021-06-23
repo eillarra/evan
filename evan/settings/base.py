@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     # helpers
     "captcha",
     "compressor",
-    "crispy_forms",
     # auth
     "allauth",
     "allauth.account",
@@ -271,8 +270,3 @@ RECAPTCHA_PUBLIC_KEY = os.environ.get("RECAPTCHA_PUBLIC_KEY", "RECAPTCHA_PUBLIC_
 RECAPTCHA_PRIVATE_KEY = os.environ.get("RECAPTCHA_PRIVATE_KEY", "RECAPTCHA_PRIVATE_KEY")
 RECAPTCHA_USE_SSL = True
 NOCAPTCHA = True  # For using reCAPTCHA v2
-
-
-# https://django-crispy-forms.readthedocs.io/en/latest/index.html
-
-CRISPY_TEMPLATE_PACK = "bootstrap4"

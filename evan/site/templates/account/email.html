@@ -1,7 +1,5 @@
 {% extends 'users/base.html' %}
 
-{% load crispy_forms_tags %}
-
 
 {% block head_title %}Emails - Settings - {{ block.super }}{% endblock %}
 
@@ -50,7 +48,7 @@
     <h6 class="mb-3">Add secondary emails</h6>
     <form method="post" action="{% url 'account_email' %}">
         {% csrf_token %}
-        {{ form | crispy }}
+        {{ form }}
         <button name="action_add" type="submit" class="btn btn-primary mt-2">Add email</button>
     </form>
 {% endblock %}

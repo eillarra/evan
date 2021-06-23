@@ -3,17 +3,21 @@
 {% load static %}
 
 
-{% block main %}
-    <div class="container">
-        <div class="row pt-5">
-            <div class="col-12 col-md-3 col-lg-2 mb-5 pr-lg-5">
-                <a href="{% url 'homepage' %}">
-                    <img class="logo" src="{% static 'images/evan.svg' %}">
-                </a>
-            </div>
-            <div class="col-12 col-md-7 col-lg-4 account-form">
-                {% block content %}{% endblock %}
-            </div>
-        </div>
+{% block page %}
+  <div class="row q-mx-lg">
+    <div class="col-12 col-md-7 col-lg-6 q-mb-lg">
+      <div class="q-mt-xl q-mb-lg">
+        <a href="{% url 'homepage' %}">
+          <evan-logo></evan-logo>
+        </a>
+      </div>
+      <q-card flat class="q-pa-lg">
+        {% block content %}{% endblock %}
+      </q-card>
     </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'js/components/django.js' %}"></script>
 {% endblock %}

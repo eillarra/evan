@@ -1,7 +1,5 @@
 {% extends 'account/signup.html' %}
 
-{% load crispy_forms_tags %}
-
 
 {% block content %}
     <h4 class="header">Sign up</h4>
@@ -9,7 +7,7 @@
 
     <form method="post" action="{% url 'socialaccount_signup' %}" class="signup" id="signup_form">
         {% csrf_token %}
-        {{ form | crispy }}
+        {{ form }}
         {% if redirect_field_value %}
             <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
         {% endif %}

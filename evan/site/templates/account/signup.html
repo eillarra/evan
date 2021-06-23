@@ -1,23 +1,79 @@
 {% extends 'account/base.html' %}
 
-{% load crispy_forms_tags %}
+{% load compress %}
 
 
 {% block head_title %}Sign up - {{ block.super }}{% endblock %}
 
 {% block content %}
-    <h4 class="mb-4">Sign up</h4>
-    <form method="post" action="{% url 'account_signup' %}">
-        {% csrf_token %}
-        {{ form | crispy }}
-        {% if redirect_field_value %}
-            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
-        {% endif %}
-        <button type="submit" class="btn btn-primary mt-2">Sign up</button>
-    </form>
-    <hr class="mt-5">
-    <p class="m-0 text-sm">
-        <i class="material-icons mr-2">vpn_key</i>
-        <span>Have an account? </span><a href="{{ login_url }}">Log in</a>
-    </p>
+  <display-5>Sign up</display-5>
+  <form method="post" action="{% url 'account_signup' %}">
+    {% csrf_token %}
+    <django-form :fields="fields"></django-form>
+    {{ form.captcha }}
+    <q-btn unelevated color="primary" type="submit" class="q-my-lg">Sign up</q-btn>
+  </form>
+  <q-separator></q-separator>
+  <p class="text-caption q-mt-lg">
+    <q-icon name="vpn_key" size="14px" class="q-mr-sm"></q-icon>
+    <span>Have an account? </span><a href="{{ login_url }}">Log in</a>
+  </p>
+{% endblock %}
+
+{% block scripts %}
+{% compress js inline %}
+  <script type="text/javascript">
+    var app = Vue.createApp({
+      data: function () {
+        return {
+          fields: [
+            {
+              name: 'first_name',
+              label: 'First name',
+              type: 'text',
+              required: true,
+              class: 'col-md-6'
+            },
+            {
+              name: 'last_name',
+              label: 'Last name',
+              type: 'text',
+              required: true,
+              class: 'col-md-6'
+            },
+            {
+              name: 'email',
+              label: 'Email',
+              type: 'email',
+              required: true
+            },
+            {
+              name: 'username',
+              label: 'Username',
+              type: 'text',
+              required: true
+            },
+            {
+              name: 'password1',
+              label: 'Password',
+              type: 'password',
+              required: true,
+              class: 'col-md-6'
+            },
+            {
+              name: 'password2',
+              label: 'Password (again)',
+              type: 'password',
+              required: true,
+              class: 'col-md-6'
+            }
+          ]
+        };
+      }
+    });
+    Evan.utils.registerComponents(app, [DjangoComponents, EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
+  </script>
+{% endcompress %}
 {% endblock %}
