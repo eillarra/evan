@@ -57,5 +57,15 @@
 {% endblock %}
 
 {% block page %}
-  {% block content %}{% endblock %}
+  <div class="row q-col-gutter-lg">
+    <div class="col-12 col-md-9 col-lg-8 q-mt-lg">
+      <q-card flat class="q-pa-lg">
+        {% block content %}{% endblock %}
+      </q-card>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script src="{% static 'js/components/django.js' %}"></script>
 {% endblock %}

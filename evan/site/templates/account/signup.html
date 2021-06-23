@@ -7,12 +7,11 @@
 
 {% block content %}
   <display-5>Sign up</display-5>
-  <form method="post" action="{% url 'account_signup' %}">
-    {% csrf_token %}
-    <django-form :fields="fields" class="q-mb-md"></django-form>
+
+  <django-form action="{% url 'account_signup' %}" :fields="fields" btn-text="Sign up" class="q-mb-lg">
     {{ form.captcha }}
-    <q-btn unelevated color="primary" type="submit" class="q-my-lg">Sign up</q-btn>
-  </form>
+  </django-form>
+
   <q-separator></q-separator>
   <p class="text-caption q-mt-lg">
     <q-icon name="vpn_key" size="14px" class="q-mr-sm"></q-icon>

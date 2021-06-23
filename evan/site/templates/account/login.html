@@ -22,14 +22,12 @@
     <p>If you have not created an account yet, then please <a href="{{ signup_url }}">sign up</a> first.</p>
   {% endif %}
 
-  <form method="post" action="{% url 'account_login' %}">
-    {% csrf_token %}
-    <django-form :fields="fields"></django-form>
+  <django-form action="{% url 'account_login' %}" :fields="fields" btn-text="Sign in" class="q-mb-lg">
     {% if redirect_field_value %}
       <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
     {% endif %}
-    <q-btn unelevated color="primary" type="submit" class="q-my-lg">Sign in</q-btn>
-  </form>
+  </django-form>
+
   <q-separator></q-separator>
   <p class="text-caption q-mt-lg">
     <q-icon name="help_outline" size="14px" class="q-mr-sm"></q-icon>
