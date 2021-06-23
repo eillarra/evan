@@ -9,7 +9,7 @@
   <display-5>Sign up</display-5>
   <form method="post" action="{% url 'account_signup' %}">
     {% csrf_token %}
-    <django-form :fields="fields"></django-form>
+    <django-form :fields="fields" class="q-mb-md"></django-form>
     {{ form.captcha }}
     <q-btn unelevated color="primary" type="submit" class="q-my-lg">Sign up</q-btn>
   </form>

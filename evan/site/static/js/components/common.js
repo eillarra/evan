@@ -1,5 +1,42 @@
 var EvanCommonComponents = {
 
+  'django-message': {
+    props: {
+      message: {
+        type: String
+      },
+      level: {
+        type: String
+      },
+      tags: {
+        type: String
+      }
+    },
+    template: '<span></span>',
+    created: function () {
+      /*
+      DEBUG = 10
+      INFO = 20
+      SUCCESS = 25
+      WARNING = 30
+      ERROR = 40
+      */
+      Quasar.Notify.create({
+        message: this.message,
+        type: {
+          10: 'info',
+          20: 'info',
+          25: 'positive',
+          30: 'warning',
+          40: 'negative'
+        }[this.level] || 'info',
+        actions: [
+          { label: 'Dismiss', color: 'white', handler: function () {} }
+        ]
+      });
+    }
+  },
+
   'country-flag': {
     props: {
       code: {

@@ -113,14 +113,14 @@ var Evan = {
         message: msg,
         caption: caption,
         icon: null
-      })
+      });
     },
     notifySuccess: function (msg) {
       Quasar.Notify.create({
         timeout: 2500,
         message: msg,
         icon: null
-      })
+      });
     },
     registerComponents: function (app, collectionList) {
       _.each(collectionList, function (componentCollection) {

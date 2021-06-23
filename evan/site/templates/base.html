@@ -47,9 +47,7 @@
             <q-page :class="{'q-py-sm q-px-lg': $q.screen.gt.sm, 'bg-white q-pa-none': $q.screen.lt.md}">
               {% if messages %}
                 {% for message in messages %}
-                  <q-banner inline-actions class="bg-yellow-2" role="alert">
-                    <span>{{ message }}</span>
-                  </q-banner>
+                  <django-message message="{{ message }}" level="{{ message.level }}" tags.number="{{ message.tags }}"></django-message>
                 {% endfor %}
               {% endif %}
               {% block page %}{% endblock %}
