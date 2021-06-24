@@ -8,48 +8,44 @@
 {% block content %}
   <display-5>Emails</display-5>
 
-    {% if user.emailaddress_set.all %}
-        <p>The following e-mail addresses are associated with your Evan account. The primary email will be used for communications:</p>
+  {% if user.emailaddress_set.all %}
+    <p>The following e-mail addresses are associated with your Evan account. The primary email will be used for communications:</p>
 
-        <form method="post" action="{% url 'account_email' %}">
-            {% csrf_token %}
-            <table class="table table-sm table-borderless">
-            {% for emailaddress in user.emailaddress_set.all %}
-                <tr>
-                    <td>
-                        <div class="custom-control custom-radio">
-                            <input id="email_radio_{{ forloop.counter }}" type="radio" name="email" {% if emailaddress.primary or user.emailaddress_set.count == 1 %}checked="checked"{%endif %} value="{{ emailaddress.email }}" class="custom-control-input">
-                            <label class="custom-control-label" for="email_radio_{{ forloop.counter }}">
-                                <span>{{ emailaddress.email }}</span>
-                                {% if emailaddress.primary %}
-                                    <span class="badge badge-success ml-2">primary</span>
-                                {% endif %}
-                            </label>
-                        </div>
-                    </td>
-                    <td class="text-right pl-2">
-                        {% if emailaddress.verified %}
-                            <small>verified</small>
-                        {% else %}
-                            <small class="text-danger">unverified</small>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% endfor %}
-            </table>
-            <div class="mt-4">
-                <button type="submit" name="action_primary" class="btn btn-sm btn-outline-primary mr-4">Make primary</button>
-                <button type="submit" name="action_send" class="btn btn-sm btn-light mr-2">Re-send verification</button>
-                <button type="submit" name="action_remove" class="btn btn-sm btn-light text-danger">Remove</button>
-            </div>
-        </form>
-    {% else %}
-        <p><strong>Warning:</strong> you currently do not have any e-mail address set up. You should really add an e-mail address so you can receive notifications, reset your password, etc.</p>
-    {% endif %}
-    <hr class="my-5">
+    <form method="post" action="{% url 'account_email' %}">
+      {% csrf_token %}
+      <input type="hidden" name="email" v-model="associatedEmail">
+      <q-list>
+        {% for emailaddress in user.emailaddress_set.all %}
+          <q-item tag="label" v-ripple class="col-12 col-md">
+            <q-item-section avatar>
+              <q-radio v-model="associatedEmail" val="{{ emailaddress.email }}"></q-radio>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ emailaddress.email }}</q-item-label>
+              <q-item-label caption>{% if emailaddress.verified %}<q-icon name="verified" class="q-mr-xs"></q-icon>Verified{% else %}<q-icon name="report" color="red-12" class="q-mr-xs"></q-icon>Unverified{% endif %}</q-item-label>
+            </q-item-section>
+            {% if emailaddress.primary %}
+              <q-item-section side>
+                <q-chip color="positive" text-color="white" icon="done" size="sm">Primary</q-chip>
+              </q-item-section>
+            {% endif %}
+          </q-item>
+        {% endfor %}
+      </q-list>
 
-  <display-5>Add secondary emails</display-5>
-  <django-form action="{% url 'account_email' %}" :fields="fields" btn-text="Add email"></django-form>
+      <div class="q-gutter-sm q-my-lg">
+        <q-btn unelevated color="primary" name="action_primary" type="submit" :disable="!associatedEmail">Make primary</q-btn>
+        <q-btn unelevated color="primary" name="action_send" type="submit" :disable="!associatedEmail">Re-send verification</q-btn>
+        <q-btn outline color="red-12" name="action_remove" type="submit" :disable="!associatedEmail">Remove</q-btn>
+      </div>
+    </form>
+  {% else %}
+    <p><strong>Warning:</strong> you currently do not have any e-mail address set up. You should really add an e-mail address so you can receive notifications, reset your password, etc.</p>
+  {% endif %}
+
+  <q-separator class="q-my-lg"></q-separator>
+
+  <django-form action="{% url 'account_email' %}" :fields="fields" btn-text="Add email" btn-name="action_add"></django-form>
 {% endblock %}
 
 {% block scripts %}
@@ -74,10 +70,11 @@
       data: function () {
         return {
           visibleDrawer: true,
+          associatedEmail: null,
           fields: [
             {
               name: 'email',
-              label: 'Email',
+              label: 'Email address',
               type: 'email',
               required: true
             }

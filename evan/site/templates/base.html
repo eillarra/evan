@@ -40,16 +40,28 @@
     </noscript>
     <div id="vue" v-cloak>
       <q-layout view="hHh LpR lff">
+        {% if messages %}
+          {% for message in messages %}
+            <django-message message="{{ message }}" level="{{ message.level }}" tags="{{ message.tags }}"></django-message>
+          {% endfor %}
+        {% endif %}
+        {% if form %}
+          {% if form.non_field_errors %}
+            <django-form-error error="{{ form.non_field_errors }}"></django-form-error>
+          {% endif %}
+          {% for field in form %}
+            {% if field.errors %}
+              {% for error in field.errors %}
+                <django-form-error field="{{ field.label }}" error="{{ error }}"></django-form-error>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
         {% block header %}{% endblock %}
         {% block drawer %}{% endblock %}
         {% block page_container %}
           <q-page-container>
             <q-page :class="{'q-py-sm q-px-lg': $q.screen.gt.sm, 'bg-white q-pa-none': $q.screen.lt.md}">
-              {% if messages %}
-                {% for message in messages %}
-                  <django-message message="{{ message }}" level="{{ message.level }}" tags.number="{{ message.tags }}"></django-message>
-                {% endfor %}
-              {% endif %}
               {% block page %}{% endblock %}
             </q-page>
           </q-page-container>

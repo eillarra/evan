@@ -13,15 +13,13 @@
 
     <form method="post" action="{% url 'socialaccount_connections' %}">
       {% csrf_token %}
-      {% if form.non_field_errors %}
-        <div id="errorMsg">{{ form.non_field_errors }}</div>
-      {% endif %}
+      <input type="hidden" name="account" v-model="account">
       <q-list class="row">
       {% for base_account in form.accounts %}
         {% with base_account.get_provider_account as account %}
           <q-item tag="label" v-ripple class="col-12 col-md">
             <q-item-section avatar>
-              <q-radio name="shape" v-model="account" id="id_account_{{ base_account.id }}" val="{{ base_account.id }}" />
+              <q-radio v-model="account" val="{{ base_account.id }}"></q-radio>
             </q-item-section>
             <q-item-section>
               <q-item-label>{{ account.get_brand.name }}</q-item-label>
@@ -31,7 +29,7 @@
         {% endwith %}
       {% endfor %}
       </q-list>
-      <q-btn outline color="red-13" type="submit" class="q-my-md" :disable="!account">Disconnect</q-btn>
+      <q-btn outline color="red-12" type="submit" class="q-my-md" :disable="!account">Disconnect</q-btn>
     </form>
   {% else %}
     <p>You currently have no social network accounts connected to this account.</p>
@@ -50,11 +48,12 @@
     var app = Vue.createApp({
       data: function () {
         return {
+          visibleDrawer: true,
           account: null
         };
       }
     });
-    Evan.utils.registerComponents(app, [DjangoComponents, EvanCommonComponents]);
+    Evan.utils.registerComponents(app, [EvanCommonComponents]);
     app.use(Quasar);
     app.mount('#vue');
   </script>

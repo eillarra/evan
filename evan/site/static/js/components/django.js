@@ -18,6 +18,10 @@ var DjangoComponents = {
           return [];
         }
       },
+      btnName: {
+        type: String,
+        default: null
+      },
       btnText: {
         type: String,
         default: 'Send'
@@ -27,10 +31,10 @@ var DjangoComponents = {
       <form method="post" :action="action">
         <input type="hidden" name="csrfmiddlewaretoken" :value="csrfToken">
         <div class="row q-col-gutter-sm">
-          <q-input dense filled v-for="f in fields" :name="f.name" :label="f.label + ((f.required) ? ' *' : '')" :type="f.type" :required="f.required" class="col-12" :class="f.class" v-model="mutable[f.name]" />
+          <q-input dense filled v-for="f in fields" v-model="mutable[f.name]" :name="f.name" :label="f.label + ((f.required) ? ' *' : '')" :type="f.type" :required="f.required" class="col-12" :class="f.class" />
         </div>
         <slot></slot>
-        <q-btn unelevated color="primary" type="submit" class="q-mt-lg" :disable="!valid">{{ btnText }}</q-btn>
+        <q-btn unelevated :name="btnName" color="primary" type="submit" class="q-mt-lg" :disable="!valid">{{ btnText }}</q-btn>
       </form>
     `,
     computed: {

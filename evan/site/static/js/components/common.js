@@ -1,5 +1,36 @@
 var EvanCommonComponents = {
 
+  'django-form-error': {
+    props: {
+      field: {
+        type: String,
+        default: null
+      },
+      error: {
+        type: String,
+        required: true
+      }
+    },
+    template: '<em class="hidden"></em>',
+    created: function () {
+      Quasar.Notify.create({
+        timeout: 10000,
+        progress: true,
+        html: true,
+        message: (this.field)
+          ? '<strong>' + this.field + '</strong>: ' + this.error
+          : this.error,
+        type: 'negative',
+        actions: [
+          { label: 'Dismiss', color: 'white', handler: function () {} }
+        ],
+        attrs: {
+          role: 'alert'
+        }
+      });
+    }
+  },
+
   'django-message': {
     props: {
       message: {
@@ -12,7 +43,7 @@ var EvanCommonComponents = {
         type: String
       }
     },
-    template: '<span></span>',
+    template: '<em class="hidden"></em>',
     created: function () {
       /*
       DEBUG = 10
@@ -29,10 +60,13 @@ var EvanCommonComponents = {
           25: 'positive',
           30: 'warning',
           40: 'negative'
-        }[this.level] || 'info',
+        }[+this.level] || 'info',
         actions: [
           { label: 'Dismiss', color: 'white', handler: function () {} }
-        ]
+        ],
+        attrs: {
+          role: 'alert'
+        }
       });
     }
   },
