@@ -67,7 +67,9 @@ var Evan = {
     }
   },
   utils: {
-    confirmAction: function (msg, callbackFn) {
+    confirmAction: function (msg, okCallbackFn, cancelCallbackFn) {
+
+
       Quasar.Dialog.create({
         title: 'Confirm action',
         message: msg,
@@ -81,7 +83,7 @@ var Evan = {
           'unelevated': true,
           'color': 'primary'
         }
-      }).onOk(callbackFn);
+      }).onOk(okCallbackFn || function () {}).onCancel(cancelCallbackFn || function () {});
     },
     notifyApiError: function (error) {
       var types = {
