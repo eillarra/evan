@@ -4,8 +4,6 @@
 {% load static %}
 
 
-{% block head_title %}{{ event.name }} - {{ block.super }}{% endblock %}
-
 {% block header %}
   <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
     <q-toolbar>
@@ -24,13 +22,13 @@
     <q-scroll-area class="fit">
       <q-list dense>
         <q-item-label header>Dashboard</q-item-label>
-        <q-item clickable tag="a" href="{% url 'dashboard' %}#/events/">
-          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
-          <q-item-section>Your events</q-item-section>
-        </q-item>
         <q-item clickable tag="a" href="{% url 'dashboard' %}#/registrations/">
           <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
           <q-item-section>Your registrations</q-item-section>
+        </q-item>
+        <q-item clickable tag="a" href="{% url 'dashboard' %}#/events/">
+          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+          <q-item-section>Your events</q-item-section>
         </q-item>
       </q-list>
       <q-list dense>

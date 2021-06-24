@@ -9,7 +9,9 @@
   <display-5>Sign up</display-5>
 
   <django-form action="{% url 'account_signup' %}" :fields="fields" btn-text="Sign up" class="q-mb-lg">
-    {{ form.captcha }}
+    <div class="q-mt-md">
+      {{ form.captcha }}
+    </div>
   </django-form>
 
   <q-separator></q-separator>

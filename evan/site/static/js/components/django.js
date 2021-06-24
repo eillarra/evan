@@ -29,7 +29,7 @@ var DjangoComponents = {
         <div class="row q-col-gutter-sm">
           <q-input dense filled v-for="f in fields" :name="f.name" :label="f.label + ((f.required) ? ' *' : '')" :type="f.type" :required="f.required" class="col-12" :class="f.class" v-model="mutable[f.name]" />
         </div>
-        <slot class="q-mt-md"></slot>
+        <slot></slot>
         <q-btn unelevated color="primary" type="submit" class="q-mt-lg" :disable="!valid">{{ btnText }}</q-btn>
       </form>
     `,

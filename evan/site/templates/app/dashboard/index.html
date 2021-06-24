@@ -24,13 +24,13 @@
     <q-scroll-area class="fit">
       <q-list dense>
         <q-item-label header>Dashboard</q-item-label>
-        <q-item clickable :to="{name: 'events'}">
-          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
-          <q-item-section>Your events</q-item-section>
-        </q-item>
         <q-item clickable :to="{name: 'registrations'}">
           <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
           <q-item-section>Your registrations</q-item-section>
+        </q-item>
+        <q-item clickable :to="{name: 'events'}">
+          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+          <q-item-section>Your events</q-item-section>
         </q-item>
       </q-list>
       <q-list dense>
@@ -233,7 +233,7 @@
       routes: [
         {
           path: '/',
-          redirect: {name: 'events'}
+          redirect: {name: 'registrations'}
         },
         {
           name: 'events',
@@ -249,14 +249,9 @@
         },
         {
           name: 'registrations',
-          path: '/registrations/:uuid?/',
+          path: '/registrations/',
           pathToRegexpOptions: {strict: true},
-          component: RegistrationsView,
-          props: function (route) {
-            return {
-              uuid: route.params.uuid
-            };
-          }
+          component: RegistrationsView
         }
       ]
     });

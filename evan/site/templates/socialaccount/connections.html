@@ -1,46 +1,62 @@
 {% extends 'users/base.html' %}
 
+{% load compress %}
 
-{% block head_title %}Social accounts - Settings{% endblock %}
+
+{% block head_title %}Social accounts - {{ block.super }}{% endblock %}
 
 {% block content %}
-    <h4 class="display-sm mb-4">Account connections</h4>
-    {% if form.accounts %}
-        <p>You can sign in to your account using any of the following third-party accounts:</p>
-        <form method="post" action="{% url 'socialaccount_connections' %}">
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div id="errorMsg">{{ form.non_field_errors }}</div>
-            {% endif %}
-            <table class="table table-sm table-borderless">
-            {% for base_account in form.accounts %}
-                {% with base_account.get_provider_account as account %}
-                    <tr>
-                        <td>
-                            <div class="custom-control custom-radio">
-                                <input id="id_account_{{ base_account.id }}" type="radio" name="account" value="{{ base_account.id }}" class="custom-control-input">
-                                <label class="custom-control-label" for="id_account_{{ base_account.id }}">
-                                    <span>{{ account.get_brand.name }}</span>
-                                </label>
-                            </div>
-                        </td>
-                        <td class="text-right">
-                            <small><em>{{ account }}</em></small>
-                        </td>
-                    </tr>
-                {% endwith %}
-            {% endfor %}
-            </table>
-            <button type="submit" class="btn btn-sm btn-outline-danger mt-2">Disconnect</button>
-        </form>
-    {% else %}
-        <p>You currently have no social network accounts connected to this account.</p>
-    {% endif %}
+  <display-5>Account connections</display-5>
 
-    <hr class="my-5">
-    <h6 class="mb-3">Add a 3rd party account</h6>
-    <ul class="socialaccounts bg-light rounded">
-        {% include 'socialaccount/snippets/provider_list.html' with process='connect' %}
-    </ul>
-    {% include 'socialaccount/snippets/login_extra.html' %}
+  {% if form.accounts %}
+    <p>You can sign in to your account using any of the following third-party accounts:</p>
+
+    <form method="post" action="{% url 'socialaccount_connections' %}">
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div id="errorMsg">{{ form.non_field_errors }}</div>
+      {% endif %}
+      <q-list class="row">
+      {% for base_account in form.accounts %}
+        {% with base_account.get_provider_account as account %}
+          <q-item tag="label" v-ripple class="col-12 col-md">
+            <q-item-section avatar>
+              <q-radio name="shape" v-model="account" id="id_account_{{ base_account.id }}" val="{{ base_account.id }}" />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ account.get_brand.name }}</q-item-label>
+              <q-item-label caption>{{ account }}</q-item-label>
+            </q-item-section>
+          </q-item>
+        {% endwith %}
+      {% endfor %}
+      </q-list>
+      <q-btn outline color="red-13" type="submit" class="q-my-md" :disable="!account">Disconnect</q-btn>
+    </form>
+  {% else %}
+    <p>You currently have no social network accounts connected to this account.</p>
+  {% endif %}
+
+  <q-separator class="q-my-lg"></q-separator>
+
+  <display-5>Add a 3rd party account</display-5>
+  {% include 'socialaccount/snippets/provider_list.html' with process='connect' %}
+  {% include 'socialaccount/snippets/login_extra.html' %}
+{% endblock %}
+
+{% block scripts %}
+{% compress js inline %}
+  <script type="text/javascript">
+    var app = Vue.createApp({
+      data: function () {
+        return {
+          account: null
+        };
+      }
+    });
+    Evan.utils.registerComponents(app, [DjangoComponents, EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
+  </script>
+{% endcompress %}
 {% endblock %}

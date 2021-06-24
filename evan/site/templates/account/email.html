@@ -1,10 +1,12 @@
 {% extends 'users/base.html' %}
 
+{% load compress %}
 
-{% block head_title %}Emails - Settings - {{ block.super }}{% endblock %}
+
+{% block head_title %}Emails - {{ block.super }}{% endblock %}
 
 {% block content %}
-    <h4 class="mb-4">Emails</h4>
+  <display-5>Emails</display-5>
 
     {% if user.emailaddress_set.all %}
         <p>The following e-mail addresses are associated with your Evan account. The primary email will be used for communications:</p>
@@ -45,15 +47,14 @@
         <p><strong>Warning:</strong> you currently do not have any e-mail address set up. You should really add an e-mail address so you can receive notifications, reset your password, etc.</p>
     {% endif %}
     <hr class="my-5">
-    <h6 class="mb-3">Add secondary emails</h6>
-    <form method="post" action="{% url 'account_email' %}">
-        {% csrf_token %}
-        {{ form }}
-        <button name="action_add" type="submit" class="btn btn-primary mt-2">Add email</button>
-    </form>
+
+  <display-5>Add secondary emails</display-5>
+  <django-form action="{% url 'account_email' %}" :fields="fields" btn-text="Add email"></django-form>
 {% endblock %}
 
-{% block extra_scripts %}
+{% block scripts %}
+{% compress js inline %}
+
     <script type="text/javascript">
         (function() {
             var message = 'Do you really want to remove the selected e-mail address?';
@@ -67,4 +68,26 @@
             }
         })();
     </script>
+
+  <script type="text/javascript">
+    var app = Vue.createApp({
+      data: function () {
+        return {
+          visibleDrawer: true,
+          fields: [
+            {
+              name: 'email',
+              label: 'Email',
+              type: 'email',
+              required: true
+            }
+          ]
+        };
+      }
+    });
+    Evan.utils.registerComponents(app, [DjangoComponents, EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
+  </script>
+{% endcompress %}
 {% endblock %}

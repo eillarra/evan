@@ -11,7 +11,7 @@
           <evan-logo></evan-logo>
         </a>
       </div>
-      <q-card flat class="q-pa-lg">
+      <q-card flat class="q-py-lg" :class="{'q-px-lg': $q.screen.gt.sm}">
         {% block content %}{% endblock %}
       </q-card>
     </div>
