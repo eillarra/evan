@@ -78,6 +78,9 @@
         <q-item>
           <q-item-section avatar><q-icon name="accessibility_new"></q-icon></q-item-section>
           <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
+          <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
+            <q-icon :name="tmpObj.user.profile.custom_data.gender" size="14px"></q-icon>
+          </q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
         <q-item>

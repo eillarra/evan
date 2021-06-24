@@ -1,4 +1,3 @@
-var NICE_DATE_FORMAT = 'dddd, MMM D';
 var DJANGO_VARS = document.querySelector('html').dataset;
 
 
@@ -8,6 +7,8 @@ function modelFromUrl(url) {
   m = (m.substring(m.length - 1) == 's') ? m.slice(0, -1) : m;
   return m;
 }
+
+var EventEmitter = new TinyEmitter();
 
 var Evan = {
   api: {
@@ -68,8 +69,6 @@ var Evan = {
   },
   utils: {
     confirmAction: function (msg, okCallbackFn, cancelCallbackFn) {
-
-
       Quasar.Dialog.create({
         title: 'Confirm action',
         message: msg,

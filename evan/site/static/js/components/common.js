@@ -1,3 +1,7 @@
+var CommonMarkReader = new commonmark.Parser({safe: true, smart: true});
+var CommonMarkWriter = new commonmark.HtmlRenderer();
+
+
 var EvanCommonComponents = {
 
   'django-form-error': {
@@ -185,7 +189,7 @@ var EvanCommonComponents = {
         default: 'check'
       }
     },
-    template: '<q-chip square :color="color" text-color="white" size="xs" :icon="icon" class="evan-chip">Yes</q-chip>'
+    template: '<q-chip :color="color" text-color="white" size="xs" :icon="icon" class="evan-chip">Yes</q-chip>'
   },
 
   'evan-no-chip': {
@@ -199,7 +203,7 @@ var EvanCommonComponents = {
         default: 'close'
       }
     },
-    template: '<q-chip square outline :color="color" size="xs" :icon="icon" class="evan-chip">No</q-chip>'
+    template: '<q-chip outline :color="color" size="xs" :icon="icon" class="evan-chip">No</q-chip>'
   },
 
   'evan-logo': {

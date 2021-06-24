@@ -527,16 +527,6 @@
       },
       computed: _.extend(
         Vuex.mapState(['event', 'registrations']), {
-        items: function () {
-          if (this.query == '') return this.registrations;
-          var qs = this.query.toLowerCase().split(' ');
-
-          return this.registrations.filter(function (obj) {
-            return _.every(qs, function (q) {
-              return obj._q.indexOf(q) !== -1;
-            });
-          });
-        }
       })
     };
 
