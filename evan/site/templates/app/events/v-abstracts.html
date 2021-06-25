@@ -13,6 +13,19 @@
         </template>
       </q-input>
       <q-table dense row-key="uuid" :rows="abstracts" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+        <template v-slot:no-data="{ icon, message, filter }">
+          <evan-no-data :message="message" :filter="filter" />
+        </template>
+        <template v-slot:body-cell-view="props">
+          <q-td auto-width :props="props">
+            <q-icon name="visibility" color="primary" />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-uuid="props">
+          <q-td auto-width :props="props">
+            <samp><small>{{ props.row.uuid }}</small></samp>
+          </q-td>
+        </template>
       </q-table>
     </q-card>
 

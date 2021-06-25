@@ -199,11 +199,21 @@
           table: {
             columns: [
               {
+                name: 'view'
+              },
+              {
                 name: 'uuid',
                 field: 'uuid',
                 sortable: true,
                 align: 'left',
                 label: 'ID'
+              },
+              {
+                name: 'title',
+                field: 'title',
+                sortable: true,
+                align: 'left',
+                label: 'Title'
               }
             ],
             pagination: {
@@ -240,21 +250,14 @@
           table: {
             columns: [
               {
-                name: 'view'
+                name: 'edit'
               },
               {
-                name: 'uuid',
-                field: 'uuid',
+                name: 'key',
+                field: 'key',
                 sortable: true,
-                label: 'ID',
-                align: 'left',
-              },
-              {
-                name: 'user_name',
-                field: 'user_name',
-                sortable: true,
-                align: 'left',
-                label: 'User'
+                label: 'Key',
+                align: 'left'
               }
             ],
             pagination: {

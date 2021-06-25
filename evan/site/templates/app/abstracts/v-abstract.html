@@ -15,7 +15,7 @@
         </div>
 
         <div class="q-mt-xl">
-          <q-btn unelevated @click.prevent="createOrUpdate(obj)" :disable="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" label="Submit abstract" multiple></q-btn>
+          <q-btn unelevated @click.prevent="createOrUpdate(obj)" :disable="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" :label="(obj.url) ? 'Update abstract' : 'Submit abstract'"></q-btn>
           <p class="q-mt-md text-orange" v-show="!formIsValid">
             <i class="material-icons q-mr-sm">block</i>
             <strong>Please fill in mandatory fields.</strong>

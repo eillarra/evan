@@ -35,7 +35,7 @@ class Abstract(models.Model):
         return self.user_id == user.id
 
     def viewable_by_user(self, user) -> bool:
-        return self.editable_by_user(user)
+        return self.editable_by_user(user) or self.event.editable_by_user(user)
 
     def get_absolute_url(self) -> str:
         return reverse("abstract:app", args=[self.uuid])

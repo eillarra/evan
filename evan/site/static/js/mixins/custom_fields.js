@@ -56,6 +56,7 @@ var CustomFieldsMixin = {
       } else {
         Evan.api.create(this.createUrl, obj, function (res) {
           window.history.pushState('', '', res.data.href + self.$route.href);
+          window.scrollTo(0, 0);
           self.obj = res.data;
         });
       }

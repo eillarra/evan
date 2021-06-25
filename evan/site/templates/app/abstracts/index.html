@@ -36,6 +36,13 @@
           </q-item-section>
         </q-item>
       </q-list>
+      <q-list dense>
+        <q-item-label header>About</q-item-label>
+        <q-item clickable :to="{name: 'event'}">
+          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+          <q-item-section>Event</q-item-section>
+        </q-item>
+      </q-list>
     </q-scroll-area>
   </q-drawer>
 {% endblock %}
@@ -47,15 +54,17 @@
 
 {% block vue_templates %}
   {% include './v-abstract.html' %}
+  {% include '../_shared_views/v-event-overview.html' %}
   {% include '../_shared_views/v-profile.html' %}
 {% endblock %}
 
 {% block scripts %}
+{% compress js file app_abstracts %}
   <script src="{% static 'js/components/forms.js' %}"></script>
   <script src="{% static 'js/mixins/custom_fields.js' %}"></script>
+  <script src="{% static 'js/mixins/event.js' %}"></script>
   <script src="{% static 'js/mixins/profile.js' %}"></script>
   <script src="{% static 'js/mixins/uploader.js' %}"></script>
-{% compress js file app_abstracts %}
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
@@ -63,8 +72,6 @@
       state: {
         user: null,
         event: null,
-        endpoint: VARS.urlAbstract,
-        isNew: VARS.urlAbstract == '',
         abstract: null
       },
       mutations: {
@@ -86,9 +93,10 @@
         },
         getAbstract: function (state) {
           var self = this;
+          var endpoint = VARS.urlAbstract;
 
-          if (!state.isNew) {
-            Evan.api.request('get', state.endpoint).then(function (res) {
+          if (endpoint) {
+            Evan.api.request('get', endpoint).then(function (res) {
               state.abstract = res.data;
             });
           } else {
@@ -150,6 +158,14 @@
       }
     };
 
+    var EventView = {
+      template: '#v-event',
+      mixins: [EventDatesMixin],
+      computed: _.extend(
+        Vuex.mapState(['event']), {
+      })
+    };
+
     var ProfileView = {
       template: '#v-profile',
       mixins: [ProfileMixin],
@@ -170,6 +186,12 @@
           path: '/abstract/',
           pathToRegexpOptions: {strict: true},
           component: AbstractView
+        },
+        {
+          name: 'event',
+          path: '/event/',
+          pathToRegexpOptions: {strict: true},
+          component: EventView
         },
         {
           name: 'profile',
