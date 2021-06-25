@@ -53,7 +53,7 @@ class RegistrationView(generic.DetailView):
         registration = self.get_object()
 
         if not registration.editable_by_user(request.user):
-            messages.error(request, "You don't have the necessary permissions to update this registration.")
+            messages.error(request, "You don't have the necessary permissions to view this registration.")
             raise PermissionDenied
 
         if registration.event.is_closed:

@@ -12,6 +12,7 @@ class Router(DefaultRouter):
         self.register(r"user", views.UserViewSet, basename="user")
 
         self.register(r"events", views.EventViewSet, basename="event")
+        self.register(r"events/(?P<code>[\w-]+)/abstracts", views.AbstractsViewSet, basename="abstracts")
         self.register(r"events/(?P<code>[\w-]+)/contents", views.ContentsViewSet, basename="contents")
         self.register(r"events/(?P<code>[\w-]+)/coupons", views.CouponsViewSet, basename="coupons")
         self.register(r"events/(?P<code>[\w-]+)/registrations", views.RegistrationsViewSet, basename="registrations")
@@ -21,10 +22,13 @@ class Router(DefaultRouter):
         self.register(r"events/(?P<code>[\w-]+)/tracks", views.TracksViewSet, basename="tracks")
         self.register(r"events/(?P<code>[\w-]+)/venues", views.VenuesViewSet, basename="venues")
 
+        self.register(r"events/(?P<code>[\w-]+)/abstract", views.AbstractCreateViewSet, basename="submit_abstract")
         self.register(r"events/(?P<code>[\w-]+)/register", views.RegistrationCreateViewSet, basename="register")
 
+        self.register(r"abstracts", views.AbstractViewSet, basename="abstract")
         self.register(r"contents", views.ContentViewSet, basename="content")
         self.register(r"coupons", views.CouponViewSet, basename="coupon")
+        self.register(r"files", views.FileViewSet, basename="file")
         self.register(r"registrations", views.RegistrationViewSet, basename="registration")
         self.register(r"rooms", views.RoomViewSet, basename="room")
         self.register(r"sessions", views.SessionViewSet, basename="session")

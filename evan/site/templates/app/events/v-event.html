@@ -9,9 +9,9 @@
       <div class="row no-wrap q-mb-sm">
         <display-5>Event information</display-5>
         <q-space />
-        <a v-if="event.website" :href="event.website" target="_blank" rel="noopener">
-          <q-btn no-caps outline rounded color="primary" label="Open website" />
-        </a>
+        <div v-if="event.website">
+          <q-btn type="a" :href="event.website" target="_blank" rel="noopener" no-caps outline rounded color="primary" label="Open website" />
+        </div>
       </div>
       <div class="q-col-gutter-md row items-start q-mb-md">
         <q-input filled dense v-model="event.code" readonly label="Evan ID" class="col-12 col-sm-4"></q-input>
@@ -56,6 +56,10 @@
               </span>
               <a :href="'https://evan.ugent.be/r/' + event.code + '/'" target="_blank" class="inherit text-primary">
                 <q-icon name="assignment_turned_in" class="q-mr-sm" />Registrations: <strong>evan.ugent.be/r/{{ event.code }}</strong></a><br>
+              <span v-if="event.main_config.abstracts">
+                <a :href="'https://evan.ugent.be/a/' + event.code + '/'" target="_blank" class="inherit text-primary">
+                  <q-icon name="text_snippet" class="q-mr-sm" />Abstract submission: <strong>evan.ugent.be/a/{{ event.code }}</strong></a><br>
+              </span>
               <a v-if="event.hashtag" :href="'https://twitter.com/search?q=%23' + event.hashtag" target="_blank" class="inherit text-primary">
                 <q-icon name="search" class="q-mr-sm" />Hashtag: <strong>#{{ event.hashtag }}</strong></a>
             </q-card-section>

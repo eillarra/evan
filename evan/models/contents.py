@@ -1,30 +1,5 @@
-import os
-
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
-
-
-class Image(models.Model):
-    """
-    Application images.
-    """
-
-    FOLDER = "public/images"
-
-    image = models.FileField("Image", upload_to=FOLDER, null=True, blank=True)
-    position = models.PositiveSmallIntegerField(default=0)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="images")
-    object_id = models.IntegerField()
-    content_object = GenericForeignKey("content_type", "object_id")
-
-    class Meta:
-        ordering = ["content_type", "object_id", "position"]
-
-    def delete(self, *args, **kwargs):
-        if os.path.isfile(self.image.path):
-            os.remove(self.image.path)
-        super().delete(*args, **kwargs)
 
 
 class Content(models.Model):
@@ -37,7 +12,7 @@ class Content(models.Model):
     value = models.TextField(null=True, blank=True)
     marked = models.BooleanField(default=True)
     notes = models.CharField(max_length=255, blank=True)
-    images = GenericRelation("evan.Image")
+    images = GenericRelation("evan.File")
 
     class Meta:
         indexes = [

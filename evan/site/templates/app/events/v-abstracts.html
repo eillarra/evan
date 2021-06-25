@@ -12,6 +12,8 @@
           <q-icon name="search" />
         </template>
       </q-input>
+      <q-table dense row-key="uuid" :rows="abstracts" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+      </q-table>
     </q-card>
 
   </div>

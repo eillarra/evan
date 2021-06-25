@@ -68,7 +68,7 @@
         </q-item>
         <q-item v-if="event.main_config.abstracts" clickable :to="{name: 'abstracts'}">
           <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
-          <q-item-section>Paper abstracts</q-item-section>
+          <q-item-section>Abstracts</q-item-section>
         </q-item>
       </q-list>
     </q-scroll-area>
@@ -76,7 +76,7 @@
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
+  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-abstracts="{% url 'v1:abstracts-list' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
   <router-view class="q-pt-lg"></router-view>
   <div class="row q-col-gutter-lg items-stretch q-pt-lg">
     <router-view name="left" class="col-12 col-md-6"></router-view>
@@ -137,6 +137,11 @@
         }
       },
       mutations: {
+        getAbstracts: function (state) {
+          Evan.api.request('get', VARS.urlAbstracts).then(function (res) {
+            state.abstracts = res.data;
+          });
+        },
         getContents: function (state) {
           Evan.api.request('get', VARS.urlContents).then(function (res) {
             state.contents = res.data;
@@ -188,10 +193,33 @@
 
     var AbstractsView = {
       template: '#v-abstracts',
-      mixins: [QueryMixin],
+      mixins: [QueryMixin, EventRelatedMixin],
+      data: function () {
+        return {
+          table: {
+            columns: [
+              {
+                name: 'uuid',
+                field: 'uuid',
+                sortable: true,
+                align: 'left',
+                label: 'ID'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'uuid',
+              descending: false
+            }
+          }
+        };
+      },
       computed: _.extend(
-        Vuex.mapState(['event']), {
-      })
+        Vuex.mapState(['event', 'abstracts']), {
+      }),
+      created: function () {
+        this.$store.commit('getAbstracts');
+      }
     };
 
     var AnalyticsView = {
@@ -212,14 +240,21 @@
           table: {
             columns: [
               {
-                name: 'edit'
+                name: 'view'
               },
               {
-                name: 'key',
-                field: 'key',
+                name: 'uuid',
+                field: 'uuid',
+                sortable: true,
+                label: 'ID',
+                align: 'left',
+              },
+              {
+                name: 'user_name',
+                field: 'user_name',
                 sortable: true,
                 align: 'left',
-                label: 'Key'
+                label: 'User'
               }
             ],
             pagination: {

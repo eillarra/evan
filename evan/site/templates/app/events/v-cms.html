@@ -6,9 +6,9 @@
       <div class="row no-wrap q-mb-sm">
         <display-5>Content management</display-5>
         <q-space />
-        <a v-if="event && event.website" :href="event.website" target="_blank" rel="noopener">
-          <q-btn no-caps outline rounded color="primary" label="Open website" />
-        </a>
+        <div v-if="event.website">
+          <q-btn type="a" :href="event.website" target="_blank" rel="noopener" no-caps outline rounded color="primary" label="Open website" />
+        </div>
       </div>
       <q-table dense row-key="key" :rows="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">

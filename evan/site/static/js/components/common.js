@@ -66,7 +66,11 @@ var EvanCommonComponents = {
           40: 'negative'
         }[+this.level] || 'info',
         actions: [
-          { label: 'Dismiss', color: 'white', handler: function () {} }
+          {
+            label: 'Dismiss',
+            color: (+this.level == 30) ? 'dark' : 'white',
+            handler: function () {}
+          }
         ],
         attrs: {
           role: 'alert'
@@ -173,8 +177,14 @@ var EvanCommonComponents = {
   },
 
   'evan-remove-icon': {
+    props: {
+      size: {
+        type: String,
+        default: null
+      }
+    },
     template: `
-      <q-icon name="backspace" color="red-12" class="cursor-pointer" />
+      <q-icon name="backspace" color="red-12" class="cursor-pointer" :size="size" />
     `
   },
 

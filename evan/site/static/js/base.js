@@ -70,7 +70,6 @@ var Evan = {
   utils: {
     confirmAction: function (msg, okCallbackFn, cancelCallbackFn) {
       Quasar.Dialog.create({
-        title: 'Confirm action',
         message: msg,
         class: 'evan-confirm-dialog q-pa-sm',
         focus: 'none',
@@ -91,6 +90,12 @@ var Evan = {
         500: 'negative'
       }
 
+      var textColors = {
+        400: 'grey-8',
+        401: 'grey-8',
+        500: 'white'
+      }
+
       var caption = [error.response.status, ' ', error.response.statusText].join('').toUpperCase() || null;
       var msg = null;
 
@@ -98,9 +103,9 @@ var Evan = {
       if (error.response.status == 400) {
         var errors = [];
         _.each(_.keys(error.response.data), function (k) {
-          errors.push('`' + k + '`: ' + error.response.data[k].join(' '))
+          errors.push('<strong>' + k + '</strong>: ' + error.response.data[k].join(' '))
         });
-        msg = errors.join('\n') || null;
+        msg = errors.join('<br>') || null;
       }
 
       // 500 Internal Server Error
@@ -109,18 +114,32 @@ var Evan = {
       }
 
       Quasar.Notify.create({
-        timeout: 5000,
-        type: types[error.response.status] || 'warning',
+        timeout: 10000,
+        progress: true,
+        html: true,
         message: msg,
         caption: caption,
-        icon: null
+        type: types[error.response.status] || 'warning',
+        actions: [
+          { label: 'Dismiss', color: 'white', handler: function () {} }
+        ],
+        actions: [
+          {
+            label: 'Dismiss',
+            color: textColors[error.response.status] || 'grey-8',
+            handler: function () {}
+          }
+        ],
+        attrs: {
+          role: 'alert'
+        }
       });
     },
     notifySuccess: function (msg) {
       Quasar.Notify.create({
         timeout: 2500,
         message: msg,
-        icon: null
+        type: 'positive'
       });
     },
     registerComponents: function (app, collectionList) {
