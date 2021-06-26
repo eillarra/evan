@@ -4,7 +4,7 @@ from evan.models import Event, Session, validate_date
 
 
 class SessionSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:session-detail")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:session-detail")
 
     class Meta:
         model = Session

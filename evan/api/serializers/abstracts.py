@@ -7,10 +7,10 @@ from .users import UserSerializer
 
 
 class AbstractSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:abstract-detail", lookup_field="uuid")
-    url_files = serializers.HyperlinkedIdentityField(view_name="v1:abstract-files", lookup_field="uuid")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:abstract-detail", lookup_field="uuid")
+    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:abstract-files", lookup_field="uuid")
     user = UserSerializer(read_only=True)
-    href = serializers.URLField(source="get_absolute_url", read_only=True)
+    url = serializers.URLField(source="get_absolute_url", read_only=True)
     files = FileSerializer(many=True, read_only=True)
     custom_data = serializers.JSONField()
 

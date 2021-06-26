@@ -25,23 +25,23 @@ var Evan = {
     create: function (url, obj, callbackFn, customMsg) {
       this.request('post', url, obj).then(function (res) {
         if (callbackFn) callbackFn(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(res.data.url || url) + ' created.');
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(res.data.self || url) + ' created.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
     },
     update: function (obj, callbackFn, customMsg) {
-      this.request('put', obj.url, obj).then(function (res) {
+      this.request('put', obj.self, obj).then(function (res) {
         if (callbackFn) callbackFn(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.url) + ' updated.');
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.self) + ' updated.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
     },
     remove: function (obj, callbackFn, customMsg) {
-      this.request('delete', obj.url).then(function (res) {
+      this.request('delete', obj.self).then(function (res) {
         if (callbackFn) callbackFn(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.url) + ' deleted.');
+        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.self) + ' deleted.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });

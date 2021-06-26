@@ -16,9 +16,10 @@ class ProfileSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
 
 
 class UserSerializer(NestedUpdateMixin, serializers.ModelSerializer):
+    self = serializers.HyperlinkedIdentityField(view_name="v1:user-detail")
     profile = ProfileSerializer()
 
     class Meta:
         model = get_user_model()
-        fields = ("username", "email", "first_name", "last_name", "profile", "url")
+        fields = ("self", "username", "email", "first_name", "last_name", "profile")
         read_only_fields = ("username",)

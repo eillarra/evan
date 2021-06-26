@@ -15,7 +15,7 @@
         </div>
 
         <div class="q-mt-xl">
-          <q-btn unelevated @click.prevent="createOrUpdate(obj)" :disable="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" :label="(obj.url) ? 'Update abstract' : 'Submit abstract'"></q-btn>
+          <q-btn unelevated @click.prevent="createOrUpdate(obj)" :disable="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" :label="(obj.self) ? 'Update abstract' : 'Submit abstract'"></q-btn>
           <p class="q-mt-md text-orange" v-show="!formIsValid">
             <i class="material-icons q-mr-sm">block</i>
             <strong>Please fill in mandatory fields.</strong>
@@ -25,7 +25,7 @@
       </q-card>
     </div>
 
-    <div v-if="obj.url_files" class="col-12 col-md-4">
+    <div v-if="obj.self" class="col-12 col-md-4">
       <q-card flat class="q-pa-lg full-height">
         <display-5>Files</display-5>
         <evan-file-list :files="obj.files" />

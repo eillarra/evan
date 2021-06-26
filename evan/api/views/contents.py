@@ -8,7 +8,7 @@ from ..viewsets import EventRelatedListOnlyViewSet
 
 
 class ContentsViewSet(EventRelatedListOnlyViewSet):
-    queryset = Content.objects.prefetch_related("images").all()
+    queryset = Content.objects.prefetch_related("files").all()
     pagination_class = None
     serializer_class = ContentSerializer
 

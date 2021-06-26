@@ -444,7 +444,7 @@ var EvanFormComponents = {
           </q-item-section>
           <q-item-section side>
             <div class="text-grey-8 q-gutter-sm">
-              <q-btn flat dense icon="visibility" size="sm" type="a" :href="item.href" target="_blank" />
+              <q-btn flat dense icon="visibility" size="sm" type="a" :href="item.url" target="_blank" />
               <q-btn flat dense icon="backspace" color="red-12" size="sm" @click.prevent="remove(item)" />
             </div>
           </q-item-section>
@@ -454,7 +454,7 @@ var EvanFormComponents = {
     computed: {
       items: function () {
         return this.files.map(function (obj) {
-          obj.filename = obj.href.split('\\').pop().split('/').pop();
+          obj.filename = obj.url.split('\\').pop().split('/').pop();
           return obj;
         });
       }

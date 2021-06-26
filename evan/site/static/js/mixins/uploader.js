@@ -21,7 +21,7 @@ var UploaderMixin = {
     uploaderFactory: function (files) {
       var filename = slugify(files[0].name).toLowerCase();
       return {
-        url: this.obj.url_files,
+        url: this.obj.rel_files,
         method: 'POST',
         headers: [
           { name: 'Content-Disposition', value: 'attachment; filename=' + filename },

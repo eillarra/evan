@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from typing import List
 
 
 class Content(models.Model):
@@ -10,9 +11,9 @@ class Content(models.Model):
     event = models.ForeignKey("evan.Event", related_name="contents", on_delete=models.CASCADE)
     key = models.CharField(max_length=32)
     value = models.TextField(null=True, blank=True)
-    marked = models.BooleanField(default=True)
-    notes = models.CharField(max_length=255, blank=True)
-    images = GenericRelation("evan.File")
+    files = GenericRelation("evan.File")
+
+    config = models.JSONField(default=dict)
 
     class Meta:
         indexes = [

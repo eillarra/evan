@@ -5,8 +5,8 @@ from .files import FileSerializer
 
 
 class ContentSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:content-detail")
-    images = FileSerializer(many=True, read_only=True)
+    self = serializers.HyperlinkedIdentityField(view_name="v1:content-detail")
+    files = FileSerializer(many=True, read_only=True)
 
     class Meta:
         model = Content

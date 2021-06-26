@@ -25,7 +25,7 @@
     <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.key" readonly label="Key"></q-input>
-        <evan-markdown v-if="tmpObj.marked" v-model="tmpObj.value" label="Content"></evan-markdown>
+        <evan-markdown v-if="tmpObj.config.marked" v-model="tmpObj.value" label="Content"></evan-markdown>
         <q-input v-else filled dense v-model="tmpObj.value" label="Content" type="textarea" autogrow></q-input>
       </div>
     </evan-editor>

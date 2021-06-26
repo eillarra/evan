@@ -18,7 +18,7 @@ var EventRelatedMixin = {
     createOrUpdate: function (obj) {
       var self = this;
 
-      if (_.has(obj, 'url')) {
+      if (_.has(obj, 'self')) {
         Evan.api.update(obj, function (res) {
           self.$store.commit('update', {var: self.stateVar, action: 'update', obj: res.data});
         });

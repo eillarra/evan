@@ -14,7 +14,7 @@
         </div>
       </div>
       <q-input filled dense v-model="query" placeholder="Search by ID, attendee name, affiliation..." type="search" class="q-mb-md">
-        <template v-slot:append>
+        <template v-slot:prepend>
           <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
           <q-icon name="search" />
         </template>

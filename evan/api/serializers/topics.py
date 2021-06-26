@@ -4,7 +4,7 @@ from evan.models import Topic
 
 
 class TopicSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:topic-detail")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:topic-detail")
 
     class Meta:
         model = Topic

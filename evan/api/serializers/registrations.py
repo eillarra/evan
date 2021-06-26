@@ -7,7 +7,7 @@ from .users import UserSerializer
 
 
 class CouponSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:coupon-detail")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:coupon-detail")
 
     class Meta:
         model = Coupon
@@ -24,11 +24,11 @@ class PersonSerializer(serializers.ModelSerializer):
 
 
 class RegistrationSerializer(WritableNestedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:registration-detail", lookup_field="uuid")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:registration-detail", lookup_field="uuid")
     user = UserSerializer(read_only=True)
     coupon = CouponSerializer(read_only=True)
-    href = serializers.URLField(source="get_absolute_url", read_only=True)
-    href_payment = serializers.URLField(source="get_payment_url", read_only=True)
+    url = serializers.URLField(source="get_absolute_url", read_only=True)
+    payment_url = serializers.URLField(source="get_payment_url", read_only=True)
     custom_data = serializers.JSONField()
 
     class Meta:

@@ -4,7 +4,7 @@ from evan.models import Room, Venue
 
 
 class RoomSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:room-detail")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:room-detail")
 
     class Meta:
         model = Room
@@ -14,7 +14,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
 
 class VenueSerializer(serializers.ModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name="v1:venue-detail")
+    self = serializers.HyperlinkedIdentityField(view_name="v1:venue-detail")
     rooms = RoomSerializer(many=True, read_only=True)
 
     class Meta:
