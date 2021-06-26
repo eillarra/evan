@@ -23,3 +23,6 @@ class Content(models.Model):
 
     def __str__(self) -> str:
         return self.key
+
+    def editable_by_user(self, user) -> bool:
+        return self.event.editable_by_user(user)
