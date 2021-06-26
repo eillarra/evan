@@ -2,6 +2,7 @@ import os
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.db import models
 
 
@@ -39,4 +40,5 @@ class File(models.Model):
         super().delete(*args, **kwargs)
 
     def get_absolute_url(self) -> str:
-        return self.file.url
+        site = Site.objects.get_current()
+        return f"https://{site.domain}{self.file.url}"
