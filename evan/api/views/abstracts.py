@@ -58,7 +58,7 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         abstract = self.get_object()
 
         try:
-            max_files = abstract.event.main_config["abstracts"]["max_files"]
+            max_files = abstract.event.config["abstracts"]["max_files"]
             if abstract.files.count() >= max_files:
                 raise ValidationError({"files": [f"You have reached the limit on number of files ({max_files})."]})
         except KeyError:

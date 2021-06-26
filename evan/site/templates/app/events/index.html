@@ -49,7 +49,7 @@
           <q-item-section>Coupons</q-item-section>
         </q-item>
       </q-list>
-      <q-list v-if="event.main_config.cms" dense>
+      <q-list v-if="event.config.cms" dense>
         <q-item-label header>Website</q-item-label>
         <q-item clickable :to="{name: 'cms'}">
           <q-item-section avatar><q-icon name="wysiwyg"></q-icon></q-item-section>
@@ -66,7 +66,7 @@
           <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
           <q-item-section>Registrations</q-item-section>
         </q-item>
-        <q-item v-if="event.main_config.abstracts" clickable :to="{name: 'abstracts'}">
+        <q-item v-if="event.config.abstracts" clickable :to="{name: 'abstracts'}">
           <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
           <q-item-section>Abstracts</q-item-section>
         </q-item>

@@ -1,11 +1,11 @@
 <script type="text/x-template" id="v-abstract">
 {% verbatim %}
-  <div v-if="event && event.main_config.abstracts && obj" class="row q-col-gutter-lg items-stretch">
+  <div v-if="event && event.config.abstracts && obj" class="row q-col-gutter-lg items-stretch">
 
     <div class="col-12 col-md-8">
       <q-card flat class="q-pa-lg full-height">
         <display-5>Abstract submission</display-5>
-        <marked v-if="event.main_config.abstracts.help" :text="event.main_config.abstracts.help" />
+        <marked v-if="event.config.abstracts.help" :text="event.config.abstracts.help" />
 
         <div class="q-mt-lg q-gutter-md">
           <q-input filled dense v-model="obj.title" label="Title *" />
@@ -29,8 +29,8 @@
       <q-card flat class="q-pa-lg full-height">
         <display-5>Files</display-5>
         <evan-file-list :files="obj.files" />
-        <div class="rounded-borders" v-show="obj.files.length < event.main_config.abstracts.max_files">
-          <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" accept=".pdf" :max-files="event.main_config.abstracts.max_files" :max-file-size="maxFileSize" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" label="Upload a PDF" color="dark" class="full-width bg-grey-2" />
+        <div class="rounded-borders" v-show="obj.files.length < event.config.abstracts.max_files">
+          <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" accept=".pdf" :max-files="event.config.abstracts.max_files" :max-file-size="maxFileSize" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" label="Upload a PDF" color="dark" class="full-width bg-grey-2" />
         </div>
       </q-card>
     </div>

@@ -65,9 +65,9 @@ class Event(models.Model):
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(null=True, blank=True)
 
+    config = models.JSONField(default=dict)
     custom_data = models.JSONField(default=dict)
     custom_fields = models.JSONField(default=dict)
-    main_config = models.JSONField(default=dict)
 
     registrations_count = models.PositiveIntegerField(default=0)
 

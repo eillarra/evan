@@ -27,7 +27,7 @@ class AbstractRedirectView(generic.DetailView):
         except Abstract.DoesNotExist:
             pass
 
-        if "abstracts" not in event.main_config or not event.main_config["abstracts"]:
+        if "abstracts" not in event.config or not event.config["abstracts"]:
             messages.error(request, "This event does not allow abstract submission.")
             raise PermissionDenied
 

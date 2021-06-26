@@ -56,7 +56,7 @@
               </span>
               <a :href="'https://evan.ugent.be/r/' + event.code + '/'" target="_blank" class="inherit text-primary">
                 <q-icon name="assignment_turned_in" class="q-mr-sm" />Registrations: <strong>evan.ugent.be/r/{{ event.code }}</strong></a><br>
-              <span v-if="event.main_config.abstracts">
+              <span v-if="event.config.abstracts">
                 <a :href="'https://evan.ugent.be/a/' + event.code + '/'" target="_blank" class="inherit text-primary">
                   <q-icon name="text_snippet" class="q-mr-sm" />Abstract submission: <strong>evan.ugent.be/a/{{ event.code }}</strong></a><br>
               </span>

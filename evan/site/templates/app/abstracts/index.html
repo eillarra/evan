@@ -127,10 +127,10 @@
           return this.obj.title && this.obj.authors && this.obj.abstract && this.customFormIsValid;
         },
         maxFiles: function () {
-          return this.event.main_config.abstracts.max_files || 0;
+          return this.event.config.abstracts.max_files || 0;
         },
         maxFileSize: function () {
-          return this.event.main_config.abstracts.max_file_size * 1024 || 0;  // TODO: Quasar Uploader bug
+          return this.event.config.abstracts.max_file_size * 1024 || 0;  // TODO: Quasar Uploader bug
         }
       }),
       methods: {
