@@ -1,3 +1,4 @@
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticatedOrReadOnly, IsAuthenticated
 
 from evan.models import Event
@@ -24,7 +25,10 @@ class EventRelatedPermission(IsAuthenticated):
     """TODO: see if both classes can be combined."""
 
     def has_permission(self, request, view):
-        event = Event.objects.get(code=view.kwargs.get("code"))
+        try:
+            event = Event.objects.get(code=view.kwargs.get("code"))
+        except Event.DoesNotExist:
+            raise NotFound("Event does not exist.")
         return event.editable_by_user(request.user)
 
     def has_object_permission(self, request, view, obj):

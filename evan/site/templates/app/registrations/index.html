@@ -28,7 +28,7 @@
           <q-item-section avatar><q-icon name="assignment_turned_in"></q-icon></q-item-section>
           <q-item-section>Registration</q-item-section>
         </q-item>
-        <q-item v-if="registration && !registrationIsNew" clickable tag="a" :href="registration.href_payment">
+        <q-item v-if="registration && !registrationIsNew" clickable tag="a" :href="registration.payment_url">
           <q-item-section avatar><q-icon name="credit_card"></q-icon></q-item-section>
           <q-item-section>Payment</q-item-section>
         </q-item>
@@ -41,7 +41,7 @@
         </q-item>
       </q-list>
       <q-list dense>
-        <q-item-label header>Overview</q-item-label>
+        <q-item-label header>About</q-item-label>
         <q-item clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
           <q-item-section>Event</q-item-section>
@@ -56,21 +56,23 @@
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}"></div>
+  <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-register="{% url 'v1:register-list' event.code %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}"></div>
   <router-view class="q-pt-lg"></router-view>
 {% endblock %}
 
 {% block vue_templates %}
-  {% include './v-event.html' %}
   {% include './v-registration.html' %}
   {% include './v-session.html' %}
+  {% include '../_shared_views/v-event-overview.html' %}
   {% include '../_shared_views/v-profile.html' %}
 {% endblock %}
 
 {% block scripts %}
-  <script src="{% static 'js/components/forms.js' %}"></script>
-  <script src="{% static 'js/mixins/profile.js' %}"></script>
 {% compress js file app_registrations %}
+  <script src="{% static 'js/components/forms.js' %}"></script>
+  <script src="{% static 'js/mixins/custom_fields.js' %}"></script>
+  <script src="{% static 'js/mixins/event.js' %}"></script>
+  <script src="{% static 'js/mixins/profile.js' %}"></script>
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
@@ -94,8 +96,6 @@
           var self = this;
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
             state.event = Object.freeze(Evan.map.event(res.data));
-            state.replaceMainForm = _.has(res.data.custom_fields, "replace") && res.data.custom_fields.replace;
-
             setTimeout(function () {
               self.commit('getEvent');
             }, 45000);
@@ -136,27 +136,10 @@
 
     var EventView = {
       template: '#v-event',
+      mixins: [EventDatesMixin],
       computed: _.extend(
         Vuex.mapState(['event']), {
-        dates: function () {
-          if (!this.event.custom_data.dates || !this.event.custom_data.dates.length) return [];
-
-          return this.event.custom_data.dates.map(function (d) {
-            d.startDate = moment(d.start_date);
-            if (d.format == 'range' && d.end_date) {
-              d.formatted = d.startDate.format('MMM D') + '-' + moment(d.end_date).format('D, Y');
-            } else {
-              d.formatted = d.startDate.format({
-                'date': 'MMM D, Y',
-                'month': 'MMM Y'
-              }[d.format] || 'MMMM Y');
-            }
-            return d;
-          }).sort(function (a, b) {
-            return a.startDate.diff(b.startDate);
-          });
-        }
-      }),
+      })
     };
 
     var ProfileView = {
@@ -166,54 +149,26 @@
 
     var RegistrationView = {
       template: '#v-registration',
+      mixins: [CustomFieldsMixin],
       data: function () {
         return {
+          module: 'registrations',
+          createUrl: VARS.urlRegister,
+          //
+          dietaryOptions: EvanMetadata.getQuasarOptions('dietary'),
           now: moment(),
           selectedDate: null
         };
       },
       computed: _.extend(
-        Vuex.mapState(['event', 'registrationIsNew', 'registration', 'firstDay', 'replaceMainForm']), {
-        showSessionsByDay: function () {
-          if (!this.event || !this.regularSessions) return false;
-          return this.regularSessions.length > (this.event.days.length * 2)
-        },
-        formIsValid: function () {
-          var self = this;
-          var customRequirements = [];
-
-          if (this.event && _.has(this.event.custom_fields, 'fieldsets')) {
-            _.each(this.event.custom_fields.fieldsets, function (fieldset) {
-              _.each(fieldset.fields, function (field) {
-                if (
-                  (
-                    field.mandatory
-                    && _.has(self.registration.custom_data, field.id)
-                    && self.registration.custom_data[field.id] === false
-                  ) || (
-                    field.required
-                    && self.registration.custom_data[field.id] === null
-                  )
-                ) {
-                  customRequirements.push("error");
-                }
-              });
-            });
-          }
-
-          if (_.contains(customRequirements, "error")) {
-            return false;
-          }
-
-          return this.fee
-            //&& this.registration.sessions.length
-            //&& this.registration.days.length
-            //&& (!this.feeIsOneDay || this.registration.days.length == 1)
-          ;
+        Vuex.mapState(['event', 'registrationIsNew', 'registration', 'firstDay']), {
+        target: function () {
+          if (!this.obj) return null;
+          return this.obj.fee_type;
         },
         fee: function () {
-          if (!this.event || !this.registration) return false;
-          return _.findWhere(this.event.fees, {type: this.registration.fee_type});
+          if (!this.event || !this.obj) return false;
+          return _.findWhere(this.event.fees, {type: this.obj.fee_type});
         },
         feeIsOneDay: function () {
           if (!this.fee) return false;
@@ -223,6 +178,13 @@
           if (!this.fee) return false;
           return this.fee.social_events_included;
         },
+        formIsValid: function () {
+          if (!this.obj) return false;
+          return this.fee && this.customFormIsValid;
+        },
+
+
+
         isEarly: function () {
           if (!this.event || !this.event.registration_early_deadline) return false;
           return this.now < this.event.deadline;
@@ -249,89 +211,38 @@
         sessionDayIds: function () {
           if (
             !this.event
-            || !this.registration
-            || !this.registration.sessions
-            || !this.registration.sessions.length
+            || !this.obj
+            || !this.obj.sessions
+            || !this.obj.sessions.length
           ) return [];
 
           var self = this;
           var dates = _.uniq(_.pluck(this.event.sessions.filter(function (obj) {
-            return self.registration.sessions.indexOf(obj.id) !== -1;
+            return self.obj.sessions.indexOf(obj.id) !== -1;
           }), 'date'));
           return _.pluck(this.event.days.filter(function (obj) {
             return dates.indexOf(obj.date) !== -1;
           }), 'id');
-        },
-        customFieldsets: function () {
-          if (!this.registration || !this.event || _.isEmpty(this.event.custom_fields)) return [];
-          var output = {};
-          var fields = [];
-          var self = this;
-
-          _.each(this.fees, function (obj) {
-            output[obj.type] = self.event.custom_fields.fieldsets.filter(function (o) {
-              return o.target.indexOf(obj.type) !== -1;
-            });
-          });
-
-          return output;
         }
       }),
       methods: {
         updateNow: function () {
           this.now = moment();
         },
-        save: function () {
-          var self = this;
-
-          if (this.registrationIsNew) {
-            var endpoint = VARS.urlEvent + 'register/';
-            Evan.api.request('post', endpoint, this.registration).then(function (res) {
-              self.$store.commit('updateRegistration', Evan.map.registration(res.data));
-              self.$store.commit('updateRegistrationIsNew', false);
-              self.$q.notify('Registration has been created');
-            }).catch(function (error) {
-              Evan.utils.notifyApiError(error);
-            }).then(function () {
-              window.scrollTo(0, 0);
-            });
-          } else {
-            Evan.api.update(this.registration, function (res) {
-              self.$store.commit('updateRegistration', Evan.map.registration(res.data));
-            });
-          }
-        },
         addPerson: function () {
-          this.registration.accompanying_persons.push({
+          this.obj.accompanying_persons.push({
             name: '',
-            dietary: {
-              id: 7
-            },
+            dietary: 'none'
           });
         },
         removePerson: function (person) {
-          this.registration.accompanying_persons = _.without(this.registration.accompanying_persons, person);
+          this.obj.accompanying_persons = _.without(this.obj.accompanying_persons, person);
         }
       },
       watch: {
-        'event': function (val, oldVal) {
-          if (oldVal == null && this.registrationIsNew && this.event && _.has(this.event.custom_fields, 'fieldsets')) {
-            var data = {};
-
-            _.each(this.event.custom_fields.fieldsets, function (fieldset) {
-              _.each(fieldset.fields, function (field) {
-                data[field.id] = {
-                  'text': null,
-                  'text_list': [],
-                  'single_choice': null,
-                  'multiple_choice': [],
-                  'checkbox': field.default
-                }[field.type];
-              });
-            });
-
-            this.$store.commit('updateRegistrationCustomData', data);
-          }
+        'registration': function (val) {
+          if (!val) return;
+          this.obj = _.clone(val);
         },
         'firstDay': function (val, oldVal) {
           if (val) {
@@ -341,26 +252,29 @@
         'fee': function (val, oldVal) {
           /* If we switch between one day and regular registrations, social event options are removed */
           if (val && oldVal && val.social_events_included != oldVal.social_events_included) {
-            this.registration.sessions = _.difference(
-              this.registration.sessions,
+            this.obj.sessions = _.difference(
+              this.obj.sessions,
               _.pluck(this.socialEvents, 'id')
             );
           }
         },
         'sessionDayIds': function (val) {
-          if (this.registration) {
-            this.registration.days = val;
+          if (this.obj) {
+            this.obj.days = val;
           }
         }
       },
       created: function () {
         var self = this;
-        if (this.firstDay) {
-          this.selectedDate = this.firstDay.date;
-        }
+        this.obj = _.clone(this.registration);
+
         setInterval(function () {
           self.updateNow();
         }, 1000);
+
+        if (this.firstDay) {
+          this.selectedDate = this.firstDay.date;
+        }
       }
     };
 

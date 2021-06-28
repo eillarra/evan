@@ -134,9 +134,6 @@
         }
       }),
       methods: {
-        updateObj: function (obj) {
-          this.obj = obj;
-        },
         removeFile: function (file) {
           this.obj.files = _.reject(_.clone(this.obj.files), function (f) {
             return f.url == file.url;

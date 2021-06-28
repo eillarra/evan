@@ -3,7 +3,7 @@ var CustomFieldsMixin = {
     return {
       module: 'default',
       createUrl: null,
-      useFeeTargets: false,
+      fieldsetTarget: null,
       obj: null
     };
   },
@@ -13,11 +13,19 @@ var CustomFieldsMixin = {
       if (!this.event || !_.has(this.event.custom_fields, this.module)) return false;
       return this.event.custom_fields[this.module].replace;
     },
+    target: function () {
+      return this.fieldsetTarget;
+    },
     fieldsets: function () {
       if (!this.event || !_.has(this.event.custom_fields, this.module)) return null;
       if (!_.has(this.event.custom_fields[this.module], 'fieldsets')) return [];
 
-      // TODO: ADD FEE FILTER
+      if (this.target) {
+        var target = this.target;
+        return this.event.custom_fields[this.module].fieldsets.filter(function (fs) {
+          return fs.target.indexOf(target) !== -1;
+        });
+      }
 
       return this.event.custom_fields[this.module].fieldsets;
     },
@@ -49,7 +57,7 @@ var CustomFieldsMixin = {
     createOrUpdate: function (obj) {
       var self = this;
 
-      if (_.has(obj, 'url')) {
+      if (_.has(obj, 'self')) {
         Evan.api.update(obj, function (res) {
           self.obj = res.data;
         });
