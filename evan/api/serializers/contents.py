@@ -12,4 +12,4 @@ class ContentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Content
         exclude = ("event",)
-        read_only = ("id", "key", "marked", "notes")
+        read_only = ("id", "key", "config")
