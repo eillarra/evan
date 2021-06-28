@@ -138,6 +138,9 @@
           this.obj.files = _.reject(_.clone(this.obj.files), function (f) {
             return f.url == file.url;
           });
+        },
+        updateObj: function (obj) {
+          this.obj = obj;
         }
       },
       watch: {

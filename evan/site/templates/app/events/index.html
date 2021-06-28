@@ -103,6 +103,7 @@
   <script src="{% static 'js/components/forms.js' %}"></script>
   <script src="{% static 'js/mixins/event_related.js' %}"></script>
   <script src="{% static 'js/mixins/query.js' %}"></script>
+  <script src="{% static 'js/mixins/uploader.js' %}"></script>
   <script type="text/javascript">
     var VARS = document.querySelector('#vars').dataset;
 
@@ -241,7 +242,7 @@
 
     var CmsView = {
       template: '#v-cms',
-      mixins: [EventRelatedMixin],
+      mixins: [EventRelatedMixin, UploaderMixin],
       data: function () {
         return {
           stateVar: 'contents',
@@ -270,9 +271,27 @@
       },
       computed: _.extend(
         Vuex.mapState(['event', 'contents']), {
+        uploadUrl: function () {
+          if (!this.tmpObj) return null;
+          return this.tmpObj.rel_files;
+        },
       }),
+      methods: {
+        removeFile: function (file) {
+          this.tmpObj.files = _.reject(_.clone(this.tmpObj.files), function (f) {
+            return f.url == file.url;
+          });
+        },
+        updateObj: function (obj) {
+          this.tmpObj = obj;
+        }
+      },
       created: function () {
         this.$store.commit('getContents');
+        EventEmitter.on('evan-file-removed', this.removeFile);
+      },
+      beforeUnmount: function () {
+        EventEmitter.off('evan-file-removed', this.removeFile);
       }
     };
 
@@ -344,10 +363,7 @@
       }),
       methods: {
         addObj: function () {
-          this.tmpObj = {
-            value: 100,
-            notes: 'Custom notes'
-          };
+          this.tmpObj = {};
         }
       },
       created: function () {
@@ -441,9 +457,6 @@
         },
         addObj: function () {
           this.tmpObj = {
-            start_date: moment().format('YYYY-MM-DD'),
-            end_date: null,
-            label: 'Custom label',
             format: 'month'
           };
         },

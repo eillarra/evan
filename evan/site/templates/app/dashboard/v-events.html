@@ -5,9 +5,11 @@
     <q-card flat class="q-pa-lg">
       <display-5>Event management</display-5>
       <q-input filled dense v-model="query" placeholder="Search by code, name..." type="search" class="q-mb-md">
+        <template v-slot:prepend>
+          <q-icon name="search" />
+        </template>
         <template v-slot:append>
           <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
-          <q-icon name="search" />
         </template>
       </q-input>
       <q-table dense row-key="code" :rows="events" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="openUrl">

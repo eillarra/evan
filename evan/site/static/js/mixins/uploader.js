@@ -12,6 +12,10 @@ var UploaderMixin = {
 
       return `${ bytes.toFixed(1) }${ units[ u ] }`;
       // return Quasar.humanStorageSize(this.maxFileSize);
+    },
+    uploadUrl: function () {
+      if (!this.obj) return null;
+      return this.obj.rel_files;
     }
   },
   methods: {
@@ -21,7 +25,7 @@ var UploaderMixin = {
     uploaderFactory: function (files) {
       var filename = slugify(files[0].name).toLowerCase();
       return {
-        url: this.obj.rel_files,
+        url: this.uploadUrl,
         method: 'POST',
         headers: [
           { name: 'Content-Disposition', value: 'attachment; filename=' + filename },

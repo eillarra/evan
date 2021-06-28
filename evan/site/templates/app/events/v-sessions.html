@@ -12,8 +12,10 @@
       </div>
       <q-input filled dense v-model="query" placeholder="Search by title, track..." type="search" class="q-mb-md">
         <template v-slot:prepend>
-          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
           <q-icon name="search" />
+        </template>
+        <template v-slot:append>
+          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
         </template>
       </q-input>
       <q-table dense row-key="id" :rows="extendedSessions" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">

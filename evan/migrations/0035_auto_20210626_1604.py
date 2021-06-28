@@ -7,12 +7,7 @@ def migrate_config(apps, schema_editor):
     Content = apps.get_model("evan", "Content")
 
     for c in Content.objects.all():
-        c.config = {
-            "marked": c.marked,
-            "images": 0,
-            "files": 0,
-            "notes": c.notes
-        }
+        c.config = {"marked": c.marked, "uploader": False}
         c.save()
 
 
