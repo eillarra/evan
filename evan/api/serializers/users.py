@@ -6,6 +6,32 @@ from rest_framework import serializers
 from evan.models import Profile
 
 
+class AttendeeSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField(read_only=True)
+    affiliation = serializers.SerializerMethodField(read_only=True)
+    country = serializers.SerializerMethodField(read_only=True)
+    connect = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = get_user_model()
+        fields = ("name", "affiliation", "country", "connect")
+
+    def get_affiliation(self, obj) -> str:
+        return obj.profile.affiliation
+
+    def get_connect(self, obj) -> bool:
+        return obj.profile.custom_data["connect"]
+
+    def get_country(self, obj) -> str:
+        return {
+            "code": obj.profile.country.code,
+            "name": obj.profile.country.name,
+        } if obj.profile.country else None
+
+    def get_name(self, obj) -> str:
+        return " ".join([obj.first_name, obj.last_name])
+
+
 class ProfileSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
     country = CountryField(country_dict=True, allow_null=True)
     custom_data = serializers.JSONField()

@@ -28,7 +28,7 @@
         <p>The following information will only be used to provide you with a better experience in case a physical event is organized. We will <strong>never</strong> share your personal information with third parties.</p>
         <div class="q-col-gutter-md row items-start q-mb-lg">
           <q-select filled dense emit-value map-options v-model="user.profile.custom_data.dietary" :options="dietaryOptions" label="Dietary requirements" class="col-12 col-sm-6 col-md-4" />
-          <q-input filled dense v-model="user.profile.custom_data.special_needs" label="Any special needs (access restrictions, etc)?" class="col-12 col-sm-6 col-md-8" ></q-input>
+          <q-input filled dense autogrow v-model="user.profile.custom_data.special_needs" label="Any special needs (access restrictions, etc)?" class="col-12 col-sm-6 col-md-8"></q-input>
         </div>
         <div class="q-mt-xl">
           <q-btn unelevated :disabled="!user.first_name || !user.last_name" @click.prevent="update(user)" color="primary" label="Save profile"></q-btn>

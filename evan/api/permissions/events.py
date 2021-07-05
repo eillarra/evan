@@ -52,3 +52,11 @@ class EventRelatedObjectPermission(IsAuthenticated):
 
         event = Event.objects.get(id=self.get_event_id(obj))
         return event.editable_by_user(request.user)
+
+
+class EventAttendeePermission(IsAuthenticated):
+    def has_object_permission(self, request, view, obj):
+        """
+        Users can only RETRIEVE attendees' list if they are also regfistered.
+        """
+        return obj.registrations.filter(user_id=request.user.id).exists()

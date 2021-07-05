@@ -1,0 +1,26 @@
+<script type="text/x-template" id="v-attendees">
+{% verbatim %}
+  <div v-if="event" class="row q-col-gutter-lg items-stretch">
+
+    <div class="col-12">
+      <q-card flat class="q-pa-lg">
+        <display-5>List of attendees</display-5>
+        <q-input filled dense v-model="query" placeholder="Search by name, affiliation, country..." type="search" class="q-mb-md">
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+          <template v-slot:append>
+            <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
+          </template>
+        </q-input>
+        <q-table dense row-key="id" :rows="rows" :columns="table.columns" :pagination="table.pagination" :filter="query">
+          <template v-slot:no-data="{ icon, message, filter }">
+            <evan-no-data :message="message" :filter="filter" />
+          </template>
+        </q-table>
+      </q-card>
+    </div>
+
+  </div>
+{% endverbatim %}
+</script>

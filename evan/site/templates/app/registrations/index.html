@@ -28,7 +28,7 @@
           <q-item-section avatar><q-icon name="assignment_turned_in"></q-icon></q-item-section>
           <q-item-section>Registration</q-item-section>
         </q-item>
-        <q-item v-if="registration && !registrationIsNew" clickable tag="a" :href="registration.payment_url">
+        <q-item v-if="registration && registration.self" clickable tag="a" :href="registration.payment_url">
           <q-item-section avatar><q-icon name="credit_card"></q-icon></q-item-section>
           <q-item-section>Payment</q-item-section>
         </q-item>
@@ -46,23 +46,23 @@
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
           <q-item-section>Event</q-item-section>
         </q-item>
-        <!--<q-item v-if="registration && !registrationIsNew" clickable :to="{name: 'event'}">
+        <q-item v-if="registration && registration.self" clickable :to="{name: 'attendees'}">
           <q-item-section avatar><q-icon name="groups"></q-icon></q-item-section>
           <q-item-section>Attendees</q-item-section>
-        </q-item>-->
+        </q-item>
       </q-list>
     </q-scroll-area>
   </q-drawer>
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-register="{% url 'v1:register-list' event.code %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}"></div>
+  <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-attendees="{% url 'v1:event-attendees' event.code %}" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-register="{% url 'v1:register-list' event.code %}" data-url-registration="{% if registration %}{% url 'v1:registration-detail' registration.uuid %}{% endif %}"></div>
   <router-view class="q-pt-lg"></router-view>
 {% endblock %}
 
 {% block vue_templates %}
+  {% include './v-attendees.html' %}
   {% include './v-registration.html' %}
-  {% include './v-session.html' %}
   {% include '../_shared_views/v-event-overview.html' %}
   {% include '../_shared_views/v-profile.html' %}
 {% endblock %}
@@ -71,6 +71,7 @@
 {% compress js file app_registrations %}
   <script src="{% static 'js/components/forms.js' %}"></script>
   <script src="{% static 'js/mixins/custom_fields.js' %}"></script>
+  <script src="{% static 'js/mixins/query.js' %}"></script>
   <script src="{% static 'js/mixins/event.js' %}"></script>
   <script src="{% static 'js/mixins/profile.js' %}"></script>
   <script type="text/javascript">
@@ -85,11 +86,21 @@
         registrationIsNew: VARS.urlRegistration == '',
         registration: null,
         session: null,
+        attendees: []
       },
       mutations: {
         getUser: function (state) {
           Evan.api.request('get', VARS.urlUser).then(function (res) {
             state.user = res.data;
+          });
+        },
+        getAttendees: function (state) {
+          var self = this;
+          Evan.api.request('get', VARS.urlAttendees).then(function (res) {
+            state.attendees = Object.freeze(res.data);
+            setTimeout(function () {
+              self.commit('getAttendees');
+            }, 44000);
           });
         },
         getEvent: function (state) {
@@ -98,7 +109,7 @@
             state.event = Object.freeze(Evan.map.event(res.data));
             setTimeout(function () {
               self.commit('getEvent');
-            }, 45000);
+            }, 66000);
           });
         },
         getRegistration: function (state) {
@@ -133,6 +144,59 @@
         }
       }
     });
+
+    var AttendeesView = {
+      template: '#v-attendees',
+      mixins: [QueryMixin],
+      data: function () {
+        return {
+          table: {
+            columns: [
+              {
+                name: 'name',
+                field: 'name',
+                align: 'left',
+                label: 'Full name',
+                sortable: true
+              },
+              {
+                name: 'affiliation',
+                field: 'affiliation',
+                align: 'left',
+                label: 'Affiliation',
+                sortable: true
+              },
+              {
+                name: 'country_name',
+                field: 'country_name',
+                align: 'left',
+                label: 'Country',
+                sortable: true
+              }
+            ],
+            pagination: {
+              rowsPerPage: 25,
+              sortBy: 'name',
+              descending: false
+            }
+          }
+        };
+      },
+      computed: _.extend(
+        Vuex.mapState(['event', 'attendees']), {
+        rows: function () {
+          return this.attendees.map(function (obj) {
+            obj.country_name = (obj.country) ? obj.country.name : '-';
+            return obj;
+          });
+        }
+      }),
+      created: function () {
+        if (!this.attendees.length) {
+          this.$store.commit('getAttendees');
+        }
+      }
+    };
 
     var EventView = {
       template: '#v-event',
@@ -323,6 +387,12 @@
         {
           path: '/',
           redirect: {name: 'registration'}
+        },
+        {
+          name: 'attendees',
+          path: '/attendees/',
+          pathToRegexpOptions: {strict: true},
+          component: AttendeesView
         },
         {
           name: 'event',
