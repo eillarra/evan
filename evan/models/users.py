@@ -47,7 +47,9 @@ class Profile(models.Model):
 @receiver(post_save, sender=get_user_model())
 def post_save_user(sender, instance, created, **kwargs):
     if created:
-        Profile.objects.create(user=instance)
+        Profile.objects.create(
+            user=instance, custom_data={"connect": True, "dietary": None, "gender": None, "special_needs": None}
+        )
         send_task("evan.tasks.users.update_affiliation", (instance.id,))
     else:
         instance.profile.updated_at = timezone.now()
