@@ -131,7 +131,7 @@
               <q-btn v-if="!obj.invoice_requested" outline icon="credit_card" color="green" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url" />
               <q-btn v-else disabled outline icon="info" color="dark" label="Invoice is being prepared" class="full-width" />
             </span>
-            <q-btn v-else disabled outline icon="info" color="dark" label="Payments disabled" class="full-width" />
+            <q-btn v-else disabled outline icon="credit_card_off" color="dark" label="Payments not active yet" class="full-width" />
           </q-item-section>
         </q-item>
       </q-list>
