@@ -46,8 +46,8 @@
       <div class="q-gutter-md">
         <q-input filled dense v-model="tmpObj.title" label="Title *" />
         <div class="row q-col-gutter-md q-ma-none">
-          <evan-datepicker :with-time="true" v-model="tmpObj.start_at" label="Start *" class="col-12 col-md"></evan-datepicker>
-          <evan-datepicker :with-time="true" v-model="tmpObj.end_at" label="End *" class="col-12 col-md"></evan-datepicker>
+          <evan-datepicker :with-time="true" v-model="tmpObj.start_at" label="Start *" class="col-12 col-md" :options="dateRange" />
+          <evan-datepicker :with-time="true" v-model="tmpObj.end_at" label="End *" class="col-12 col-md" :options="dateRange" />
           <q-input filled dense readonly v-model="tmpObj.duration" label="Duration" class="col-12 col-md" />
         </div>
         <div class="row q-col-gutter-md q-ma-none">

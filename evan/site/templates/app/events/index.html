@@ -640,6 +640,13 @@
       computed: _.extend(
         Vuex.mapGetters(['topicsSorted', 'tracksSorted']),
         Vuex.mapState(['event', 'sessions', 'topics', 'tracks']), {
+        dateRange: function () {
+          if (!this.event) return null;
+          var range = moment.range(moment(this.event.start_date), moment(this.event.end_date));
+          return Array.from(range.by('day')).map(function (obj) {
+            return obj.format('YYYY/MM/DD');
+          });
+        },
         extendedSessions: function () {
           var td = this.tracksDict;
           return this.sessions.map(function (obj) {

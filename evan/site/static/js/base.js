@@ -8,7 +8,9 @@ function modelFromUrl(url) {
   return m;
 }
 
+
 var EventEmitter = new TinyEmitter();
+window['moment-range'].extendMoment(moment);
 
 var Evan = {
   api: {

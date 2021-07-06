@@ -152,6 +152,14 @@ var EvanFormComponents = {
         type: String,
         required: true
       },
+      options: {
+        type: [Array, Function],
+        default: function () {
+          return function () {
+            return true;
+          };
+        }
+      },
       hint: {
         type: [String, Boolean],
         default: false
@@ -176,7 +184,7 @@ var EvanFormComponents = {
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer" size="xs">
               <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                <q-date v-model="mutable" :mask="mask">
+                <q-date v-model="mutable" :mask="mask" :options="options" :default-year-month="yearMonth" first-day-of-week="1">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="Close" color="primary" flat />
                   </div>
@@ -205,6 +213,10 @@ var EvanFormComponents = {
         return (this.withTime)
           ? 'YYYY-MM-DDTHH:mm'
           : 'YYYY-MM-DD';
+      },
+      yearMonth: function () {
+        if (_.isArray(this.options)) return _.first(this.options).substring(0, 7);
+        return moment().format('YYYY/MM');
       }
     },
     watch: {
@@ -384,6 +396,7 @@ var EvanFormComponents = {
                   <small v-show="field.mandatory" class="text-caption text-grey-8">Mandatory</small>
                 </q-item-section>
               </q-item>
+              <evan-datepicker v-else-if="field.type == 'date'" v-model="mutable.custom_data[field.id]" :label="field.label" :options="field.options" />
               <div v-else>{{ field }}</div>
             </div>
           </div>
