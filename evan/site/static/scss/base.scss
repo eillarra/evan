@@ -93,6 +93,13 @@ a {
   }
 }
 
+.q-list.q-px-none {
+  &.q-list--dense > .q-item {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
 .q-table tbody td.min-width {
   width: 16px;
 }

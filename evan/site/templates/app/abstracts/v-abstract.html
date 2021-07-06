@@ -25,12 +25,12 @@
       </q-card>
     </div>
 
-    <div v-if="obj.self" class="col-12 col-md-4">
+    <div v-if="obj.self && event.config.abstracts.uploader" class="col-12 col-md-4">
       <q-card flat class="q-pa-lg full-height">
         <display-5>Files</display-5>
         <evan-file-list :files="obj.files" />
-        <div class="rounded-borders" v-show="obj.files.length < event.config.abstracts.max_files">
-          <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" accept=".pdf" :max-files="event.config.abstracts.max_files" :max-file-size="maxFileSize" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" label="Upload a PDF" color="dark" class="full-width bg-grey-2" />
+        <div class="rounded-borders" v-show="obj.files.length < event.config.abstracts.uploader.max_files">
+          <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" :accept="event.config.abstracts.uploader.accept" :max-files="maxFiles" :max-file-size="maxFileSize" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" :label="event.config.abstracts.uploader.label" color="dark" class="full-width bg-grey-2" />
         </div>
       </q-card>
     </div>

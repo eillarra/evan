@@ -642,7 +642,7 @@
         Vuex.mapState(['event', 'sessions', 'topics', 'tracks']), {
         dateRange: function () {
           if (!this.event) return null;
-          var range = moment.range(moment(this.event.start_date), moment(this.event.end_date));
+          var range = moment.range(this.event.start, this.event.end);
           return Array.from(range.by('day')).map(function (obj) {
             return obj.format('YYYY/MM/DD');
           });

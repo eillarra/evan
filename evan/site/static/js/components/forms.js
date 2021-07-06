@@ -354,38 +354,15 @@ var EvanFormComponents = {
       }
     },
     template: `
-      <div v-if="mutable" v-for="fieldset in fieldsets">
-        <div v-if="fieldset.taxonomy">
-          <div v-if="event" class="q-gutter-md q-mt-md">
-            <q-field v-if="event.tracks.length" filled stack-label clearable label="Track">
-              <template v-slot:control>
-                <div class="q-gutter-x-sm q-mt-sm">
-                  <q-radio v-for="track in tracksSorted" v-model="mutable.custom_data.track" :val="track.id" :label="track.name" size="xs" />
-                </div>
-              </template>
-              <template v-slot:append v-if="mutable.custom_data.track">
-                <q-icon @click="mutable.custom_data.track = null" name="cancel" class="cursor-pointer" size="xs" />
-              </template>
-            </q-field>
-            <q-field v-if="event.topics.length" filled stack-label label="Topics">
-              <template v-slot:control>
-                <div class="q-gutter-x-sm q-mt-sm">
-                  <q-checkbox v-for="topic in topicsSorted" v-model="mutable.custom_data.topics" :val="topic.id" :label="topic.name" size="xs" />
-                </div>
-              </template>
-            </q-field>
-          </div>
-        </div>
-        <div v-else>
-          <h6 class="q-mt-xl q-mb-md">{{ fieldset.title }}</h6>
-          <div v-for="field in fieldset.fields">
-            <p v-show="field.type != 'checkbox'" class="q-mb-md">{{ field.label }} <strong v-show="field.required" class="text-orange">*</strong></p>
-            <div>
-              <q-input v-if="field.type == 'text'"
-                v-model="mutable.custom_data[field.id]"
-                filled dense autogrow class="q-mb-lg"></q-input>
-              <evan-text-list v-else-if="field.type == 'text_list'" v-model="mutable.custom_data[field.id]" :fields="field.fields" class="q-mb-md"></evan-text-list>
-              <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'" v-model="mutable.custom_data[field.id]" :options="field.options" :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'" class="q-mb-md"></q-option-group>
+      <div v-if="mutable" v-for="fieldset in fieldsets" class="q-mt-lg">
+        <h6 class="q-mb-md">{{ fieldset.title }}</h6>
+        <div class="row q-col-gutter-md items-end">
+          <div v-for="field in fieldset.fields" class="col-12" :class="field.class">
+            <div v-if="field.text">{{ field.text }} <strong v-show="field.required" class="text-orange">*</strong></div>
+            <div v-if="field.type" :class="{'q-mt-md': field.text}">
+              <q-input v-if="field.type == 'text' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'text'" />
+              <evan-text-list v-else-if="field.type == 'text_list'" v-model="mutable.custom_data[field.id]" :fields="field.fields" :limit="field.limit" />
+              <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'" v-model="mutable.custom_data[field.id]" :options="field.options" :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'" />
               <q-item v-else-if="field.type == 'checkbox'" class="q-pl-none">
                 <q-item-section avatar class="q-px-none">
                   <q-checkbox v-model="mutable.custom_data[field.id]"

@@ -38,9 +38,8 @@ var CustomFieldsMixin = {
       _.each(this.fieldsets, function (fieldset) {
         _.each(fieldset.fields, function (f) {
           if (
-            (f.mandatory && !_.has(obj.custom_data, f.id))
+            (f.required && (!_.has(obj.custom_data, f.id) || _.isEmpty(obj.custom_data[f.id])))
             || (f.mandatory && _.has(obj.custom_data, f.id) && obj.custom_data[f.id] === false)
-            || (f.required && obj.custom_data[f.id] === null)
           ) {
             errors.push(true);
           }

@@ -16,43 +16,26 @@
         </div>
 
         <h6 class="q-mb-sm">Registration fee</h6>
-        <p>Please select the appropriate fee. Students might be required to present some kind of identification. <strong class="text-orange">*</strong></p>
+        <p>Please select the appropriate fee. <span v-show="fees.length > 1">Students might be required to present some kind of identification. </span><strong class="text-orange">*</strong></p>
 
         <div v-for="fee in fees" class="custom-control custom-radio my-1">
           <q-radio v-model="obj.fee_type" :val="fee.type" :label="fee.notes + ' (' + fee.value + ' EUR)'"></q-radio>
         </div>
 
-        <!--<div v-if="!replaceMainForm">
-          <div class="form-group">
-            <h6 class="q-mb-sm">Travel visa</h6>
-            <div class="custom-control custom-checkbox my-1">
-              <input type="checkbox" v-model="obj.visa_requested" class="custom-control-input" id="visa_requested">
-              <label class="custom-control-label" for="visa_requested">I require an Invitation Letter for my visa application</label>
-            </div>
-          </div>
-          <div class="form-group">
-            <h6 class="q-mb-sm">Choose the sessions you would like to attend <small class="text-danger">*</small><small class="text-info d-block mt-1">Select at least one.</small></h6>
-            <div v-if="showSessionsByDay">
-              <nav>
-                <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                  <a class="nav-item nav-link pointer" v-for="day in event.days" :key:="day.id" @click="selectedDate = day.date" :class="{'active': day.date == selectedDate}">{{ day.date }}</a>
-                </div>
-              </nav>
-              <div class="border border-top-0 rounded-bottom bg-white p-3">
-                <div v-for="session in regularSessions" :key="session.id" v-show="session.date == selectedDate" class="custom-control custom-checkbox my-1">
-                  <input type="checkbox" v-model="obj.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
-                  <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
-                </div>
-              </div>
-            </div>
-            <div v-else>
-              <div v-for="session in regularSessions" :key="session.id" class="custom-control custom-checkbox my-1">
-                <input type="checkbox" v-model="obj.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
-                <label class="custom-control-label" :for="'session' + session.id">{{ session.niceDate }}: {{ session.title }} </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
-              </div>
-            </div>
-          </div>
-          <div v-if="feeIncludesSocialEvents">
+        <div v-if="!replaceMainForm">
+          <h6 class="q-mb-sm">Choose the sessions you would like to attend</h6>
+          <p>Select at least one. </span><strong class="text-orange">*</strong></p>
+          <q-list dense class="q-px-none">
+            <q-item v-for="session in regularSessions" class="q-pl-none">
+              <q-item-section avatar class="q-px-none">
+                <q-checkbox v-model="obj.sessions" :val="session.id" keep-color></q-checkbox>
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ session.title }}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <!--<div v-if="feeIncludesSocialEvents">
             <h6 class="q-mb-sm">Choose the social events you would like to attend</h6>
             <div v-for="session in socialEvents" :key="session.id" class="custom-control custom-checkbox my-1">
               <input type="checkbox" v-model="obj.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
@@ -84,19 +67,23 @@
                 <small><a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Add another person</a></small>
               </tfoot>
             </table>
-          </div>
-          <div class="form-group">
-            <hr class="my-4">
-            <h6 class="q-mb-sm">Days you will attend (automatic)<small class="text-danger">*</small><small class="text-info d-block mt-1" v-if="feeIsOneDay" :class="{'text-danger': feeIsOneDay && obj.days.length > 1}">You have selected the one day fee. You can only attend one of the days of the event.</small></h6>
-            <div v-for="day in event.days" class="custom-control custom-checkbox custom-control-inline my-1">
-              <input type="checkbox" v-model="obj.days" :value="day.id" class="custom-control-input" :id="'day' + day.id" disabled />
-              <label class="custom-control-label" :for="'day' + day.id">{{ day.niceDate }}<span v-if="day.name">: {{ day.name }}</span></label>
-            </div>
-          </div>
-        </div>-->
+          </div>-->
+        </div>
 
         <div v-if="obj.fee_type">
           <evan-custom-fieldsets v-model="obj" :fieldsets="fieldsets" />
+        </div>
+
+        <div>
+          <h6 class="q-mb-md">Travel visa</h6>
+          <q-item class="q-pl-none">
+            <q-item-section avatar class="q-px-none">
+              <q-checkbox v-model="obj.visa_requested" keep-color></q-checkbox>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>I require an Invitation Letter for my visa application</q-item-label>
+            </q-item-section>
+          </q-item>
         </div>
 
         <div class="q-mt-xl">
