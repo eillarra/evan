@@ -39,9 +39,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         return ListModelMixin.list(self, request, *args, **kwargs)
 
     @action(
-        detail=True,
-        methods=["post"],
-        permission_classes=(EventAttendeePermission,),
+        detail=True, methods=["post"], permission_classes=(EventAttendeePermission,),
     )
     @never_cache
     def contact(self, request, *args, **kwargs):
@@ -68,5 +66,8 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
             return Response({"message": "Your message has been sent."})
 
-        except Exception:
-            return Response({"message": "We could not send your message."}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response(
+                {"message": "We could not send your message.", "detail": str(e)},
+                status=HTTPStatus.INTERNAL_SERVER_ERROR,
+            )
