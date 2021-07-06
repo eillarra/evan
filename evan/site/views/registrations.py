@@ -68,9 +68,17 @@ class RegistrationView(generic.DetailView):
 
 
 class RegistrationPaymentBaseView(generic.TemplateView):
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        if not self.get_object().event.allows_payments:
+            messages.error(request, "Payments are not active for this event.")
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_object(self, queryset=None) -> Registration:
         if not hasattr(self, "object"):
-            self.object = get_object_or_404(Registration, uuid=self.kwargs.get("uuid"))
+            self.object = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
         return self.object
 
     def get_ingenico_result_url(self) -> str:
@@ -108,8 +116,7 @@ class RegistrationPaymentView(RegistrationPaymentBaseView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        registration = self.get_object()
-        if not registration.editable_by_user(request.user):
+        if not self.get_object().editable_by_user(request.user):
             messages.error(request, "You don't have the necessary permissions to update this registration.")
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
@@ -144,8 +151,7 @@ class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
         return self.get_object().get_payment_delegated_result_url()
 
     def dispatch(self, request, *args, **kwargs):
-        registration = self.get_object()
-        if registration.secret != kwargs.get("secret"):
+        if self.get_object().secret != kwargs.get("secret"):
             messages.error(request, "You don't have access to this registration.")
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

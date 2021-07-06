@@ -57,6 +57,7 @@ var Evan = {
       });
       obj.start = moment(obj.start_date);
       obj.end = moment(obj.end_date);
+      obj.date_range = moment.range(obj.start, obj.end);
       return obj;
     },
     registration: function (obj) {

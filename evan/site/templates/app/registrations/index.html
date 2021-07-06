@@ -28,7 +28,7 @@
           <q-item-section avatar><q-icon name="assignment_turned_in"></q-icon></q-item-section>
           <q-item-section>Registration</q-item-section>
         </q-item>
-        <q-item v-if="registration && registration.self" clickable tag="a" :href="registration.payment_url">
+        <q-item v-if="(registration && registration.self) && (event && event.allows_payments)" clickable tag="a" :href="registration.payment_url">
           <q-item-section avatar><q-icon name="credit_card"></q-icon></q-item-section>
           <q-item-section>Payment</q-item-section>
         </q-item>
@@ -358,7 +358,7 @@
           visibleDrawer: true
         };
       },
-      computed: Vuex.mapState(['user', 'registration', 'session']),
+      computed: Vuex.mapState(['user', 'event', 'registration', 'session']),
       created: function () {
         this.$store.commit('getEvent');
         this.$store.commit('getRegistration');

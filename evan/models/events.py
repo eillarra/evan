@@ -61,6 +61,7 @@ class Event(models.Model):
     wbs_element = models.CharField(max_length=32, null=True, blank=True)
     ingenico_salt = models.CharField(max_length=200, null=True, blank=True)
     allows_invoices = models.BooleanField(default=True)
+    payments_activation = models.DateTimeField(null=True, blank=True)
     test_mode = models.BooleanField(default=True, editable=False)
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(null=True, blank=True)
@@ -109,6 +110,12 @@ class Event(models.Model):
 
     def get_registration_url(self) -> str:
         return "".join(["https://", get_current_site(None).domain, reverse("registration:redirect", args=[self.code])])
+
+    @property
+    def allows_payments(self) -> bool:
+        if self.payments_activation:
+            return self.payments_activation <= timezone.now()
+        return True
 
     @property
     def has_social_event_bundle(self) -> bool:

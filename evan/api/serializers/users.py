@@ -23,10 +23,7 @@ class AttendeeSerializer(serializers.ModelSerializer):
         return obj.profile.custom_data["connect"]
 
     def get_country(self, obj) -> str:
-        return {
-            "code": obj.profile.country.code,
-            "name": obj.profile.country.name,
-        } if obj.profile.country else None
+        return {"code": obj.profile.country.code, "name": obj.profile.country.name} if obj.profile.country else None
 
     def get_name(self, obj) -> str:
         return " ".join([obj.first_name, obj.last_name])

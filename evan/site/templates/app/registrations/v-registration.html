@@ -19,16 +19,16 @@
         <p>Please select the appropriate fee. <span v-show="fees.length > 1">Students might be required to present some kind of identification. </span><strong class="text-orange">*</strong></p>
 
         <div v-for="fee in fees" class="custom-control custom-radio my-1">
-          <q-radio v-model="obj.fee_type" :val="fee.type" :label="fee.notes + ' (' + fee.value + ' EUR)'"></q-radio>
+          <q-radio v-model="obj.fee_type" :val="fee.type" :label="fee.notes + ' (' + fee.value + ' EUR)'" />
         </div>
 
         <div v-if="!replaceMainForm">
-          <h6 class="q-mb-sm">Choose the sessions you would like to attend</h6>
-          <p>Select at least one. </span><strong class="text-orange">*</strong></p>
+          <h6 class="q-mb-sm">Which sessions do you expect you will attend?</h6>
+          <p>Select at least one. <strong class="text-orange">*</strong></p>
           <q-list dense class="q-px-none">
             <q-item v-for="session in regularSessions" class="q-pl-none">
               <q-item-section avatar class="q-px-none">
-                <q-checkbox v-model="obj.sessions" :val="session.id" keep-color></q-checkbox>
+                <q-checkbox v-model="obj.sessions" :val="session.id" keep-color />
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ session.title }}</q-item-label>
@@ -78,7 +78,7 @@
           <h6 class="q-mb-md">Travel visa</h6>
           <q-item class="q-pl-none">
             <q-item-section avatar class="q-px-none">
-              <q-checkbox v-model="obj.visa_requested" keep-color></q-checkbox>
+              <q-checkbox v-model="obj.visa_requested" keep-color />
             </q-item-section>
             <q-item-section>
               <q-item-label>I require an Invitation Letter for my visa application</q-item-label>
@@ -87,7 +87,7 @@
         </div>
 
         <div class="q-mt-xl">
-          <q-btn unelevated @click.prevent="createOrUpdate(obj)" :disabled="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" :label="(obj.self) ? 'Update registration' : 'Create registration'"></q-btn>
+          <q-btn unelevated @click.prevent="createOrUpdate(obj)" :disabled="!formIsValid" :color="(formIsValid) ? 'primary' : 'orange'" :label="(obj.self) ? 'Update registration' : 'Create registration'" />
           <p class="q-mt-md text-orange" v-show="!formIsValid">
             <i class="material-icons q-mr-sm">block</i>
             <span v-if="feeIsOneDay && obj.days.length > 1">You can only attend one of the days of the event.</span>
@@ -120,17 +120,18 @@
             <q-item-label caption>{{ obj.base_fee }} EUR <span v-if="obj.extra_fees">+ {{ obj.extra_fees }} EUR</span></q-item-label>
           </q-item-section>
           <q-item-section side top class="q-mt-sm">
-            <q-badge v-if="obj.isPaid" label="PAID" color="primary"></q-badge>
-            <q-badge v-else label="PENDING" color="dark"></q-badge>
+            <q-badge v-if="obj.isPaid" label="PAID" color="primary" />
+            <q-badge v-else label="PENDING" color="dark" />
           </q-item-section>
         </q-item>
-        <q-item>
+        <q-item class="q-mt-lg">
           <q-item-section>
-            <q-btn v-if="obj.isPaid" outline icon="info" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url"></q-btn>
-            <span v-else>
-              <q-btn v-if="!obj.invoice_requested" outline icon="credit_card" color="green" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url"></q-btn>
-              <q-btn v-else disabled outline icon="info" color="dark" label="Invoice is being prepared" class="full-width"></q-btn>
+            <q-btn v-if="obj.isPaid" outline icon="info" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url" />
+            <span v-else-if="event.allows_payments">
+              <q-btn v-if="!obj.invoice_requested" outline icon="credit_card" color="green" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url" />
+              <q-btn v-else disabled outline icon="info" color="dark" label="Invoice is being prepared" class="full-width" />
             </span>
+            <q-btn v-else disabled outline icon="info" color="dark" label="Payments disabled" class="full-width" />
           </q-item-section>
         </q-item>
       </q-list>

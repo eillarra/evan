@@ -42,6 +42,7 @@ class EventSerializer(EventListSerializer):
     is_closed = serializers.BooleanField(read_only=True)
     is_open_for_registration = serializers.BooleanField(read_only=True)
     allows_invoices = serializers.BooleanField(read_only=True)
+    allows_payments = serializers.BooleanField(read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
@@ -51,7 +52,7 @@ class EventSerializer(EventListSerializer):
 
     class Meta:
         model = Event
-        exclude = ("id", "wbs_element", "ingenico_salt", "test_mode", "signature")
+        exclude = ("id", "wbs_element", "ingenico_salt", "test_mode", "signature", "payments_activation")
         read_only_fields = ("code", "config", "custom_fields")
 
     def validate(self, data):
