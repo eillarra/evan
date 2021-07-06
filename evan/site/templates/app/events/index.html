@@ -188,6 +188,11 @@
               id: payload.obj.id
             }));
           }
+        },
+        updateEvent: function (state, obj) {
+          Evan.api.update(obj, function (res) {
+            state.event = Evan.map.event(res.data);
+          });
         }
       }
     });
@@ -502,13 +507,9 @@
               && moment(this.event.registration_deadline).isAfter();
         }
       }),
-      watch: {
-        'event': {
-          deep: true,
-          handler: _.debounce(function (val, oldVal) {
-            if (oldVal == null) return;
-            Evan.api.update(val);
-          }, 2000)
+      methods: {
+        update: function () {
+          this.$store.commit('updateEvent', this.event);
         }
       }
     };

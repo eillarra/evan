@@ -32,6 +32,7 @@
             <q-input filled dense v-model="event.website" label="Website"></q-input>
             <q-input filled dense v-model="event.hashtag" label="Hashtag" prefix="#"></q-input>
           </div>
+          <q-btn unelevated v-close-popup @click="update" label="Update event information" color="primary" class="q-px-md q-mt-xl" />
         </div>
         <div class="col-12 col-md-6">
           <q-card flat bordered class="full-width">
