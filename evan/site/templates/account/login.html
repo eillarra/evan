@@ -2,21 +2,20 @@
 
 {% load compress %}
 {% load account socialaccount %}
-{% get_providers as socialaccount_providers %}
 
 
 {% block head_title %}Sign in - {{ block.super }}{% endblock %}
 
 {% block content %}
+  {% get_providers as socialaccount_providers %}
+
   <display-5>Sign in</display-5>
 
   {% if socialaccount_providers %}
-    <p>Please sign in with one
-    of your existing third-party accounts. Or, <a href="{{ signup_url }}">sign up</a>
-    for an account and sign in below:</p>
-    <ul class="socialaccounts bg-light rounded">
+    <p>Please sign in with one of your existing third-party accounts. Or, <a href="{{ signup_url }}">sign up</a> for an account and sign in below:</p>
+    <div class="q-mb-xl">
       {% include 'socialaccount/snippets/provider_list.html' with process='login' %}
-    </ul>
+    </div>
     {% include 'socialaccount/snippets/login_extra.html' %}
   {% else %}
     <p>If you have not created an account yet, then please <a href="{{ signup_url }}">sign up</a> first.</p>
