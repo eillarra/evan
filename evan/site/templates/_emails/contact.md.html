@@ -4,9 +4,9 @@
 {% block header %}{{ sender.first_name }} has sent you a message via Evan{% endblock %}
 
 {% block body %}
-Dear {{ user.name }},
+Dear {{ user.first_name }},
 
-{{ sender.profile.name }} {% if sender_affiliation %}({{ sender_affiliation }}) {% endif %}has sent you a message using the contact form on the Evan website (#{{ event.hashtag }}):
+{{ sender.profile.name }} {% if sender.profile.affiliation %}({{ sender.profile.affiliation }}) {% endif %}has sent you a message using the contact form on the Evan website (#{{ event.hashtag }}):
 
 > {{ message }}
 
