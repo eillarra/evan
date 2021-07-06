@@ -1,9 +1,13 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from evan.functions import send_task
 from evan.models import Event
 from ..permissions import EventPermission, EventAttendeePermission
 from ..serializers import AttendeeSerializer, EventSerializer
@@ -33,3 +37,36 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
             get_user_model().objects.filter(registrations__event_id=self.get_object().id).select_related("profile")
         )
         return ListModelMixin.list(self, request, *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=(EventAttendeePermission,),
+    )
+    @never_cache
+    def contact(self, request, *args, **kwargs):
+        try:
+            event = self.get_object()
+            user = get_user_model().objects.select_related("profile").get(id=self.request.data["user_id"])
+
+            if not user.profile.can_be_contacted():
+                return Response({"message": "User cannot be contacted."}, status=HTTPStatus.FORBIDDEN)
+
+            email = (
+                "_emails/contact.md.html",
+                f"You have received a message for #{event.hashtag} (via Evan)",
+                "Ghent University <no-reply@ugent.be>",
+                [user.email],
+                {
+                    "event": self.get_object(),
+                    "user": user,
+                    "sender": self.request.user,
+                    "message": self.request.data["message"],
+                },
+            )
+            send_task("evan.tasks.emails.send_template_email", email)
+
+            return Response({"message": "Your message has been sent."})
+
+        except Exception:
+            return Response({"message": "We could not send your message."}, status=HTTPStatus.INTERNAL_SERVER_ERROR)

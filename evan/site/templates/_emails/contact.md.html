@@ -1,0 +1,17 @@
+{% extends 'email.txt' %}
+
+
+{% block header %}{{ sender.first_name }} has sent you a message via Evan{% endblock %}
+
+{% block body %}
+Dear {{ user.name }},
+
+{{ sender.profile.name }} {% if sender_affiliation %}({{ sender_affiliation }}) {% endif %}has sent you a message using the contact form on the Evan website (#{{ event.hashtag }}):
+
+> {{ message }}
+
+You can contact {{ sender.first_name }} directly via <{{ sender.email }}> to answer the request
+or you can just ignore this message if you consider it inappropriate.
+{% endblock %}
+
+{% block footer %}{{ event.name }} (via Evan){% endblock %}

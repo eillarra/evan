@@ -14,13 +14,13 @@ class AttendeeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ("name", "affiliation", "country", "connect")
+        fields = ("id", "name", "affiliation", "country", "connect")
 
     def get_affiliation(self, obj) -> str:
         return obj.profile.affiliation
 
     def get_connect(self, obj) -> bool:
-        return obj.profile.custom_data["connect"]
+        return obj.profile.can_be_contacted()
 
     def get_country(self, obj) -> str:
         return {"code": obj.profile.country.code, "name": obj.profile.country.name} if obj.profile.country else None

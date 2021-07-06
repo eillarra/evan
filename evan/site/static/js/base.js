@@ -90,12 +90,14 @@ var Evan = {
       var types = {
         400: 'warning',
         401: 'warning',
+        403: 'warning',
         500: 'negative'
       }
 
       var textColors = {
         400: 'grey-8',
         401: 'grey-8',
+        403: 'grey-8',
         500: 'white'
       }
 
@@ -111,8 +113,8 @@ var Evan = {
         msg = errors.join('<br>') || null;
       }
 
-      // 500 Internal Server Error
-      if (error.response.status == 500) {
+      // 403 Forbidden || 500 Internal Server Error
+      if (error.response.status == 403 || error.response.status == 500) {
         msg = error.response.data.message || null;
       }
 

@@ -31,6 +31,9 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return f"{self.name}, {self.affiliation if self.affiliation else '-'}"
 
+    def can_be_contacted(self) -> bool:
+        return self.custom_data["connect"]
+
     @property
     def email(self) -> str:
         return self.user.email

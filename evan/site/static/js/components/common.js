@@ -275,6 +275,76 @@ var EvanCommonComponents = {
         return this.provider.toLowerCase() + '-logo';
       }
     }
+  },
+
+  'evan-contact-dialog': {
+    props: {
+      eventUrl: {
+        type: String,
+        required: true
+      }
+    },
+    data: function () {
+      return {
+        dialogVisible: false,
+        user: null,
+        msg: null
+      }
+    },
+    template: `
+      <q-dialog v-model="showDialog" @show="dialogVisible = true">
+        <q-card v-if="user" class="q-pa-sm" style="width: 500px">
+          <q-toolbar>
+            <q-toolbar-title class="q-ml-xs">Contact form</q-toolbar-title>
+            <q-space />
+            <q-btn v-close-popup flat round icon="close" />
+          </q-toolbar>
+          <q-card-section class="text-body2">
+            <p>For privacy reasons we cannot share other users' emails. Please use this form to send a message to <strong>{{ user.name }}</strong><span v-if="user.affiliation"> ({{ user.affiliation }})</span>: we will share your email address with {{ user.name }} so you can get a direct response.</p>
+            <q-input v-model="msg" filled type="textarea" class="q-mb-md"></q-input>
+            <q-btn v-close-popup @click="sendMessage" outline color="primary" label="Send message" :disable="!msg" />
+          </q-card-section>
+          <q-card-section class="text-caption q-pb-lg">
+            <span>Please note that {{ user.name }} can choose to discard your message.</span>
+          </q-card-section>
+        </q-card>
+      </q-dialog>
+    `,
+    computed: {
+      showDialog: {
+        get: function () {
+          return this.user != null;
+        },
+        set: function (val) {
+          if (this.dialogVisible) {
+            this.dialogVisible = false;
+            this.msg = null;
+            this.user = null;
+          }
+        }
+      }
+    },
+    methods: {
+      updateUser: function (user) {
+        this.user = user;
+      },
+      sendMessage: function () {
+        Evan.api.request('post', this.eventUrl + 'contact/', {
+          user_id: this.user.id,
+          message: this.msg
+        }).then(function (res) {
+          Evan.utils.notifySuccess('Message sent.');
+        }).catch(function (error) {
+          Evan.utils.notifyApiError(error);
+        });
+      }
+    },
+    created: function () {
+      EventEmitter.on('show-contact-dialog', this.updateUser);
+    },
+    beforeDestroy: function () {
+      EventEmitter.off('show-contact-dialog');
+    }
   }
 
 };

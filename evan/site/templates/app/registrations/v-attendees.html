@@ -17,9 +17,17 @@
           <template v-slot:no-data="{ icon, message, filter }">
             <evan-no-data :message="message" :filter="filter" />
           </template>
+          <template v-slot:body-cell-contact="props">
+            <q-td v-if="props.row.connect" auto-width :props="props" @click="contactUser(props.row)" class="cursor-pointer">
+              <q-icon name="mail_outline" color="primary" />
+            </q-td>
+            <q-td v-else auto-width></q-td>
+          </template>
         </q-table>
       </q-card>
     </div>
+
+    <evan-contact-dialog :event-url="event.self" />
 
   </div>
 {% endverbatim %}

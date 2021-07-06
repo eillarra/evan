@@ -168,6 +168,9 @@
                 align: 'left',
                 label: 'Country',
                 sortable: true
+              },
+              {
+                name: 'contact'
               }
             ],
             pagination: {
@@ -187,6 +190,11 @@
           });
         }
       }),
+      methods: {
+        contactUser: function (user) {
+          EventEmitter.emit('show-contact-dialog', user);
+        }
+      },
       created: function () {
         if (!this.attendees.length) {
           this.$store.commit('getAttendees');
