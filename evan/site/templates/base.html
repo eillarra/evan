@@ -25,15 +25,13 @@
     {% endif %}
     {% block structured_data %}{% endblock %}
     {% if not debug %}
-      <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.css" />
-      <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.1.0/cookieconsent.min.js"></script>
+      <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css" />
     {% endif %}
     {% block head_scripts %}{% endblock %}
   </head>
   <body class="bg-grey-1">
     <noscript>
       <div class="p-5 bg-light-yellow text-center mb-5">
-        <img class="logo flipped" src="{% static 'images/evan.svg' %}">
         <h2 class="mt-4">No love for JavaScript?</h2>
         <p class="mt-3">Evan requires your browser to have <a href="http://enable-javascript.com/">JavaScript enabled</a>.</p>
       </div>
@@ -122,22 +120,21 @@
     {% block extra_scripts %}{% endblock %}
     {% block scripts %}{% endblock %}
     {% if not debug %}
+      <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js" data-cfasync="false"></script>
       {% compress js inline %}
         <script>
-          window.addEventListener('load', function() {
-            window.cookieconsent.initialise({
-              'theme': 'classic',
-              'position': 'bottom-right',
-              'palette': {
-                'popup': {
-                  'background': '#1e64c8'
-                },
-                'button': {
-                  'background': '#fff',
-                  'text': '#1e64c8'
-                }
+          window.cookieconsent.initialise({
+            'theme': 'classic',
+            'position': 'bottom-right',
+            'palette': {
+              'popup': {
+                'background': '#1e64c8'
+              },
+              'button': {
+                'background': '#fff',
+                'text': '#1e64c8'
               }
-            });
+            }
           });
         </script>
       {% endcompress %}
