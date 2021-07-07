@@ -154,7 +154,7 @@
         EventEmitter.on('evan-file-removed', this.removeFile);
       },
       beforeUnmount: function () {
-        EventEmitter.off('evan-file-removed', this.removeFile);
+        EventEmitter.off('evan-file-removed');
       }
     };
 

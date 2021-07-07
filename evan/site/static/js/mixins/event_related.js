@@ -45,6 +45,6 @@ var EventRelatedMixin = {
   },
   beforeUnmount: function () {
     EventEmitter.off(this.saveEventName);
-    EventEmitter.off('evan-editor-hide', this.clearObj);
+    EventEmitter.off('evan-editor-hide');
   }
 };

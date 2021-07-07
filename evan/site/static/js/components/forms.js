@@ -76,7 +76,7 @@ var EvanFormComponents = {
       EventEmitter.on('evan-editor-hide-after-save', this.hideDialog);
     },
     beforeUnmount: function () {
-      EventEmitter.off('evan-editor-hide-after-save', this.hideDialog);
+      EventEmitter.off('evan-editor-hide-after-save');
     }
   },
 

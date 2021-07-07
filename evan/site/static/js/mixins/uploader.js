@@ -70,10 +70,10 @@ var UploaderMixin = {
       });
     }
   },
-  created: function () {
+  mounted: function () {
     EventEmitter.on('evan-file-removed', this.removeFile);
   },
-  beforeUnmount: function () {
-    EventEmitter.off('evan-file-removed', this.removeFile);
+  unmounted: function () {
+    EventEmitter.off('evan-file-removed');
   }
 };
