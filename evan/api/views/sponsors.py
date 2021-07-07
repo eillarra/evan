@@ -36,6 +36,6 @@ class SponsorViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
         if sponsor.files.count() > 1:
             raise ValidationError({"files": ["You have reached the limit on number of files (1)."]})
 
-        file = File(content_object=sponsor, type=File.PUBLIC, file=request.data["file"])
-        file.save()
+        File(content_object=sponsor, type=File.PUBLIC, file=request.data["file"]).save()
+
         return RetrieveModelMixin.retrieve(self, request, *args, **kwargs)

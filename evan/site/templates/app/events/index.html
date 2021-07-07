@@ -23,6 +23,21 @@
   <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area v-if="event" class="fit">
       <q-list dense>
+        <q-item-label header>Overview</q-item-label>
+        <q-item clickable :to="{name: 'analytics'}">
+          <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
+          <q-item-section>Analytics</q-item-section>
+        </q-item>
+        <q-item clickable :to="{name: 'registrations'}">
+          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
+          <q-item-section>Registrations</q-item-section>
+        </q-item>
+        <q-item v-if="event.config.abstracts" clickable :to="{name: 'abstracts'}">
+          <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
+          <q-item-section>Abstracts</q-item-section>
+        </q-item>
+      </q-list>
+      <q-list dense>
         <q-item-label header>Event management</q-item-label>
         <q-item clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
@@ -58,21 +73,6 @@
         <q-item v-if="event.config.sponsors" clickable :to="{name: 'sponsors'}">
           <q-item-section avatar><q-icon name="shield"></q-icon></q-item-section>
           <q-item-section>Sponsors</q-item-section>
-        </q-item>
-      </q-list>
-      <q-list dense>
-        <q-item-label header>Overview</q-item-label>
-        <q-item clickable :to="{name: 'analytics'}">
-          <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
-          <q-item-section>Analytics</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'registrations'}">
-          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
-          <q-item-section>Registrations</q-item-section>
-        </q-item>
-        <q-item v-if="event.config.abstracts" clickable :to="{name: 'abstracts'}">
-          <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
-          <q-item-section>Abstracts</q-item-section>
         </q-item>
       </q-list>
     </q-scroll-area>
@@ -709,6 +709,12 @@
                 field: 'level',
                 align: 'left',
                 label: 'Level'
+              },
+              {
+                name: 'website',
+                field: 'website',
+                align: 'left',
+                label: 'Website'
               },
               {
                 name: 'remove'

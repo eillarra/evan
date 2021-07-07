@@ -30,6 +30,7 @@ var UploaderMixin = {
       return {
         url: this.uploadUrl,
         method: 'POST',
+        sendRaw: true,
         headers: [
           { name: 'Content-Disposition', value: 'attachment; filename=' + filename },
           { name: 'X-CSRFTOKEN', value: document.querySelector('html').dataset.csrfToken }

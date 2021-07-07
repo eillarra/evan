@@ -40,6 +40,6 @@ class ContentViewSet(UpdateModelMixin, GenericViewSet):
         except KeyError:
             raise ValidationError({"files": ["Content is not accepting files."]})
 
-        file = File(content_object=content, type=File.PUBLIC, file=request.data["file"])
-        file.save()
+        File(content_object=content, type=File.PUBLIC, file=request.data["file"]).save()
+
         return RetrieveModelMixin.retrieve(self, request, *args, **kwargs)

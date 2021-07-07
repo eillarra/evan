@@ -22,6 +22,11 @@
         <template v-slot:body-cell-level="props">
           <q-td :props="props">{{ props.row.level_display }}</q-td>
         </template>
+        <template v-slot:body-cell-website="props">
+          <q-td :props="props">
+            <a :href="props.row.website" target="_blank" rel="noopener" @click.stop>{{ props.row.website }}</a>
+          </q-td>
+        </template>
         <template v-slot:body-cell-remove="props">
           <q-td v-if="!event.is_closed" auto-width :props="props" @click.stop="remove(props.row)">
             <evan-remove-icon />
