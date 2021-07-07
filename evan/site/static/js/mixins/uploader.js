@@ -19,6 +19,9 @@ var UploaderMixin = {
     }
   },
   methods: {
+    removeFile: function (obj) {
+      alert('NotImplementedError');
+    },
     updateObj: function (obj) {
       alert('NotImplementedError');
     },
@@ -65,5 +68,11 @@ var UploaderMixin = {
         }
       });
     }
+  },
+  created: function () {
+    EventEmitter.on('evan-file-removed', this.removeFile);
+  },
+  beforeUnmount: function () {
+    EventEmitter.off('evan-file-removed', this.removeFile);
   }
 };

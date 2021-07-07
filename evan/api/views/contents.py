@@ -17,9 +17,9 @@ class ContentsViewSet(EventRelatedListOnlyViewSet):
     serializer_class = ContentSerializer
 
 
-class ContentViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+class ContentViewSet(UpdateModelMixin, GenericViewSet):
     permission_classes = (ContentPermission,)
-    queryset = Content.objects.all()
+    queryset = Content.objects.prefetch_related("files").all()
     serializer_class = ContentSerializer
 
     @action(
@@ -40,6 +40,6 @@ class ContentViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         except KeyError:
             raise ValidationError({"files": ["Content is not accepting files."]})
 
-        file = File(content_object=self.get_object(), type=File.PUBLIC, file=request.data["file"])
+        file = File(content_object=content, type=File.PUBLIC, file=request.data["file"])
         file.save()
-        return self.retrieve(request, *args, **kwargs)
+        return RetrieveModelMixin.retrieve(self, request, *args, **kwargs)

@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from evan.models import Event, Fee, validate_event_dates
 from .sessions import SessionSerializer
+from .sponsors import SponsorSerializer
 from .topics import TopicSerializer
 from .tracks import TrackSerializer
 from .venues import VenueSerializer
@@ -46,6 +47,7 @@ class EventSerializer(EventListSerializer):
     fees = FeeSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
+    sponsors = SponsorSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
     tracks = TrackSerializer(many=True, read_only=True)
     venues = VenueSerializer(many=True, read_only=True)

@@ -21,10 +21,12 @@ var EventRelatedMixin = {
       if (_.has(obj, 'self')) {
         Evan.api.update(obj, function (res) {
           self.$store.commit('update', {var: self.stateVar, action: 'update', obj: res.data});
+          EventEmitter.emit('evan-editor-hide-after-save');
         });
       } else {
         Evan.api.create(this.createUrl, obj, function (res) {
           self.$store.commit('update', {var: self.stateVar, action: 'add', obj: res.data});
+          EventEmitter.emit('evan-editor-hide-after-save');
         });
       }
     },

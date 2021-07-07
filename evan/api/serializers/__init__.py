@@ -7,6 +7,7 @@ from .files import *
 from .payments import *
 from .registrations import *
 from .sessions import *
+from .sponsors import *
 from .topics import *
 from .tracks import *
 from .users import *

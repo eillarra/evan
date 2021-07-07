@@ -1,0 +1,55 @@
+<script type="text/x-template" id="v-sponsors">
+{% verbatim %}
+  <div v-if="event && event.config.sponsors">
+
+    <q-card flat class="q-pa-lg">
+      <div class="row no-wrap q-mb-sm">
+        <display-5>Sponsors</display-5>
+        <q-space />
+        <div>
+          <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add sponsor" />
+        </div>
+      </div>
+      <q-table dense row-key="key" :rows="rows" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
+        <template v-slot:no-data="{ icon, message, filter }">
+          <evan-no-data :message="message" :filter="filter" />
+        </template>
+        <template v-slot:body-cell-edit="props">
+          <q-td auto-width :props="props">
+            <evan-edit-icon />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-level="props">
+          <q-td :props="props">{{ props.row.level_display }}</q-td>
+        </template>
+        <template v-slot:body-cell-remove="props">
+          <q-td v-if="!event.is_closed" auto-width :props="props" @click.stop="remove(props.row)">
+            <evan-remove-icon />
+          </q-td>
+          <q-td v-else auto-width></q-td>
+        </template>
+      </q-table>
+    </q-card>
+
+    <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
+      <div class="q-gutter-md">
+        <q-input filled dense v-model="tmpObj.name" label="Name" type="text"></q-input>
+        <q-select filled dense v-model="tmpObj.level" emit-value map-options :options="levelOptions" label="Sponsorship level"></q-select>
+        <q-input filled dense v-model="tmpObj.website" label="Website" type="url"></q-input>
+
+        <div v-if="tmpObj.self">
+          <div v-if="tmpObj.files.length">
+            <h6 class="q-mt-lg q-mb-md">Files</h6>
+            <evan-file-list :files="tmpObj.files" />
+          </div>
+          <div v-else class="q-mt-lg">
+            <q-uploader ref="uploader" flat auto-upload no-thumbnails :factory="uploaderFactory" accept=".png, image/*" :max-files="1" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" label="Upload sponsor logo" color="grey-7" class="full-width bg-grey-2" />
+          </div>
+        </div>
+
+      </div>
+    </evan-editor>
+
+  </div>
+{% endverbatim %}
+</script>

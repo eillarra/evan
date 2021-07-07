@@ -21,7 +21,9 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
     @never_cache
     def retrieve(self, request, *args, **kwargs):
-        self.queryset = self.queryset.prefetch_related("topics", "tracks", "fees", "sessions__topics", "venues__rooms")
+        self.queryset = self.queryset.prefetch_related(
+            "fees", "sessions__topics", "sponsors__files", "topics", "tracks", "venues__rooms"
+        )
         return super().retrieve(request, *args, **kwargs)
 
     @action(

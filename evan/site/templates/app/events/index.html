@@ -55,6 +55,10 @@
           <q-item-section avatar><q-icon name="wysiwyg"></q-icon></q-item-section>
           <q-item-section>Contents</q-item-section>
         </q-item>
+        <q-item v-if="event.config.sponsors" clickable :to="{name: 'sponsors'}">
+          <q-item-section avatar><q-icon name="shield"></q-icon></q-item-section>
+          <q-item-section>Sponsors</q-item-section>
+        </q-item>
       </q-list>
       <q-list dense>
         <q-item-label header>Overview</q-item-label>
@@ -76,7 +80,7 @@
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-abstracts="{% url 'v1:abstracts-list' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
+  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-abstracts="{% url 'v1:abstracts-list' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-sponsors="{% url 'v1:sponsors-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
   <router-view class="q-pt-lg"></router-view>
   <div class="row q-col-gutter-lg items-stretch q-pt-lg">
     <router-view name="left" class="col-12 col-md-6"></router-view>
@@ -93,6 +97,7 @@
   {% include './v-event.html' %}
   {% include './v-registrations.html' %}
   {% include './v-sessions.html' %}
+  {% include './v-sponsors.html' %}
   {% include './v-topics.html' %}
   {% include './v-tracks.html' %}
   {% include './v-venues.html' %}
@@ -115,6 +120,7 @@
         coupons: [],
         registrations: [],
         sessions: [],
+        sponsors: [],
         topics: [],
         tracks: [],
         venues: []
@@ -157,6 +163,7 @@
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
             state.event = Evan.map.event(res.data);
             state.sessions = _.clone(state.event.sessions);
+            state.sponsors = _.clone(state.event.sponsors);
             state.topics = _.clone(state.event.topics);
             state.tracks = _.clone(state.event.tracks);
             state.venues = _.clone(state.event.venues);
@@ -284,19 +291,20 @@
       methods: {
         removeFile: function (file) {
           this.tmpObj.files = _.reject(_.clone(this.tmpObj.files), function (f) {
-            return f.url == file.url;
+            return f.self == file.self;
           });
+          this.updateState();
         },
         updateObj: function (obj) {
           this.tmpObj = obj;
+          this.updateState();
+        },
+        updateState: function () {
+          this.$store.commit('update', {var: this.stateVar, action: 'update', obj: _.clone(this.tmpObj)});
         }
       },
       created: function () {
         this.$store.commit('getContents');
-        EventEmitter.on('evan-file-removed', this.removeFile);
-      },
-      beforeUnmount: function () {
-        EventEmitter.off('evan-file-removed', this.removeFile);
       }
     };
 
@@ -676,6 +684,92 @@
       }
     };
 
+    var SponsorsView = {
+      template: '#v-sponsors',
+      mixins: [EventRelatedMixin, UploaderMixin],
+      data: function () {
+        return {
+          createUrl: VARS.urlSponsors,
+          stateVar: 'sponsors',
+          saveEventName: 'evan-save-sponsor',
+          //
+          table: {
+            columns: [
+              {
+                name: 'edit'
+              },
+              {
+                name: 'name',
+                field: 'name',
+                align: 'left',
+                label: 'Name'
+              },
+              {
+                name: 'level',
+                field: 'level',
+                align: 'left',
+                label: 'Level'
+              },
+              {
+                name: 'remove'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 0,
+              sortBy: 'level',
+              descending: false
+            }
+          }
+        };
+      },
+      computed: _.extend(
+        Vuex.mapState(['event', 'sponsors']), {
+        levelOptions: function () {
+          if (!this.event || !this.event.config.sponsors) return [];
+          return this.event.config.sponsors.map(function (s, i) {
+            return {
+              label: s,
+              value: i
+            }
+          });
+        },
+        rows: function () {
+          if (!this.levelOptions.length) return this.sponsors;
+          var lo = _.indexBy(this.levelOptions, "value");
+          return this.sponsors.map(function (obj) {
+            obj.level_display = lo[obj.level].label;
+            return obj;
+          });
+        },
+        uploadUrl: function () {
+          if (!this.tmpObj) return null;
+          return this.tmpObj.rel_files;
+        }
+      }),
+      methods: {
+        addObj: function () {
+          this.tmpObj = {
+            level: null,
+            name: null,
+            website: null
+          };
+        },
+        removeFile: function (file) {
+          this.tmpObj.files = _.reject(_.clone(this.tmpObj.files), function (f) {
+            return f.self == file.self;
+          });
+          this.updateState();
+        },
+        updateObj: function (obj) {
+          this.tmpObj = obj;
+          this.updateState();
+        },
+        updateState: function () {
+          this.$store.commit('update', {var: this.stateVar, action: 'update', obj: _.clone(this.tmpObj)});
+        }
+      }
+    };
+
     var TopicsView = {
       template: '#v-topics',
       mixins: [EventRelatedMixin],
@@ -880,6 +974,12 @@
               q: route.query.q
             };
           }
+        },
+        {
+          name: 'sponsors',
+          path: '/sponsors/',
+          pathToRegexpOptions: {strict: true},
+          component: SponsorsView
         },
         {
           name: 'taxonomy',

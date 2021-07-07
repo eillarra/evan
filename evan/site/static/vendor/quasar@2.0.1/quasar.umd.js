@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v2.0.0
+ * Quasar Framework v2.0.1
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -277,16 +277,7 @@
         userAgent,
         is: getPlatform(userAgent),
         has: {
-          touch: hasTouch,
-          webStorage: (() => {
-            try {
-              if (window.localStorage) {
-                return true
-              }
-            }
-            catch (e) {}
-            return false
-          })()
+          touch: hasTouch
         },
         within: {
           iframe: window.self !== window.top
@@ -318,6 +309,29 @@
   };
 
   {
+    // do not access window.localStorage without
+    // devland actually using it as this will get
+    // reported under "Cookies" in Google Chrome
+    let hasWebStorage;
+    Object.defineProperty(client.has, 'webStorage', {
+      get: () => {
+        if (hasWebStorage !== void 0) {
+          return hasWebStorage
+        }
+
+        try {
+          if (window.localStorage) {
+            hasWebStorage = true;
+            return true
+          }
+        }
+        catch (e) {}
+
+        hasWebStorage = false;
+        return false
+      }
+    });
+
     client.is.ios === true
       && window.navigator.vendor.toLowerCase().indexOf('apple') === -1;
 
@@ -1423,7 +1437,7 @@
   }
 
   var installQuasar = function (parentApp, opts = {}) {
-      const $q = { version: '2.0.0' };
+      const $q = { version: '2.0.1' };
 
       if (globalConfigIsFrozen === false) {
         if (opts.config !== void 0) {
@@ -17123,7 +17137,7 @@
       const { props, proxy } = vue.getCurrentInstance();
 
       // export public method (so it can be used in QForm)
-      Object.assign(proxy, validate);
+      Object.assign(proxy, { validate });
 
       vue.watch(() => props.disable, val => {
         if (val === true) {
@@ -38344,7 +38358,7 @@
   });
 
   var index_umd = {
-    version: '2.0.0',
+    version: '2.0.1',
     install (app, opts) {
       installQuasar(app, {
         components,

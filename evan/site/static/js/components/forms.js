@@ -38,7 +38,7 @@ var EvanFormComponents = {
           <q-card-actions align="right" class="q-py-md q-px-lg">
             <q-btn flat v-close-popup label="Close" color="grey-8" />
             <q-space />
-            <q-btn v-if="saveEventName" unelevated v-close-popup @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
+            <q-btn v-if="saveEventName" unelevated @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -64,9 +64,19 @@ var EvanFormComponents = {
       }
     },
     methods: {
+      hideDialog: function () {
+        this.dialogVisible = false;
+        EventEmitter.emit('evan-editor-hide');
+      },
       save: function () {
         EventEmitter.emit(this.saveEventName, this.obj);
       }
+    },
+    created: function () {
+      EventEmitter.on('evan-editor-hide-after-save', this.hideDialog);
+    },
+    beforeUnmount: function () {
+      EventEmitter.off('evan-editor-hide-after-save', this.hideDialog);
     }
   },
 

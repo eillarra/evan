@@ -10,6 +10,7 @@ from .payments import *
 from .permissions import *
 from .registrations import *
 from .sessions import *
+from .sponsors import *
 from .topics import *
 from .tracks import *
 from .users import *
