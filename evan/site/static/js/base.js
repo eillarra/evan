@@ -68,6 +68,10 @@ var Evan = {
       obj.total_paid = ((obj.coupon) ? obj.coupon.value : 0) + obj.paid + obj.paid_via_invoice;
       obj.is_paid = obj.total_paid >= obj.total_fees;
 
+      obj._q = (obj.user.profile.custom_data.gender)
+        ? 'gender:' + obj.user.profile.custom_data.gender
+        : 'gender:unknown';
+
       this.qStrings(obj, ['uuid', 'user_name', 'user_affiliation']);
       this.qBooleans(obj, [
         ['paid', 'is_paid'],

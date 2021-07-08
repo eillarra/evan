@@ -390,7 +390,7 @@ var EvanCommonComponents = {
           <q-card style="width: 280px; height: 100%" class="q-pa-lg">
             <display-5 class="text-grey-8">Search builder</display-5>
             <div class="q-gutter-md q-mt-md">
-              <q-input dense filled v-model="filterData.text" type="text" label="Text" />
+              <q-input dense filled v-model="filterData.text" @keyup.enter="dialogVisible = false" type="text" label="Text" />
               <q-separator />
               <q-select v-for="filter in filters" dense filled v-model="filterData[filter.name]" :options="filter.options" :label="filter.name">
                 <template v-if="filterData[filter.name]" v-slot:append>
