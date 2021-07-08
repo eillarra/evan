@@ -13,7 +13,7 @@
           <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:registrations_sheet' event.code %}{% verbatim %}" target="_blank" color="primary" label="Download overview"></q-btn>
         </div>
       </div>
-      <evan-search-bar v-model="query" :filters="search.filters" placeholder="Search by ID, attendee name, affiliation..." />
+      <evan-search-bar v-model="query" :filters="filtersWithCountries" placeholder="Search by ID, attendee name, affiliation..." />
       <q-table dense row-key="uuid" :rows="rows" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />

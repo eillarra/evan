@@ -532,7 +532,7 @@
             filters: [
               {
                 name: 'gender',
-                options: ['female', 'male', 'non_binary', 'unknown']
+                options: ['female', 'male', 'non-binary', 'unknown']
               },
               {
                 name: 'paid',
@@ -618,6 +618,26 @@
         rows: function () {
           if (!this.q) return this.registrations;
           return Evan.utils.filter(this.registrations, this.q);
+        },
+        filtersWithCountries: function () {
+          var countryFilters = [];
+
+          if (this.registrations.length) {
+            var countries = ['unknown'];
+
+            _.each(this.registrations, function (reg) {
+              if (reg.user.profile.country) countries.push(slugify(reg.user.profile.country.name).toLowerCase());
+            });
+
+            countryFilters = [
+              {
+                name: 'country',
+                options: _.uniq(countries).sort()
+              }
+            ];
+          }
+
+          return _.union(countryFilters, this.search.filters);
         }
       })
     };

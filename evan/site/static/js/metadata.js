@@ -3,7 +3,7 @@ var EvanMetadata = {
     gender: {
       female: 'Female',
       male: 'Male',
-      non_binary: 'Non-binary'
+      'non-binary': 'Non-binary'
     },
     dietary: {
       none: 'No special requirements',

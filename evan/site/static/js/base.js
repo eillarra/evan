@@ -58,6 +58,7 @@ var Evan = {
       obj.start = moment(obj.start_date);
       obj.end = moment(obj.end_date);
       obj.date_range = moment.range(obj.start, obj.end);
+
       return obj;
     },
     registration: function (obj) {
@@ -68,9 +69,13 @@ var Evan = {
       obj.total_paid = ((obj.coupon) ? obj.coupon.value : 0) + obj.paid + obj.paid_via_invoice;
       obj.is_paid = obj.total_paid >= obj.total_fees;
 
-      obj._q = (obj.user.profile.custom_data.gender)
-        ? 'gender:' + obj.user.profile.custom_data.gender
-        : 'gender:unknown';
+      obj._q = (obj.user.profile.country)
+        ? 'country:' + slugify(obj.user.profile.country.name).toLowerCase()
+        : 'country:unknown';
+
+      obj._q += (obj.user.profile.custom_data.gender)
+        ? ' gender:' + obj.user.profile.custom_data.gender
+        : ' gender:unknown';
 
       this.qStrings(obj, ['uuid', 'user_name', 'user_affiliation']);
       this.qBooleans(obj, [
@@ -80,6 +85,11 @@ var Evan = {
         ['visa.requested', 'visa_requested'],
         ['visa.sent', 'visa_sent'],
       ]);
+
+      return obj;
+    },
+    session: function (obj) {
+      obj._q = '';
 
       return obj;
     },
