@@ -387,18 +387,16 @@ var EvanCommonComponents = {
           </template>
         </q-input>
         <q-dialog v-model="dialogVisible" position="right" @before-show="updateFilters" @before-hide="updateQuery">
-          <q-card style="width: 280px; height: 100%" class="q-pa-lg">
+          <q-card v-if="filters.length" style="width: 280px; height: 100%" class="q-pa-lg">
             <display-5 class="text-grey-8">Search builder</display-5>
             <div class="q-gutter-md q-mt-md">
               <q-input dense filled v-model="filterData.text" @keyup.enter="dialogVisible = false" type="text" label="Text" />
-              <div v-if="filters.length">
-                <q-separator />
-                <q-select v-for="filter in filters" dense filled v-model="filterData[filter.name]" :options="filter.options" :label="filter.name">
-                  <template v-if="filterData[filter.name]" v-slot:append>
-                    <q-icon name="clear" @click.stop="delete filterData[filter.name]" class="cursor-pointer" size="14px" />
-                  </template>
-                </q-select>
-              </div>
+              <q-separator />
+              <q-select v-for="filter in filters" dense filled v-model="filterData[filter.name]" :options="filter.options" :label="filter.name">
+                <template v-if="filterData[filter.name]" v-slot:append>
+                  <q-icon name="clear" @click.stop="delete filterData[filter.name]" class="cursor-pointer" size="14px" />
+                </template>
+              </q-select>
             </div>
           </q-card>
         </q-dialog>
