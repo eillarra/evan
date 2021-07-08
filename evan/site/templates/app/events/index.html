@@ -528,6 +528,30 @@
       props: ['uuid'],
       data: function () {
         return {
+          search: {
+            filters: [
+              {
+                name: 'paid',
+                options: ['yes', 'no']
+              },
+              {
+                name: 'invoice.requested',
+                options: ['yes', 'no']
+              },
+              {
+                name: 'invoice.sent',
+                options: ['yes', 'no']
+              },
+              {
+                name: 'visa.requested',
+                options: ['yes', 'no']
+              },
+              {
+                name: 'visa.sent',
+                options: ['yes', 'no']
+              }
+            ]
+          },
           table: {
             columns: [
               {
@@ -539,6 +563,13 @@
                 sortable: true,
                 label: 'ID',
                 align: 'left',
+              },
+              {
+                name: 'q',
+                field: 'q',
+                sortable: true,
+                align: 'left',
+                label: 'Q'
               },
               {
                 name: 'user_name',
@@ -587,6 +618,10 @@
       },
       computed: _.extend(
         Vuex.mapState(['event', 'registrations']), {
+        rows: function () {
+          if (!this.q) return this.registrations;
+          return Evan.utils.filter(this.registrations, this.q);
+        }
       })
     };
 

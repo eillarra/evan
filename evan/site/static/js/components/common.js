@@ -278,17 +278,17 @@ var EvanCommonComponents = {
   },
 
   'evan-contact-dialog': {
-    props: {
-      eventUrl: {
-        type: String,
-        required: true
-      }
-    },
     data: function () {
       return {
         dialogVisible: false,
         user: null,
         msg: null
+      };
+    },
+    props: {
+      eventUrl: {
+        type: String,
+        required: true
       }
     },
     template: `
@@ -344,6 +344,107 @@ var EvanCommonComponents = {
     },
     beforeDestroy: function () {
       EventEmitter.off('show-contact-dialog');
+    }
+  },
+
+  'evan-search-bar': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        dialogVisible: false,
+        filterData: {}
+      };
+    },
+    props: {
+      modelValue: {
+        type: String,
+        default: ''
+      },
+      placeholder: {
+        type: String,
+        default: 'Search...'
+      },
+      filters: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      }
+    },
+    template: `
+      <div>
+        <q-input filled dense v-model="q" :placeholder="placeholder" type="search" class="text-mono q-mb-md">
+          <template v-slot:prepend>
+            <q-icon name="search" />
+          </template>
+          <template v-slot:append>
+            <q-icon v-show="q !== ''" @click="q = ''" name="close" class="cursor-pointer">
+              <q-tooltip>Clear search</q-tooltip>
+            </q-icon>
+            <q-icon v-if="filters.length" @click="dialogVisible = true" name="tune" class="cursor-pointer q-ml-sm">
+              <q-tooltip>Toggle search builder</q-tooltip>
+            </q-icon>
+          </template>
+        </q-input>
+        <q-dialog v-model="dialogVisible" position="right" @before-show="updateFilters" @before-hide="updateQuery">
+          <q-card style="width: 280px; height: 100%" class="q-pa-lg">
+            <display-5 class="text-grey-8">Search builder</display-5>
+            <div class="q-gutter-md q-mt-md">
+              <q-input dense filled v-model="filterData.text" type="text" label="Text" />
+              <q-separator />
+              <q-select v-for="filter in filters" dense filled v-model="filterData[filter.name]" :options="filter.options" :label="filter.name">
+                <template v-if="filterData[filter.name]" v-slot:append>
+                  <q-icon name="clear" @click.stop="delete filterData[filter.name]" class="cursor-pointer" size="14px" />
+                </template>
+              </q-select>
+            </div>
+          </q-card>
+        </q-dialog>
+      </div>
+    `,
+    computed: {
+      q: {
+        get: function () {
+          return this.modelValue;
+        },
+        set: function (val) {
+          this.$emit('update:modelValue', val);
+        }
+      }
+    },
+    methods: {
+      updateQuery: function () {
+        var val = this.filterData;
+        var q = [val.text];
+        _.each(_.keys(val), function (k) {
+          if (k != 'text') q.push(k + ':' + val[k]);
+        });
+        this.$emit('update:modelValue', q.join(' '));
+      },
+      updateFilters: function () {
+        var q = this.q.replace(/\s+/g,' ').trim();
+
+        if (q == '') {
+          this.filterData = {};
+          return;
+        };
+
+        var filterParts = {};
+        var textParts = [];
+
+        _.each(q.split(' '), function (word) {
+          if (word.indexOf(':') > -1) {
+            var s = word.split(':');
+            filterParts[s[0]] = s[1];
+          } else {
+            textParts.push(word);
+          }
+        });
+
+        filterParts['text'] = textParts.join(' ');
+
+        this.filterData = filterParts;
+      }
     }
   }
 

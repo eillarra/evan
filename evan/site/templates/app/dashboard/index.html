@@ -220,7 +220,7 @@
       },
       computed: _.extend(
         Vuex.mapState(['registrations']), {
-        items: function () {
+        rows: function () {
           return this.registrations.map(function (obj) {
             obj.event_name = obj.event.name;
             return obj;

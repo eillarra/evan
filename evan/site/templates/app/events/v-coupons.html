@@ -13,14 +13,7 @@
           <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add coupon" />
         </div>
       </div>
-      <q-input filled dense v-model="query" placeholder="Search by code, notes..." type="search" class="q-mb-md">
-        <template v-slot:prepend>
-          <q-icon name="search" />
-        </template>
-        <template v-slot:append>
-          <q-icon v-if="query !== ''" name="close" @click="query = ''" class="cursor-pointer" />
-        </template>
-      </q-input>
+      <evan-search-bar v-model="query" placeholder="Search by code, notes..." />
       <q-table dense row-key="id" :rows="extendedCoupons" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />

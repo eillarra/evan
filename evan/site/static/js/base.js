@@ -67,10 +67,48 @@ var Evan = {
       obj.total_fees = obj.base_fee + obj.extra_fees + obj.manual_extra_fees;
       obj.total_paid = ((obj.coupon) ? obj.coupon.value : 0) + obj.paid + obj.paid_via_invoice;
       obj.is_paid = obj.total_paid >= obj.total_fees;
+
+      this.qStrings(obj, ['uuid', 'user_name', 'user_affiliation']);
+      this.qBooleans(obj, [
+        ['paid', 'is_paid'],
+        ['invoice.requested', 'invoice_requested'],
+        ['invoice.sent', 'invoice_sent'],
+        ['visa.requested', 'visa_requested'],
+        ['visa.sent', 'visa_sent'],
+      ]);
+
       return obj;
+    },
+    qStrings: function (obj, fields) {
+      if (!obj._q) obj._q = '';
+      var qs = [];
+      _.each(fields, function (f) {
+        qs.push(obj[f]);
+      });
+      obj._q += (' ' + qs.join(' ')).toLowerCase();
+    },
+    qBooleans: function (obj, fields) {
+      if (!obj._q) obj._q = '';
+      var qs = [];
+      _.each(fields, function (f) {
+        qs.push(f[0] + ':' + (obj[f[1]] ? 'yes' : 'no'));
+      });
+      obj._q +=  (' ' + qs.join(' ')).toLowerCase();
     }
   },
   utils: {
+    filter: function (data, q) {
+      if (q == '') return data;
+      var queries = q.toLowerCase().split(' ');
+
+      return data.filter(function (obj) {
+        var matches = 0;
+        _.each(queries, function (q) {
+          if (obj._q.indexOf(q) !== -1) matches++;
+        });
+        return matches == queries.length;
+      });
+    },
     confirmAction: function (msg, okCallbackFn, cancelCallbackFn) {
       Quasar.Dialog.create({
         message: msg,
