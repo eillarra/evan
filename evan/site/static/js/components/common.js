@@ -419,7 +419,7 @@ var EvanCommonComponents = {
         _.each(_.keys(val), function (k) {
           if (k != 'text') q.push(k + ':' + val[k]);
         });
-        this.$emit('update:modelValue', q.join(' '));
+        this.$emit('update:modelValue', q.join(' ').trim());
       },
       updateFilters: function () {
         var q = this.q.replace(/\s+/g,' ').trim();

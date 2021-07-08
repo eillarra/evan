@@ -24,7 +24,7 @@
 
         <div v-if="!replaceMainForm">
           <h6 class="q-mb-sm">Which sessions do you expect you will attend?</h6>
-          <p>Select at least one. <strong class="text-orange">*</strong></p>
+          <p>Select at least one ({{ event.start.format('LL') }} - {{ event.end.format('LL') }}). <strong class="text-orange">*</strong></p>
           <q-list dense class="q-px-none">
             <q-item v-for="session in regularSessions" class="q-pl-none">
               <q-item-section avatar class="q-px-none">
