@@ -11,10 +11,10 @@ var EvanMetadata = {
       vegan: 'Vegan',
       kosher: 'Kosher',
       muslim: 'Muslim',
-      intolerant_gluten: '[Intolerant] Gluten',
-      intolerant_lactose: '[Intolerant] Lactose',
-      allergic_crustaceans: '[Allergic] Crustaceans',
-      allergic_peanuts: '[Allergic] Peanuts'
+      'intolerant-gluten': '[Intolerant] Gluten',
+      'intolerant-lactose': '[Intolerant] Lactose',
+      'allergic-crustaceans': '[Allergic] Crustaceans',
+      'allergic-peanuts': '[Allergic] Peanuts'
     }
   },
   getQuasarOptions: function (metadata) {
