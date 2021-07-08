@@ -378,12 +378,8 @@ var EvanCommonComponents = {
             <q-icon name="search" />
           </template>
           <template v-slot:append>
-            <q-icon v-show="q !== ''" @click="q = ''" name="close" class="cursor-pointer">
-              <q-tooltip>Clear search</q-tooltip>
-            </q-icon>
-            <q-icon v-if="filters.length" @click="dialogVisible = true" name="tune" class="cursor-pointer q-ml-sm">
-              <q-tooltip>Toggle search builder</q-tooltip>
-            </q-icon>
+            <q-icon v-show="q !== ''" @click="q = ''" name="close" class="cursor-pointer" />
+            <q-icon v-if="filters.length" @click="dialogVisible = true" name="tune" class="cursor-pointer q-ml-sm" />
           </template>
         </q-input>
         <q-dialog v-model="dialogVisible" position="right" @before-show="updateFilters" @before-hide="updateQuery">
@@ -444,6 +440,37 @@ var EvanCommonComponents = {
         filterParts['text'] = textParts.join(' ');
 
         this.filterData = filterParts;
+      }
+    }
+  },
+
+  'stats-progress': {
+    props: {
+      size: {
+        type: String,
+        default: 'lg'
+      },
+      fontSize: {
+        type: String,
+        default: '12px'
+      },
+      value: {
+        type: Number,
+        required: true
+      }
+    },
+    template: `
+      <q-circular-progress show-value :size="size" :font-size="fontSize" :value="value" :color="color" track-color="grey-3">
+        <samp><strong><slot></slot></strong></samp>
+      </q-circular-progress>
+    `,
+    computed: {
+      color: function () {
+        if (this.value == 100) return 'positive';
+        if (this.value >= 50) return 'blue';
+        if (this.value >= 25) return 'light-blue';
+        if (this.value >= 10) return 'cyan';
+        return 'blue-grey';
       }
     }
   }

@@ -24,9 +24,9 @@
     <q-scroll-area v-if="event" class="fit">
       <q-list dense>
         <q-item-label header>Overview</q-item-label>
-        <q-item clickable :to="{name: 'analytics'}">
+        <q-item clickable :to="{name: 'stats'}">
           <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
-          <q-item-section>Analytics</q-item-section>
+          <q-item-section>Stats</q-item-section>
         </q-item>
         <q-item clickable :to="{name: 'registrations'}">
           <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
@@ -90,7 +90,6 @@
 
 {% block vue_templates %}
   {% include './v-abstracts.html' %}
-  {% include './v-analytics.html' %}
   {% include './v-cms.html' %}
   {% include './v-coupons.html' %}
   {% include './v-dates.html' %}
@@ -98,6 +97,7 @@
   {% include './v-registrations.html' %}
   {% include './v-sessions.html' %}
   {% include './v-sponsors.html' %}
+  {% include './v-stats.html' %}
   {% include './v-topics.html' %}
   {% include './v-tracks.html' %}
   {% include './v-venues.html' %}
@@ -126,6 +126,35 @@
         venues: []
       },
       getters: {
+        countries: function (state) {
+          if (!state.registrations.length) return [];
+          return _.uniq(state.registrations.filter(function (obj) {
+            return obj.user.profile.country;
+          }).map(function (obj) {
+            return {
+              slug: slugify(obj.user.profile.country.name).toLowerCase(),
+              name: obj.user.profile.country.name
+            };
+          }), function (obj) {
+            return obj.slug;
+          }).sort(function (a, b) {
+            return Evan.utils.sortText(a.name, b.name);
+          });
+        },
+        stats: function (state) {
+          var stats = {};
+
+          _.each(state.registrations, function (obj) {
+            _.each(obj._q.split(' '), function (w) {
+              if (w.indexOf(':') > -1) {
+                if (!_.has(stats, w)) stats[w] = 1;
+                else stats[w] += 1;
+              }
+            });
+          });
+
+          return stats;
+        },
         topicsSorted: function (state) {
           return state.topics.sort(function (a, b) {
             return Evan.utils.sortText(a.name, b.name);
@@ -243,13 +272,6 @@
       created: function () {
         this.$store.commit('getAbstracts');
       }
-    };
-
-    var AnalyticsView = {
-      template: '#v-analytics',
-      computed: _.extend(
-        Vuex.mapState(['event']), {
-      })
     };
 
     var CmsView = {
@@ -539,6 +561,10 @@
                 options: ['yes', 'no']
               },
               {
+                name: 'coupon',
+                options: ['yes', 'no']
+              },
+              {
                 name: 'invoice.requested',
                 options: ['yes', 'no']
               },
@@ -614,6 +640,7 @@
         };
       },
       computed: _.extend(
+        Vuex.mapGetters(['countries']),
         Vuex.mapState(['event', 'registrations']), {
         rows: function () {
           if (!this.q) return this.registrations;
@@ -622,17 +649,11 @@
         filtersWithCountries: function () {
           var countryFilters = [];
 
-          if (this.registrations.length) {
-            var countries = ['unknown'];
-
-            _.each(this.registrations, function (reg) {
-              if (reg.user.profile.country) countries.push(slugify(reg.user.profile.country.name).toLowerCase());
-            });
-
+          if (this.registrations.length && this.countries.length) {
             countryFilters = [
               {
                 name: 'country',
-                options: _.uniq(countries).sort()
+                options: _.union(_.pluck(this.countries, 'slug'), ['unknown'])
               }
             ];
           }
@@ -828,6 +849,60 @@
       }
     };
 
+    var StatsView = {
+      template: '#v-stats',
+      data: function () {
+        return {
+          limit: 5,
+          blocks: [
+            {
+              label: 'Gender',
+              items: [
+                { key: 'gender:female', label: 'Female attendees' },
+                { key: 'gender:male', label: 'Male attendees' },
+                { key: 'gender:non-binary', label: 'Non-binary' },
+                { key: 'gender:unknown', label: '(Not set)' }
+              ]
+            },
+            {
+              label: 'Finances',
+              items: [
+                { key: 'paid:yes', label: 'Registrations paid' },
+                { key: 'coupon:yes', label: 'Coupons used' },
+                { key: 'invoice.requested:yes', label: 'Invoices requested' },
+                { key: 'invoice.sent:yes', label: 'Invoices sent', compare: 'invoice.requested:yes' }
+              ]
+            },
+            {
+              label: 'Visum',
+              items: [
+                { key: 'visa.requested:yes', label: 'Visa letters requested' },
+                { key: 'visa.sent:yes', label: 'Visa letters sent', compare: 'visa.requested:yes' },
+              ]
+            }
+          ]
+        };
+      },
+      computed: _.extend(
+        Vuex.mapGetters(['countries', 'stats']),
+        Vuex.mapState(['event', 'registrations']), {
+        countriesBlock: function () {
+          if (!Object.keys(this.stats).length || !this.countries.length) return [];
+          var stats = this.stats;
+          return this.countries.map(function (obj) {
+            obj.key = 'country:' + obj.slug,
+            obj.count = stats[obj.key];
+            return obj;
+          }).sort(function (a, b) {
+            return b.count - a.count || Evan.utils.sortText(a.name, b.name);
+          });
+        },
+        totalRegistrations: function () {
+          return this.registrations.length;
+        }
+      })
+    };
+
     var TopicsView = {
       template: '#v-topics',
       mixins: [EventRelatedMixin],
@@ -967,19 +1042,13 @@
       routes: [
         {
           path: '/',
-          redirect: {name: 'event'}
+          redirect: {name: 'stats'}
         },
         {
           name: 'abstracts',
           path: '/abstracts/',
           pathToRegexpOptions: {strict: true},
           component: AbstractsView
-        },
-        {
-          name: 'analytics',
-          path: '/analytics/',
-          pathToRegexpOptions: {strict: true},
-          component: AnalyticsView
         },
         {
           name: 'cms',
@@ -1038,6 +1107,12 @@
           path: '/sponsors/',
           pathToRegexpOptions: {strict: true},
           component: SponsorsView
+        },
+        {
+          name: 'stats',
+          path: '/stats/',
+          pathToRegexpOptions: {strict: true},
+          component: StatsView
         },
         {
           name: 'taxonomy',

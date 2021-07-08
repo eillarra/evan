@@ -69,17 +69,21 @@ var Evan = {
       obj.total_paid = ((obj.coupon) ? obj.coupon.value : 0) + obj.paid + obj.paid_via_invoice;
       obj.is_paid = obj.total_paid >= obj.total_fees;
 
-      obj._q = (obj.user.profile.country)
-        ? 'country:' + slugify(obj.user.profile.country.name).toLowerCase()
-        : 'country:unknown';
+      obj._q = [
+        obj.uuid,
+        obj.user_name,
+        obj.user_affiliation,
+        (obj.user.profile.country)
+          ? 'country:' + slugify(obj.user.profile.country.name)
+          : 'country:unknown',
+        (obj.user.profile.custom_data.gender)
+          ? 'gender:' + obj.user.profile.custom_data.gender
+          : 'gender:unknown'
+      ].join(' ').toLowerCase();
 
-      obj._q += (obj.user.profile.custom_data.gender)
-        ? ' gender:' + obj.user.profile.custom_data.gender
-        : ' gender:unknown';
-
-      this.qStrings(obj, ['uuid', 'user_name', 'user_affiliation']);
       this.qBooleans(obj, [
         ['paid', 'is_paid'],
+        ['coupon', 'coupon'],
         ['invoice.requested', 'invoice_requested'],
         ['invoice.sent', 'invoice_sent'],
         ['visa.requested', 'visa_requested'],
@@ -92,14 +96,6 @@ var Evan = {
       obj._q = '';
 
       return obj;
-    },
-    qStrings: function (obj, fields) {
-      if (!obj._q) obj._q = '';
-      var qs = [];
-      _.each(fields, function (f) {
-        qs.push(obj[f]);
-      });
-      obj._q += (' ' + qs.join(' ')).toLowerCase();
     },
     qBooleans: function (obj, fields) {
       if (!obj._q) obj._q = '';
