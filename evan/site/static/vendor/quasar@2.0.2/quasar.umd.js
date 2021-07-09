@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v2.0.1
+ * Quasar Framework v2.0.2
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -1437,7 +1437,7 @@
   }
 
   var installQuasar = function (parentApp, opts = {}) {
-      const $q = { version: '2.0.1' };
+      const $q = { version: '2.0.2' };
 
       if (globalConfigIsFrozen === false) {
         if (opts.config !== void 0) {
@@ -7722,7 +7722,6 @@
             },
 
             touchStart (evt) {
-              console.log('touchStart');
               if (shouldStart(evt, ctx)) {
                 const target = evt.target;
 
@@ -15036,7 +15035,7 @@
 
           const target = anchorEl.value;
           const evts = [ 'touchmove', 'touchcancel', 'touchend', 'click' ]
-            .map(e => ([ target, e, '__delayHide', 'passiveCapture' ]));
+            .map(e => ([ target, e, 'delayHide', 'passiveCapture' ]));
 
           addEvt(anchorEvents, 'tooltipTemp', evts);
         }
@@ -17137,7 +17136,7 @@
       const { props, proxy } = vue.getCurrentInstance();
 
       // export public method (so it can be used in QForm)
-      Object.assign(proxy, { validate });
+      Object.assign(proxy, { validate, resetValidation });
 
       vue.watch(() => props.disable, val => {
         if (val === true) {
@@ -26554,15 +26553,13 @@
             });
           },
           onClick (e) {
-            if (hasDialog !== true) {
-              // label from QField will propagate click on the input (except IE)
-              prevent(e);
+            // label from QField will propagate click on the input
+            prevent(e);
 
-              if (menu.value === true) {
-                closeMenu();
-                targetRef.value !== null && targetRef.value.focus();
-                return
-              }
+            if (hasDialog !== true && menu.value === true) {
+              closeMenu();
+              targetRef.value !== null && targetRef.value.focus();
+              return
             }
 
             showPopup(e);
@@ -38358,7 +38355,7 @@
   });
 
   var index_umd = {
-    version: '2.0.1',
+    version: '2.0.2',
     install (app, opts) {
       installQuasar(app, {
         components,
