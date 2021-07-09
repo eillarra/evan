@@ -20,61 +20,63 @@
 {% endblock %}
 
 {% block drawer %}
-  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 text-weight-medium" :width="250">
     <q-scroll-area v-if="event" class="fit">
-      <q-list :dense="$q.screen.gt.sm">
-        <q-item-label header>Overview</q-item-label>
-        <q-item clickable :to="{name: 'stats'}">
-          <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
-          <q-item-section>Stats</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'registrations'}">
-          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
-          <q-item-section>Registrations</q-item-section>
-        </q-item>
-        <q-item v-if="event.config.abstracts" clickable :to="{name: 'abstracts'}">
-          <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
-          <q-item-section>Abstracts</q-item-section>
-        </q-item>
-      </q-list>
-      <q-list :dense="$q.screen.gt.sm">
-        <q-item-label header>Event management</q-item-label>
-        <q-item clickable :to="{name: 'event'}">
-          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
-          <q-item-section>Event</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'dates'}">
-          <q-item-section avatar><q-icon name="event"></q-icon></q-item-section>
-          <q-item-section>Important dates</q-item-section>
-        </q-item>
-        <q-item v-if="!event.is_virtual" clickable :to="{name: 'venues'}">
-          <q-item-section avatar><q-icon name="pin_drop"></q-icon></q-item-section>
-          <q-item-section>Venues & rooms</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'taxonomy'}">
-          <q-item-section avatar><q-icon name="label"></q-icon></q-item-section>
-          <q-item-section>Tracks & topics</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'sessions'}">
-          <q-item-section avatar><q-icon name="view_week"></q-icon></q-item-section>
-          <q-item-section>Sessions</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'coupons'}">
-          <q-item-section avatar><q-icon name="local_activity"></q-icon></q-item-section>
-          <q-item-section>Coupons</q-item-section>
-        </q-item>
-      </q-list>
-      <q-list v-if="event.config.cms" dense>
-        <q-item-label header>Website</q-item-label>
-        <q-item clickable :to="{name: 'cms'}">
-          <q-item-section avatar><q-icon name="wysiwyg"></q-icon></q-item-section>
-          <q-item-section>Contents</q-item-section>
-        </q-item>
-        <q-item v-if="event.config.sponsors" clickable :to="{name: 'sponsors'}">
-          <q-item-section avatar><q-icon name="shield"></q-icon></q-item-section>
-          <q-item-section>Sponsors</q-item-section>
-        </q-item>
-      </q-list>
+      <div class="q-pt-lg q-pb-xl q-pl-sm">
+        <q-list :dense="$q.screen.gt.sm">
+          <q-item-label header>Overview</q-item-label>
+          <q-item clickable :to="{name: 'stats'}">
+            <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
+            <q-item-section>Stats</q-item-section>
+          </q-item>
+          <q-item clickable :to="{name: 'registrations'}">
+            <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
+            <q-item-section>Registrations</q-item-section>
+          </q-item>
+          <q-item v-if="event.config.abstracts" clickable :to="{name: 'abstracts'}">
+            <q-item-section avatar><q-icon name="topic"></q-icon></q-item-section>
+            <q-item-section>Abstracts</q-item-section>
+          </q-item>
+        </q-list>
+        <q-list :dense="$q.screen.gt.sm">
+          <q-item-label header>Event management</q-item-label>
+          <q-item clickable :to="{name: 'event'}">
+            <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+            <q-item-section>Event</q-item-section>
+          </q-item>
+          <q-item clickable :to="{name: 'dates'}">
+            <q-item-section avatar><q-icon name="event"></q-icon></q-item-section>
+            <q-item-section>Important dates</q-item-section>
+          </q-item>
+          <q-item v-if="!event.is_virtual" clickable :to="{name: 'venues'}">
+            <q-item-section avatar><q-icon name="pin_drop"></q-icon></q-item-section>
+            <q-item-section>Venues & rooms</q-item-section>
+          </q-item>
+          <q-item clickable :to="{name: 'taxonomy'}">
+            <q-item-section avatar><q-icon name="label"></q-icon></q-item-section>
+            <q-item-section>Tracks & topics</q-item-section>
+          </q-item>
+          <q-item clickable :to="{name: 'sessions'}">
+            <q-item-section avatar><q-icon name="view_week"></q-icon></q-item-section>
+            <q-item-section>Sessions</q-item-section>
+          </q-item>
+          <q-item clickable :to="{name: 'coupons'}">
+            <q-item-section avatar><q-icon name="local_activity"></q-icon></q-item-section>
+            <q-item-section>Coupons</q-item-section>
+          </q-item>
+        </q-list>
+        <q-list v-if="event.config.cms" :dense="$q.screen.gt.sm">
+          <q-item-label header>Website</q-item-label>
+          <q-item clickable :to="{name: 'cms'}">
+            <q-item-section avatar><q-icon name="wysiwyg"></q-icon></q-item-section>
+            <q-item-section>Contents</q-item-section>
+          </q-item>
+          <q-item v-if="event.config.sponsors" clickable :to="{name: 'sponsors'}">
+            <q-item-section avatar><q-icon name="shield"></q-icon></q-item-section>
+            <q-item-section>Sponsors</q-item-section>
+          </q-item>
+        </q-list>
+      </div>
     </q-scroll-area>
   </q-drawer>
 {% endblock %}

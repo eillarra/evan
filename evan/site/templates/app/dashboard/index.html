@@ -20,38 +20,40 @@
 {% endblock %}
 
 {% block drawer %}
-  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 text-weight-medium" :width="250">
     <q-scroll-area class="fit">
-      <q-list :dense="$q.screen.gt.sm">
-        <q-item-label header>Dashboard</q-item-label>
-        <q-item clickable :to="{name: 'registrations'}">
-          <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
-          <q-item-section>Your registrations</q-item-section>
-        </q-item>
-        <q-item clickable :to="{name: 'events'}">
-          <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
-          <q-item-section>Your events</q-item-section>
-        </q-item>
-      </q-list>
-      <q-list :dense="$q.screen.gt.sm">
-        <q-item-label header>Account</q-item-label>
-        <q-item clickable :to="{name: 'profile'}">
-          <q-item-section avatar><q-icon name="account_circle"></q-icon></q-item-section>
-          <q-item-section>Your profile</q-item-section>
-        </q-item>
-        <q-item tag="a" href="{% url 'account_change_password' %}">
-          <q-item-section avatar><q-icon name="vpn_key"></q-icon></q-item-section>
-          <q-item-section>Password</q-item-section>
-        </q-item>
-        <q-item tag="a" href="{% url 'account_email' %}">
-          <q-item-section avatar><q-icon name="email"></q-icon></q-item-section>
-          <q-item-section>Emails</q-item-section>
-        </q-item>
-        <q-item tag="a" href="{% url 'socialaccount_connections' %}">
-          <q-item-section avatar><q-icon name="extension"></q-icon></q-item-section>
-          <q-item-section>Social accounts</q-item-section>
-        </q-item>
-      </q-list>
+      <div class="q-pt-lg q-pb-xl q-pl-sm">
+        <q-list :dense="$q.screen.gt.sm">
+          <q-item-label header>Dashboard</q-item-label>
+          <q-item clickable :to="{name: 'registrations'}">
+            <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
+            <q-item-section>Your registrations</q-item-section>
+          </q-item>
+          <q-item clickable :to="{name: 'events'}">
+            <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
+            <q-item-section>Your events</q-item-section>
+          </q-item>
+        </q-list>
+        <q-list :dense="$q.screen.gt.sm">
+          <q-item-label header>Account</q-item-label>
+          <q-item clickable :to="{name: 'profile'}">
+            <q-item-section avatar><q-icon name="account_circle"></q-icon></q-item-section>
+            <q-item-section>Your profile</q-item-section>
+          </q-item>
+          <q-item tag="a" href="{% url 'account_change_password' %}">
+            <q-item-section avatar><q-icon name="vpn_key"></q-icon></q-item-section>
+            <q-item-section>Password</q-item-section>
+          </q-item>
+          <q-item tag="a" href="{% url 'account_email' %}">
+            <q-item-section avatar><q-icon name="email"></q-icon></q-item-section>
+            <q-item-section>Emails</q-item-section>
+          </q-item>
+          <q-item tag="a" href="{% url 'socialaccount_connections' %}">
+            <q-item-section avatar><q-icon name="extension"></q-icon></q-item-section>
+            <q-item-section>Social accounts</q-item-section>
+          </q-item>
+        </q-list>
+      </div>
     </q-scroll-area>
   </q-drawer>
 {% endblock %}
