@@ -25,7 +25,7 @@
         </template>
         <template v-slot:body-cell-uuid="props">
           <q-td auto-width :props="props">
-            <samp><small>{{ props.row.uuid }}</small></samp>
+            <samp>{{ props.row.uuid }}</samp>
           </q-td>
         </template>
         <template v-slot:body-cell-created_at="props">
@@ -62,7 +62,7 @@
       <q-list dense>
         <q-item>
           <q-item-section avatar><q-icon name="tag"></q-icon></q-item-section>
-          <q-item-section><samp><small>{{ tmpObj.uuid }}</small></samp></q-item-section>
+          <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
         <q-item>
