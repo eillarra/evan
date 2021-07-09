@@ -14,7 +14,7 @@
         </div>
       </div>
       <evan-search-bar v-model="query" placeholder="Search by code, notes..." />
-      <q-table dense row-key="id" :rows="extendedCoupons" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table :dense="$q.screen.gt.sm" row-key="id" :rows="extendedCoupons" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />
         </template>

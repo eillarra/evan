@@ -22,7 +22,7 @@
 {% block drawer %}
   <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area class="fit">
-      <q-list dense>
+      <q-list :dense="$q.screen.gt.sm">
         <q-item-label header>Dashboard</q-item-label>
         <q-item clickable :to="{name: 'registrations'}">
           <q-item-section avatar><q-icon name="folder_shared"></q-icon></q-item-section>
@@ -33,7 +33,7 @@
           <q-item-section>Your events</q-item-section>
         </q-item>
       </q-list>
-      <q-list dense>
+      <q-list :dense="$q.screen.gt.sm">
         <q-item-label header>Account</q-item-label>
         <q-item clickable :to="{name: 'profile'}">
           <q-item-section avatar><q-icon name="account_circle"></q-icon></q-item-section>

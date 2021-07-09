@@ -22,7 +22,7 @@
 {% block drawer %}
   <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area v-if="event" class="fit">
-      <q-list dense>
+      <q-list :dense="$q.screen.gt.sm">
         <q-item-label header>Overview</q-item-label>
         <q-item clickable :to="{name: 'stats'}">
           <q-item-section avatar><q-icon name="insights"></q-icon></q-item-section>
@@ -37,7 +37,7 @@
           <q-item-section>Abstracts</q-item-section>
         </q-item>
       </q-list>
-      <q-list dense>
+      <q-list :dense="$q.screen.gt.sm">
         <q-item-label header>Event management</q-item-label>
         <q-item clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
@@ -656,12 +656,7 @@
 
           return _.union(countryFilters, this.search.filters);
         }
-      }),
-      methods: {
-        customFilter: function (rows, terms, cols, getCellValue) {
-          return Evan.utils.filter(rows, terms);
-        }
-      }
+      })
     };
 
     var SessionsView = {

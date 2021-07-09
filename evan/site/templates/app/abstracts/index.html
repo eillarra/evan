@@ -22,7 +22,7 @@
 {% block drawer %}
   <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 q-pt-lg q-pl-sm text-weight-medium" :width="250">
     <q-scroll-area class="fit">
-      <q-list dense>
+      <q-list :dense="$q.screen.gt.sm">
         <q-item-label header>Abstract submission</q-item-label>
         <q-item clickable :to="{name: 'abstract'}">
           <q-item-section avatar><q-icon name="text_snippet"></q-icon></q-item-section>
@@ -36,7 +36,7 @@
           </q-item-section>
         </q-item>
       </q-list>
-      <q-list dense>
+      <q-list :dense="$q.screen.gt.sm">
         <q-item-label header>About</q-item-label>
         <q-item clickable :to="{name: 'event'}">
           <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>

@@ -10,7 +10,7 @@
           <q-btn type="a" :href="event.website" target="_blank" rel="noopener" no-caps outline rounded color="primary" label="Open website" />
         </div>
       </div>
-      <q-table dense row-key="key" :rows="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table :dense="$q.screen.gt.sm" row-key="key" :rows="contents" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />
         </template>

@@ -6,7 +6,7 @@
       <q-card flat class="q-pa-lg">
         <display-5>List of attendees</display-5>
         <evan-search-bar v-model="query" placeholder="Search by name, affiliation, country..." />
-        <q-table dense row-key="id" :rows="rows" :columns="table.columns" :pagination="table.pagination" :filter="query">
+        <q-table :dense="$q.screen.gt.sm" row-key="id" :rows="rows" :columns="table.columns" :pagination="table.pagination" :filter="query">
           <template v-slot:no-data="{ icon, message, filter }">
             <evan-no-data :message="message" :filter="filter" />
           </template>
