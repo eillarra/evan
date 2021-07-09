@@ -36,6 +36,21 @@ class RegistrationsOverview(ModelExcelWriter):
                 ],
             },
             {
+                "title": "Dietary",
+                "data": [
+                    [
+                        "uuid",
+                        "email",
+                        "first_name",
+                        "last_name",
+                        "affiliation",
+                        "country",
+                        "dietary_requirements",
+                        "special_needs",
+                    ]
+                ],
+            },
+            {
                 "title": "Visum",
                 "data": [
                     [
@@ -48,12 +63,6 @@ class RegistrationsOverview(ModelExcelWriter):
                         "visa_requested",
                         "visa_sent",
                     ]
-                ],
-            },
-            {
-                "title": "Dietary",
-                "data": [
-                    ["uuid", "email", "first_name", "last_name", "affiliation", "country", "dietary_requirements"]
                 ],
             },
             {
@@ -75,9 +84,11 @@ class RegistrationsOverview(ModelExcelWriter):
             del sheets[3]
 
         for obj in qs:
+            uuid = str(obj.uuid)
+
             sheets[0]["data"].append(
                 [
-                    str(obj.uuid),
+                    uuid,
                     obj.user.email,
                     obj.user.first_name,
                     obj.user.last_name,
@@ -99,27 +110,30 @@ class RegistrationsOverview(ModelExcelWriter):
             )
             sheets[1]["data"].append(
                 [
-                    str(obj.uuid),
+                    uuid,
                     obj.user.email,
                     obj.user.first_name,
                     obj.user.last_name,
                     obj.user.profile.affiliation,
                     obj.user.profile.country.name,
-                    obj.visa_requested,
-                    obj.visa_sent,
+                    obj.user.profile.custom_data.get("dietary", None),
+                    obj.user.profile.custom_data.get("special_needs", None),
                 ]
             )
-            sheets[2]["data"].append(
-                [
-                    str(obj.uuid),
-                    obj.user.email,
-                    obj.user.first_name,
-                    obj.user.last_name,
-                    obj.user.profile.affiliation,
-                    obj.user.profile.country.name,
-                    obj.user.profile.custom_data["dietary"] if "dietary" in obj.user.profile.custom_data else None,
-                ]
-            )
+
+            if obj.visa_requested:
+                sheets[2]["data"].append(
+                    [
+                        uuid,
+                        obj.user.email,
+                        obj.user.first_name,
+                        obj.user.last_name,
+                        obj.user.profile.affiliation,
+                        obj.user.profile.country.name,
+                        obj.visa_requested,
+                        obj.visa_sent,
+                    ]
+                )
 
             if custom_fields:
                 custom_data = []
@@ -130,7 +144,7 @@ class RegistrationsOverview(ModelExcelWriter):
 
                 sheets[3]["data"].append(
                     [
-                        str(obj.uuid),
+                        uuid,
                         obj.user.email,
                         obj.user.first_name,
                         obj.user.last_name,
