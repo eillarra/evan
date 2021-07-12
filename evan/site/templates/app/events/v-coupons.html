@@ -38,7 +38,9 @@
           <q-td v-if="!props.row.used" auto-width :props="props" @click.stop="remove(props.row)">
             <evan-remove-icon />
           </q-td>
-          <q-td v-else auto-width></q-td>
+          <q-td v-else auto-width @click.stop="$router.push({name: 'registrations', query: {q: 'coupon:' + props.row.code}})">
+            <q-icon name="navigate_next" />
+          </q-td>
         </template>
       </q-table>
     </q-card>

@@ -78,7 +78,10 @@ var Evan = {
           : 'country:unknown',
         (obj.user.profile.custom_data.gender)
           ? 'gender:' + obj.user.profile.custom_data.gender
-          : 'gender:unknown'
+          : 'gender:unknown',
+        (obj.coupon)
+          ? 'coupon:' + obj.coupon.code
+          : ''
       ].join(' ').toLowerCase();
 
       this.qBooleans(obj, [

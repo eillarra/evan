@@ -112,6 +112,14 @@
           <q-item-section avatar><q-icon name="radio_button_unchecked" color="orange-7" /></q-item-section>
           <q-item-section class="text-orange-7 text-bold">Pending payment</q-item-section>
         </q-item>
+        <q-separator v-if="tmpObj.coupon" inset="item" class="q-mb-sm"/>
+        <q-item v-if="tmpObj.coupon">
+          <q-item-section avatar><q-icon name="local_activity" /></q-item-section>
+          <q-item-section>
+            <q-item-label><samp>{{ tmpObj.coupon.code }}</samp></q-item-label>
+            <q-item-label caption>{{ tmpObj.coupon.notes }} (€ {{ tmpObj.coupon.value }})</q-item-label>
+          </q-item-section>
+        </q-item>
       </q-list>
     </evan-editor>
 
