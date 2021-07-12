@@ -47,7 +47,11 @@
 
     <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
-        <q-input v-show="tmpObj.code" filled dense v-model="tmpObj.code" readonly label="Code"></q-input>
+        <q-input v-show="tmpObj.code" filled dense v-model="tmpObj.code" readonly label="Code">
+          <template v-slot:append>
+            <evan-copy-icon :text="tmpObj.code" size="18px" />
+          </template>
+        </q-input>
         <q-input filled dense v-model.number="tmpObj.value" label="Coupon value" type="number" prefix="€"></q-input>
         <q-input filled dense v-model="tmpObj.notes" label="Notes" type="textarea" autogrow></q-input>
       </div>

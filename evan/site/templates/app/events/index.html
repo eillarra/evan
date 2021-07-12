@@ -170,8 +170,8 @@
         usedCoupons: function (state) {
           if (!state.registrations.length) return new Set();
           return new Set(_.pluck(_.pluck(state.registrations.filter(function (obj) {
-              return obj.coupon !== null;
-            }), 'coupon'), 'id'));
+            return obj.coupon !== null;
+          }), 'coupon'), 'id'));
         }
       },
       mutations: {
