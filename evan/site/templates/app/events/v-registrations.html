@@ -81,7 +81,7 @@
         <q-item>
           <q-item-section avatar><q-icon name="email" /></q-item-section>
           <q-item-section>{{ tmpObj.user.email }}</q-item-section>
-          <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
+          <q-item-section side>
             <evan-copy-icon :text="tmpObj.user.email" size="14px" />
           </q-item-section>
         </q-item>
