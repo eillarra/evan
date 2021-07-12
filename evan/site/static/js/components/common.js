@@ -390,7 +390,7 @@ var EvanCommonComponents = {
               <q-separator />
               <q-select v-for="filter in filters" dense filled v-model="filterData[filter.name]" :options="filter.options" :label="filter.name">
                 <template v-if="filterData[filter.name]" v-slot:append>
-                  <q-icon name="clear" @click.stop="delete filterData[filter.name]" class="cursor-pointer" size="14px" />
+                  <q-icon name="clear" @click.stop="filterData[filter.name] = null" class="cursor-pointer" size="14px" />
                 </template>
               </q-select>
             </div>
@@ -413,7 +413,7 @@ var EvanCommonComponents = {
         var val = this.filterData;
         var q = [val.text];
         _.each(_.keys(val), function (k) {
-          if (k != 'text') q.push(k + ':' + val[k]);
+          if (k != 'text' && val[k]) q.push(k + ':' + val[k]);
         });
         this.$emit('update:modelValue', q.join(' ').trim());
       },
