@@ -40,7 +40,7 @@ var UploaderMixin = {
     uploaded: function (data) {
       this.updateObj(JSON.parse(data.xhr.response));
       this.$refs.uploader.reset();
-      Evan.utils.notifySuccess('File uploaded.');
+      Evan.utils.notify('File uploaded.');
     },
     uploadFailed: function (data) {
       Evan.utils.notifyApiError({

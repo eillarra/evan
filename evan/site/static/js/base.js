@@ -27,7 +27,7 @@ var Evan = {
     create: function (url, obj, callbackFn, customMsg) {
       this.request('post', url, obj).then(function (res) {
         if (callbackFn) callbackFn(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(res.data.self || url) + ' created.');
+        Evan.utils.notify((customMsg) ? customMsg : modelFromUrl(res.data.self || url) + ' created.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
@@ -35,7 +35,7 @@ var Evan = {
     update: function (obj, callbackFn, customMsg) {
       this.request('put', obj.self, obj).then(function (res) {
         if (callbackFn) callbackFn(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.self) + ' updated.');
+        Evan.utils.notify((customMsg) ? customMsg : modelFromUrl(obj.self) + ' updated.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
@@ -43,7 +43,7 @@ var Evan = {
     remove: function (obj, callbackFn, customMsg) {
       this.request('delete', obj.self).then(function (res) {
         if (callbackFn) callbackFn(res);
-        Evan.utils.notifySuccess((customMsg) ? customMsg : modelFromUrl(obj.self) + ' deleted.');
+        Evan.utils.notify((customMsg) ? customMsg : modelFromUrl(obj.self) + ' deleted.');
       }).catch(function (error) {
         Evan.utils.notifyApiError(error);
       });
@@ -188,11 +188,11 @@ var Evan = {
         }
       });
     },
-    notifySuccess: function (msg) {
+    notify: function (msg, type) {
       Quasar.Notify.create({
-        timeout: 2500,
+        timeout: 2000,
         message: msg,
-        type: 'positive'
+        type: type || 'positive'
       });
     },
     registerComponents: function (app, collectionList) {

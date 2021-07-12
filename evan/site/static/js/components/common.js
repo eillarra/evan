@@ -277,6 +277,25 @@ var EvanCommonComponents = {
     }
   },
 
+  'evan-copy-icon': {
+    props: {
+      text: {
+        type: String,
+        required: true
+      }
+    },
+    template: '<q-icon name="copy_all" @click.stop="copyToClipboard" class="cursor-pointer" />',
+    methods: {
+      copyToClipboard: function () {
+        Quasar.copyToClipboard(this.text).then(function () {
+          Evan.utils.notify('Copied to clipboard', 'none');
+        }).catch(function () {
+          Evan.utils.notify('Could not copy to clipboard', 'warning');
+        });
+      }
+    }
+  },
+
   'evan-contact-dialog': {
     data: function () {
       return {
@@ -333,7 +352,7 @@ var EvanCommonComponents = {
           user_id: this.user.id,
           message: this.msg
         }).then(function (res) {
-          Evan.utils.notifySuccess('Message sent.');
+          Evan.utils.notify('Message sent.');
         }).catch(function (error) {
           Evan.utils.notifyApiError(error);
         });
