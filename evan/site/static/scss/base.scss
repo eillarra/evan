@@ -95,6 +95,10 @@ code, kbd, pre, samp,
   font-size: .85em;
 }
 
+.q-placeholder::placeholder {
+  opacity: 0.5;
+}
+
 .text-caption {
   line-height: 1.35;
 
