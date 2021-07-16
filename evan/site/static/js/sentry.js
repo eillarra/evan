@@ -8,10 +8,10 @@ Sentry.init({
   integrations: [new Sentry.Integrations.Vue({tracing: false})],
 });
 
-if (DJANGO_VARS.user > 0) {
+if (+DJANGO_VARS.user > 0) {
   Sentry.configureScope(function (scope) {
     scope.setUser({
-      id: DJANGO_VARS.user
+      id: +DJANGO_VARS.user
     });
   });
 }
