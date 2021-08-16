@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v2.0.2
+ * Quasar Framework v2.0.3
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -1437,7 +1437,7 @@
   }
 
   var installQuasar = function (parentApp, opts = {}) {
-      const $q = { version: '2.0.2' };
+      const $q = { version: '2.0.3' };
 
       if (globalConfigIsFrozen === false) {
         if (opts.config !== void 0) {
@@ -1775,14 +1775,19 @@
 
   function hSlot (slot, otherwise) {
     return slot !== void 0
-      ? slot()
+      ? slot() || otherwise
       : otherwise
   }
 
   function hUniqueSlot (slot, otherwise) {
-    return slot !== void 0
-      ? slot().slice()
-      : otherwise
+    if (slot !== void 0) {
+      const vnode = slot();
+      if (vnode !== void 0 && vnode !== null) {
+        return vnode.slice()
+      }
+    }
+
+    return otherwise
   }
 
   /**
@@ -5337,7 +5342,8 @@
           flat: props.flat,
           rounded: props.rounded,
           push: props.push,
-          unelevated: props.glossy,
+          unelevated: props.unelevated,
+          glossy: props.glossy,
           stretch: props.stretch
         }, () => [
           vue.h(QBtn, {
@@ -9911,7 +9917,7 @@
 
       function changeSpectrum (left, top, change) {
         const panel = spectrumRef.value;
-        if (panel === void 0) { return }
+        if (panel === null) { return }
 
         const
           width = panel.clientWidth,
@@ -15013,7 +15019,7 @@
       function updatePosition () {
         const el = innerRef.value;
 
-        if (anchorEl.value === void 0 || !el) {
+        if (anchorEl.value === null || !el) {
           return
         }
 
@@ -15063,7 +15069,7 @@
       }
 
       function configureAnchorEl () {
-        if (props.noParentEvent === true || anchorEl.value === void 0) { return }
+        if (props.noParentEvent === true || anchorEl.value === null) { return }
 
         const evts = $q.platform.is.mobile === true
           ? [
@@ -15078,7 +15084,7 @@
       }
 
       function configureScrollTarget () {
-        if (anchorEl.value !== void 0 || props.scrollTarget !== void 0) {
+        if (anchorEl.value !== null || props.scrollTarget !== void 0) {
           localScrollTarget.value = getScrollTarget(anchorEl.value, props.scrollTarget);
           const fn = props.noParentEvent === true
             ? updatePosition
@@ -16729,7 +16735,7 @@
         let child;
 
         if (slots.header !== void 0) {
-          child = slots.header().slice();
+          child = [].concat(slots.header());
         }
         else {
           child = [
@@ -16975,19 +16981,25 @@
       const classes = vue.computed(() =>
         'q-fab z-fab row inline justify-center'
         + ` q-fab--align-${ props.verticalActionsAlign } ${ formClass.value }`
-        + (showing.value === true ? ' q-fab--opened' : '')
+        + (showing.value === true ? ' q-fab--opened' : ' q-fab--closed')
       );
 
       const actionClass = vue.computed(() =>
         'q-fab__actions flex no-wrap inline'
         + ` q-fab__actions--${ props.direction }`
+        + ` q-fab__actions--${ showing.value === true ? 'opened' : 'closed' }`
+      );
+
+      const iconHolderClass = vue.computed(() =>
+        'q-fab__icon-holder '
+        + ` q-fab__icon-holder--${ showing.value === true ? 'opened' : 'closed' }`
       );
 
       function getTriggerContent () {
         const child = [];
 
         props.hideIcon !== true && child.push(
-          vue.h('div', { class: 'q-fab__icon-holder' }, [
+          vue.h('div', { class: iconHolderClass.value }, [
             vue.h(QIcon, {
               class: 'q-fab__icon absolute-full',
               name: props.icon || $q.iconSet.fab.icon
@@ -17832,7 +17844,7 @@
 
       if (hasError.value === true) {
         if (computedErrorMessage.value !== null) {
-          msg = [ vue.h('div', computedErrorMessage.value) ];
+          msg = [ vue.h('div', { role: 'alert' }, computedErrorMessage.value) ];
           key = `q--slot-error-${ computedErrorMessage.value }`;
         }
         else {
@@ -19642,7 +19654,12 @@
     const hasMask = vue.ref(null);
     const innerValue = vue.ref(getInitialMaskedValue());
 
-    vue.watch(() => props.type, updateMaskInternals);
+    function getIsTypeText () {
+      return props.autogrow === true
+        || [ 'textarea', 'text', 'search', 'url', 'tel', 'password' ].includes(props.type)
+    }
+
+    vue.watch(() => props.type + props.autogrow, updateMaskInternals);
 
     vue.watch(() => props.mask, v => {
       if (v !== void 0) {
@@ -19699,7 +19716,7 @@
     function updateMaskInternals () {
       hasMask.value = props.mask !== void 0
         && props.mask.length > 0
-        && [ 'text', 'search', 'url', 'tel', 'password' ].includes(props.type);
+        && getIsTypeText();
 
       if (hasMask.value === false) {
         computedUnmask = void 0;
@@ -20215,6 +20232,11 @@
         props.type === 'textarea' || props.autogrow === true
       );
 
+      const isTypeText = vue.computed(() =>
+        isTextarea.value === true
+        || [ 'text', 'search', 'url', 'tel', 'password' ].includes(props.type)
+      );
+
       const onEvents = vue.computed(() => {
         const evt = {
           ...state.splitAttrs.listeners.value,
@@ -20355,7 +20377,7 @@
         else {
           emitValue(val);
 
-          if ([ 'text', 'search', 'url', 'tel', 'password' ].includes(props.type) && e.target === document.activeElement) {
+          if (isTypeText.value === true && e.target === document.activeElement) {
             const { selectionStart, selectionEnd } = e.target;
 
             if (selectionStart !== void 0 && selectionEnd !== void 0) {
@@ -22260,19 +22282,19 @@
         newPage.value = null;
       }
 
-      function getBtn (data, page) {
-        const props = { ...btnProps.value, ...data };
+      function getBtn (cfg, page) {
+        const data = { ...btnProps.value, ...cfg };
 
         if (page !== void 0) {
           if (props.toFn !== void 0) {
-            props.to = props.toFn(page);
+            data.to = props.toFn(page);
           }
           else {
-            props.onClick = () => set(page);
+            data.onClick = () => set(page);
           }
         }
 
-        return vue.h(QBtn, props)
+        return vue.h(QBtn, data)
       }
 
       // expose public methods
@@ -22772,7 +22794,7 @@
 
       function getContent () {
         const child = slots.default !== void 0
-          ? slots.default(scope.value).slice()
+          ? [].concat(slots.default(scope.value))
           : [];
 
         props.title && child.unshift(
@@ -25310,7 +25332,12 @@
 
       const innerFieldProps = vue.computed(() => {
         const acc = {};
-        fieldPropsList.forEach(key => props[ key ]);
+        fieldPropsList.forEach(key => {
+          const val = props[ key ];
+          if (val !== void 0) {
+            acc[ key ] = val;
+          }
+        });
         return acc
       });
 
@@ -25366,6 +25393,19 @@
 
       const tabindex = vue.computed(() => (state.focused.value === true ? props.tabindex : -1));
 
+      const comboboxAttrs = vue.computed(() => ({
+        role: 'combobox',
+        'aria-multiselectable': props.multiple === true ? 'true' : 'false',
+        'aria-expanded': menu.value === true ? 'true' : 'false',
+        'aria-owns': `${ state.targetUid.value }_lb`,
+        'aria-activedescendant': `${ state.targetUid.value }_${ optionIndex.value }`
+      }));
+
+      const listboxAttrs = vue.computed(() => ({
+        role: 'listbox',
+        id: `${ state.targetUid.value }_lb`
+      }));
+
       const selectedScope = vue.computed(() => {
         return innerValue.value.map((opt, i) => ({
           index: i,
@@ -25400,12 +25440,16 @@
             tabindex: -1,
             dense: props.optionsDense,
             dark: isOptionsDark.value,
+            role: 'option',
+            id: `${ state.targetUid.value }_${ index }`,
             onClick: () => { toggleOption(opt); }
           };
 
           if (disable !== true) {
             isOptionSelected(opt) === true && (itemProps.active = true);
             optionIndex.value === index && (itemProps.focused = true);
+
+            itemProps[ 'aria-selected' ] = itemProps.active === true ? 'true' : 'false';
 
             if ($q.platform.is.desktop === true) {
               itemProps.onMousemove = () => { setOptionIndex(index); };
@@ -25993,7 +26037,7 @@
         }
 
         if (slots.selected !== void 0) {
-          return slots.selected().slice()
+          return [].concat(slots.selected())
         }
 
         if (props.useChips === true) {
@@ -26081,7 +26125,8 @@
           'data-autofocus': (fromDialog !== true && props.autofocus === true) || void 0,
           disabled: props.disable === true,
           readonly: props.readonly === true,
-          ...inputControlEvents.value
+          ...inputControlEvents.value,
+          ...comboboxAttrs.value
         };
 
         if (fromDialog !== true && hasDialog === true) {
@@ -26244,6 +26289,7 @@
           transitionHide: props.transitionHide,
           transitionDuration: props.transitionDuration,
           separateClosePopup: true,
+          ...listboxAttrs.value,
           onScrollPassive: onVirtualScrollEvt,
           onBeforeShow: onControlPopupShow,
           onBeforeHide: onMenuBeforeHide,
@@ -26302,6 +26348,7 @@
             ref: menuContentRef,
             class: menuContentClass.value + ' scroll',
             style: props.popupContentStyle,
+            ...listboxAttrs.value,
             onClick: prevent,
             onScrollPassive: onVirtualScrollEvt
           }, (
@@ -26582,6 +26629,7 @@
                 class: 'no-outline',
                 id: state.targetUid.value,
                 tabindex: props.tabindex,
+                ...comboboxAttrs.value,
                 onKeydown: onTargetKeydown,
                 onKeyup: onTargetKeyup,
                 onKeypress: onTargetKeypress
@@ -26888,31 +26936,36 @@
         });
 
         const node = vue.h('div', {
-          key: 'content',
+          key: `${ dirs.length === 0 ? 'only-' : '' } content`,
           ref: contentRef,
           class: 'q-slide-item__content'
         }, hSlot(slots.default));
 
-        content.push(
-          vue.withDirectives(node, getCacheWithFn('dir#' + dirs.join(''), () => {
-            const modifiers = {
-              prevent: true,
-              stop: true,
-              mouse: true
-            };
+        if (dirs.length === 0) {
+          content.push(node);
+        }
+        else {
+          content.push(
+            vue.withDirectives(node, getCacheWithFn('dir#' + dirs.join(''), () => {
+              const modifiers = {
+                prevent: true,
+                stop: true,
+                mouse: true
+              };
 
-            dirs.forEach(dir => {
-              modifiers[ dir ] = true;
-            });
+              dirs.forEach(dir => {
+                modifiers[ dir ] = true;
+              });
 
-            return [ [
-              TouchPan,
-              onPan,
-              void 0,
-              modifiers
-            ] ]
-          }))
-        );
+              return [ [
+                TouchPan,
+                onPan,
+                void 0,
+                modifiers
+              ] ]
+            }))
+          );
+        }
 
         return vue.h('div', { class: classes.value }, content)
       }
@@ -29540,15 +29593,12 @@
         const data = {
           class: col.__thClass
             + (props.autoWidth === true ? ' q-table--col-auto-width' : ''),
-          style: col.headerStyle
-        };
-
-        if (col.sortable === true) {
-          data.onClick = evt => {
-            props.props.sort(col); // eslint-disable-line
+          style: col.headerStyle,
+          onClick: evt => {
+            col.sortable === true && props.props.sort(col); // eslint-disable-line
             emit('click', evt);
-          };
-        }
+          }
+        };
 
         return vue.h('th', data, child)
       }
@@ -33702,7 +33752,9 @@
     },
     fieldName: {
       type: [ Function, String ],
-      default: file => file.name
+      default: () => {
+        return file => file.name
+      }
     },
     headers: [ Function, Array ],
     formFields: [ Function, Array ],
@@ -38355,7 +38407,7 @@
   });
 
   var index_umd = {
-    version: '2.0.2',
+    version: '2.0.3',
     install (app, opts) {
       installQuasar(app, {
         components,
