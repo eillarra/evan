@@ -10,7 +10,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(model_name="event", old_name="extra_data", new_name="main_config",),
-        migrations.AlterField(model_name="image", name="object_id", field=models.IntegerField(),),
-        migrations.AlterField(model_name="permission", name="object_id", field=models.IntegerField(),),
+        migrations.RenameField(
+            model_name="event",
+            old_name="extra_data",
+            new_name="main_config",
+        ),
+        migrations.AlterField(
+            model_name="image",
+            name="object_id",
+            field=models.IntegerField(),
+        ),
+        migrations.AlterField(
+            model_name="permission",
+            name="object_id",
+            field=models.IntegerField(),
+        ),
     ]

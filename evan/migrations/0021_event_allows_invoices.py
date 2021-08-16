@@ -10,5 +10,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(model_name="event", name="allows_invoices", field=models.BooleanField(default=True),),
+        migrations.AddField(
+            model_name="event",
+            name="allows_invoices",
+            field=models.BooleanField(default=True),
+        ),
     ]

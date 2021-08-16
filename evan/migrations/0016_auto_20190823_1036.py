@@ -12,7 +12,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(model_name="content", name="notes", field=models.CharField(blank=True, max_length=255),),
+        migrations.AddField(
+            model_name="content",
+            name="notes",
+            field=models.CharField(blank=True, max_length=255),
+        ),
         migrations.CreateModel(
             name="Image",
             fields=[
@@ -29,6 +33,8 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["content_type", "object_id", "position"],},
+            options={
+                "ordering": ["content_type", "object_id", "position"],
+            },
         ),
     ]

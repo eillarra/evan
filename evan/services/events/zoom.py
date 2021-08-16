@@ -17,8 +17,7 @@ def to_minutes(minutes: Union[str, int]) -> int:
 
 
 def attendee_report(csv_path: str) -> Dict:
-    """Given a standard Zoom CSV attendee report, returns massaged information.
-    """
+    """Given a standard Zoom CSV attendee report, returns massaged information."""
     report = []
     field_map = {
         "email": ["Email", str],

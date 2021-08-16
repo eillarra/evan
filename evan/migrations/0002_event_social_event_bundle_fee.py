@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="event", name="social_event_bundle_fee", field=models.PositiveSmallIntegerField(default=0),
+            model_name="event",
+            name="social_event_bundle_fee",
+            field=models.PositiveSmallIntegerField(default=0),
         ),
     ]

@@ -10,6 +10,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(name="event", options={"ordering": ("-start_date",)},),
-        migrations.AddField(model_name="content", name="marked", field=models.BooleanField(default=True),),
+        migrations.AlterModelOptions(
+            name="event",
+            options={"ordering": ("-start_date",)},
+        ),
+        migrations.AddField(
+            model_name="content",
+            name="marked",
+            field=models.BooleanField(default=True),
+        ),
     ]

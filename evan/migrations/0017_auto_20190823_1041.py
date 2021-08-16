@@ -10,5 +10,8 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterUniqueTogether(name="content", unique_together={("event", "key")},),
+        migrations.AlterUniqueTogether(
+            name="content",
+            unique_together={("event", "key")},
+        ),
     ]

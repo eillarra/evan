@@ -24,9 +24,12 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ("event", "key"),},
+            options={
+                "ordering": ("event", "key"),
+            },
         ),
         migrations.AddIndex(
-            model_name="content", index=models.Index(fields=["event", "key"], name="evan_conten_event_i_935c38_idx"),
+            model_name="content",
+            index=models.Index(fields=["event", "key"], name="evan_conten_event_i_935c38_idx"),
         ),
     ]

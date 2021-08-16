@@ -30,7 +30,8 @@ class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
     def perform_create(self, serializer):
         try:
             serializer.save(
-                user=self.request.user, event=Event.objects.get(code=self.kwargs.get("code")),
+                user=self.request.user,
+                event=Event.objects.get(code=self.kwargs.get("code")),
             )
         except IntegrityError:
             raise ValidationError({"event-user": ["Duplicate entry - this user already has an abstract."]})

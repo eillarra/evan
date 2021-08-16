@@ -22,7 +22,8 @@ class EventView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         if not self.get_object().editable_by_user(request.user):
             messages.error(
-                request, "You don't have the necessary permissions to manage this event.",
+                request,
+                "You don't have the necessary permissions to manage this event.",
             )
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

@@ -40,8 +40,7 @@ class Ingenico:
         return sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
 
     def process_parameters(self, parameters: dict, user) -> dict:
-        """Process and check if a minimum of parameters have been received.
-        """
+        """Process and check if a minimum of parameters have been received."""
         ingenico_parameters = {
             "CURRENCY": "EUR",
             "LANGUAGE": "en_US",
@@ -79,8 +78,7 @@ class Ingenico:
 
     @classmethod
     def validate_out_parameters(cls, qs: QueryDict, *, outsalt: str) -> bool:
-        """Check if the URL parameters have been tampered.
-        """
+        """Check if the URL parameters have been tampered."""
 
         parameters = qs.dict()
         shasign = parameters.pop("SHASIGN", None)

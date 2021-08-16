@@ -22,30 +22,61 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Coupon",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("code", models.UUIDField(default=uuid.uuid4, editable=False)),
                 (
                     "value",
-                    models.PositiveIntegerField(default=0, validators=[django.core.validators.MinValueValidator(1)],),
+                    models.PositiveIntegerField(
+                        default=0,
+                        validators=[django.core.validators.MinValueValidator(1)],
+                    ),
                 ),
                 ("notes", models.CharField(blank=True, max_length=190, null=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
             ],
-            options={"ordering": ("event", "id"),},
+            options={
+                "ordering": ("event", "id"),
+            },
         ),
         migrations.CreateModel(
             name="Day",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("date", models.DateField()),
                 ("name", models.CharField(max_length=190)),
             ],
-            options={"ordering": ("date",),},
+            options={
+                "ordering": ("date",),
+            },
         ),
         migrations.CreateModel(
             name="Event",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("code", models.CharField(max_length=32, unique=True)),
                 ("name", models.CharField(max_length=32)),
                 ("full_name", models.CharField(max_length=160)),
@@ -57,7 +88,10 @@ class Migration(migrations.Migration):
                 ("start_date", models.DateField()),
                 ("end_date", models.DateField()),
                 ("registration_start_date", models.DateField()),
-                ("registration_early_deadline", models.DateTimeField(blank=True, null=True),),
+                (
+                    "registration_early_deadline",
+                    models.DateTimeField(blank=True, null=True),
+                ),
                 ("registration_deadline", models.DateTimeField()),
                 ("wbs_element", models.CharField(blank=True, max_length=32, null=True)),
                 ("test_mode", models.BooleanField(default=True, editable=False)),
@@ -67,17 +101,32 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Fee",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "type",
                     models.CharField(
-                        choices=[("regular", "Regular"), ("student", "Student"), ("one_day", "One day"),],
+                        choices=[
+                            ("regular", "Regular"),
+                            ("student", "Student"),
+                            ("one_day", "One day"),
+                        ],
                         max_length=16,
                     ),
                 ),
                 (
                     "value",
-                    models.PositiveIntegerField(default=0, validators=[django.core.validators.MinValueValidator(1)],),
+                    models.PositiveIntegerField(
+                        default=0,
+                        validators=[django.core.validators.MinValueValidator(1)],
+                    ),
                 ),
                 ("notes", models.CharField(blank=True, max_length=190, null=True)),
                 ("is_early", models.BooleanField(default=False)),
@@ -87,28 +136,52 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Metadata",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "type",
                     models.CharField(
-                        choices=[("gender", "Gender"), ("meal_preference", "Meal preference"),], max_length=32,
+                        choices=[
+                            ("gender", "Gender"),
+                            ("meal_preference", "Meal preference"),
+                        ],
+                        max_length=32,
                     ),
                 ),
                 ("value", models.CharField(max_length=64)),
                 ("position", models.PositiveSmallIntegerField(default=0)),
             ],
-            options={"ordering": ("type", "value"),},
+            options={
+                "ordering": ("type", "value"),
+            },
         ),
         migrations.CreateModel(
             name="Paper",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("title", models.TextField()),
                 ("authors", models.TextField()),
                 (
                     "event",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="papers", to="evan.Event",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="papers",
+                        to="evan.Event",
                     ),
                 ),
             ],
@@ -116,12 +189,23 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Payment",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("amount", models.PositiveIntegerField(default=0)),
                 (
                     "type",
                     models.CharField(
-                        choices=[("stripe_charge", "Stripe charge"), ("stripe_refund", "Stripe refund"),],
+                        choices=[
+                            ("stripe_charge", "Stripe charge"),
+                            ("stripe_refund", "Stripe refund"),
+                        ],
                         default="stripe_charge",
                         max_length=32,
                     ),
@@ -129,7 +213,11 @@ class Migration(migrations.Migration):
                 (
                     "status",
                     models.CharField(
-                        choices=[("succeeded", "Succeeded"), ("pending", "Pending"), ("failed", "Failed"),],
+                        choices=[
+                            ("succeeded", "Succeeded"),
+                            ("pending", "Pending"),
+                            ("failed", "Failed"),
+                        ],
                         default="failed",
                         max_length=16,
                     ),
@@ -143,11 +231,20 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Permission",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 (
                     "level",
                     models.PositiveSmallIntegerField(
-                        choices=[(9, "Owner"), (5, "Administrator"), (1, "Guest")], db_index=True,
+                        choices=[(9, "Owner"), (5, "Administrator"), (1, "Guest")],
+                        db_index=True,
                     ),
                 ),
                 ("object_id", models.PositiveIntegerField()),
@@ -176,7 +273,11 @@ class Migration(migrations.Migration):
                 (
                     "gender",
                     models.CharField(
-                        blank=True, choices=[("F", "Female"), ("M", "Male")], db_index=True, max_length=1, null=True,
+                        blank=True,
+                        choices=[("F", "Female"), ("M", "Male")],
+                        db_index=True,
+                        max_length=1,
+                        null=True,
                     ),
                 ),
                 (
@@ -206,19 +307,34 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Registration",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("uuid", models.UUIDField(default=uuid.uuid4, editable=False)),
                 ("visa_requested", models.BooleanField(default=False)),
                 ("visa_sent", models.BooleanField(default=False)),
                 (
                     "fee_type",
                     models.CharField(
-                        choices=[("regular", "Regular"), ("student", "Student"), ("one_day", "One day"),],
+                        choices=[
+                            ("regular", "Regular"),
+                            ("student", "Student"),
+                            ("one_day", "One day"),
+                        ],
                         default="regular",
                         max_length=8,
                     ),
                 ),
-                ("base_fee", models.PositiveSmallIntegerField(default=0, editable=False),),
+                (
+                    "base_fee",
+                    models.PositiveSmallIntegerField(default=0, editable=False),
+                ),
                 ("manual_extra_fees", models.PositiveSmallIntegerField(default=0)),
                 ("invoice_requested", models.BooleanField(default=False)),
                 ("invoice_sent", models.BooleanField(default=False)),
@@ -230,28 +346,48 @@ class Migration(migrations.Migration):
                 (
                     "coupon",
                     models.OneToOneField(
-                        blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to="evan.Coupon",
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="evan.Coupon",
                     ),
                 ),
-                ("days", models.ManyToManyField(related_name="registrations", to="evan.Day"),),
+                (
+                    "days",
+                    models.ManyToManyField(related_name="registrations", to="evan.Day"),
+                ),
                 (
                     "event",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="registrations", to="evan.Event",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="registrations",
+                        to="evan.Event",
                     ),
                 ),
             ],
-            options={"ordering": ("-created_at",),},
+            options={
+                "ordering": ("-created_at",),
+            },
         ),
         migrations.CreateModel(
             name="RegistrationLog",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 (
                     "registration",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="logs", to="evan.Registration",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="logs",
+                        to="evan.Registration",
                     ),
                 ),
             ],
@@ -259,24 +395,45 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Room",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=190)),
                 ("max_capacity", models.PositiveSmallIntegerField(default=0)),
                 ("position", models.PositiveSmallIntegerField(default=0)),
             ],
-            options={"ordering": ("position",),},
+            options={
+                "ordering": ("position",),
+            },
         ),
         migrations.CreateModel(
             name="Session",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("date", models.DateField()),
                 ("start_at", models.TimeField(blank=True, null=True)),
                 ("end_at", models.TimeField(blank=True, null=True)),
                 ("title", models.CharField(max_length=190)),
                 ("summary", models.TextField(blank=True, null=True)),
                 ("website", models.URLField(blank=True, null=True)),
-                ("image", models.FileField(blank=True, null=True, upload_to="public/sympo/activity"),),
+                (
+                    "image",
+                    models.FileField(blank=True, null=True, upload_to="public/sympo/activity"),
+                ),
                 (
                     "max_attendees",
                     models.PositiveSmallIntegerField(default=0, help_text="Leave on `0` for non limiting."),
@@ -289,12 +446,18 @@ class Migration(migrations.Migration):
                 (
                     "event",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="sessions", to="evan.Event",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sessions",
+                        to="evan.Event",
                     ),
                 ),
                 (
                     "organizers",
-                    models.ManyToManyField(blank=True, related_name="organized_sessions", to=settings.AUTH_USER_MODEL,),
+                    models.ManyToManyField(
+                        blank=True,
+                        related_name="organized_sessions",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
                 ),
                 (
                     "room",
@@ -307,17 +470,29 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ("date", "start_at", "end_at"),},
+            options={
+                "ordering": ("date", "start_at", "end_at"),
+            },
         ),
         migrations.CreateModel(
             name="Topic",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=64)),
                 (
                     "event",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="topics", to="evan.Event",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="topics",
+                        to="evan.Event",
                     ),
                 ),
             ],
@@ -325,34 +500,62 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Track",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("name", models.CharField(max_length=64)),
                 ("position", models.PositiveSmallIntegerField(default=0)),
                 (
                     "event",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="tracks", to="evan.Event",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tracks",
+                        to="evan.Event",
                     ),
                 ),
             ],
-            options={"ordering": ("position", "name"),},
+            options={
+                "ordering": ("position", "name"),
+            },
         ),
         migrations.CreateModel(
             name="Venue",
             fields=[
-                ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID",),),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("is_main", models.BooleanField(default=False)),
                 ("name", models.CharField(max_length=160)),
                 ("city", models.CharField(blank=True, max_length=160, null=True)),
                 ("presentation", models.TextField(blank=True, null=True)),
                 ("address", models.CharField(blank=True, max_length=160, null=True)),
-                ("lat", models.FloatField(blank=True, null=True, verbose_name="Latitude"),),
-                ("lng", models.FloatField(blank=True, null=True, verbose_name="Longitude"),),
+                (
+                    "lat",
+                    models.FloatField(blank=True, null=True, verbose_name="Latitude"),
+                ),
+                (
+                    "lng",
+                    models.FloatField(blank=True, null=True, verbose_name="Longitude"),
+                ),
                 ("website", models.URLField(blank=True, null=True)),
                 (
                     "event",
                     models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE, related_name="venues", to="evan.Event",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="venues",
+                        to="evan.Event",
                     ),
                 ),
             ],
@@ -366,21 +569,28 @@ class Migration(migrations.Migration):
             model_name="session",
             name="track",
             field=models.ForeignKey(
-                null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="sessions", to="evan.Track",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="sessions",
+                to="evan.Track",
             ),
         ),
         migrations.AddField(
             model_name="room",
             name="venue",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="rooms", to="evan.Venue",
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="rooms",
+                to="evan.Venue",
             ),
         ),
         migrations.AddField(
             model_name="registrationlog",
             name="session",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="logs", to="evan.Session",
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="logs",
+                to="evan.Session",
             ),
         ),
         migrations.AddField(
@@ -392,7 +602,9 @@ class Migration(migrations.Migration):
             model_name="registration",
             name="user",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="registrations", to=settings.AUTH_USER_MODEL,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="registrations",
+                to=settings.AUTH_USER_MODEL,
             ),
         ),
         migrations.AddField(
@@ -409,19 +621,27 @@ class Migration(migrations.Migration):
             model_name="payment",
             name="registration",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="payments", to="evan.Registration",
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="payments",
+                to="evan.Registration",
             ),
         ),
         migrations.AddIndex(
-            model_name="metadata", index=models.Index(fields=["type"], name="evan_metada_type_61f530_idx"),
+            model_name="metadata",
+            index=models.Index(fields=["type"], name="evan_metada_type_61f530_idx"),
         ),
         migrations.AddField(
             model_name="fee",
             name="event",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="fees", to="evan.Event",),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="fees",
+                to="evan.Event",
+            ),
         ),
         migrations.AddIndex(
-            model_name="event", index=models.Index(fields=["code"], name="evan_event_code_de03e5_idx"),
+            model_name="event",
+            index=models.Index(fields=["code"], name="evan_event_code_de03e5_idx"),
         ),
         migrations.AddIndex(
             model_name="event",
@@ -430,33 +650,51 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="day",
             name="event",
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="days", to="evan.Event",),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="days",
+                to="evan.Event",
+            ),
         ),
         migrations.AddField(
             model_name="coupon",
             name="event",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, related_name="coupons", to="evan.Event",
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="coupons",
+                to="evan.Event",
             ),
         ),
         migrations.AddIndex(
-            model_name="session", index=models.Index(fields=["event", "date"], name="evan_sessio_event_i_fa353e_idx"),
+            model_name="session",
+            index=models.Index(fields=["event", "date"], name="evan_sessio_event_i_fa353e_idx"),
         ),
         migrations.AddIndex(
-            model_name="session", index=models.Index(fields=["event", "track"], name="evan_sessio_event_i_74abf3_idx"),
+            model_name="session",
+            index=models.Index(fields=["event", "track"], name="evan_sessio_event_i_74abf3_idx"),
         ),
-        migrations.AlterUniqueTogether(name="registrationlog", unique_together={("registration", "session")},),
-        migrations.AddIndex(
-            model_name="registration", index=models.Index(fields=["uuid"], name="evan_regist_uuid_df76cd_idx"),
-        ),
-        migrations.AlterUniqueTogether(name="registration", unique_together={("event", "user")},),
-        migrations.AddIndex(
-            model_name="fee", index=models.Index(fields=["type", "is_early"], name="evan_fee_type_f6ca07_idx"),
+        migrations.AlterUniqueTogether(
+            name="registrationlog",
+            unique_together={("registration", "session")},
         ),
         migrations.AddIndex(
-            model_name="day", index=models.Index(fields=["event", "date"], name="evan_day_event_i_74099f_idx"),
+            model_name="registration",
+            index=models.Index(fields=["uuid"], name="evan_regist_uuid_df76cd_idx"),
+        ),
+        migrations.AlterUniqueTogether(
+            name="registration",
+            unique_together={("event", "user")},
         ),
         migrations.AddIndex(
-            model_name="coupon", index=models.Index(fields=["code"], name="evan_coupon_code_196326_idx"),
+            model_name="fee",
+            index=models.Index(fields=["type", "is_early"], name="evan_fee_type_f6ca07_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="day",
+            index=models.Index(fields=["event", "date"], name="evan_day_event_i_74099f_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="coupon",
+            index=models.Index(fields=["code"], name="evan_coupon_code_196326_idx"),
         ),
     ]

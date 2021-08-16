@@ -10,11 +10,28 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(model_name="event", name="badge",),
-        migrations.AddField(
-            model_name="event", name="extra_data", field=models.JSONField(blank=True, default=dict, null=True),
+        migrations.RemoveField(
+            model_name="event",
+            name="badge",
         ),
-        migrations.AddField(model_name="event", name="is_virtual", field=models.BooleanField(default=False),),
-        migrations.AlterField(model_name="event", name="custom_fields", field=models.JSONField(default=dict),),
-        migrations.AlterField(model_name="registration", name="custom_data", field=models.JSONField(default=dict),),
+        migrations.AddField(
+            model_name="event",
+            name="extra_data",
+            field=models.JSONField(blank=True, default=dict, null=True),
+        ),
+        migrations.AddField(
+            model_name="event",
+            name="is_virtual",
+            field=models.BooleanField(default=False),
+        ),
+        migrations.AlterField(
+            model_name="event",
+            name="custom_fields",
+            field=models.JSONField(default=dict),
+        ),
+        migrations.AlterField(
+            model_name="registration",
+            name="custom_data",
+            field=models.JSONField(default=dict),
+        ),
     ]

@@ -22,14 +22,29 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(name="session", options={"ordering": ("start_at", "end_at")},),
-        migrations.RemoveIndex(model_name="session", name="evan_sessio_event_i_fa353e_idx",),
-        migrations.AlterField(model_name="session", name="end_at", field=models.DateTimeField(blank=True, null=True),),
+        migrations.AlterModelOptions(
+            name="session",
+            options={"ordering": ("start_at", "end_at")},
+        ),
+        migrations.RemoveIndex(
+            model_name="session",
+            name="evan_sessio_event_i_fa353e_idx",
+        ),
         migrations.AlterField(
-            model_name="session", name="start_at", field=models.DateTimeField(blank=True, null=True),
+            model_name="session",
+            name="end_at",
+            field=models.DateTimeField(blank=True, null=True),
+        ),
+        migrations.AlterField(
+            model_name="session",
+            name="start_at",
+            field=models.DateTimeField(blank=True, null=True),
         ),
         # -----------
         migrations.RunPython(update_dates),
         # -----------
-        migrations.RemoveField(model_name="session", name="date",),
+        migrations.RemoveField(
+            model_name="session",
+            name="date",
+        ),
     ]

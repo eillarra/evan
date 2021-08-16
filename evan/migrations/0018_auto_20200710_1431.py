@@ -10,8 +10,16 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(model_name="event", name="custom_fields", field=models.TextField(default="{}"),),
-        migrations.AddField(model_name="registration", name="custom_data", field=models.TextField(default="{}"),),
+        migrations.AddField(
+            model_name="event",
+            name="custom_fields",
+            field=models.TextField(default="{}"),
+        ),
+        migrations.AddField(
+            model_name="registration",
+            name="custom_data",
+            field=models.TextField(default="{}"),
+        ),
         migrations.AlterField(
             model_name="registration",
             name="days",

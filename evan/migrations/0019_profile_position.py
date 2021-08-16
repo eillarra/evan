@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="profile", name="position", field=models.CharField(blank=True, max_length=190, null=True),
+            model_name="profile",
+            name="position",
+            field=models.CharField(blank=True, max_length=190, null=True),
         ),
     ]

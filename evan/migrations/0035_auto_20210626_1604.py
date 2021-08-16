@@ -18,10 +18,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(model_name="content", name="config", field=models.JSONField(default=dict),),
+        migrations.AddField(
+            model_name="content",
+            name="config",
+            field=models.JSONField(default=dict),
+        ),
         # -----------
         migrations.RunPython(migrate_config),
         # -----------
-        migrations.RemoveField(model_name="content", name="marked",),
-        migrations.RemoveField(model_name="content", name="notes",),
+        migrations.RemoveField(
+            model_name="content",
+            name="marked",
+        ),
+        migrations.RemoveField(
+            model_name="content",
+            name="notes",
+        ),
     ]

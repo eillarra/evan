@@ -10,7 +10,11 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(model_name="invitationletter", old_name="submitted_paper", new_name="submitted_title",),
+        migrations.RenameField(
+            model_name="invitationletter",
+            old_name="submitted_paper",
+            new_name="submitted_title",
+        ),
         migrations.AddField(
             model_name="invitationletter",
             name="submitted",

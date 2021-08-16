@@ -71,7 +71,12 @@ class RegistrationAdmin(admin.ModelAdmin):
     raw_id_fields = ("event", "user", "coupon")
     readonly_fields = ("event", "base_fee", "extra_fees", "paid", "saldo")
     fieldsets = (
-        (None, {"fields": ("event", "user"),}),
+        (
+            None,
+            {
+                "fields": ("event", "user"),
+            },
+        ),
         (
             "PAYMENT",
             {
@@ -86,7 +91,12 @@ class RegistrationAdmin(admin.ModelAdmin):
                 ),
             },
         ),
-        ("EXTRA INFORMATION", {"fields": ("visa_requested", "visa_sent"),}),
+        (
+            "EXTRA INFORMATION",
+            {
+                "fields": ("visa_requested", "visa_sent"),
+            },
+        ),
     )
     inlines = (InvitationLetterInline,)
     actions = ("send_reminder", "send_visa_reminder", "send_payment_reminder", "send_profile_reminder")

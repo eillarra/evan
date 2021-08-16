@@ -10,10 +10,28 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(model_name="importantdate", name="event",),
-        migrations.RemoveField(model_name="registration", name="days",),
-        migrations.AddField(model_name="event", name="custom_data", field=models.JSONField(default=dict),),
-        migrations.AlterField(model_name="event", name="main_config", field=models.JSONField(default=dict),),
-        migrations.DeleteModel(name="Day",),
-        migrations.DeleteModel(name="ImportantDate",),
+        migrations.RemoveField(
+            model_name="importantdate",
+            name="event",
+        ),
+        migrations.RemoveField(
+            model_name="registration",
+            name="days",
+        ),
+        migrations.AddField(
+            model_name="event",
+            name="custom_data",
+            field=models.JSONField(default=dict),
+        ),
+        migrations.AlterField(
+            model_name="event",
+            name="main_config",
+            field=models.JSONField(default=dict),
+        ),
+        migrations.DeleteModel(
+            name="Day",
+        ),
+        migrations.DeleteModel(
+            name="ImportantDate",
+        ),
     ]

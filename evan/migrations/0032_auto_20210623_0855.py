@@ -41,13 +41,32 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(model_name="person", name="custom_data", field=models.JSONField(default=dict),),
-        migrations.AddField(model_name="profile", name="custom_data", field=models.JSONField(default=dict),),
+        migrations.AddField(
+            model_name="person",
+            name="custom_data",
+            field=models.JSONField(default=dict),
+        ),
+        migrations.AddField(
+            model_name="profile",
+            name="custom_data",
+            field=models.JSONField(default=dict),
+        ),
         # -----------
         migrations.RunPython(migrate_metadata),
         # -----------
-        migrations.RemoveField(model_name="person", name="dietary",),
-        migrations.RemoveField(model_name="profile", name="dietary",),
-        migrations.RemoveField(model_name="profile", name="gender",),
-        migrations.DeleteModel(name="Metadata",),
+        migrations.RemoveField(
+            model_name="person",
+            name="dietary",
+        ),
+        migrations.RemoveField(
+            model_name="profile",
+            name="dietary",
+        ),
+        migrations.RemoveField(
+            model_name="profile",
+            name="gender",
+        ),
+        migrations.DeleteModel(
+            name="Metadata",
+        ),
     ]

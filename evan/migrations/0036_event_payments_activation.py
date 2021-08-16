@@ -11,6 +11,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="event", name="payments_activation", field=models.DateTimeField(blank=True, null=True),
+            model_name="event",
+            name="payments_activation",
+            field=models.DateTimeField(blank=True, null=True),
         ),
     ]

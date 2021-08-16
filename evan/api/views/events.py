@@ -41,7 +41,9 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         return ListModelMixin.list(self, request, *args, **kwargs)
 
     @action(
-        detail=True, methods=["post"], permission_classes=(EventAttendeePermission,),
+        detail=True,
+        methods=["post"],
+        permission_classes=(EventAttendeePermission,),
     )
     @never_cache
     def contact(self, request, *args, **kwargs):

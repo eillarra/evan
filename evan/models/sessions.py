@@ -16,7 +16,13 @@ class Session(models.Model):
     event = models.ForeignKey("evan.Event", related_name="sessions", on_delete=models.CASCADE)
     organizers = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="organized_sessions")
     track = models.ForeignKey("evan.Track", related_name="sessions", null=True, on_delete=models.SET_NULL)
-    room = models.ForeignKey("evan.Room", related_name="sessions", null=True, blank=True, on_delete=models.SET_NULL,)
+    room = models.ForeignKey(
+        "evan.Room",
+        related_name="sessions",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
     start_at = models.DateTimeField(null=True, blank=True)
     end_at = models.DateTimeField(null=True, blank=True)
     title = models.CharField(max_length=190)

@@ -42,7 +42,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["-created_at"],},
+            options={
+                "ordering": ["-created_at"],
+            },
         ),
         migrations.CreateModel(
             name="File",
@@ -58,8 +60,15 @@ class Migration(migrations.Migration):
                     ),
                 ),
             ],
-            options={"ordering": ["content_type", "object_id"],},
+            options={
+                "ordering": ["content_type", "object_id"],
+            },
         ),
-        migrations.DeleteModel(name="Image",),
-        migrations.AddIndex(model_name="file", index=models.Index(fields=["file"], name="evan_file_file_ea5cff_idx"),),
+        migrations.DeleteModel(
+            name="Image",
+        ),
+        migrations.AddIndex(
+            model_name="file",
+            index=models.Index(fields=["file"], name="evan_file_file_ea5cff_idx"),
+        ),
     ]
