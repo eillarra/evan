@@ -212,5 +212,37 @@ var Evan = {
       if (a > b) return 1;
       return 0;
     }
+  },
+  cookies: {
+    consent: function (msg, acceptBtnText, privacyBtnText, privacyUrl) {
+      var cookie = 'cookieconsent';
+      if (!Quasar.Cookies.has(cookie)) {
+        Quasar.Notify.create({
+          timeout: 0,
+          message: msg || 'We use cookies to ensure you get the best experience on our website.',
+          position: 'bottom-right',
+          color: 'primary',
+          multiLine: true,
+          actions: [
+            {
+              label: acceptBtnText || 'Accept',
+              color: 'yellow-7',
+              handler: function () {
+                Quasar.Cookies.set(cookie, true, {
+                  secure: true
+                })
+              }
+            },
+            {
+              label: privacyBtnText || 'Learn more',
+              color: 'white',
+              handler: function () {
+                Quasar.openURL(privacyUrl || '/privacy/');
+              }
+            }
+          ]
+        });
+      }
+    }
   }
 };
