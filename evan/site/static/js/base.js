@@ -230,8 +230,8 @@ var Evan = {
               color: 'yellow-7',
               handler: function () {
                 Quasar.Cookies.set(cookie, true, {
-                  secure: true
-                })
+                  path: '/'
+                });
               }
             },
             {
