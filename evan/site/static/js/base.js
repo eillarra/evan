@@ -222,6 +222,7 @@ var Evan = {
           message: msg || 'We use cookies to ensure you get the best experience on our website.',
           position: 'bottom-right',
           color: 'primary',
+          classes: 'evan-cookies-notify',
           multiLine: true,
           actions: [
             {
