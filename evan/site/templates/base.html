@@ -83,7 +83,7 @@
     </div>
     {% block vue_templates %}{% endblock %}
     {% if not debug %}
-      <script src="https://browser.sentry-cdn.com/6.11.0/bundle.min.js" integrity="sha384-c+8PXtRnYfCKsSEvgtDqFeJvhjltkNLIUB1vcWKW4EleABoS4jh87UrE+1nQXg+g" crossorigin="anonymous"></script>
+      <script src="https://browser.sentry-cdn.com/6.11.0/bundle.tracing.min.js" integrity="sha384-XuDodOP4mgLWA8eRlqZJWs+mtmznHF6ES/nOotK0fE7SHjj0Ec3YMVIzjh5ytsKH" crossorigin="anonymous"></script>
       <script src="https://browser.sentry-cdn.com/6.11.0/vue.min.js" integrity="sha384-CuCDTHNwfKKxDsiqbSI4p7MpikMED/z+znW6nnr6374xyEHle52d+p36HADU+N7M" crossorigin="anonymous"></script>
       <script src="{% static 'js/sentry.js' %}"></script>
     {% endif %}
