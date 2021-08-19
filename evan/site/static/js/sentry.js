@@ -6,10 +6,8 @@ Sentry.init({
   release: DJANGO_VARS.rev,
   environment: 'production',
   integrations: [
-    new Sentry.Integrations.BrowserTracing(),
     new Sentry.Integrations.Vue()
-  ],
-  tracesSampleRate: 0.1
+  ]
 });
 
 if (+DJANGO_VARS.user > 0) {
