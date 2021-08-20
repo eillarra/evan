@@ -22,7 +22,7 @@ Update dependencies (and manually update `requirements.txt`):
 
 ### Run Celery
 
-    $ celery worker -B -A evan
+    $ celery -A evan worker -B
 
 ### Style guide
 

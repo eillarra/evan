@@ -56,7 +56,9 @@ var EvanCommonComponents = {
       WARNING = 30
       ERROR = 40
       */
+      var level = +this.level;
       Quasar.Notify.create({
+        timeout: (level > 25) ? 10000 : 5000,
         message: this.message,
         type: {
           10: 'info',
@@ -64,11 +66,11 @@ var EvanCommonComponents = {
           25: 'positive',
           30: 'warning',
           40: 'negative'
-        }[+this.level] || 'info',
+        }[level] || 'info',
         actions: [
           {
             label: 'Dismiss',
-            color: (+this.level == 30) ? 'dark' : 'white',
+            color: (level == 30) ? 'dark' : 'white',
             handler: function () {}
           }
         ],

@@ -152,8 +152,10 @@ code, kbd, pre, samp,
   }
 }
 
-.evan-cookies-notify {
-  max-width: 360px;
+@media (min-width: 600px) {
+  .evan-cookies-notify {
+    max-width: 360px;
+  }
 }
 
 .mini-logo {
