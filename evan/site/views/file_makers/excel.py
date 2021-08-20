@@ -8,18 +8,14 @@ from evan.services.excel import ModelExcelWriter
 class RegistrationsOverview(ModelExcelWriter):
     def get_sheets(self) -> List[Dict]:
         qs = self.queryset.select_related("user__profile", "coupon").prefetch_related("sessions")
+        base_data = ["uuid", "email", "first_name", "last_name", "affiliation", "country"]
 
         sheets = [
             {
                 "title": "Registrations",
                 "data": [
-                    [
-                        "uuid",
-                        "email",
-                        "first_name",
-                        "last_name",
-                        "affiliation",
-                        "country",
+                    base_data
+                    + [
                         "fee_type",
                         "base_fee",
                         "extra_fees",
@@ -38,13 +34,8 @@ class RegistrationsOverview(ModelExcelWriter):
             {
                 "title": "Dietary",
                 "data": [
-                    [
-                        "uuid",
-                        "email",
-                        "first_name",
-                        "last_name",
-                        "affiliation",
-                        "country",
+                    base_data
+                    + [
                         "dietary_requirements",
                         "special_needs",
                     ]
@@ -53,47 +44,62 @@ class RegistrationsOverview(ModelExcelWriter):
             {
                 "title": "Visum",
                 "data": [
-                    [
-                        "uuid",
-                        "email",
-                        "first_name",
-                        "last_name",
-                        "affiliation",
-                        "country",
+                    base_data
+                    + [
                         "visa_requested",
                         "visa_sent",
                     ]
                 ],
             },
             {
+                "title": "Sessions",
+                "data": [base_data],
+            },
+            {
                 "title": "Custom fields",
-                "data": [["uuid", "email", "first_name", "last_name", "affiliation", "country"]],
+                "data": [base_data],
             },
         ]
 
+        event = None
         custom_fields = []
+        session_ids = []
+        session_fields = []
 
         for obj in qs:
+            event = obj.event
             for k in obj.custom_data.keys():
                 if k not in custom_fields:
                     custom_fields.append(k)
 
         if custom_fields:
-            sheets[3]["data"][0] = sheets[3]["data"][0] + custom_fields
+            sheets[4]["data"][0] = sheets[3]["data"][0] + custom_fields
         else:
-            del sheets[3]
+            del sheets[4]
+
+        for session in event.sessions.all():
+            session_ids.append(session.id)
+            session_fields.append(session.title)
+
+        sheets[3]["data"][0] = sheets[3]["data"][0] + session_fields
 
         for obj in qs:
             uuid = str(obj.uuid)
+            user_sessions = {s.id for s in obj.sessions.all()}
+            user_base_data = [
+                uuid,
+                obj.user.email,
+                obj.user.first_name,
+                obj.user.last_name,
+                obj.user.profile.affiliation,
+                obj.user.profile.country.name,
+            ]
+
+            # Registrations
 
             sheets[0]["data"].append(
-                [
-                    uuid,
-                    obj.user.email,
-                    obj.user.first_name,
-                    obj.user.last_name,
-                    obj.user.profile.affiliation,
-                    obj.user.profile.country.name,
+                user_base_data
+                + [
                     obj.fee_type,
                     obj.base_fee,
                     obj.extra_fees,
@@ -108,32 +114,29 @@ class RegistrationsOverview(ModelExcelWriter):
                     obj.updated_at,
                 ]
             )
+
+            # Dietary
+
             sheets[1]["data"].append(
-                [
-                    uuid,
-                    obj.user.email,
-                    obj.user.first_name,
-                    obj.user.last_name,
-                    obj.user.profile.affiliation,
-                    obj.user.profile.country.name,
+                user_base_data
+                + [
                     obj.user.profile.custom_data.get("dietary", None),
                     obj.user.profile.custom_data.get("special_needs", None),
                 ]
             )
 
+            # Visum
+
             if obj.visa_requested:
                 sheets[2]["data"].append(
-                    [
-                        uuid,
-                        obj.user.email,
-                        obj.user.first_name,
-                        obj.user.last_name,
-                        obj.user.profile.affiliation,
-                        obj.user.profile.country.name,
+                    user_base_data
+                    + [
                         obj.visa_requested,
                         obj.visa_sent,
                     ]
                 )
+
+            # Custom fields
 
             if custom_fields:
                 custom_data = []
@@ -142,16 +145,15 @@ class RegistrationsOverview(ModelExcelWriter):
                     v = obj.custom_data[f] if f in obj.custom_data else None
                     custom_data.append(json.dumps(v) if type(v) in {dict, list} else v)
 
-                sheets[3]["data"].append(
-                    [
-                        uuid,
-                        obj.user.email,
-                        obj.user.first_name,
-                        obj.user.last_name,
-                        obj.user.profile.affiliation,
-                        obj.user.profile.country.name,
-                    ]
-                    + custom_data
-                )
+                sheets[4]["data"].append(user_base_data + custom_data)
+
+            # Sessions
+
+            session_data = []
+
+            for session_id in session_ids:
+                session_data.append(session_id in user_sessions)
+
+            sheets[3]["data"].append(user_base_data + session_data)
 
         return sheets
