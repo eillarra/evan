@@ -10,6 +10,9 @@ class Venue(models.Model):
     gmaps = models.URLField(null=True, blank=True)
     website = models.URLField(null=True, blank=True)
 
+    class Meta:
+        ordering = ("event", "-is_main", "name")
+
     def __str__(self) -> str:
         return "{0} ({1}, {2})".format(self.name, self.city, self.event.country)
 

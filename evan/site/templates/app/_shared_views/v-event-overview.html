@@ -19,18 +19,42 @@
       </q-card>
     </div>
 
-    <div v-if="dates.length" class="col-12 col-md">
-      <q-card flat class="q-pa-lg full-height">
-        <display-5>Important dates</display-5>
-        <q-list class="q-mt-sm">
-          <q-item v-for="date in dates" class="evan-px-none">
-            <q-item-section>
-              <q-item-label caption>{{ date.formatted }}</q-item-label>
-              <q-item-label>{{ date.label }}</q-item-label>
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-card>
+    <div class="col-12 col-md q-gutter-lg">
+
+        <div v-if="dates.length">
+          <q-card flat class="q-pa-lg">
+            <display-5>Important dates</display-5>
+            <q-list class="q-mt-sm">
+              <q-item v-for="date in dates" class="evan-px-none">
+                <q-item-section>
+                  <q-item-label caption>{{ date.formatted }}</q-item-label>
+                  <q-item-label>{{ date.label }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
+        </div>
+
+        <div v-if="event.venues.length">
+          <q-card flat class="q-pa-lg">
+            <display-5>Venues</display-5>
+            <q-list class="q-mt-sm">
+              <q-item v-for="venue in event.venues" class="evan-px-none">
+                <q-item-section>
+                  <q-item-label>{{ venue.name }}</q-item-label>
+                  <q-item-label caption v-if="venue.is_main">Main venue</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <div class="q-gutter-sm">
+                    <q-btn :disable="!venue.gmaps" flat round dense icon="place" type="a" :href="venue.gmaps" target="_blank" rel="noopener" />
+                    <q-btn :disable="!venue.website" flat round dense icon="language" type="a" :href="venue.website" target="_blank" rel="noopener" />
+                  </div>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card>
+        </div>
+
     </div>
 
   </div>
