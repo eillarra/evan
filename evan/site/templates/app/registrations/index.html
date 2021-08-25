@@ -87,7 +87,6 @@
         endpoint: VARS.urlRegistration,
         registrationIsNew: VARS.urlRegistration == '',
         registration: null,
-        session: null,
         attendees: []
       },
       mutations: {
@@ -136,9 +135,6 @@
         },
         updateRegistrationCustomData: function (state, data) {
           state.registration.custom_data = data;
-        },
-        updateSession: function (state, data) {
-          state.session = data;
         }
       }
     });

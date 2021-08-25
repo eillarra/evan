@@ -51,10 +51,17 @@ var Evan = {
   },
   map: {
     event: function (obj) {
+      var sessionMap = this.session;
+
       if (!_.has(obj.custom_data, 'dates')) obj.custom_data.dates = [];
       else obj.custom_data.dates.sort(function (a, b) {
         return moment(a.start_date) - moment(b.start_date);
       });
+
+      _.each(obj.sessions, function (s) {
+        sessionMap(s);
+      });
+
       obj.start = moment(obj.start_date);
       obj.end = moment(obj.end_date);
       obj.date_range = moment.range(obj.start, obj.end);
@@ -96,6 +103,8 @@ var Evan = {
       return obj;
     },
     session: function (obj) {
+      obj.start = moment(obj.start_at);
+      obj.end = moment(obj.end_at);
       obj._q = '';
 
       return obj;

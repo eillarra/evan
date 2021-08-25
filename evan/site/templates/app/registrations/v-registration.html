@@ -35,13 +35,20 @@
               </q-item-section>
             </q-item>
           </q-list>
-          <!--<div v-if="feeIncludesSocialEvents">
+
+          <div v-if="feeIncludesSocialEvents">
             <h6 class="q-mb-sm">Choose the social events you would like to attend</h6>
-            <div v-for="session in socialEvents" :key="session.id" class="custom-control custom-checkbox my-1">
-              <input type="checkbox" v-model="obj.sessions" :value="session.id" class="custom-control-input" :id="'session' + session.id" />
-              <label class="custom-control-label" :for="'session' + session.id">{{ session.title }} ({{ session.date }}) </label>&nbsp;<router-link :to="{name: 'session', params: {sessionId: session.id}}">[+]</router-link>
-            </div>
-            <h6 class="q-mb-sm">Accompanying persons<small v-if="event.social_event_bundle_fee > 0" class="text-info d-block mt-1">Accompanying persons can attend the social event(s) for an extra fee of <strong>{{ event.social_event_bundle_fee }} EUR</strong> per person.</small></h6>
+            <q-list dense class="q-px-none">
+              <q-item v-for="session in socialEvents" class="q-pl-none">
+                <q-item-section avatar class="q-px-none">
+                  <q-checkbox v-model="obj.sessions" :val="session.id" keep-color />
+                </q-item-section>
+                <q-item-section>
+                  <q-item-label>{{ session.title }} ({{ session.start.format('ddd MMM D, LT') }})</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+            <!--<h6 class="q-mb-sm">Accompanying persons<small v-if="event.social_event_bundle_fee > 0" class="text-info d-block mt-1">Accompanying persons can attend the social event(s) for an extra fee of <strong>{{ event.social_event_bundle_fee }} EUR</strong> per person.</small></h6>
             <p v-if="!obj.accompanying_persons.length" class="text-sm">
               <a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Click here</a> if you want to add an accompanying person for this event.</p>
             <table v-else class="table table-sm">
@@ -66,8 +73,9 @@
               <tfoot>
                 <small><a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Add another person</a></small>
               </tfoot>
-            </table>
-          </div>-->
+            </table>-->
+          </div>
+
         </div>
 
         <div v-if="obj.fee_type">
