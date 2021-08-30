@@ -92,7 +92,7 @@ class Registration(models.Model):
         return reverse("registration:payment_result", args=[self.uuid])
 
     def get_payment_delegated_result_url(self) -> str:
-        return reverse("registration:payment_delegated_result", args=[self.uuid])
+        return reverse("registration:payment_delegated_result", args=[self.uuid, self.secret])
 
     def get_receipt_url(self) -> str:
         return reverse("registration:receipt", args=[self.uuid])

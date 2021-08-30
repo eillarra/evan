@@ -39,7 +39,7 @@
               {% if registration.paid > 0 %}
                 <p>You have already paid <strong>{{ registration.paid }} EUR</strong>.</p>
               {% endif %}
-              <img src="{% static 'images/ingenico.svg' %}" class="float-right logo mt-2">
+              <img src="{% static 'images/ingenico.svg' %}" class="float-right mini-logo q-mt-sm">
               <form method="post" action="{{ ingenico_url }}">
                 {% for key, value in ingenico_parameters.items %}
                   <input type="hidden" name="{{ key }}" value="{{ value }}">

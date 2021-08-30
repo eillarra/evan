@@ -68,7 +68,6 @@ class RegistrationView(generic.DetailView):
 
 
 class RegistrationPaymentBaseView(generic.TemplateView):
-    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not self.get_object().event.allows_payments:
             messages.error(request, "Payments are not active for this event.")

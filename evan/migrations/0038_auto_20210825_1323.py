@@ -6,25 +6,25 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('evan', '0037_sponsor'),
+        ("evan", "0037_sponsor"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='venue',
-            name='address',
+            model_name="venue",
+            name="address",
         ),
         migrations.RemoveField(
-            model_name='venue',
-            name='lat',
+            model_name="venue",
+            name="lat",
         ),
         migrations.RemoveField(
-            model_name='venue',
-            name='lng',
+            model_name="venue",
+            name="lng",
         ),
         migrations.AddField(
-            model_name='venue',
-            name='gmaps',
+            model_name="venue",
+            name="gmaps",
             field=models.URLField(blank=True, null=True),
         ),
     ]
