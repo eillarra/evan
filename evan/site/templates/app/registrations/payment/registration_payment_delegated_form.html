@@ -47,6 +47,8 @@
                 <q-btn unelevated color="primary" type="submit" icon="vpn_key" label="Pay"></q-btn>
               </form>
             </div>
+          {% else %}
+            <p>Delegated payment not available: the user has already requested an invoice.</p>
           {% endif %}
         {% endif %}
 
