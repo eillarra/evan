@@ -260,6 +260,14 @@ class RegistrationReceiptPdf(RegistrationPdfView):
     Download a receipt in PDF format.
     """
 
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        registration = self.get_object()
+        if not registration.is_paid:
+            messages.error(request, "Receipt is not available.")
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         obj = self.get_object()
         maker = ReceiptPdfMaker(registration=obj, filename=f"receipt--{obj.uuid}.pdf", as_attachment=False)
