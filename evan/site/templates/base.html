@@ -42,7 +42,9 @@
         {% endif %}
         {% if form %}
           {% if form.non_field_errors %}
-            <django-form-error error="{{ form.non_field_errors }}"></django-form-error>
+            {% for error in form.non_field_errors %}
+              <django-form-error error="{{ error }}"></django-form-error>
+            {% endfor %}
           {% endif %}
           {% for field in form %}
             {% if field.errors %}
