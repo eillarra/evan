@@ -12,8 +12,8 @@ var QueryMixin = {
   },
   watch: {
     query: function (val, oldVal) {
-      if (val != '') this.$router.replace({query: {q: val}});
-      else this.$router.replace({query: {q: undefined}});
+      if (val == '') this.$router.replace({query: {q: undefined}});
+      else if (val != this.$route.query.q && val != oldVal) this.$router.replace({query: {q: val}});
     }
   },
   created: function () {

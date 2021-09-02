@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400&&amp;display=swap" rel="stylesheet">
     {% compress css file base %}
-      <link href="{% static 'vendor/quasar@2.0.3/quasar.prod.css' %}" type="text/css" rel="stylesheet">
+      <link href="{% static 'vendor/quasar@2.0.4/quasar.prod.css' %}" type="text/css" rel="stylesheet">
       <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
       <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
     {% endcompress %}
@@ -101,12 +101,12 @@
         <script src="{% static 'vendor/vue@3.2.2/vue.global.js' %}"></script>
         <script src="{% static 'vendor/vuex@4.0.2/vuex.global.js' %}"></script>
         <script src="{% static 'vendor/vue-router@4.0.11/vue-router.global.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.0.3/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.0.4/quasar.umd.js' %}"></script>
       {% else %}
         <script src="{% static 'vendor/vue@3.2.2/vue.global.prod.js' %}"></script>
         <script src="{% static 'vendor/vuex@4.0.2/vuex.global.prod.js' %}"></script>
         <script src="{% static 'vendor/vue-router@4.0.11/vue-router.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.0.3/quasar.umd.prod.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.0.4/quasar.umd.prod.js' %}"></script>
       {%endif %}
     {% endcompress %}
     {% compress js file evan %}

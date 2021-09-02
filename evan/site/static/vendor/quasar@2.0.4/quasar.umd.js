@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v2.0.3
+ * Quasar Framework v2.0.4
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -1437,7 +1437,7 @@
   }
 
   var installQuasar = function (parentApp, opts = {}) {
-      const $q = { version: '2.0.3' };
+      const $q = { version: '2.0.4' };
 
       if (globalConfigIsFrozen === false) {
         if (opts.config !== void 0) {
@@ -19483,7 +19483,7 @@
       // expose public methods
       const vm = vue.getCurrentInstance();
       Object.assign(vm.proxy, {
-        poll: () => poll.apply(null, arguments),
+        poll: () => { poll !== void 0 && poll(); },
         trigger, stop, reset, resume, setIndex
       });
 
@@ -26552,9 +26552,9 @@
         filter, updateMenuPosition, updateInputValue,
         isOptionSelected,
         getEmittingOptionValue,
-        isOptionDisabled: () => isOptionDisabled.value.apply(null, arguments),
-        getOptionValue: () => getOptionValue.value.apply(null, arguments),
-        getOptionLabel: () => getOptionLabel.value.apply(null, arguments)
+        isOptionDisabled: (...args) => isOptionDisabled.value.apply(null, args),
+        getOptionValue: (...args) => getOptionValue.value.apply(null, args),
+        getOptionLabel: (...args) => getOptionLabel.value.apply(null, args)
       });
 
       Object.assign(state, {
@@ -38407,7 +38407,7 @@
   });
 
   var index_umd = {
-    version: '2.0.3',
+    version: '2.0.4',
     install (app, opts) {
       installQuasar(app, {
         components,
