@@ -13,10 +13,17 @@ This is a reminder to complete your payment for {{ event_name }}.
 You will find instructions for the payment on this page:
 https://evan.ugent.be{{ payment_url }}
 
-If you have a received a coupon from the Organization, you can also validate it there.{% endif %}
-{% if event_allows_invoices %}
-{% if not invoice_requested %}If you would prefer to pay via invoice, please contact <evan@ugent.be> with the following invoice details:{% else %}We've noticed that you would like to pay your registration fee by invoice.
-Can you please send us the following invoice details to <evan@ugent.be>:{% endif %}
+If you have a received a coupon from the Organization, you can validate it there.
+
+You can also share a private link with the administration at your institution if
+you want them to pay the registration on your behalf. The payment can be done online
+and you can download a receipt afterwards:
+https://evan.ugent.be{{ payment_delegated_url }}
+
+If you need an official invoice, you can request it on the payment page.
+{% else %}
+You've indicated that you would like to pay your registration fee via invoice.
+Can you please send us the following invoice details to <evan@ugent.be>:
 
 - In case we need to send the invoice to your institution:
   - Official name and address or your institution

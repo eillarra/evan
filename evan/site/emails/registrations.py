@@ -14,10 +14,12 @@ class RegistrationEmail(TemplateEmail):
             "event_name": self.instance.event.name,
             "event_city": self.instance.event.city,
             "event_url": self.instance.event.get_absolute_url(),
+            "invoice_requested": self.instance.invoice_requested,
             "registrations_count": self.instance.event.registrations_count,
             "registration_uuid": str(self.instance.uuid),
             "registration_url": self.instance.get_absolute_url(),
             "payment_url": self.instance.get_payment_url(),
+            "payment_delegated_url":  self.instance.get_payment_delegated_url(),
         }
 
 
