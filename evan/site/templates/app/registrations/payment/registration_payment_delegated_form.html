@@ -27,11 +27,7 @@
         <p class="q-mt-none q-mb-xl text-grey-8">On behalf of: {{ registration.user.profile.name }}</p>
 
         {% if registration.is_paid %}
-          <p>Your registration is fully paid.</p>
-          {% if registration.paid > 0 %}
-            <p><a target="_blank" href="{{ registration.get_receipt_url }}" class="btn btn-outline-secondary">
-             <i class="material-icons mr-2">get_app</i>Download receipt</a></p>
-          {% endif %}
+          <p>{{ registration.user.profile.name }}'s registration is fully paid.</p>
         {% else %}
           {% if not registration.invoice_requested %}
             <div class="clearfix">

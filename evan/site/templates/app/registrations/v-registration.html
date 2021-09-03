@@ -134,12 +134,12 @@
         </q-item>
         <q-item class="q-mt-lg">
           <q-item-section>
-            <q-btn v-if="obj.is_paid" outline icon="info" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url" />
+            <q-btn v-if="obj.is_paid" outline rounded no-caps icon="done_all" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url" />
             <span v-else-if="event.allows_payments">
-              <q-btn v-if="!obj.invoice_requested" outline icon="credit_card" color="green" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url" />
-              <q-btn v-else disabled outline icon="info" color="dark" label="Invoice is being prepared" class="full-width" />
+              <q-btn v-if="!obj.invoice_requested" outline rounded no-caps icon="credit_card" color="primary" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url" />
+              <q-btn v-else disabled outline rounded no-caps icon="notes" color="dark" label="Invoice is being prepared" class="full-width" />
             </span>
-            <q-btn v-else disabled outline icon="credit_card_off" color="dark" label="Payments not active yet" class="full-width" />
+            <q-btn v-else disabled outline rounded no-caps icon="credit_card_off" color="dark" label="Payments not active yet" class="full-width" />
           </q-item-section>
         </q-item>
       </q-list>

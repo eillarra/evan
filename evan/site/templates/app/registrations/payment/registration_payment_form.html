@@ -66,8 +66,7 @@
         {% if registration.is_paid %}
           <p>Your registration is fully paid.</p>
           {% if registration.paid > 0 %}
-            <p><a target="_blank" href="{{ registration.get_receipt_url }}" class="btn btn-outline-secondary">
-             <i class="material-icons mr-2">get_app</i>Download receipt</a></p>
+            <q-btn outline rounded no-caps type="a" target="_blank" href="{{ registration.get_receipt_url }}" icon="receipt" color="primary" label="Download receipt" class="q-mt-md q-px-lg" />
           {% endif %}
         {% else %}
           <p class="text-negative">You still have to pay <strong>{{ registration.remaining_fee }} EUR</strong> for your "{{ registration.event }}" registration.</p>
