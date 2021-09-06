@@ -19,7 +19,7 @@ class RegistrationEmail(TemplateEmail):
             "registration_uuid": str(self.instance.uuid),
             "registration_url": self.instance.get_absolute_url(),
             "payment_url": self.instance.get_payment_url(),
-            "payment_delegated_url":  self.instance.get_payment_delegated_url(),
+            "payment_delegated_url": self.instance.get_payment_delegated_url(),
         }
 
 

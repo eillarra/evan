@@ -1,6 +1,5 @@
 import os
 import time
-import unicodedata
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -49,15 +48,7 @@ class Ingenico:
         }
 
         # User parameters
-        ingenico_parameters.update(
-            {
-                "EMAIL": user.email,
-                "CN": unicodedata.normalize("NFKD", user.profile.name)
-                .encode("ascii", "ignore")
-                .decode("utf-8")
-                .upper(),
-            }
-        )
+        ingenico_parameters.update({"EMAIL": user.email})
 
         # Required parameters
         absolute_uri = get_absolute_uri()
