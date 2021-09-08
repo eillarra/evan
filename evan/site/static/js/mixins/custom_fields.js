@@ -53,8 +53,12 @@ var CustomFieldsMixin = {
     }
   }),
   methods: {
+    cleanObj: function (obj) {
+      return obj;
+    },
     createOrUpdate: function (obj) {
       var self = this;
+      var obj = this.cleanObj(obj);
 
       if (_.has(obj, 'self')) {
         Evan.api.update(obj, function (res) {

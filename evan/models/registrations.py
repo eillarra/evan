@@ -3,13 +3,25 @@ import uuid
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models.signals import post_save, post_delete, m2m_changed
+from django.db.models.signals import post_save, m2m_changed
 from django.dispatch import receiver
 from django.urls import reverse
 from hashlib import sha256
 
 from evan.functions import send_task
 from .fees import Fee
+from .sessions import Session
+
+
+def calculate_accompanying_fees(accompanying_data: dict) -> int:
+    session_ids = accompanying_data.keys()
+    fees = 0
+
+    if session_ids:
+        for session in Session.objects.filter(pk__in=session_ids):
+            fees += session.extra_attendees_fee * len(accompanying_data[str(session.id)])
+
+    return fees
 
 
 class RegistrationManager(models.Manager):
@@ -63,7 +75,11 @@ class Registration(models.Model):
         is_early = self.is_early if self.pk else self.event.is_early
         key = (self.fee_type, is_early) if self.fee_type != Fee.ONE_DAY else (self.fee_type, False)
         self.base_fee = self.event.fees_dict[key] if key in self.event.fees_dict else 0
-        self.extra_fees = self.event.social_event_bundle_fee * self.accompanying_persons.count()
+        try:
+            self.extra_fees = calculate_accompanying_fees(self.custom_data["accompanying_persons"])
+            print(self.extra_fees)
+        except KeyError:
+            pass
         self.saldo = -self.remaining_fee
         super().save(*args, **kwargs)
 
@@ -173,22 +189,6 @@ class RegistrationLog(models.Model):
 
     class Meta:
         unique_together = ("registration", "session")
-
-
-class Person(models.Model):
-    """
-    Accompanying person.
-    """
-
-    registration = models.ForeignKey(Registration, related_name="accompanying_persons", on_delete=models.CASCADE)
-    name = models.CharField(max_length=190)
-    custom_data = models.JSONField(default=dict)
-
-
-@receiver(post_save, sender=Person)
-@receiver(post_delete, sender=Person)
-def person_post_update(sender, instance, *args, **kwargs):
-    instance.registration.save()
 
 
 class InvitationLetter(models.Model):

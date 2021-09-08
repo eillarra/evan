@@ -45,35 +45,10 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label>{{ session.title }} ({{ session.start.format('ddd MMM D, LT') }})</q-item-label>
+                  <evan-accompanying v-if="session.extra_attendees_fee > 0 && sessionSelected(session.id)" v-model="obj.custom_data.accompanying_persons[session.id]" :label="session.title" :fee="session.extra_attendees_fee"></evan-accompanying>
                 </q-item-section>
               </q-item>
             </q-list>
-            <!--<h6 class="q-mb-sm">Accompanying persons<small v-if="event.social_event_bundle_fee > 0" class="text-info d-block mt-1">Accompanying persons can attend the social event(s) for an extra fee of <strong>{{ event.social_event_bundle_fee }} EUR</strong> per person.</small></h6>
-            <p v-if="!obj.accompanying_persons.length" class="text-sm">
-              <a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Click here</a> if you want to add an accompanying person for this event.</p>
-            <table v-else class="table table-sm">
-              <thead>
-                <tr class="text-sm">
-                  <th>Name</th>
-                  <th>Dietary requirements</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="person in obj.accompanying_persons">
-                  <td class="pl-0">
-                    <input v-model="person.name" class="form-control form-control-sm" placeholder="Person's name">
-                  </td>
-                  <td>
-                    <q-select filled dense emit-value map-options v-model="person.dietary" :options="dietaryOptions" class="col-12 col-sm-6" />
-                  </td>
-                  <td class="sm"><a href @click.prevent="removePerson(person)" class="text-danger"><i class="material-icons mt-1">remove_circle</i></a></td>
-                </tr>
-              </tbody>
-              <tfoot>
-                <small><a href @click.prevent="addPerson"><i class="material-icons sm mr-1">add</i>Add another person</a></small>
-              </tfoot>
-            </table>-->
           </div>
 
         </div>

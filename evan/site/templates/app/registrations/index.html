@@ -118,15 +118,22 @@
 
           if (!state.registrationIsNew) {
             Evan.api.request('get', state.endpoint).then(function (res) {
-              state.registration = Evan.map.registration(res.data);
+              var obj = Evan.map.registration(res.data);
+
+              if (!_.has(obj.custom_data, 'accompanying_persons')) {
+                obj.custom_data.accompanying_persons = {};
+              }
+
+              state.registration = obj;
             });
           } else {
             state.registration = {
               fee_type: null,
               visa_requested: false,
               sessions: [],
-              accompanying_persons: [],
-              custom_data: {}
+              custom_data: {
+                accompanying_persons: {}
+              }
             };
           }
         },
@@ -277,17 +284,17 @@
         }
       }),
       methods: {
+        cleanObj: function (obj) {
+          _.each(obj.custom_data.accompanying_persons, function (value, key, index) {
+            if (!_.contains(obj.sessions, +key)) delete obj.custom_data.accompanying_persons[key];
+          });
+          return obj;
+        },
         updateNow: function () {
           this.now = moment();
         },
-        addPerson: function () {
-          this.obj.accompanying_persons.push({
-            name: '',
-            dietary: 'none'
-          });
-        },
-        removePerson: function (person) {
-          this.obj.accompanying_persons = _.without(this.obj.accompanying_persons, person);
+        sessionSelected: function (sessionId) {
+          return _.contains(this.obj.sessions, sessionId);
         }
       },
       watch: {

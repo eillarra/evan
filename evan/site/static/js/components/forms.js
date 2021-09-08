@@ -469,6 +469,94 @@ var EvanFormComponents = {
         });
       }
     }
+  },
+
+  'evan-accompanying': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        dialog: false,
+        stack: [],
+        dietaryOptions: EvanMetadata.getQuasarOptions('dietary')
+      };
+    },
+    props: {
+      modelValue: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
+      label: {
+        type: String,
+        default: ''
+      },
+      fee: {
+        type: Number,
+        default: 0
+      }
+    },
+    template: `
+      <div>
+        <q-dialog v-model="dialog" style="min-width: 400px">
+          <q-card>
+            <q-card-section class="scroll q-pa-lg" style="min-height: 250px; max-height: 75vh;">
+              <div class="text-h6 q-mb-sm">Accompanying persons</div>
+              <p>Accompanying persons can attend "{{ label }}" for an extra fee of <strong>{{ fee }} EUR</strong> per person<span v-if="totalFee"> ({{ totalFee }} EUR in total)</span>.</p>
+              <input v-model="mutable" type="hidden" />
+              <div v-for="el in stack" class="row q-col-gutter-xs q-mb-sm items-center">
+                <q-input filled dense v-model="el.name" label="name" class="col"></q-input>
+                <q-select filled dense emit-value map-options v-model="el.dietary" :options="dietaryOptions" label="Dietary requirements" class="col" />
+                <div class="col-1 text-center">
+                  <evan-remove-icon @click.prevent="removeFromStack(el)" />
+                </div>
+              </div>
+              <q-btn outline @click="addToStack" size="sm" color="green" icon="add" label="Add person"></q-btn>
+            </q-card-section>
+            <q-card-actions align="right" class="q-py-md q-px-lg">
+              <q-btn flat label="Cancel" color="grey" @click="stack = []" v-close-popup />
+              <q-btn flat label="Update" color="primary" @click="update" :disable="disableSave" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+        <small @click.prevent="dialog = true" class="text-primary cursor-pointer"><span v-if="modelValue.length">{{ modelValue.length }}</span><span v-else>Add</span> accompanying person<span v-if="modelValue.length != 1">s</span></small>
+      </div>
+    `,
+    computed: {
+      disableSave: function () {
+        if (this.stack.length == 0) return true;
+        return _.contains(_.pluck(this.stack, 'name'), '');
+      },
+      mutable: {
+        get: function () {
+          return this.modelValue;
+        },
+        set: function (val) {
+          this.$emit('update:modelValue', val);
+        }
+      },
+      totalFee: function () {
+        if (this.fee == 0) return 0;
+        return this.fee * this.stack.length;
+      }
+    },
+    methods: {
+      addToStack: function () {
+        this.stack.push({
+          'name': '',
+          'dietary': 'none',
+        });
+      },
+      removeFromStack: function (item) {
+        this.stack = _.without(this.stack, item);
+      },
+      update: function () {
+        this.$emit('update:modelValue', this.stack);
+      }
+    },
+    created: function () {
+      this.stack = this.modelValue;
+    }
   }
 
 };
