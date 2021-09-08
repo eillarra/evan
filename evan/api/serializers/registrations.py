@@ -30,7 +30,6 @@ class RegistrationSerializer(WritableNestedModelSerializer):
 
 
 class RegistrationRetrieveSerializer(RegistrationSerializer):
-
     class Meta(RegistrationSerializer.Meta):
         model = Registration
         exclude = ("id", "event", "saldo")
