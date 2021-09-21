@@ -1,5 +1,5 @@
 /*!
- * Quasar Framework v2.0.4
+ * Quasar Framework v2.1.0
  * (c) 2015-present Razvan Stoenescu
  * Released under the MIT License.
  */
@@ -1437,7 +1437,7 @@
   }
 
   var installQuasar = function (parentApp, opts = {}) {
-      const $q = { version: '2.0.4' };
+      const $q = { version: '2.1.0' };
 
       if (globalConfigIsFrozen === false) {
         if (opts.config !== void 0) {
@@ -38407,7 +38407,7 @@
   });
 
   var index_umd = {
-    version: '2.0.4',
+    version: '2.1.0',
     install (app, opts) {
       installQuasar(app, {
         components,

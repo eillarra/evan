@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400&&amp;display=swap" rel="stylesheet">
     {% compress css file base %}
-      <link href="{% static 'vendor/quasar@2.0.4/quasar.prod.css' %}" type="text/css" rel="stylesheet">
+      <link href="{% static 'vendor/quasar@2.1.0/quasar.prod.css' %}" type="text/css" rel="stylesheet">
       <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
       <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
     {% endcompress %}
@@ -85,12 +85,12 @@
     </div>
     {% block vue_templates %}{% endblock %}
     {% if not debug %}
-      <script src="https://browser.sentry-cdn.com/6.11.0/bundle.tracing.min.js" integrity="sha384-XuDodOP4mgLWA8eRlqZJWs+mtmznHF6ES/nOotK0fE7SHjj0Ec3YMVIzjh5ytsKH" crossorigin="anonymous"></script>
-      <script src="https://browser.sentry-cdn.com/6.11.0/vue.min.js" integrity="sha384-CuCDTHNwfKKxDsiqbSI4p7MpikMED/z+znW6nnr6374xyEHle52d+p36HADU+N7M" crossorigin="anonymous"></script>
+      <script src="https://browser.sentry-cdn.com/6.12.0/bundle.tracing.min.js" integrity="sha384-S3qfdh3AsT1UN84WIYNuOX9vVOoFg3nB17Jp5/pTFGDBGBt+dtz7MGAV845efkZr" crossorigin="anonymous"></script>
+      <script src="https://browser.sentry-cdn.com/6.12.0/vue.min.js" integrity="sha384-CuCDTHNwfKKxDsiqbSI4p7MpikMED/z+znW6nnr6374xyEHle52d+p36HADU+N7M" crossorigin="anonymous"></script>
       <script src="{% static 'js/sentry.js' %}"></script>
     {% endif %}
     {% compress js file helpers %}
-      <script src="{% static 'vendor/axios@0.21.1/axios.min.js' %}"></script>
+      <script src="{% static 'vendor/axios@0.21.4/axios.min.js' %}"></script>
       <script src="{% static 'vendor/commonmark@0.30.0/commonmark.min.js' %}"></script>
       <script src="{% static 'vendor/moment@2.29.1/moment.min.js' %}"></script>
       <script src="{% static 'vendor/moment-range@4.0.2/moment-range.min.js' %}"></script>
@@ -100,15 +100,15 @@
     {% endcompress %}
     {% compress js file vue %}
       {% if debug %}
-        <script src="{% static 'vendor/vue@3.2.2/vue.global.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.2.12/vue.global.js' %}"></script>
         <script src="{% static 'vendor/vuex@4.0.2/vuex.global.js' %}"></script>
         <script src="{% static 'vendor/vue-router@4.0.11/vue-router.global.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.0.4/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.1.0/quasar.umd.js' %}"></script>
       {% else %}
-        <script src="{% static 'vendor/vue@3.2.2/vue.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.2.12/vue.global.prod.js' %}"></script>
         <script src="{% static 'vendor/vuex@4.0.2/vuex.global.prod.js' %}"></script>
         <script src="{% static 'vendor/vue-router@4.0.11/vue-router.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.0.4/quasar.umd.prod.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.1.0/quasar.umd.prod.js' %}"></script>
       {%endif %}
     {% endcompress %}
     {% compress js file evan %}
