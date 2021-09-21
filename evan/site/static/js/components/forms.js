@@ -254,6 +254,12 @@ var EvanFormComponents = {
       label: {
         type: String,
         default: 'Text'
+      },
+      previewClass: {
+        type: Object,
+        default: function () {
+          return {};
+        }
       }
     },
     template: `
@@ -270,7 +276,7 @@ var EvanFormComponents = {
           </template>
           <template v-slot:after>
             <div :class="{'q-pl-md': !$q.screen.lt.md, 'q-pt-md': $q.screen.lt.md}">
-              <marked :text="mutable" class="text-body2"></marked>
+              <marked :text="mutable" class="text-body2" :class="previewClass"></marked>
             </div>
           </template>
         </q-splitter>
