@@ -2,6 +2,9 @@
 
 
 {% block object-tools-items %}
+  {% if certificate_url %}
+    <li><a href="{{ certificate_url }}" target="_blank">Certificate</a></li>
+  {% endif %}
   {% if receipt_url %}
     <li><a href="{{ receipt_url }}" target="_blank">Receipt</a></li>
   {% endif %}
