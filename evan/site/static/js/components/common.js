@@ -136,7 +136,7 @@ var EvanCommonComponents = {
       }
     },
     template: `
-      <q-btn v-if="userId > 0" no-caps flat icon-right="account_circle" color="grey-8" :label="username">
+      <q-btn v-if="userId > 0" no-caps flat icon-right="account_circle" color="grey-8" :label="($q.screen.gt.xs) ? username : null">
         <q-menu>
           <q-list style="min-width: 140px">
             <q-item clickable tag="a" href="/u/dashboard/">
