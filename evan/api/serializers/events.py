@@ -19,6 +19,9 @@ class EventListSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     country = CountryField(country_dict=True, read_only=True)
+    is_open_for_registration = serializers.BooleanField(read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+    is_closed = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Event
@@ -33,15 +36,15 @@ class EventListSerializer(serializers.ModelSerializer):
             "city",
             "country",
             "registrations_count",
+            "is_open_for_registration",
+            "is_active",
+            "is_closed",
         )
 
 
 class EventSerializer(EventListSerializer):
     registration_url = serializers.URLField(source="get_registration_url", read_only=True)
     registration_early_deadline = serializers.DateTimeField(allow_null=True)
-    is_active = serializers.BooleanField(read_only=True)
-    is_closed = serializers.BooleanField(read_only=True)
-    is_open_for_registration = serializers.BooleanField(read_only=True)
     allows_invoices = serializers.BooleanField(read_only=True)
     allows_payments = serializers.BooleanField(read_only=True)
     fees = FeeSerializer(many=True, read_only=True)

@@ -76,10 +76,6 @@ var Evan = {
       obj.total_paid = ((obj.coupon) ? obj.coupon.value : 0) + obj.paid + obj.paid_via_invoice;
       obj.is_paid = obj.total_paid >= obj.total_fees;
 
-      if (obj.event) {
-        obj.event.has_ended = moment().isAfter(moment(obj.event.end_date));
-      }
-
       obj._q = [
         obj.uuid,
         obj.user_name,
