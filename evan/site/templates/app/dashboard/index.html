@@ -72,6 +72,7 @@
 {% block scripts %}
 {% compress js file dashboard %}
   <script src="{% static 'js/components/forms.js' %}"></script>
+  <script src="{% static 'js/mixins/event_related.js' %}"></script>
   <script src="{% static 'js/mixins/query.js' %}"></script>
   <script src="{% static 'js/mixins/profile.js' %}"></script>
   <script type="text/javascript">
@@ -177,7 +178,7 @@
 
     var RegistrationsView = {
       template: '#v-registrations',
-      mixins: [QueryMixin],
+      mixins: [QueryMixin, EventRelatedMixin],
       data: function () {
         return {
           table: {
@@ -257,9 +258,14 @@
         },
         {
           name: 'registrations',
-          path: '/registrations/',
+          path: '/registrations/:uuid?/',
           pathToRegexpOptions: {strict: true},
-          component: RegistrationsView
+          component: RegistrationsView,
+          props: function (route) {
+            return {
+              uuid: route.params.uuid
+            };
+          }
         }
       ]
     });

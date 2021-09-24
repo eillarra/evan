@@ -37,6 +37,8 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
 
 class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
     event = EventListSerializer(read_only=True)
+    certificate_url = serializers.URLField(source="get_certificate_url", read_only=True)
+    receipt_url = serializers.URLField(source="get_receipt_url", read_only=True)
 
     class Meta(RegistrationSerializer.Meta):
         model = Registration

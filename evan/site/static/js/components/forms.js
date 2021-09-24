@@ -26,6 +26,10 @@ var EvanFormComponents = {
       size: {
         type: String,
         default: 'sm'
+      },
+      externalUrl: {
+        type: String,
+        default: null
       }
     },
     template: `
@@ -39,6 +43,7 @@ var EvanFormComponents = {
             <q-btn flat v-close-popup label="Close" color="grey-8" />
             <q-space />
             <q-btn v-if="saveEventName" unelevated @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
+            <q-btn v-if="externalUrl" unelevated type="a" :href="externalUrl" label="View" color="primary" class="q-px-md" />
           </q-card-actions>
         </q-card>
       </q-dialog>

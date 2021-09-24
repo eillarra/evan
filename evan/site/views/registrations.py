@@ -266,6 +266,9 @@ class RegistrationReceiptPdf(RegistrationPdfView):
         if not registration.is_paid:
             messages.error(request, "Receipt is not available.")
             raise PermissionDenied
+        if registration.paid == 0:
+            messages.error(request, "Receipt is only available for credit card payments.")
+            raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):

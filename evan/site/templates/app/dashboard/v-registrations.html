@@ -5,13 +5,13 @@
     <q-card flat class="q-pa-lg">
       <display-5>Registrations</display-5>
       <evan-search-bar v-model="query" placeholder="Search by ID, event name..." />
-      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="rows" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="openUrl">
+      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="rows" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />
         </template>
         <template v-slot:body-cell-href="props">
           <q-td auto-width>
-            <q-icon name="outbond" color="primary"></q-icon>
+            <q-icon name="visibility" color="primary"></q-icon>
           </q-td>
         </template>
         <template v-slot:body-cell-uuid="props">
@@ -30,6 +30,74 @@
         </template>
       </q-table>
     </q-card>
+
+    <evan-editor size="md" position="standard" :obj="tmpObj" :externalUrl="(tmpObj && !tmpObj.event.has_ended) ? tmpObj.url : null">
+      <q-list dense class="q-mb-lg">
+        <q-item>
+          <q-item-section avatar><q-icon name="widgets" /></q-item-section>
+          <q-item-section>{{ tmpObj.event.name }}</q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="tag" /></q-item-section>
+          <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="schedule" /></q-item-section>
+          <q-item-section>{{ tmpObj.date }}</q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item>
+          <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
+          <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
+        </q-item>
+        <q-separator v-if="tmpObj.invoice_requested" inset="item"></q-separator>
+        <q-item v-if="tmpObj.invoice_requested">
+          <q-item-section avatar><q-icon name="grading" :color="(tmpObj.invoice_sent) ? 'positive' : 'orange-7'" /></q-item-section>
+          <q-item-section v-if="tmpObj.invoice_sent" class="text-positive text-bold">Invoice sent</q-item-section>
+          <q-item-section v-else class="text-orange-7 text-bold">Invoice requested (not sent)</q-item-section>
+        </q-item>
+        <q-separator inset="item"></q-separator>
+        <q-item v-if="tmpObj.is_paid">
+          <q-item-section avatar><q-icon name="done_outline" color="positive" /></q-item-section>
+          <q-item-section class="text-positive text-bold">Paid</q-item-section>
+        </q-item>
+        <q-item v-else>
+          <q-item-section avatar><q-icon name="radio_button_unchecked" color="orange-7" /></q-item-section>
+          <q-item-section class="text-orange-7 text-bold">Pending payment</q-item-section>
+        </q-item>
+        <q-separator v-if="tmpObj.coupon" inset="item" class="q-mb-sm"/>
+        <q-item v-if="tmpObj.coupon">
+          <q-item-section avatar><q-icon name="local_activity" /></q-item-section>
+          <q-item-section>
+            <q-item-label><samp>{{ tmpObj.coupon.code }}</samp></q-item-label>
+            <q-item-label caption>Coupon used (€ {{ tmpObj.coupon.value }})</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+      <q-list dense rounded v-if="tmpObj.event.has_ended && tmpObj.is_paid" class="rounded-borders bg-green-1 q-pb-md">
+        <q-item-label header>Download documents</q-item-label>
+        <q-item v-if="tmpObj.paid > 0" clickable tag="a" :href="tmpObj.receipt_url" target="_blank">
+          <q-item-section avatar><q-icon name="receipt" /></q-item-section>
+          <q-item-section>Receipt</q-item-section>
+          <q-item-section side>
+            <q-icon name="north_east" size="14px" />
+          </q-item-section>
+        </q-item>
+        <q-item clickable tag="a" :href="tmpObj.certificate_url" target="_blank">
+          <q-item-section avatar><q-icon name="history_edu" /></q-item-section>
+          <q-item-section>Certificate of attendance</q-item-section>
+          <q-item-section side>
+            <q-icon name="north_east" size="14px" />
+          </q-item-section>
+        </q-item>
+      </q-list>
+      <q-list v-else rounded class="rounded-borders bg-orange-1">
+        <q-item-label v-if="tmpObj.is_paid" header>Documents will be available after the event</q-item-label>
+        <q-item-label v-else header>Documents will be available after payment</q-item-label>
+      </q-list>
+    </evan-editor>
 
   </div>
 {% endverbatim %}
