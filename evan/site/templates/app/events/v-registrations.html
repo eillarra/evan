@@ -10,7 +10,7 @@
         <display-5>Registrations</display-5>
         <q-space />
         <div>
-          <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:registrations_sheet' event.code %}{% verbatim %}" target="_blank" color="primary" label="Download overview"></q-btn>
+          <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:registrations_sheet' event.code %}{% verbatim %}" target="_blank" rel="noopener" color="primary" label="Download overview"></q-btn>
         </div>
       </div>
       <evan-search-bar v-model="query" :filters="filtersWithCountries" placeholder="Search by ID, attendee name, affiliation..." />

@@ -3,16 +3,16 @@
 
 {% block object-tools-items %}
   {% if certificate_url %}
-    <li><a href="{{ certificate_url }}" target="_blank">Certificate</a></li>
+    <li><a href="{{ certificate_url }}" target="_blank" rel="noopener">Certificate</a></li>
   {% endif %}
   {% if receipt_url %}
-    <li><a href="{{ receipt_url }}" target="_blank">Receipt</a></li>
+    <li><a href="{{ receipt_url }}" target="_blank" rel="noopener">Receipt</a></li>
   {% endif %}
   {% if has_letter %}
-    <li><a href="{% url 'admin:registration_pdf_letter' object_id %}" target="_blank">Invitation Letter</a></li>
+    <li><a href="{% url 'admin:registration_pdf_letter' object_id %}" target="_blank" rel="noopener">Invitation Letter</a></li>
   {% endif %}
   {% if payment_delegated_url %}
-    <li><a href="{{ payment_delegated_url }}" class="viewsitelink" target="_blank">Delegated payment</a></li>
+    <li><a href="{{ payment_delegated_url }}" class="viewsitelink" target="_blank" rel="noopener">Delegated payment</a></li>
   {% endif %}
   {{ block.super }}
 {% endblock %}

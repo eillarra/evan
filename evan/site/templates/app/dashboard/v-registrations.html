@@ -78,14 +78,14 @@
       </q-list>
       <q-list dense rounded v-if="tmpObj.event.has_ended && tmpObj.is_paid" class="rounded-borders bg-green-1 q-pb-md">
         <q-item-label header>Download documents</q-item-label>
-        <q-item v-if="tmpObj.paid > 0" clickable tag="a" :href="tmpObj.receipt_url" target="_blank">
+        <q-item v-if="tmpObj.paid > 0" clickable tag="a" :href="tmpObj.receipt_url" target="_blank" rel="noopener">
           <q-item-section avatar><q-icon name="receipt" /></q-item-section>
           <q-item-section>Receipt</q-item-section>
           <q-item-section side>
             <q-icon name="north_east" size="14px" />
           </q-item-section>
         </q-item>
-        <q-item clickable tag="a" :href="tmpObj.certificate_url" target="_blank">
+        <q-item clickable tag="a" :href="tmpObj.certificate_url" target="_blank" rel="noopener">
           <q-item-section avatar><q-icon name="history_edu" /></q-item-section>
           <q-item-section>Certificate of attendance</q-item-section>
           <q-item-section side>
