@@ -5,6 +5,7 @@ from .contents import *
 from .events import *
 from .files import *
 from .registrations import *
+from .search import *
 from .sessions import *
 from .sponsors import *
 from .topics import *

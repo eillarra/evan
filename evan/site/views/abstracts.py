@@ -31,6 +31,10 @@ class AbstractRedirectView(generic.DetailView):
             messages.error(request, "This event does not allow abstract submission.")
             raise PermissionDenied
 
+        if event.abstract_submission_is_closed:
+            messages.error(request, "Abstract submission is closed.")
+            raise PermissionDenied
+
         return super().dispatch(request, *args, **kwargs)
 
 
@@ -49,6 +53,10 @@ class AbstractView(generic.DetailView):
 
         if not abstract.editable_by_user(request.user):
             messages.error(request, "You don't have the necessary permissions to view this abstract submission.")
+            raise PermissionDenied
+
+        if abstract.event.abstract_submission_is_closed:
+            messages.error(request, "Abstract submission is closed.")
             raise PermissionDenied
 
         return super().dispatch(request, *args, **kwargs)

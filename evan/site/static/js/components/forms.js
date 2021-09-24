@@ -353,6 +353,85 @@ var EvanFormComponents = {
     }
   },
 
+  'evan-choice-field': {
+    emits: ['update:modelValue'],
+    data: function () {
+      return {
+        mutable: null
+      };
+    },
+    props: {
+      modelValue: {
+        type: [String, Array]
+      },
+      autocomplete: {
+        type: Boolean,
+        default: false
+      },
+      multiple: {
+        type: Boolean,
+        default: false
+      },
+      options: {
+        type: Array,
+        default: function () {
+          return [];
+        }
+      },
+      vary: {
+        type: Boolean,
+        default: false
+      },
+      varyOn: {
+        type: String,
+        default: null
+      },
+    },
+    template: `
+      <q-select
+        v-if="autocomplete"
+        behavior="dialog"
+        dense
+        filled
+        clearable
+        fill-input
+        v-model="mutable"
+        emit-value
+        map-options
+        :multiple="multiple"
+        :options="filterdedOptions"
+      >
+        <template v-slot:no-option>
+          <q-item>
+            <q-item-section class="text-grey">
+              No results
+            </q-item-section>
+          </q-item>
+        </template>
+      </q-select>
+      <q-option-group v-else v-model="mutable" :options="filterdedOptions" :type="(multiple) ? 'checkbox' : 'radio'" />
+    `,
+    computed: {
+      filterdedOptions: function () {
+        if (!this.varyOn) return this.options;
+        var varyOn = this.varyOn;
+        return this.options.filter(function (opt) {
+          return opt.vary == varyOn;
+        });
+      }
+    },
+    watch: {
+      'mutable': function (val) {
+        this.$emit('update:modelValue', val);
+      }
+    },
+    created: function () {
+      this.mutable = (this.modelValue)
+        ? this.modelValue
+        : (this.multiple) ? [] : null;
+    }
+  },
+
   'evan-custom-fieldsets': {
     emits: ['update:modelValue'],
     data: function () {
@@ -378,12 +457,16 @@ var EvanFormComponents = {
       <div v-if="mutable" v-for="fieldset in fieldsets" class="q-mt-lg">
         <h6 class="q-mb-md">{{ fieldset.title }}</h6>
         <div class="row q-col-gutter-md items-end">
-          <div v-for="field in fieldset.fields" class="col-12" :class="field.class">
+          <div v-for="field in fieldset.fields" class="col-12" :class="field.class" v-show="!field.vary_on || mutable.custom_data[field.vary_on]">
             <div v-if="field.text">{{ field.text }} <strong v-show="field.required" class="text-orange">*</strong></div>
             <div v-if="field.type" :class="{'q-mt-md': field.text}">
+<!-- text -->
               <q-input v-if="field.type == 'text' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'text'" />
+<!-- text_list -->
               <evan-text-list v-else-if="field.type == 'text_list'" v-model="mutable.custom_data[field.id]" :fields="field.fields" :limit="field.limit" />
-              <q-option-group v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'" v-model="mutable.custom_data[field.id]" :options="field.options" :type="(field.type == 'single_choice') ? 'radio' : 'checkbox'" />
+<!-- single_choice || multiple_choice || variable_choice -->
+              <evan-choice-field v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'" v-model="mutable.custom_data[field.id]" :options="field.options" :multiple="field.type == 'multiple_choice'" :autocomplete="field.autocomplete" :vary="!!field.vary_on" :vary-on="mutable.custom_data[field.vary_on]" />
+<!-- checkbox -->
               <q-item v-else-if="field.type == 'checkbox'" class="q-pl-none">
                 <q-item-section avatar class="q-px-none">
                   <q-checkbox v-model="mutable.custom_data[field.id]"
@@ -394,7 +477,9 @@ var EvanFormComponents = {
                   <small v-show="field.mandatory" class="text-caption text-grey-8">Mandatory</small>
                 </q-item-section>
               </q-item>
+<!-- date -->
               <evan-datepicker v-else-if="field.type == 'date'" v-model="mutable.custom_data[field.id]" :label="field.label" :options="field.options" />
+<!-- [other] -->
               <div v-else>{{ field }}</div>
             </div>
           </div>

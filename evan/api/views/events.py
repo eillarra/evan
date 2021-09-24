@@ -4,11 +4,12 @@ from django.contrib.auth import get_user_model
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from evan.functions import send_task
-from evan.models import Event
+from evan.models import Event, File
 from ..permissions import EventPermission, EventAttendeePermission
 from ..serializers import AttendeeSerializer, EventSerializer
 
@@ -80,3 +81,19 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
                 {"message": "We could not send your message.", "detail": str(e)},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        pagination_class=None,
+        serializer_class=EventSerializer,
+        parser_classes=[FileUploadParser],
+    )
+    @never_cache
+    def files(self, request, *args, **kwargs):
+        file_tags = request.query_params.get("tags", None)
+        file_type = request.query_params.get("type", File.PRIVATE)
+        file_type = file_type if file_type in [File.PUBLIC, File.PRIVATE] else File.PRIVATE
+        file = File(content_object=self.get_object(), type=file_type, tags=file_tags, file=request.data["file"])
+        file.save()
+        return self.retrieve(request, *args, **kwargs)

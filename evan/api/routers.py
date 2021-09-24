@@ -37,3 +37,5 @@ class Router(DefaultRouter):
         self.register(r"topics", views.TopicViewSet, basename="topic")
         self.register(r"tracks", views.TrackViewSet, basename="track")
         self.register(r"venues", views.VenueViewSet, basename="venue")
+
+        self.register(r"search/users", views.UserSearchViewSet, basename="search_users")

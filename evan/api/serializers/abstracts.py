@@ -17,14 +17,14 @@ class AbstractSerializer(serializers.ModelSerializer):
     class Meta:
         model = Abstract
         exclude = ("id", "event")
-        read_only_fields = ("id", "uuid", "event", "created_at", "updated_at")
+        read_only_fields = ("id", "uuid", "event", "is_accepted", "created_at", "updated_at")
 
 
 class AbstractRetrieveSerializer(AbstractSerializer):
     pass
 
 
-class AuthRegistrationRetrieveSerializer(AbstractRetrieveSerializer):
+class AuthAbstractRetrieveSerializer(AbstractRetrieveSerializer):
     event = EventListSerializer(read_only=True)
 
     class Meta(AbstractRetrieveSerializer.Meta):

@@ -33,18 +33,19 @@ var CustomFieldsMixin = {
       var obj = this.obj;
       var errors = [];
 
-      if (!obj) return false;
-
-      _.each(this.fieldsets, function (fieldset) {
-        _.each(fieldset.fields, function (f) {
-          if (
-            (f.required && (!_.has(obj.custom_data, f.id) || _.isEmpty(obj.custom_data[f.id])))
-            || (f.mandatory && _.has(obj.custom_data, f.id) && obj.custom_data[f.id] === false)
-          ) {
-            errors.push(true);
-          }
+      if (this.obj) {
+        _.each(this.fieldsets, function (fieldset) {
+          _.each(fieldset.fields, function (f) {
+            if (
+              (f.required && (!_.has(obj.custom_data, f.id) || _.isEmpty(obj.custom_data[f.id])))
+              || (f.mandatory && _.has(obj.custom_data, f.id) && obj.custom_data[f.id] === false)
+            ) {
+              errors.push(true);
+              console.log(f.id);
+            }
+          });
         });
-      });
+      }
 
       return !_.contains(errors, true);
     },
@@ -82,11 +83,6 @@ var CustomFieldsMixin = {
 
       if (this.fieldsets.length) {
         _.each(this.fieldsets, function (fieldset) {
-          if (fieldset.taxonomy) {
-            if (!_.has(self.obj.custom_data, 'track')) self.obj.custom_data.track = null;
-            if (!_.has(self.obj.custom_data, 'topics')) self.obj.custom_data.topics = [];
-          }
-
           _.each(fieldset.fields, function (f) {
             if (!_.has(self.obj.custom_data, f.id)) {
               self.obj.custom_data[f.id] = {

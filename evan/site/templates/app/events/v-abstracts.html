@@ -5,6 +5,10 @@
     <q-card flat class="q-pa-lg">
       <div class="row no-wrap q-mb-sm">
         <display-5>Paper abstracts</display-5>
+        <q-space />
+        <div>
+          <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:abstracts_sheet' event.code %}{% verbatim %}" color="primary" label="Download overview" target="_blank" rel="noopener"></q-btn>
+        </div>
       </div>
       <evan-search-bar v-model="query" placeholder="Search by ID, author, title..." />
       <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="abstracts" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">

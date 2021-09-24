@@ -7,7 +7,7 @@ from django.views import generic
 from os import environ
 
 from evan.models import Event
-from evan.site.views.file_makers.excel import RegistrationsOverview
+from evan.site.views.file_makers.excel import AbstractsSheet, RegistrationsSheet
 
 
 class EventView(generic.DetailView):
@@ -61,8 +61,15 @@ class EventBadgesPdf(EventView):
         """
 
 
-class EventSpreadsheet(EventView):
+class EventAbstractsSheet(EventView):
     def get(self, request, *args, **kwargs):
-        return RegistrationsOverview(
+        return AbstractsSheet(
+            filename=f"{self.get_object().code}.xlsx", queryset=self.get_object().abstracts
+        ).response
+
+
+class EventRegistrationsSheet(EventView):
+    def get(self, request, *args, **kwargs):
+        return RegistrationsSheet(
             filename=f"{self.get_object().code}.xlsx", queryset=self.get_object().registrations
         ).response

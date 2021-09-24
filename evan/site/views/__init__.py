@@ -3,7 +3,7 @@
 from .errors import *
 
 from .abstracts import AbstractRedirectView, AbstractView
-from .events import EventView, EventBadgesPdf, EventSpreadsheet
+from .events import EventView, EventBadgesPdf, EventAbstractsSheet, EventRegistrationsSheet
 from .files import PrivateFileView
 from .registrations import (
     RegistrationRedirectView,

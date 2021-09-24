@@ -1,3 +1,6 @@
+import pytz
+
+from datetime import datetime
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
@@ -66,13 +69,14 @@ class Event(models.Model):
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(null=True, blank=True)
 
+    acl = GenericRelation("evan.Permission")
+    files = GenericRelation("evan.File")
+
     config = models.JSONField(default=dict)
     custom_data = models.JSONField(default=dict)
     custom_fields = models.JSONField(default=dict)
 
     registrations_count = models.PositiveIntegerField(default=0)
-
-    acl = GenericRelation("evan.Permission")
 
     objects = EventManager()
 
@@ -108,8 +112,11 @@ class Event(models.Model):
     def get_absolute_url(self) -> str:
         return reverse("event:app", args=[self.code])
 
+    def get_abstract_url(self) -> str:
+        return "".join(["//", get_current_site(None).domain, reverse("abstract:redirect", args=[self.code])])
+
     def get_registration_url(self) -> str:
-        return "".join(["https://", get_current_site(None).domain, reverse("registration:redirect", args=[self.code])])
+        return "".join(["//", get_current_site(None).domain, reverse("registration:redirect", args=[self.code])])
 
     @property
     def allows_payments(self) -> bool:
@@ -139,6 +146,14 @@ class Event(models.Model):
     def is_open_for_registration(self) -> bool:
         now = timezone.now()
         return self.registration_start_date <= now.date() and now <= self.registration_deadline
+
+    @property
+    def abstract_submission_is_closed(self) -> bool:
+        try:
+            deadline = datetime.strptime(self.custom_data["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
+            return deadline.replace(tzinfo=pytz.UTC) < timezone.now()
+        except Exception:
+            return False
 
     @cached_property
     def fees_dict(self):

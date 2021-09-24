@@ -20,7 +20,8 @@ event_patterns = ([
     path("<slug:code>/", include([
         path("", views.EventView.as_view(), name="app"),
         path("files/badges.pdf", views.EventBadgesPdf.as_view(), name="badges"),
-        path("files/overview.xlsx", views.EventSpreadsheet.as_view(), name="registrations_sheet"),
+        path("files/abstracts.xlsx", views.EventAbstractsSheet.as_view(), name="abstracts_sheet"),
+        path("files/registrations.xlsx", views.EventRegistrationsSheet.as_view(), name="registrations_sheet"),
     ])),
 ], "event_patterns")
 

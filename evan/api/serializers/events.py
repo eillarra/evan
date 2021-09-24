@@ -2,6 +2,7 @@ from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
 from evan.models import Event, Fee, validate_event_dates
+from .files import FileSerializer
 from .sessions import SessionSerializer
 from .sponsors import SponsorSerializer
 from .topics import TopicSerializer
@@ -43,12 +44,15 @@ class EventListSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(EventListSerializer):
+    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:event-files", lookup_field="code")
+    abstract_url = serializers.URLField(source="get_abstract_url", read_only=True)
     registration_url = serializers.URLField(source="get_registration_url", read_only=True)
     registration_early_deadline = serializers.DateTimeField(allow_null=True)
     allows_invoices = serializers.BooleanField(read_only=True)
     allows_payments = serializers.BooleanField(read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
+    files = FileSerializer(many=True, read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
     sponsors = SponsorSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)

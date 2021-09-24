@@ -101,7 +101,7 @@ var EvanCommonComponents = {
   },
 
   'display-3': {
-    template: '<h5 class="q-mt-none q-mb-lg text-weight-bold"><slot></slot></h5>'
+    template: '<h5 class="q-mt-none q-mb-md text-weight-light"><slot></slot></h5>'
   },
 
   'display-5': {

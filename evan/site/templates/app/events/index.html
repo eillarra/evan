@@ -43,6 +43,10 @@
             <q-item-section avatar><q-icon name="widgets"></q-icon></q-item-section>
             <q-item-section>Event</q-item-section>
           </q-item>
+          <q-item v-if="event.config.abstracts" clickable :to="{name: 'abstracts_config'}">
+            <q-item-section avatar><q-icon name="settings"></q-icon></q-item-section>
+            <q-item-section>Abstracts</q-item-section>
+          </q-item>
           <q-item clickable :to="{name: 'dates'}">
             <q-item-section avatar><q-icon name="event"></q-icon></q-item-section>
             <q-item-section>Important dates</q-item-section>
@@ -91,6 +95,7 @@
 
 {% block vue_templates %}
   {% include './v-abstracts.html' %}
+  {% include './v-abstracts-config.html' %}
   {% include './v-cms.html' %}
   {% include './v-coupons.html' %}
   {% include './v-dates.html' %}
@@ -107,6 +112,7 @@
 {% block scripts %}
 {% compress js file app_events %}
   <script src="{% static 'js/components/forms.js' %}"></script>
+  <script src="{% static 'js/components/users.js' %}"></script>
   <script src="{% static 'js/mixins/event_related.js' %}"></script>
   <script src="{% static 'js/mixins/query.js' %}"></script>
   <script src="{% static 'js/mixins/uploader.js' %}"></script>
@@ -191,7 +197,13 @@
         },
         getEvent: function (state) {
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
-            state.event = Evan.map.event(res.data);
+            var obj = res.data;
+
+            if (!_.has(obj.custom_data, 'abstracts')) {
+              obj.custom_data.abstracts = {};
+            }
+
+            state.event = Evan.map.event(obj);
             state.sessions = _.clone(state.event.sessions);
             state.sponsors = _.clone(state.event.sponsors);
             state.topics = _.clone(state.event.topics);
@@ -225,6 +237,9 @@
               id: payload.obj.id
             }));
           }
+        },
+        replaceEvent: function (state, obj) {
+          state.event = Evan.map.event(obj);
         },
         updateEvent: function (state, obj) {
           Evan.api.update(obj, function (res) {
@@ -275,6 +290,48 @@
       }
     };
 
+    var AbstractsConfigView = {
+      template: '#v-abstracts-config',
+      mixins: [UploaderMixin],
+      data: function () {
+        return {
+          showUploader: false,
+          fileTags: 'abstract-template'
+        };
+      },
+      computed: _.extend(
+        Vuex.mapState(['event']), {
+        abstractFile: function () {
+          if (!this.event) return null;
+          return _.findWhere(this.event.files, {'tags': this.fileTags});
+        },
+        abstractUrl: function () {
+          return (this.abstractFile) ? this.abstractFile.url : '[none]';
+        },
+        uploadUrl: function () {
+          if (!this.event) return null;
+          return this.event.rel_files + '?type=public&tags=' + this.fileTags;
+        }
+      }),
+      methods: {
+        removeAbstractFile: function () {
+          var file = this.abstractFile;
+          Evan.api.remove(file, function (res) {
+            this.event.files = _.reject(_.clone(this.event.files), function (f) {
+              return f.self == file.self;
+            });
+          });
+          this.update();
+        },
+        updateObj: function (obj) {
+          this.$store.commit('replaceEvent', obj);
+        },
+        update: function () {
+          this.$store.commit('updateEvent', this.event);
+        }
+      }
+    };
+
     var CmsView = {
       template: '#v-cms',
       mixins: [EventRelatedMixin, UploaderMixin],
@@ -309,7 +366,7 @@
         uploadUrl: function () {
           if (!this.tmpObj) return null;
           return this.tmpObj.rel_files;
-        },
+        }
       }),
       methods: {
         removeFile: function (file) {
@@ -1041,6 +1098,12 @@
           component: AbstractsView
         },
         {
+          name: 'abstracts_config',
+          path: '/abstracts/config/',
+          pathToRegexpOptions: {strict: true},
+          component: AbstractsConfigView
+        },
+        {
           name: 'cms',
           path: '/cms/',
           pathToRegexpOptions: {strict: true},
@@ -1136,7 +1199,7 @@
       }
     });
 
-    Evan.utils.registerComponents(app, [EvanCommonComponents, EvanFormComponents]);
+    Evan.utils.registerComponents(app, [EvanCommonComponents, EvanFormComponents, EvanUserComponents]);
 
     app.use(Store);
     app.use(Router);

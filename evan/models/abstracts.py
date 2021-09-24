@@ -14,6 +14,7 @@ class Abstract(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     event = models.ForeignKey("evan.Event", related_name="abstracts", on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), related_name="abstracts", on_delete=models.CASCADE)
+    is_accepted = models.BooleanField(default=False)
 
     title = models.CharField(max_length=512)
     authors = models.CharField(max_length=512)
