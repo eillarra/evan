@@ -23,6 +23,7 @@ class File(models.Model):
 
     type = models.CharField(max_length=8, choices=TYPE_CHOICES)
     file = models.FileField(upload_to=get_upload_path)
+    tags = models.CharField(max_length=254, blank=True, null=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="files")
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")

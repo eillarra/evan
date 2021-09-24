@@ -9,4 +9,4 @@ class FileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = File
-        fields = ("self", "url")
+        fields = ("self", "url", "type", "tags")
