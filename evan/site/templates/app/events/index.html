@@ -85,7 +85,7 @@
 {% endblock %}
 
 {% block page %}
-  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-abstracts="{% url 'v1:abstracts-list' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-sponsors="{% url 'v1:sponsors-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
+  <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-abstracts="{% url 'v1:abstracts-list' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-create-review="{% url 'v1:create_review-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-sponsors="{% url 'v1:sponsors-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
   <router-view class="q-pt-lg"></router-view>
   <div class="row q-col-gutter-lg items-stretch q-pt-lg">
     <router-view name="left" class="col-12 col-md-6"></router-view>
@@ -180,11 +180,19 @@
         }
       },
       mutations: {
-        getAbstracts: function (state) {
+        getAbstracts: _.debounce(function (state) {
+          var self = this;
+
           Evan.api.request('get', VARS.urlAbstracts).then(function (res) {
-            state.abstracts = res.data;
+            state.abstracts = res.data.map(function (obj) {
+              return Evan.map.abstract(obj);
+            });
+
+            setTimeout(function () {
+              self.commit('getAbstracts');
+            }, 60000);
           });
-        },
+        }, 100),
         getContents: function (state) {
           Evan.api.request('get', VARS.urlContents).then(function (res) {
             state.contents = res.data;
@@ -196,8 +204,14 @@
           });
         },
         getEvent: function (state) {
+          var self = this;
+
           Evan.api.request('get', VARS.urlEvent).then(function (res) {
             var obj = res.data;
+
+            if (obj.config.abstracts) {
+              self.commit('getAbstracts');
+            }
 
             if (!_.has(obj.custom_data, 'abstracts')) {
               obj.custom_data.abstracts = {};
@@ -226,6 +240,10 @@
           });
         },
         update: function (state, payload) {
+          if (payload.mapper) {
+            payload.obj = payload.mapper(payload.obj);
+          }
+
           if (payload.action == 'add') {
             state[payload.var].push(payload.obj);
           } else if (payload.action == 'update') {
@@ -254,17 +272,12 @@
       mixins: [QueryMixin, EventRelatedMixin],
       data: function () {
         return {
+          reviewers: [],
+          //
           table: {
             columns: [
               {
                 name: 'view'
-              },
-              {
-                name: 'uuid',
-                field: 'uuid',
-                sortable: true,
-                align: 'left',
-                label: 'ID'
               },
               {
                 name: 'title',
@@ -272,21 +285,127 @@
                 sortable: true,
                 align: 'left',
                 label: 'Title'
+              },
+              {
+                name: 'user_name',
+                field: 'user_name',
+                sortable: true,
+                align: 'left',
+                label: 'User'
+              },
+              {
+                name: 'user_affiliation',
+                field: 'user_affiliation',
+                sortable: true,
+                align: 'left',
+                label: 'Affiliation'
+              },
+              {
+                name: 'reviewers',
+                field: 'reviewers',
+                sortable: true,
+                align: 'left',
+                label: 'Reviewers'
+              },
+              {
+                name: 'created_at',
+                field: 'created_at',
+                sortable: true,
+                align: 'left',
+                label: 'Date'
+              },
+              {
+                name: 'is_accepted',
+                field: 'is_accepted',
+                sortable: true,
+                align: 'left',
+                label: 'Accepted'
               }
             ],
             pagination: {
-              rowsPerPage: 0,
-              sortBy: 'uuid',
-              descending: false
+              rowsPerPage: 25,
+              sortBy: 'created_at',
+              descending: true
             }
           }
         };
       },
       computed: _.extend(
         Vuex.mapState(['event', 'abstracts']), {
+        existingReviewerIds: function () {
+          if (!this.tmpObj) return [];
+          var abstract = _.findWhere(this.abstracts, {id: this.tmpObj.id});
+          return _.pluck(abstract.reviews, 'user');
+        },
+        filters: function () {
+          if (this.abstracts.length) return Evan.utils.getFilters(this.abstracts);
+          else return [];
+        },
+        filteredReviewers: function () {
+          if (!this.event) return [];
+
+          try {
+            if (!this.tmpObj) return this.event.custom_data.abstracts.reviewers;
+            var submitted_by = this.tmpObj.user.id;
+            return this.event.custom_data.abstracts.reviewers.filter(function (obj) {
+              return obj.id != submitted_by;
+            });
+          } catch (e) {
+            return [];
+          }
+        }
       }),
-      created: function () {
-        this.$store.commit('getAbstracts');
+      methods: {
+        toggleStatus: function (obj) {
+          var self = this;
+          var data = _.clone(obj);
+          data.is_accepted = !data.is_accepted;
+
+          Evan.api.update(data, function (res) {
+            self.$store.commit('update', {
+              var: 'abstracts',
+              action: 'update',
+              obj: res.data,
+              mapper: Evan.map.abstract
+            });
+            self.tmpObj.is_accepted = res.data.is_accepted;
+          }, 'Abstract status updated.');
+        },
+        saveReviewers: function (abstract_id) {
+          var self = this;
+          var abstract = _.findWhere(this.abstracts, {id: this.tmpObj.id});
+          var reviewer_ids_to_add = _.difference(this.reviewers, this.existingReviewerIds);
+          var reviewer_ids_to_remove = _.difference(this.existingReviewerIds, this.reviewers);
+
+          _.each(reviewer_ids_to_add, function (user_id) {
+            Evan.api.create(VARS.urlCreateReview, {
+              abstract: abstract_id,
+              user: user_id
+            }, function (res) {
+              self.$store.commit('getAbstracts');
+            }, 'Reviewer added.');
+          });
+
+          if (reviewer_ids_to_remove.length) {
+            Evan.utils.confirmAction('Removing reviewers will also remove their reviews. Are you sure?', function () {
+              _.each(reviewer_ids_to_remove, function (user_id) {
+                var review = _.findWhere(abstract.reviews, {user: user_id});
+                Evan.api.remove(review, function (res) {
+                  self.$store.commit('getAbstracts');
+                }, 'Reviewer removed.');
+              });
+            }, function () {
+              self.reviewers = _.union(self.existingReviewerIds, reviewer_ids_to_remove);
+            });
+          }
+        }
+      },
+      watch: {
+        'tmpObj': function (val) {
+          if (val && val.reviews) {
+            this.reviewers = _.clone(_.pluck(this.tmpObj.reviews, 'user'));
+          }
+        }
       }
     };
 

@@ -63,9 +63,7 @@ class EventBadgesPdf(EventView):
 
 class EventAbstractsSheet(EventView):
     def get(self, request, *args, **kwargs):
-        return AbstractsSheet(
-            filename=f"{self.get_object().code}.xlsx", queryset=self.get_object().abstracts
-        ).response
+        return AbstractsSheet(filename=f"{self.get_object().code}.xlsx", queryset=self.get_object().abstracts).response
 
 
 class EventRegistrationsSheet(EventView):

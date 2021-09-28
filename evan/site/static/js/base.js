@@ -50,6 +50,29 @@ var Evan = {
     }
   },
   map: {
+    abstract: function (obj) {
+      obj.user_name = [obj.user.first_name, obj.user.last_name].join(' ');
+      obj.user_affiliation = (obj.user.profile.affiliation) ? obj.user.profile.affiliation : '-';
+      obj.date = moment(obj.created_at).format('lll');
+      obj.reviewers = (obj.reviews) ? obj.reviews.length : null;
+
+      obj._q = [
+        obj.uuid,
+        obj.user_name,
+        obj.user_affiliation,
+        obj.title.replace(':', ' '),
+        obj.authors,
+        'reviewers:' + obj.reviewers
+      ].join(' ').toLowerCase();
+
+      Evan.map.qBooleans(obj, [
+        ['accepted', 'is_accepted'],
+      ]);
+
+      Evan.map.qCustomData(obj);
+
+      return obj;
+    },
     event: function (obj) {
       var sessionMap = this.session;
 
@@ -91,7 +114,7 @@ var Evan = {
           : ''
       ].join(' ').toLowerCase();
 
-      this.qBooleans(obj, [
+      Evan.map.qBooleans(obj, [
         ['paid', 'is_paid'],
         ['coupon', 'coupon'],
         ['invoice.requested', 'invoice_requested'],
@@ -115,7 +138,15 @@ var Evan = {
       _.each(fields, function (f) {
         qs.push(f[0] + ':' + (obj[f[1]] ? 'yes' : 'no'));
       });
-      obj._q +=  (' ' + qs.join(' ')).toLowerCase();
+      obj._q += ' ' + qs.join(' ').toLowerCase();
+    },
+    qCustomData: function (obj) {
+      if (!obj._q) obj._q = '';
+      var qs = [];
+      _.each(obj.custom_data, function (value, key) {
+        if (_.isString(value)) qs.push(key + ':' + value);
+      });
+      obj._q += ' ' + qs.join(' ');
     }
   },
   utils: {
@@ -125,11 +156,37 @@ var Evan = {
 
       return data.filter(function (obj) {
         var matches = 0;
+        obj._q = obj._q.toLowerCase();
         _.each(queries, function (q) {
           if (obj._q.indexOf(q) !== -1) matches++;
         });
         return matches == queries.length;
       });
+    },
+    getFilters: function (data) {
+      var filter_collection = {};
+      var filters = [];
+
+      if (data.length) {
+        _.each(data, function (obj) {
+          _.each(obj._q.split(' '), function (w) {
+            if (w.indexOf(':') > -1) {
+              var f = w.split(':');
+              if (!_.has(filter_collection, f[0])) filter_collection[f[0]] = [f[1]];
+              else filter_collection[f[0]].push(f[1]);
+            }
+          });
+        });
+
+        _.each(filter_collection, function (values, key) {
+          filters.push({
+            name: key,
+            options: _.uniq(values).sort()
+          });
+        });
+      }
+
+      return filters;
     },
     confirmAction: function (msg, okCallbackFn, cancelCallbackFn) {
       Quasar.Dialog.create({

@@ -27,7 +27,7 @@ class Abstract(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ("-id",)
 
     def __str__(self) -> str:
         return f"{self.uuid} ({self.user})"
@@ -35,8 +35,39 @@ class Abstract(models.Model):
     def editable_by_user(self, user) -> bool:
         return self.user_id == user.id
 
+    def reviewer(self, user) -> bool:
+        return self.editable_by_user(user) or self.event.editable_by_user(user)
+
     def viewable_by_user(self, user) -> bool:
         return self.editable_by_user(user) or self.event.editable_by_user(user)
 
     def get_absolute_url(self) -> str:
         return reverse("abstract:app", args=[self.uuid])
+
+
+class AbstractReview(models.Model):
+    """
+    Abstract review.
+    """
+
+    ASSIGNED = "assigned"
+    REVIEWED = "reviewed"
+    FINALIZED = "finalized"
+    STATUS_CHOICES = (
+        (ASSIGNED, "Assigned"),
+        (REVIEWED, "Reviewed"),
+        (FINALIZED, "Finalized"),
+    )
+
+    abstract = models.ForeignKey(Abstract, related_name="reviews", on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), related_name="abstract_reviews", on_delete=models.SET_NULL, null=True)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=ASSIGNED)
+
+    custom_data = models.JSONField(default=dict)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "evan_abstract_review"
+        unique_together = ("abstract", "user")

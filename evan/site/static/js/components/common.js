@@ -394,7 +394,7 @@ var EvanCommonComponents = {
     },
     template: `
       <div>
-        <q-input filled dense v-model="q" :placeholder="placeholder" type="search" class="text-mono q-mb-md">
+        <q-input filled :dense="$q.screen.gt.sm" v-model="q" :placeholder="placeholder" type="search" class="text-mono q-mb-md">
           <template v-slot:prepend>
             <q-icon name="search" />
           </template>

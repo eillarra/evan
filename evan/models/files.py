@@ -32,7 +32,7 @@ class File(models.Model):
         indexes = [
             models.Index(fields=["file"]),
         ]
-        ordering = ["content_type", "object_id"]
+        ordering = ("content_type", "object_id")
 
     def delete(self, *args, **kwargs):
         if os.path.isfile(self.file.path):

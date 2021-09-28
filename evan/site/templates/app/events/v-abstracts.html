@@ -10,8 +10,8 @@
           <q-btn no-caps outline rounded type="a" href="{% endverbatim %}{% url 'event:abstracts_sheet' event.code %}{% verbatim %}" color="primary" label="Download overview" target="_blank" rel="noopener"></q-btn>
         </div>
       </div>
-      <evan-search-bar v-model="query" placeholder="Search by ID, author, title..." />
-      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="abstracts" :columns="table.columns" :pagination="table.pagination" :filter="query" @row-click="function (e, row) { cloneObj(row) }">
+      <evan-search-bar v-model="query" placeholder="Search by ID, author, title..." :filters="filters" />
+      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="abstracts" :columns="table.columns" :pagination="table.pagination" :filter="query" :filter-method="customFilter" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />
         </template>
@@ -25,7 +25,104 @@
             <samp>{{ props.row.uuid }}</samp>
           </q-td>
         </template>
+        <template v-slot:body-cell-title="props">
+          <q-td :props="props">
+            <div class="ellipsis" style="min-width:200px; max-width:25vw">{{ props.row.title }}</div>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-created_at="props">
+          <q-td auto-width :props="props">{{ props.row.date }}</q-td>
+        </template>
+        <template v-slot:body-cell-reviewers="props">
+          <q-td auto-width :props="props">
+            <q-icon name="circle" :color="(props.row.reviewers == 0) ? 'red' : ((props.row.reviewers == event.custom_data.abstracts.max_reviewers) ? 'positive' : 'orange')" class="q-mr-xs" />
+            <span>{{ props.row.reviewers }} / {{ event.custom_data.abstracts.max_reviewers }}</span>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-is_accepted="props">
+          <q-td auto-width :props="props" class="items-center">
+            <evan-yes-chip v-if="props.row.is_accepted" />
+            <evan-no-chip v-else />
+          </q-td>
+        </template>
       </q-table>
+
+      <evan-editor size="md" position="standard" :obj="tmpObj">
+        <q-list dense>
+          <q-item>
+            <q-item-section avatar><q-icon name="tag" /></q-item-section>
+            <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="schedule" /></q-item-section>
+            <q-item-section>{{ tmpObj.date }}</q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
+            <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
+            <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
+              <q-icon :name="tmpObj.user.profile.custom_data.gender" size="14px" />
+            </q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="email" /></q-item-section>
+            <q-item-section>{{ tmpObj.user.email }}</q-item-section>
+            <q-item-section side>
+              <evan-copy-icon :text="tmpObj.user.email" size="14px" />
+            </q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="business" /></q-item-section>
+            <q-item-section>{{ tmpObj.user_affiliation }}</q-item-section>
+          </q-item>
+          <q-separator v-if="tmpObj.user.profile.country" inset="item" />
+          <q-item v-if="tmpObj.user.profile.country">
+            <q-item-section avatar>
+              <country-flag :code="tmpObj.user.profile.country.code"></country-flag>
+            </q-item-section>
+            <q-item-section>{{ tmpObj.user.profile.country.name }}</q-item-section>
+          </q-item>
+          <q-separator inset="item" class="q-mb-lg"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="description" /></q-item-section>
+            <q-item-section>
+              <p class="text-serif q-mb-sm text-body2">
+                <em>{{ tmpObj.title }}</em><br>
+                <small>{{ tmpObj.authors }}</small>
+              </p>
+              <marked :text="tmpObj.abstract" class="text-caption"></marked>
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <q-list dense class="q-mt-lg">
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon :name="(tmpObj.is_accepted) ? 'check_circle_outline' : 'help_outline'" /></q-item-section>
+            <q-item-section>
+              <q-item-label>Status: <strong v-if="tmpObj.is_accepted" class="text-positive">accepted</strong>
+                <strong v-else>not accepted</strong></q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-btn @click="toggleStatus(tmpObj)" dense flat icon="change_circle" color="primary" />
+            </q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item class="q-mt-sm">
+            <q-item-section avatar><q-icon name="how_to_reg" /></q-item-section>
+            <q-item-section>
+              <q-select dense filled counter v-model="reviewers" :options="filteredReviewers" option-value="id" option-label="name" emit-value map-options hint="Reviewers" multiple use-chips :max-values="event.custom_data.abstracts.max_reviewers" />
+            </q-item-section>
+            <q-item-section side>
+              <q-btn @click="saveReviewers(tmpObj.id)" dense flat icon="save" color="primary" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </evan-editor>
+
     </q-card>
 
   </div>

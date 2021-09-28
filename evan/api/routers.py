@@ -25,12 +25,14 @@ class Router(DefaultRouter):
 
         self.register(r"events/(?P<code>[\w-]+)/abstract", views.AbstractCreateViewSet, basename="submit_abstract")
         self.register(r"events/(?P<code>[\w-]+)/register", views.RegistrationCreateViewSet, basename="register")
+        self.register(r"events/(?P<code>[\w-]+)/review", views.AbstractReviewCreateViewSet, basename="create_review")
 
         self.register(r"abstracts", views.AbstractViewSet, basename="abstract")
         self.register(r"contents", views.ContentViewSet, basename="content")
         self.register(r"coupons", views.CouponViewSet, basename="coupon")
         self.register(r"files", views.FileViewSet, basename="file")
         self.register(r"registrations", views.RegistrationViewSet, basename="registration")
+        self.register(r"reviews", views.AbstractReviewViewSet, basename="review")
         self.register(r"rooms", views.RoomViewSet, basename="room")
         self.register(r"sessions", views.SessionViewSet, basename="session")
         self.register(r"sponsors", views.SponsorViewSet, basename="sponsor")

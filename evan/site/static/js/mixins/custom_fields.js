@@ -41,7 +41,6 @@ var CustomFieldsMixin = {
               || (f.mandatory && _.has(obj.custom_data, f.id) && obj.custom_data[f.id] === false)
             ) {
               errors.push(true);
-              console.log(f.id);
             }
           });
         });

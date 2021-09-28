@@ -34,7 +34,7 @@
         <div class="col-12 col-md-6">
           <display-3>Reviews</display-3>
           <div class="q-gutter-md q-mt-none">
-            <q-input filled dense v-model.number="event.custom_data.abstracts.reviewers_max" type="number" label="Max reviewers per abstract"></q-input>
+            <q-input filled dense v-model.number="event.custom_data.abstracts.max_reviewers" type="number" label="Max reviewers per abstract"></q-input>
             <q-select label="Evaluation criteria" filled dense v-model="event.custom_data.abstracts.review_criteria" use-input use-chips multiple hide-dropdown-icon input-debounce="0" new-value-mode="add" class="evan__autocomplete" hint="All criteria will be evaluated from 1 (lower) to 5 (higher)." />
             <evan-user-selector v-model="event.custom_data.abstracts.reviewers" label="List of reviewers" hint="Reviewers need to have an account at Evan before you can select them. They can create an account at evan.ugent.be/join"></evan-user-selector>
           </div>

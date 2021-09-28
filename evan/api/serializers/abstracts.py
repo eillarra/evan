@@ -1,9 +1,19 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from evan.models import Abstract
+from evan.models import Abstract, AbstractReview
 from .events import EventListSerializer
 from .files import FileSerializer
 from .users import UserSerializer
+
+
+class AbstractReviewSerializer(serializers.ModelSerializer):
+    self = serializers.HyperlinkedIdentityField(view_name="v1:review-detail", lookup_field="id")
+    user = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all(), required=True, allow_null=False)
+
+    class Meta:
+        model = AbstractReview
+        exclude = ()
 
 
 class AbstractSerializer(serializers.ModelSerializer):
@@ -12,21 +22,18 @@ class AbstractSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     files = FileSerializer(many=True, read_only=True)
-    custom_data = serializers.JSONField()
 
     class Meta:
         model = Abstract
-        exclude = ("id", "event")
+        exclude = ("event",)
         read_only_fields = ("id", "uuid", "event", "is_accepted", "created_at", "updated_at")
 
 
-class AbstractRetrieveSerializer(AbstractSerializer):
-    pass
-
-
-class AuthAbstractRetrieveSerializer(AbstractRetrieveSerializer):
+class ManagedAbstractSerializer(AbstractSerializer):
     event = EventListSerializer(read_only=True)
+    reviews = AbstractReviewSerializer(many=True, read_only=True)
 
-    class Meta(AbstractRetrieveSerializer.Meta):
+    class Meta(AbstractSerializer.Meta):
         model = Abstract
-        exclude = ("id",)
+        exclude = ()
+        read_only_fields = ("id", "uuid", "event", "custom_data", "created_at", "updated_at")

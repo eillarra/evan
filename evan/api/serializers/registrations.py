@@ -21,7 +21,6 @@ class RegistrationSerializer(WritableNestedModelSerializer):
     coupon = CouponSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     payment_url = serializers.URLField(source="get_payment_url", read_only=True)
-    custom_data = serializers.JSONField()
 
     class Meta:
         model = Registration

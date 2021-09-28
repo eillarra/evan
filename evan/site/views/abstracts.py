@@ -55,10 +55,6 @@ class AbstractView(generic.DetailView):
             messages.error(request, "You don't have the necessary permissions to view this abstract submission.")
             raise PermissionDenied
 
-        if abstract.event.abstract_submission_is_closed:
-            messages.error(request, "Abstract submission is closed.")
-            raise PermissionDenied
-
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

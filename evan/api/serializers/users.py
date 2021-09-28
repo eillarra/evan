@@ -31,7 +31,6 @@ class AttendeeSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
     country = CountryField(country_dict=True, allow_null=True)
-    custom_data = serializers.JSONField()
 
     class Meta:
         model = Profile

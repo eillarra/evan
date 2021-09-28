@@ -77,7 +77,6 @@ class Registration(models.Model):
         self.base_fee = self.event.fees_dict[key] if key in self.event.fees_dict else 0
         try:
             self.extra_fees = calculate_accompanying_fees(self.custom_data["accompanying_persons"])
-            print(self.extra_fees)
         except KeyError:
             pass
         self.saldo = -self.remaining_fee

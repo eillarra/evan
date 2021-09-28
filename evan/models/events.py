@@ -1,10 +1,12 @@
 import pytz
 
 from datetime import datetime
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.query import QuerySet
 from django.template.defaultfilters import date as date_filter
 from django.urls import reverse
 from django.utils import timezone
@@ -146,6 +148,14 @@ class Event(models.Model):
     def is_open_for_registration(self) -> bool:
         now = timezone.now()
         return self.registration_start_date <= now.date() and now <= self.registration_deadline
+
+    @property
+    def abstract_reviewers(self) -> QuerySet:
+        try:
+            reviewer_ids = [r["id"] for r in self.custom_data["abstracts"]["reviewers"]]
+            return get_user_model().objects.filter(id__in=reviewer_ids)
+        except Exception:
+            return get_user_model().objects.none()
 
     @property
     def abstract_submission_is_closed(self) -> bool:

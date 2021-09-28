@@ -1,31 +1,36 @@
 from django.db import IntegrityError
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Abstract, File
-from ..permissions import AbstractPermission
-from ..serializers import AbstractRetrieveSerializer
+from evan.models import Event, Abstract, AbstractReview, File
+from ..permissions import AbstractPermission, AbstractReviewPermission
+from ..serializers import AbstractSerializer, ManagedAbstractSerializer, AbstractReviewSerializer
 from ..viewsets import EventRelatedViewSet
 
 
 class AbstractsViewSet(EventRelatedViewSet):
     queryset = Abstract.objects.prefetch_related("files")
-    serializer_class = AbstractRetrieveSerializer
+    serializer_class = AbstractSerializer
+
+    def get_serializer_class(self):
+        if Event.objects.get(code=self.kwargs.get("code")).can_be_managed_by(self.request.user):
+            return ManagedAbstractSerializer
+        return super().get_serializer_class()
 
     def list(self, request, *args, **kwargs):
-        self.serializer_class = AbstractRetrieveSerializer
+        self.serializer_class = AbstractSerializer
         return super().list(request, *args, **kwargs)
 
 
 class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = (IsAuthenticated,)
     queryset = Abstract.objects.select_related("user__profile")
-    serializer_class = AbstractRetrieveSerializer
+    serializer_class = AbstractSerializer
 
     def perform_create(self, serializer):
         try:
@@ -40,8 +45,13 @@ class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
 class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     lookup_field = "uuid"
     permission_classes = (AbstractPermission,)
-    queryset = Abstract.objects.select_related("user__profile")
-    serializer_class = AbstractRetrieveSerializer
+    queryset = Abstract.objects.select_related("event", "user__profile")
+    serializer_class = AbstractSerializer
+
+    def get_serializer_class(self):
+        if self.get_object().event.can_be_managed_by(self.request.user):
+            return ManagedAbstractSerializer
+        return super().get_serializer_class()
 
     @never_cache
     def retrieve(self, request, *args, **kwargs):
@@ -51,7 +61,7 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         detail=True,
         methods=["post"],
         pagination_class=None,
-        serializer_class=AbstractRetrieveSerializer,
+        serializer_class=AbstractSerializer,
         parser_classes=[FileUploadParser],
     )
     @never_cache
@@ -68,3 +78,28 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         file = File(content_object=self.get_object(), type=File.PRIVATE, file=request.data["file"])
         file.save()
         return self.retrieve(request, *args, **kwargs)
+
+
+class AbstractReviewCreateViewSet(CreateModelMixin, GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    queryset = AbstractReview.objects.select_related("abstract__event", "user")
+    serializer_class = AbstractReviewSerializer
+
+    def perform_create(self, serializer):
+        event = Event.objects.get(code=self.kwargs.get("code"))
+
+        if not event.can_be_managed_by(self.request.user):
+            raise PermissionDenied("Only managers can create a new review.")
+
+        super().perform_create(serializer)
+
+
+class AbstractReviewViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+    lookup_field = "id"
+    permission_classes = (AbstractReviewPermission,)
+    queryset = AbstractReview.objects.select_related("abstract__event", "user")
+    serializer_class = AbstractReviewSerializer
+
+    @never_cache
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
