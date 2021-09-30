@@ -12,14 +12,14 @@ class AbstractRedirectView(generic.DetailView):
     model = Event
     template_name = "app/abstracts/index.html"
 
-    def get_object(self, queryset=None) -> Event:
-        if not hasattr(self, "object"):
-            self.object = get_object_or_404(Event, code=self.kwargs.get("code"))
-        return self.object
+    def get_event(self, queryset=None) -> Event:
+        if not hasattr(self, "event"):
+            self.event = get_object_or_404(Event, code=self.kwargs.get("code"))
+        return self.event
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        event = self.get_object()
+        event = self.get_event()
 
         try:
             abstract = event.abstracts.get(user=request.user)
@@ -60,4 +60,28 @@ class AbstractView(generic.DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["event"] = self.get_object().event
+        return context
+
+
+class AbstractReviewView(generic.TemplateView):
+    template_name = "app/abstracts/review/index.html"
+
+    def get_event(self, queryset=None) -> Event:
+        if not hasattr(self, "event"):
+            self.event = get_object_or_404(Event, code=self.kwargs.get("code"))
+        return self.event
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        event = self.get_event()
+
+        if not event.abstract_reviewers.filter(id=request.user.id).exists():
+            messages.error(request, "You don't have the necessary permissions to access this page.")
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["event"] = self.get_event()
         return context

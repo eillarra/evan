@@ -14,6 +14,7 @@ abstract_patterns = ([
         path("", views.AbstractView.as_view(), name="app")
     ])),
     path("<slug:code>/", views.AbstractRedirectView.as_view(), name="redirect"),
+    path("<slug:code>/review/", views.AbstractReviewView.as_view(), name="review"),
 ], "abstract_patterns")
 
 event_patterns = ([

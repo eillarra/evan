@@ -14,6 +14,7 @@ class AbstractReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = AbstractReview
         exclude = ()
+        read_only_fields = ("id", "created_at", "updated_at")
 
 
 class AbstractSerializer(serializers.ModelSerializer):
@@ -37,3 +38,8 @@ class ManagedAbstractSerializer(AbstractSerializer):
         model = Abstract
         exclude = ()
         read_only_fields = ("id", "uuid", "event", "custom_data", "created_at", "updated_at")
+
+
+class FullAbstractReviewSerializer(AbstractReviewSerializer):
+    abstract = AbstractSerializer(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)

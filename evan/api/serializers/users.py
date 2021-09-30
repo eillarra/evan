@@ -43,7 +43,7 @@ class UserSerializer(NestedUpdateMixin, serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ("self", "username", "email", "first_name", "last_name", "profile")
+        fields = ("self", "id", "username", "email", "first_name", "last_name", "profile")
         read_only_fields = ("username",)
 
 

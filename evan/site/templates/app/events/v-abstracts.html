@@ -20,14 +20,9 @@
             <q-icon name="visibility" color="primary" />
           </q-td>
         </template>
-        <template v-slot:body-cell-uuid="props">
-          <q-td auto-width :props="props">
-            <samp>{{ props.row.uuid }}</samp>
-          </q-td>
-        </template>
         <template v-slot:body-cell-title="props">
           <q-td :props="props">
-            <div class="ellipsis" style="min-width:200px; max-width:25vw">{{ props.row.title }}</div>
+            <div class="ellipsis" style="min-width:200px; max-width:22vw">{{ props.row.title }}</div>
           </q-td>
         </template>
         <template v-slot:body-cell-created_at="props">
@@ -39,6 +34,12 @@
             <span>{{ props.row.reviewers }} / {{ event.custom_data.abstracts.max_reviewers }}</span>
           </q-td>
         </template>
+        <template v-slot:body-cell-score="props">
+          <q-td auto-width :props="props">
+            <q-icon :name="(props.row.reviews_with_score.length == event.custom_data.reviewers) ? 'done_all' : 'warning_amber'" :color="(props.row.reviews_with_score.length  == 0) ? 'red' : ((props.row.reviews_with_score.length == event.custom_data.reviewers) ? 'positive' : 'orange')" class="q-mr-xs" />
+            <span><span v-if="props.row.score">{{ props.row.score }}</span><span v-else>-</span> / {{ event.custom_data.abstracts.review_criteria.length * 5 }} ({{ props.row.reviews_with_score.length }})</span>
+          </q-td>
+        </template>
         <template v-slot:body-cell-is_accepted="props">
           <q-td auto-width :props="props" class="items-center">
             <evan-yes-chip v-if="props.row.is_accepted" />
@@ -47,7 +48,7 @@
         </template>
       </q-table>
 
-      <evan-editor size="md" position="standard" :obj="tmpObj">
+      <evan-editor size="lg" position="standard" :obj="tmpObj">
         <q-list dense>
           <q-item>
             <q-item-section avatar><q-icon name="tag" /></q-item-section>
@@ -95,6 +96,12 @@
                 <small>{{ tmpObj.authors }}</small>
               </p>
               <marked :text="tmpObj.abstract" class="text-caption"></marked>
+              <p class="text-caption q-mt-sm q-mb-none text-grey-8">
+                <template v-for="tag in tmpObj._tags" class="q-pr-md">#{{ tag }} &nbsp;&nbsp; </template>
+              </p>
+            </q-item-section>
+            <q-item-section side v-if="tmpObj.files && tmpObj.files.length">
+              <q-btn dense flat icon="launch" type="a" :href="tmpObj.files[0].url" target="_blank" rel="noopener" />
             </q-item-section>
           </q-item>
         </q-list>
@@ -112,12 +119,25 @@
           </q-item>
           <q-separator inset="item"></q-separator>
           <q-item class="q-mt-sm">
-            <q-item-section avatar><q-icon name="how_to_reg" /></q-item-section>
+            <q-item-section avatar top><q-icon name="how_to_reg" class="q-mt-sm" /></q-item-section>
             <q-item-section>
-              <q-select dense filled counter v-model="reviewers" :options="filteredReviewers" option-value="id" option-label="name" emit-value map-options hint="Reviewers" multiple use-chips :max-values="event.custom_data.abstracts.max_reviewers" />
+              <q-select dense filled counter v-model="reviewers" :options="filteredReviewers" option-value="id" option-label="name" emit-value map-options hint="Reviewers" multiple use-chips :max-values="event.custom_data.abstracts.max_reviewers">
+                <template v-slot:selected-item="scope">
+                  <q-chip
+                    removable
+                    dense
+                    @remove="scope.removeAtIndex(scope.index)"
+                    :tabindex="scope.tabindex"
+                    class="q-ma-none q-mr-sm"
+                  >
+                    <q-avatar :color="(reviewerIdsWithScore.indexOf(scope.opt.id) > -1) ? 'positive' : 'orange'" text-color="white" :icon="(reviewerIdsWithScore.indexOf(scope.opt.id) > -1) ? 'check' : 'warning_amber'" />
+                    <span class="q-px-xs">{{ scope.opt.name }}</span>
+                  </q-chip>
+                </template>
+              </q-select>
             </q-item-section>
-            <q-item-section side>
-              <q-btn @click="saveReviewers(tmpObj.id)" dense flat icon="save" color="primary" />
+            <q-item-section side top>
+              <q-btn @click="saveReviewers(tmpObj.id)" dense flat icon="save" color="primary" class="q-mt-xs" />
             </q-item-section>
           </q-item>
         </q-list>

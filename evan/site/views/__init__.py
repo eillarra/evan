@@ -2,7 +2,7 @@
 
 from .errors import *
 
-from .abstracts import AbstractRedirectView, AbstractView
+from .abstracts import AbstractRedirectView, AbstractView, AbstractReviewView
 from .events import EventView, EventBadgesPdf, EventAbstractsSheet, EventRegistrationsSheet
 from .files import PrivateFileView
 from .registrations import (

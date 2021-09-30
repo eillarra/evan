@@ -13,7 +13,7 @@ var EventRelatedMixin = {
       this.tmpObj = null;
     },
     cloneObj: function (obj) {
-      this.tmpObj = _.clone(obj);
+      this.tmpObj = JSON.parse(JSON.stringify(obj));
     },
     createOrUpdate: function (obj) {
       var self = this;

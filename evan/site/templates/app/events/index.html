@@ -308,6 +308,13 @@
                 label: 'Reviewers'
               },
               {
+                name: 'score',
+                field: 'score',
+                sortable: true,
+                align: 'left',
+                label: 'Score'
+              },
+              {
                 name: 'created_at',
                 field: 'created_at',
                 sortable: true,
@@ -332,6 +339,10 @@
       },
       computed: _.extend(
         Vuex.mapState(['event', 'abstracts']), {
+        reviewerIdsWithScore: function () {
+          if (!this.tmpObj) return [];
+          return _.pluck(this.tmpObj.reviews_with_score, 'user');
+        },
         existingReviewerIds: function () {
           if (!this.tmpObj) return [];
           var abstract = _.findWhere(this.abstracts, {id: this.tmpObj.id});

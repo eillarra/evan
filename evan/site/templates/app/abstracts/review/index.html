@@ -1,0 +1,215 @@
+{% extends 'layout.html' %}
+
+{% load compress %}
+{% load static %}
+
+
+{% block head_title %}{{ event.name }} - {{ block.super }}{% endblock %}
+
+{% block header %}
+  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+    <q-toolbar>
+      <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
+      <q-toolbar-title>
+        <strong>{{ event.name }}</strong>
+      </q-toolbar-title>
+      <evan-user-menu username="{{ user }}"></evan-user-menu>
+    </q-toolbar>
+  </q-header>
+{% endblock %}
+
+{% block drawer %}
+  <q-drawer show-if-above v-model="visibleDrawer" side="left" :elevated="$q.screen.lt.md" class="bg-grey-1 text-weight-medium" :width="250">
+    <q-scroll-area class="fit">
+      <div class="q-pt-lg q-pb-xl q-pl-sm">
+        <q-list :dense="$q.screen.gt.sm">
+          <q-item-label header>Abstracts</q-item-label>
+          <q-item clickable :to="{name: 'reviews'}">
+            <q-item-section avatar><q-icon name="task"></q-icon></q-item-section>
+            <q-item-section>Review</q-item-section>
+          </q-item>
+        </q-list>
+      </div>
+    </q-scroll-area>
+  </q-drawer>
+{% endblock %}
+
+{% block page %}
+  <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-reviews="{% url 'v1:reviews-list' event.code %}"></div>
+  <router-view class="q-pt-lg"></router-view>
+{% endblock %}
+
+{% block vue_templates %}
+  {% include './v-reviews.html' %}
+{% endblock %}
+
+{% block scripts %}
+{% compress js file app_abstracts %}
+  <script src="{% static 'js/components/forms.js' %}"></script>
+  <script src="{% static 'js/mixins/event_related.js' %}"></script>
+  <script src="{% static 'js/mixins/query.js' %}"></script>
+  <script type="text/javascript">
+    var VARS = document.querySelector('#vars').dataset;
+
+    var Store = Vuex.createStore({
+      state: {
+        event: null,
+        reviews: null
+      },
+      mutations: {
+        getEvent: function (state) {
+          var self = this;
+          Evan.api.request('get', VARS.urlEvent).then(function (res) {
+            state.event = Object.freeze(Evan.map.event(res.data));
+
+            setTimeout(function () {
+              self.commit('getEvent');
+            }, 45000);
+          });
+        },
+        getReviews: function (state) {
+          var self = this;
+          Evan.api.request('get', VARS.urlReviews).then(function (res) {
+            state.reviews = Object.freeze(res.data.map(function (obj) {
+              obj.abstract = Evan.map.abstract(obj.abstract);
+              if (obj.custom_data.reviews) {
+                obj.is_reviewed = !_.isEmpty(obj.custom_data.reviews);
+                obj.score = _.values(obj.custom_data.reviews).reduce(function (a, b) { return a + b; }, null);
+              } else {
+                obj.is_reviewed = false;
+                obj.score = null;
+              }
+              return obj;
+            }));
+          });
+        }
+      }
+    });
+
+    var ReviewsView = {
+      template: '#v-reviews',
+      mixins: [QueryMixin, EventRelatedMixin],
+      data: function () {
+        return {
+          table: {
+            columns: [
+              {
+                name: 'view'
+              },
+              {
+                name: 'title',
+                field: 'title',
+                sortable: true,
+                align: 'left',
+                label: 'Title'
+              },
+              {
+                name: 'user_name',
+                field: 'user_name',
+                sortable: true,
+                align: 'left',
+                label: 'User'
+              },
+              {
+                name: 'user_affiliation',
+                field: 'user_affiliation',
+                sortable: true,
+                align: 'left',
+                label: 'Affiliation'
+              },
+              {
+                name: 'score',
+                field: 'score',
+                sortable: true,
+                align: 'left',
+                label: 'Score'
+              },
+              {
+                name: 'created_at',
+                field: 'created_at',
+                sortable: true,
+                align: 'left',
+                label: 'Date'
+              },
+              {
+                name: 'is_reviewed',
+                field: 'is_reviewed',
+                sortable: true,
+                align: 'left',
+                label: 'Reviewed'
+              }
+            ],
+            pagination: {
+              rowsPerPage: 25,
+              sortBy: 'created_at',
+              descending: true
+            }
+          }
+        };
+      },
+      computed: _.extend(
+        Vuex.mapState(['event', 'reviews']), {
+      }),
+      methods: {
+        cloneObj: function (obj) {
+          var tmp = JSON.parse(JSON.stringify(obj));
+
+          try {
+            if (!_.has(tmp.custom_data, 'reviews')) {
+              tmp.custom_data.reviews = {};
+            }
+            _.each(this.event.custom_data.abstracts.review_criteria, function (crit) {
+              if (!_.has(tmp.custom_data.reviews, crit)) {
+                tmp.custom_data.reviews[crit] = 0;
+              }
+            });
+          } catch (e) {
+            console.log(e);
+          }
+
+          this.tmpObj = tmp;
+        },
+        saveReview: function (obj) {
+          var self = this;
+          var data = JSON.parse(JSON.stringify(obj));
+          data.abstract = data.abstract.id;
+          Evan.api.update(data, function (res) {
+            self.$store.commit('getReviews');
+          });
+        }
+      }
+    };
+
+    var Router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
+      routes: [
+        {
+          name: 'reviews',
+          path: '/',
+          pathToRegexpOptions: {strict: true},
+          component: ReviewsView
+        }
+      ]
+    });
+
+    var app = Vue.createApp({
+      data: function () {
+        return {
+          visibleDrawer: true
+        };
+      },
+      created: function () {
+        this.$store.commit('getEvent');
+        this.$store.commit('getReviews');
+      }
+    });
+
+    Evan.utils.registerComponents(app, [EvanCommonComponents, EvanFormComponents]);
+
+    app.use(Store);
+    app.use(Router);
+    app.use(Quasar);
+    app.mount('#vue');
+  </script>
+{% endcompress %}
+{% endblock %}

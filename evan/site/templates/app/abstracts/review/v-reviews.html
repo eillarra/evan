@@ -1,0 +1,117 @@
+<script type="text/x-template" id="v-reviews">
+{% verbatim %}
+  <div v-if="event && event.config.abstracts">
+
+    <q-card flat class="q-pa-lg">
+      <div class="row no-wrap q-mb-sm">
+        <display-5>Abstracts to review</display-5>
+      </div>
+
+      <evan-search-bar v-model="query" placeholder="Search by ID, author, title..." />
+      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="reviews" :columns="table.columns" :pagination="table.pagination" :filter="query" :filter-method="customFilter" @row-click="function (e, row) { cloneObj(row) }">
+        <template v-slot:no-data="{ icon, message, filter }">
+          <evan-no-data :message="message" :filter="filter" />
+        </template>
+        <template v-slot:body-cell-view="props">
+          <q-td auto-width :props="props">
+            <q-icon name="visibility" color="primary" />
+          </q-td>
+        </template>
+        <template v-slot:body-cell-title="props">
+          <q-td :props="props">
+            <div class="ellipsis" style="min-width:200px; max-width:25vw">{{ props.row.abstract.title }}</div>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-user_name="props">
+          <q-td auto-width :props="props">{{ props.row.abstract.user_name }}</q-td>
+        </template>
+        <template v-slot:body-cell-user_affiliation="props">
+          <q-td auto-width :props="props">{{ props.row.abstract.user_affiliation }}</q-td>
+        </template>
+        <template v-slot:body-cell-score="props">
+          <q-td auto-width :props="props">
+            <span><span v-if="props.row.score">{{ props.row.score }}</span><span v-else>-</span> / {{ event.custom_data.abstracts.review_criteria.length * 5 }}</span>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-created_at="props">
+          <q-td auto-width :props="props">{{ props.row.abstract.date }}</q-td>
+        </template>
+        <template v-slot:body-cell-is_reviewed="props">
+          <q-td auto-width :props="props" class="items-center">
+            <evan-yes-chip v-if="props.row.is_reviewed" />
+            <evan-no-chip v-else />
+          </q-td>
+        </template>
+      </q-table>
+
+      <evan-editor size="lg" position="standard" :obj="tmpObj">
+        <q-list dense>
+          <q-item>
+            <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
+            <q-item-section><strong>{{ tmpObj.abstract.user_name }}</strong></q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="email" /></q-item-section>
+            <q-item-section>{{ tmpObj.abstract.user.email }}</q-item-section>
+            <q-item-section side>
+              <evan-copy-icon :text="tmpObj.abstract.user.email" size="14px" />
+            </q-item-section>
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="business" /></q-item-section>
+            <q-item-section>{{ tmpObj.abstract.user_affiliation }}</q-item-section>
+          </q-item>
+          <q-separator v-if="tmpObj.abstract.user.profile.country" inset="item" />
+          <q-item v-if="tmpObj.abstract.user.profile.country">
+            <q-item-section avatar>
+              <country-flag :code="tmpObj.abstract.user.profile.country.code"></country-flag>
+            </q-item-section>
+            <q-item-section>{{ tmpObj.abstract.user.profile.country.name }}</q-item-section>
+          </q-item>
+          <q-separator inset="item" class="q-mb-lg"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="description" /></q-item-section>
+            <q-item-section>
+              <p class="text-serif q-mb-sm text-body2">
+                <em>{{ tmpObj.abstract.title }}</em><br>
+                <small>{{ tmpObj.abstract.authors }}</small>
+              </p>
+              <marked :text="tmpObj.abstract.abstract" class="text-caption"></marked>
+              <p class="text-caption q-mt-sm q-mb-none text-grey-8">
+                <template v-for="tag in tmpObj.abstract._tags" class="q-pr-md">#{{ tag }} &nbsp;&nbsp; </template>
+              </p>
+            </q-item-section>
+            <q-item-section side v-if="tmpObj.abstract.files && tmpObj.abstract.files.length">
+              <q-btn dense flat icon="launch" type="a" :href="tmpObj.abstract.files[0].url" target="_blank" rel="noopener" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <q-list dense>
+          <q-separator inset="item" class="q-my-lg"></q-separator>
+          <q-item class="q-mt-sm">
+            <q-item-section avatar top><q-icon name="reviews" class="q-mt-sm" /></q-item-section>
+            <q-item-section class="q-pt-xs">
+              <div class="row q-col-gutter-md">
+                <div v-for="crit in event.custom_data.abstracts.review_criteria" class="col-12 col-md text-body2">
+                  <q-rating no-reset v-model="tmpObj.custom_data.reviews[crit]" size="sm" :max="5" color="grey" color-selected="grey-8" class="q-mr-sm" icon="star_border" icon-selected="star" />
+                  <span>{{ crit }}</span>
+                </div>
+                <div class="col-12">
+                  <q-input dense filled autogrow type="textarea" v-model="tmpObj.custom_data.comments" label="Comments" />
+                </div>
+              </div>
+            </q-item-section>
+            <q-item-section side top>
+              <q-btn @click="saveReview(tmpObj)" dense flat icon="save" color="primary" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </evan-editor>
+
+    </q-card>
+
+  </div>
+{% endverbatim %}
+</script>

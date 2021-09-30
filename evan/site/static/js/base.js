@@ -37,6 +37,7 @@ var Evan = {
         if (callbackFn) callbackFn(res);
         Evan.utils.notify((customMsg) ? customMsg : modelFromUrl(obj.self) + ' updated.');
       }).catch(function (error) {
+        console.log(error);
         Evan.utils.notifyApiError(error);
       });
     },
@@ -54,15 +55,30 @@ var Evan = {
       obj.user_name = [obj.user.first_name, obj.user.last_name].join(' ');
       obj.user_affiliation = (obj.user.profile.affiliation) ? obj.user.profile.affiliation : '-';
       obj.date = moment(obj.created_at).format('lll');
-      obj.reviewers = (obj.reviews) ? obj.reviews.length : null;
+
+      if (obj.reviews) {
+        obj.reviewers = obj.reviews.length;
+        obj.reviews.map(function (r) {
+          try {
+            r.score = _.values(r.custom_data.reviews).reduce(function (a, b) { return a + b; }, null);
+          } catch (e) {
+            r.score = null;
+          }
+          return r;
+        });
+        obj.reviews_with_score = obj.reviews.filter(function (r) { return r.score != null; });
+        obj.score = _.pluck(obj.reviews_with_score, 'score').reduce(function (a, b) { return a + b; }, null);
+      } else {
+        obj.reviewers = 0;
+        obj.score = null;
+      }
 
       obj._q = [
         obj.uuid,
         obj.user_name,
         obj.user_affiliation,
         obj.title.replace(':', ' '),
-        obj.authors,
-        'reviewers:' + obj.reviewers
+        obj.authors
       ].join(' ').toLowerCase();
 
       Evan.map.qBooleans(obj, [
@@ -70,6 +86,10 @@ var Evan = {
       ]);
 
       Evan.map.qCustomData(obj);
+
+      obj._tags = _.clone(obj._q.split(' ')).filter(function (w) {
+        return w.indexOf(':') > -1;
+      });
 
       return obj;
     },

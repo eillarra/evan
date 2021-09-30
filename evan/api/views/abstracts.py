@@ -2,14 +2,25 @@ from django.db import IntegrityError
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import (
+    ListModelMixin,
+    CreateModelMixin,
+    RetrieveModelMixin,
+    UpdateModelMixin,
+    DestroyModelMixin,
+)
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event, Abstract, AbstractReview, File
 from ..permissions import AbstractPermission, AbstractReviewPermission
-from ..serializers import AbstractSerializer, ManagedAbstractSerializer, AbstractReviewSerializer
+from ..serializers import (
+    AbstractSerializer,
+    ManagedAbstractSerializer,
+    AbstractReviewSerializer,
+    FullAbstractReviewSerializer,
+)
 from ..viewsets import EventRelatedViewSet
 
 
@@ -78,6 +89,18 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         file = File(content_object=self.get_object(), type=File.PRIVATE, file=request.data["file"])
         file.save()
         return self.retrieve(request, *args, **kwargs)
+
+
+class AbstractReviewsViewSet(ListModelMixin, GenericViewSet):
+    pagination_class = None
+    queryset = AbstractReview.objects.prefetch_related("abstract__files", "abstract__user__profile")
+    serializer_class = FullAbstractReviewSerializer
+
+    @never_cache
+    def list(self, request, *args, **kwargs):
+        event_id = Event.objects.values_list("id", flat=True).get(code=self.kwargs.get("code"))
+        self.queryset = self.queryset.filter(abstract__event_id=event_id, user_id=request.user.id)
+        return super().list(request, *args, **kwargs)
 
 
 class AbstractReviewCreateViewSet(CreateModelMixin, GenericViewSet):
