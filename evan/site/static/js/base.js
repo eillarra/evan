@@ -176,9 +176,9 @@ var Evan = {
 
       return data.filter(function (obj) {
         var matches = 0;
-        obj._q = obj._q.toLowerCase();
+        var _q = obj._q.slice().toLowerCase();
         _.each(queries, function (q) {
-          if (obj._q.indexOf(q) !== -1) matches++;
+          if (_q.indexOf(q) !== -1) matches++;
         });
         return matches == queries.length;
       });
