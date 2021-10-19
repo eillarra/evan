@@ -50,6 +50,7 @@ class EventSerializer(EventListSerializer):
     registration_early_deadline = serializers.DateTimeField(allow_null=True)
     allows_invoices = serializers.BooleanField(read_only=True)
     allows_payments = serializers.BooleanField(read_only=True)
+    is_open_for_abstract_submission = serializers.BooleanField(read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
     files = FileSerializer(many=True, read_only=True)

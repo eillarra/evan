@@ -31,7 +31,7 @@ class AbstractRedirectView(generic.DetailView):
             messages.error(request, "This event does not allow abstract submission.")
             raise PermissionDenied
 
-        if event.abstract_submission_is_closed:
+        if not event.is_open_for_abstract_submission:
             messages.error(request, "Abstract submission is closed.")
             raise PermissionDenied
 

@@ -28,6 +28,7 @@
             </div>
             <q-input filled dense v-model="event.custom_data.abstracts.help" type="textarea" label="Form introduction"></q-input>
             <q-input filled dense v-model.number="event.custom_data.abstracts.abstract_max_length" type="number" label="Max characters abstract field"></q-input>
+            <evan-datepicker v-model="event.custom_data.abstracts.submission_start_date" label="Submission start date" :allow-null="true"></evan-datepicker>
             <evan-datepicker v-model="event.custom_data.abstracts.submission_deadline" label="Submission deadline" :allow-null="true" :with-time="true"></evan-datepicker>
           </div>
         </div>

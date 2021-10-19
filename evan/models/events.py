@@ -150,20 +150,22 @@ class Event(models.Model):
         return self.registration_start_date <= now.date() and now <= self.registration_deadline
 
     @property
+    def is_open_for_abstract_submission(self) -> bool:
+        try:
+            now = timezone.now()
+            start_date = datetime.strptime(self.custom_data["abstracts"]["submission_start_date"], "%Y-%m-%d")
+            deadline = datetime.strptime(self.custom_data["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
+            return start_date.replace(tzinfo=pytz.UTC).date() <= now.date() and now <= deadline.replace(tzinfo=pytz.UTC)
+        except Exception:
+            return False
+
+    @cached_property
     def abstract_reviewers(self) -> QuerySet:
         try:
             reviewer_ids = [r["id"] for r in self.custom_data["abstracts"]["reviewers"]]
             return get_user_model().objects.filter(id__in=reviewer_ids)
         except Exception:
             return get_user_model().objects.none()
-
-    @property
-    def abstract_submission_is_closed(self) -> bool:
-        try:
-            deadline = datetime.strptime(self.custom_data["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
-            return deadline.replace(tzinfo=pytz.UTC) < timezone.now()
-        except Exception:
-            return False
 
     @cached_property
     def fees_dict(self):
