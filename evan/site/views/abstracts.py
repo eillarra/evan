@@ -12,6 +12,9 @@ class AbstractRedirectView(generic.DetailView):
     model = Event
     template_name = "app/abstracts/index.html"
 
+    def get_object(self, queryset=None) -> Event:
+        return self.get_event()
+
     def get_event(self, queryset=None) -> Event:
         if not hasattr(self, "event"):
             self.event = get_object_or_404(Event, code=self.kwargs.get("code"))
