@@ -108,6 +108,8 @@ var Evan = {
       obj.start = moment(obj.start_date);
       obj.end = moment(obj.end_date);
       obj.date_range = moment.range(obj.start, obj.end);
+      obj.registrationDeadline = moment(obj.registration_deadline);
+      obj.registrationEarlyDeadline = moment(obj.registration_early_deadline);
 
       return obj;
     },

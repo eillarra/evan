@@ -238,6 +238,17 @@
           if (!this.obj) return null;
           return this.obj.fee_type;
         },
+        isEarly: function () {
+          if (!this.event || !this.event.registration_early_deadline) return false;
+          return this.event.registrationEarlyDeadline.isAfter();
+        },
+        fees: function () {
+          if (!this.event) return [];
+          var self = this;
+          return this.event.fees.filter(function (obj) {
+            return obj.is_early == self.isEarly;
+          });
+        },
         fee: function () {
           if (!this.event || !this.obj) return false;
           return _.findWhere(this.event.fees, {type: this.obj.fee_type});
@@ -256,19 +267,6 @@
           return this.fee && this.customFormIsValid && sessionsSelected;
         },
 
-
-
-        isEarly: function () {
-          if (!this.event || !this.event.registration_early_deadline) return false;
-          return this.now < this.event.deadline;
-        },
-        fees: function () {
-          if (!this.event) return [];
-          var self = this;
-          return this.event.fees.filter(function (obj) {
-            return obj.isOneDay || obj.is_early == self.isEarly;
-          });
-        },
         regularSessions: function () {
           if (!this.event) return [];
           return this.event.sessions.filter(function (obj) {
