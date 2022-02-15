@@ -52,8 +52,8 @@ class AbstractsSheet(ModelExcelWriter):
             abstract_data = [
                 obj.title,
                 obj.authors,
-                obj.created_at,
-                obj.updated_at,
+                obj.created_at.replace(tzinfo=None),
+                obj.updated_at.replace(tzinfo=None),
                 obj.is_accepted,
             ]
 
@@ -176,8 +176,8 @@ class RegistrationsSheet(ModelExcelWriter):
                     obj.paid,
                     obj.paid_via_invoice,
                     obj.saldo,
-                    obj.created_at,
-                    obj.updated_at,
+                    obj.created_at.replace(tzinfo=None),
+                    obj.updated_at.replace(tzinfo=None),
                 ]
             )
 
