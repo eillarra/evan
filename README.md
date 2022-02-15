@@ -20,9 +20,9 @@ Update dependencies (and manually update `requirements.txt`):
 
     $ pytest --cov=evan --cov-report=term
 
-### Run Celery
+### Run Huey worker
 
-    $ celery -A evan worker -B
+    $ python manage.py run_huey
 
 ### Style guide
 

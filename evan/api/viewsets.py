@@ -1,3 +1,4 @@
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.mixins import ListModelMixin, CreateModelMixin
 from rest_framework.schemas import AutoSchema
@@ -14,7 +15,7 @@ class EventCreateModelMixin(CreateModelMixin):
 
 
 class EventListModelMixin(ListModelMixin):
-    @never_cache
+    @method_decorator(never_cache)
     def list(self, request, *args, **kwargs):
         event_id = Event.objects.values_list("id", flat=True).get(code=self.kwargs.get("code"))
         self.queryset = self.queryset.filter(event_id=event_id)

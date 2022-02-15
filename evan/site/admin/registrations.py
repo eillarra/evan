@@ -149,29 +149,25 @@ class RegistrationAdmin(admin.ModelAdmin):
     with_coupon.short_description = "Coupon"
 
     def send_reminder(self, request, queryset):
-        for instance in queryset:
-            RegistrationReminderEmail(instance=instance).send()
+        RegistrationReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     send_reminder.short_description = "[Mailer] Send general reminder to users"
 
     def send_payment_reminder(self, request, queryset):
-        for instance in queryset:
-            PaymentReminderEmail(instance=instance).send()
+        PaymentReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     send_payment_reminder.short_description = "[Mailer] Send payment reminder to users"
 
     def send_profile_reminder(self, request, queryset):
-        for instance in queryset:
-            RegistrationProfileReminderEmail(instance=instance).send()
+        RegistrationProfileReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     send_profile_reminder.short_description = "[Mailer] Send profile reminder to users"
 
     def send_visa_reminder(self, request, queryset):
-        for instance in queryset:
-            VisaReminderEmail(instance=instance).send()
+        VisaReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     send_visa_reminder.short_description = "[Mailer] Send visa reminder to users"

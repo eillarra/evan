@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
@@ -8,7 +9,6 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from evan.functions import send_task
 from evan.models import Event, File
 from ..permissions import EventPermission, EventAttendeePermission
 from ..serializers import AttendeeSerializer, EventSerializer
@@ -20,7 +20,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
 
-    @never_cache
+    @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         self.queryset = self.queryset.prefetch_related(
             "fees", "sessions__topics", "sponsors__files", "topics", "tracks", "venues__rooms"
@@ -34,7 +34,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         permission_classes=(EventAttendeePermission,),
         serializer_class=AttendeeSerializer,
     )
-    @never_cache
+    @method_decorator(never_cache)
     def attendees(self, request, *args, **kwargs):
         self.queryset = (
             get_user_model().objects.filter(registrations__event_id=self.get_object().id).select_related("profile")
@@ -46,8 +46,10 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         methods=["post"],
         permission_classes=(EventAttendeePermission,),
     )
-    @never_cache
+    @method_decorator(never_cache)
     def contact(self, request, *args, **kwargs):
+        import evan.tasks.emails
+
         try:
             event = self.get_object()
             user = get_user_model().objects.select_related("profile").get(id=self.request.data["user_id"])
@@ -72,7 +74,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
                     "message": self.request.data["message"],
                 },
             )
-            send_task("evan.tasks.emails.send_template_email", email)
+            evan.tasks.emails.send_template_email(*email)
 
             return Response({"message": "Your message has been sent."})
 
@@ -89,7 +91,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         serializer_class=EventSerializer,
         parser_classes=[FileUploadParser],
     )
-    @never_cache
+    @method_decorator(never_cache)
     def files(self, request, *args, **kwargs):
         file_tags = request.query_params.get("tags", None)
         file_type = request.query_params.get("type", File.PRIVATE)

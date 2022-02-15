@@ -23,5 +23,5 @@ if env in ["production"]:
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "evan.settings")
 os.environ["HTTPS"] = "on"
 
-app = get_wsgi_application()
-app = WhiteNoise(app, root=os.path.join(settings.SITE_ROOT, "www"), max_age=31536000)
+application = get_wsgi_application()
+application = WhiteNoise(application, root=os.path.join(settings.SITE_ROOT, "www"), max_age=31536000)

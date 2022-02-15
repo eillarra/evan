@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -64,7 +65,7 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
             return ManagedAbstractSerializer
         return super().get_serializer_class()
 
-    @never_cache
+    @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
@@ -75,7 +76,7 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         serializer_class=AbstractSerializer,
         parser_classes=[FileUploadParser],
     )
-    @never_cache
+    @method_decorator(never_cache)
     def files(self, request, *args, **kwargs):
         abstract = self.get_object()
 
@@ -96,7 +97,7 @@ class AbstractReviewsViewSet(ListModelMixin, GenericViewSet):
     queryset = AbstractReview.objects.prefetch_related("abstract__files", "abstract__user__profile")
     serializer_class = FullAbstractReviewSerializer
 
-    @never_cache
+    @method_decorator(never_cache)
     def list(self, request, *args, **kwargs):
         event_id = Event.objects.values_list("id", flat=True).get(code=self.kwargs.get("code"))
         self.queryset = self.queryset.filter(abstract__event_id=event_id, user_id=request.user.id)
@@ -123,6 +124,6 @@ class AbstractReviewViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMi
     queryset = AbstractReview.objects.select_related("abstract__event", "user")
     serializer_class = AbstractReviewSerializer
 
-    @never_cache
+    @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)

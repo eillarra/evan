@@ -10,7 +10,6 @@ __pycache__
 .coverage
 .env
 .pytest_cache
-celerybeat-schedule
 dev.db
 htmlcov
 test-reports

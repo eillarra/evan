@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
@@ -52,6 +53,6 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Registration.objects.prefetch_related("sessions").select_related("user__profile")
     serializer_class = RegistrationRetrieveSerializer
 
-    @never_cache
+    @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)

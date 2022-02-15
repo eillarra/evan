@@ -1,3 +1,4 @@
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -29,7 +30,7 @@ class SponsorViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
         serializer_class=SponsorSerializer,
         parser_classes=[FileUploadParser],
     )
-    @never_cache
+    @method_decorator(never_cache)
     def files(self, request, *args, **kwargs):
         sponsor = self.get_object()
 

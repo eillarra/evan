@@ -1,22 +1,31 @@
-from evan.functions import send_task
+from datetime import datetime, timedelta
+
+from evan.tasks.emails import send_template_email
 
 
 class TemplateEmail:
     template = ""
     from_email = "Ghent University <evan@ugent.be>"
 
-    def __init__(self, *args, instance, **kwargs) -> None:
+    def __init__(self, *args, instance=None, queryset=None, **kwargs) -> None:
+        self.queryset = queryset
         self.instance = instance
 
-    @property
-    def data(self):
+    def get_data(self, obj) -> tuple:
         return (
             self.template,
-            self.get_subject(),
+            self.get_subject(obj),
             self.from_email,
-            self.get_to_emails(),
-            self.get_context_data(),
+            self.get_to_emails(obj),
+            self.get_context_data(obj),
         )
 
     def send(self) -> None:
-        send_task("evan.tasks.emails.send_template_email", self.data)
+        if self.instance:
+            send_template_email(*self.get_data(self.instance))
+
+        if self.queryset:
+            eta = datetime.now()
+            for instance in self.queryset:
+                send_template_email.schedule(self.get_data(instance), eta=eta)
+                eta = eta + timedelta(seconds=25)

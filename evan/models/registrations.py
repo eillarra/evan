@@ -8,7 +8,6 @@ from django.dispatch import receiver
 from django.urls import reverse
 from hashlib import sha256
 
-from evan.functions import send_task
 from .fees import Fee
 from .sessions import Session
 
@@ -142,6 +141,8 @@ class Registration(models.Model):
 
 @receiver(post_save, sender=Registration)
 def registration_post_save(sender, instance, created, *args, **kwargs):
+    import evan.tasks.emails
+
     if created:
         event = instance.event
         event.registrations_count = event.registrations.count()
@@ -160,7 +161,7 @@ def registration_post_save(sender, instance, created, *args, **kwargs):
                 "event_name": instance.event.name,
             },
         )
-        send_task("evan.tasks.emails.send_template_email", email)
+        evan.tasks.emails.send_email(*email)
 
 
 @receiver(m2m_changed, sender=Registration.sessions.through)

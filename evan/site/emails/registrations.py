@@ -4,48 +4,55 @@ from .generic import TemplateEmail
 
 
 class RegistrationEmail(TemplateEmail):
-    def get_to_emails(self) -> List[str]:
-        return [self.instance.user.email]
 
-    def get_context_data(self):
+    @staticmethod
+    def get_to_emails(obj) -> List[str]:
+        return [obj.user.email]
+
+    @staticmethod
+    def get_context_data(obj):
         return {
-            "user_name": self.instance.user.profile.name,
-            "event_allows_invoices": self.instance.event.allows_invoices,
-            "event_name": self.instance.event.name,
-            "event_city": self.instance.event.city,
-            "event_url": self.instance.event.get_absolute_url(),
-            "invoice_requested": self.instance.invoice_requested,
-            "registrations_count": self.instance.event.registrations_count,
-            "registration_uuid": str(self.instance.uuid),
-            "registration_url": self.instance.get_absolute_url(),
-            "payment_url": self.instance.get_payment_url(),
-            "payment_delegated_url": self.instance.get_payment_delegated_url(),
+            "user_name": obj.user.profile.name,
+            "event_allows_invoices": obj.event.allows_invoices,
+            "event_name": obj.event.name,
+            "event_city": obj.event.city,
+            "event_url": obj.event.get_absolute_url(),
+            "invoice_requested": obj.invoice_requested,
+            "registrations_count": obj.event.registrations_count,
+            "registration_uuid": str(obj.uuid),
+            "registration_url": obj.get_absolute_url(),
+            "payment_url": obj.get_payment_url(),
+            "payment_delegated_url": obj.get_payment_delegated_url(),
         }
 
 
 class RegistrationProfileReminderEmail(RegistrationEmail):
     template = "_emails/registrations_profile_update_reminder.md.html"
 
-    def get_subject(self) -> str:
-        return f"[{self.instance.event.hashtag}] Please update your profile / {self.instance.uuid}"
+    @staticmethod
+    def get_subject(obj) -> str:
+        return f"[{obj.event.hashtag}] Please update your profile / {obj.uuid}"
 
 
 class RegistrationReminderEmail(RegistrationEmail):
     template = "_emails/registrations_reminder.md.html"
 
-    def get_subject(self) -> str:
-        return f"[{self.instance.event.hashtag}] Please update your registration / {self.instance.uuid}"
+    @staticmethod
+    def get_subject(obj) -> str:
+        return f"[{obj.event.hashtag}] Please update your registration / {obj.uuid}"
 
 
 class PaymentReminderEmail(RegistrationEmail):
     template = "_emails/registrations_payment_reminder.md.html"
 
-    def get_subject(self) -> str:
-        return f"[{self.instance.event.hashtag}] Payment reminder / {self.instance.uuid}"
+    @staticmethod
+    def get_subject(obj) -> str:
+        return f"[{obj.event.hashtag}] Payment reminder / {obj.uuid}"
 
 
 class VisaReminderEmail(RegistrationEmail):
     template = "_emails/registrations_visa_reminder.md.html"
 
-    def get_subject(self) -> str:
-        return f"[{self.instance.event.hashtag}] Your visa application / {self.instance.uuid}"
+    @staticmethod
+    def get_subject(obj) -> str:
+        return f"[{obj.event.hashtag}] Your visa application / {obj.uuid}"

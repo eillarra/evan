@@ -5,8 +5,6 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django_countries.fields import CountryField
 
-from evan.functions import send_task
-
 
 class ProfileManager(models.Manager):
     def get_queryset(self):
@@ -49,11 +47,14 @@ class Profile(models.Model):
 
 @receiver(post_save, sender=get_user_model())
 def post_save_user(sender, instance, created, **kwargs):
+    import evan.tasks.users
+
     if created:
         Profile.objects.create(
             user=instance, custom_data={"connect": True, "dietary": None, "gender": None, "special_needs": None}
         )
-        send_task("evan.tasks.users.update_affiliation", (instance.id,))
+        evan.tasks.users.update_affiliation(instance.id)
+
     else:
         instance.profile.updated_at = timezone.now()
         instance.profile.save()

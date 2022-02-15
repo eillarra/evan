@@ -1,7 +1,6 @@
 import os
 
 from django.contrib.messages import constants as messages
-from kombu import Queue
 from urllib.parse import urlparse
 
 
@@ -47,6 +46,8 @@ INSTALLED_APPS = [
     "evan",
     "evan.api",
     "evan.site",
+    # tasks
+    "huey.contrib.djhuey",
     # admin
     "django.contrib.admin",
 ]
@@ -73,7 +74,7 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = "evan.urls"
-WSGI_APPLICATION = "evan.wsgi.app"
+WSGI_APPLICATION = "evan.wsgi.application"
 
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
@@ -249,18 +250,12 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT, "www", "media")
 
 
-# http://docs.celeryproject.org/en/latest/getting-started/first-steps-with-celery.html#celerytut-configuration
+# https://huey.readthedocs.io/en/latest/django.html
 
-task_default_queue = "evan"
-CELERY_TASK_QUEUES = [Queue(name=task_default_queue)]
-CELERY_TASK_DEFAULT_QUEUE = task_default_queue
-
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-
-CELERY_TIMEZONE = TIME_ZONE
-CELERY_ENABLE_UTC = False
+HUEY = {
+    "name": "evan",
+    "immediate": True,
+}
 
 
 # reCAPTCHA

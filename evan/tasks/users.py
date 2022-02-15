@@ -1,11 +1,11 @@
-from celery.decorators import task
+from huey.contrib.djhuey import db_task
 from django.db import connection
 from tld import get_tld
 
 from evan.models import Profile
 
 
-@task()
+@db_task()
 def update_affiliation(user_id: int) -> tuple:
     profile = Profile.objects.select_related("user").get(user_id=user_id)
     domain = get_tld(profile.user.email.split("@")[-1], as_object=True, fix_protocol=True)

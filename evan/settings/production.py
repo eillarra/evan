@@ -25,9 +25,8 @@ SENDFILE_URL = "/-internal"
 
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL"),
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient", "IGNORE_EXCEPTIONS": True},
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379"),
     },
     "staticfiles": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "django-staticfiles"},
 }
@@ -36,9 +35,16 @@ CACHE_MIDDLEWARE_SECONDS = 30
 USE_ETAGS = True
 
 
-# http://celery.readthedocs.org/en/latest/django/
+# https://huey.readthedocs.io/en/latest/django.html
 
-CELERY_BROKER_URL = os.environ.get("RABBITMQ_URL")
+HUEY = {
+    "name": "evan",
+    "huey_class": "huey.RedisHuey",
+    "immediate": DEBUG,
+    "connection": {
+        "url": f"{os.environ.get('REDIS_URL', 'redis://localhost:6379')}/10",
+    },
+}
 
 
 # https://docs.djangoproject.com/en/dev/topics/email/
