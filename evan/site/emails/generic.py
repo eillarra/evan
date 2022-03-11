@@ -11,11 +11,14 @@ class TemplateEmail:
         self.queryset = queryset
         self.instance = instance
 
+    def get_from_email(self, obj) -> str:
+        return self.from_email
+
     def get_data(self, obj) -> tuple:
         return (
             self.template,
             self.get_subject(obj),
-            self.from_email,
+            self.get_from_email(obj),
             self.get_to_emails(obj),
             self.get_context_data(obj),
         )

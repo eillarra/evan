@@ -70,6 +70,7 @@ class Event(models.Model):
     test_mode = models.BooleanField(default=True, editable=False)
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
 
     acl = GenericRelation("evan.Permission")
     files = GenericRelation("evan.File")

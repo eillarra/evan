@@ -141,27 +141,14 @@ class Registration(models.Model):
 
 @receiver(post_save, sender=Registration)
 def registration_post_save(sender, instance, created, *args, **kwargs):
-    import evan.tasks.emails
+    from evan.site.emails.registrations import RegistrationCreatedEmail
 
     if created:
         event = instance.event
         event.registrations_count = event.registrations.count()
         event.save()
 
-        email = (
-            "_emails/registrations_created.md.html",
-            f"[{instance.event.hashtag}] Your registration / {instance.uuid}",
-            "Ghent University <evan@ugent.be>",
-            [instance.user.email],
-            {
-                "registration_uuid": str(instance.uuid),
-                "registration_url": instance.get_absolute_url(),
-                "visa_requested": instance.visa_requested,
-                "event_city": instance.event.city,
-                "event_name": instance.event.name,
-            },
-        )
-        evan.tasks.emails.send_email(*email)
+        RegistrationCreatedEmail(queryset=[instance]).send()
 
 
 @receiver(m2m_changed, sender=Registration.sessions.through)
