@@ -28,6 +28,7 @@ class Abstract(models.Model):
 
     class Meta:
         ordering = ("-id",)
+        unique_together = ("event", "user")
 
     def __str__(self) -> str:
         return f"{self.uuid} ({self.user})"
