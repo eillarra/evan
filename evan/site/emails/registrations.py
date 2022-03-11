@@ -4,7 +4,6 @@ from .generic import TemplateEmail
 
 
 class RegistrationEmail(TemplateEmail):
-
     @staticmethod
     def get_to_emails(obj) -> List[str]:
         return [obj.user.email]

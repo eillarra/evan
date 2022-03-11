@@ -14,7 +14,7 @@ class Venue(models.Model):
         ordering = ("event", "-is_main", "name")
 
     def __str__(self) -> str:
-        return "{0} ({1}, {2})".format(self.name, self.city, self.event.country)
+        return f"{self.name} ({self.city}, {self.event.country})"
 
     def save(self, *args, **kwargs) -> None:
         self.city = self.event.city if not self.city else self.city
@@ -31,4 +31,4 @@ class Room(models.Model):
         ordering = ("position",)
 
     def __str__(self) -> str:
-        return "{0} - Room: {1}".format(self.venue, self.name)
+        return f"{self.venue} - Room: {self.name}"

@@ -22,4 +22,4 @@ class Coupon(models.Model):
         ordering = ("event", "id")
 
     def __str__(self) -> str:
-        return "{0} ({1})".format(self.code, self.value)
+        return f"{self.code} ({self.value})"
