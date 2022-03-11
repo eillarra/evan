@@ -3,6 +3,8 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.urls import reverse
 
 
@@ -44,6 +46,14 @@ class Abstract(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("abstract:app", args=[self.uuid])
+
+
+@receiver(post_save, sender=Abstract)
+def registration_post_save(sender, instance, created, *args, **kwargs):
+    from evan.site.emails.abstracts import AbstractCreatedEmail
+
+    if created:
+        AbstractCreatedEmail(queryset=[instance]).send()
 
 
 class AbstractReview(models.Model):
