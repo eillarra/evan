@@ -24,12 +24,6 @@ class AbstractRedirectView(generic.DetailView):
     def dispatch(self, request, *args, **kwargs):
         event = self.get_event()
 
-        try:
-            abstract = event.abstracts.get(user=request.user)
-            return redirect(abstract.get_absolute_url())
-        except Abstract.DoesNotExist:
-            pass
-
         if "abstracts" not in event.config or not event.config["abstracts"]:
             messages.error(request, "This event does not allow abstract submission.")
             raise PermissionDenied
