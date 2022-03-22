@@ -7,7 +7,7 @@
 {% block head_title %}{{ event.name }} - {{ block.super }}{% endblock %}
 
 {% block header %}
-  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+  <q-header class="bg-ugent text-white q-pl-sm">
     <q-toolbar>
       <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
@@ -36,7 +36,7 @@
 
 {% block page %}
   <div id="vars" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-reviews="{% url 'v1:reviews-list' event.code %}"></div>
-  <router-view class="q-pt-lg"></router-view>
+  <router-view></router-view>
 {% endblock %}
 
 {% block vue_templates %}

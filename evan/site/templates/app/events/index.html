@@ -7,7 +7,7 @@
 {% block head_title %}{{ event.code }} - {{ block.super }}{% endblock %}
 
 {% block header %}
-  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+  <q-header class="bg-ugent text-white q-pl-sm">
     <q-toolbar>
       <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
@@ -86,7 +86,7 @@
 
 {% block page %}
   <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-event="{% url 'v1:event-detail' event.code %}" data-url-abstracts="{% url 'v1:abstracts-list' event.code %}" data-url-contents="{% url 'v1:contents-list' event.code %}" data-url-coupons="{% url 'v1:coupons-list' event.code %}" data-url-create-review="{% url 'v1:create_review-list' event.code %}" data-url-registrations="{% url 'v1:registrations-list' event.code %}" data-url-sessions="{% url 'v1:sessions-list' event.code %}" data-url-sponsors="{% url 'v1:sponsors-list' event.code %}" data-url-topics="{% url 'v1:topics-list' event.code %}" data-url-tracks="{% url 'v1:tracks-list' event.code %}" data-url-venues="{% url 'v1:venues-list' event.code %}"></div>
-  <router-view class="q-pt-lg"></router-view>
+  <router-view></router-view>
   <div class="row q-col-gutter-lg items-stretch q-pt-lg">
     <router-view name="left" class="col-12 col-md-6"></router-view>
     <router-view name="right" class="col-12 col-md-6"></router-view>

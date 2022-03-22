@@ -10,12 +10,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400&&amp;display=swap" rel="stylesheet">
-    {% compress css file base %}
-      <link href="{% static 'vendor/quasar@2.1.0/quasar.prod.css' %}" type="text/css" rel="stylesheet">
-      <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
-      <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
-    {% endcompress %}
-    {% block styles %}{% endblock %}
+    {% block styles %}
+      {% compress css file base %}
+        <link href="{% static 'vendor/quasar@2.1.0/quasar.prod.css' %}" type="text/css" rel="stylesheet">
+        <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
+        <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
+      {% endcompress %}
+    {% endblock %}
+    {% block extra_styles %}{% endblock %}
     <title>{% block head_title %}Evan - Ghent University{% endblock %}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -27,7 +29,7 @@
     {% block structured_data %}{% endblock %}
     {% block head_scripts %}{% endblock %}
   </head>
-  <body class="bg-grey-1">
+  <body class="{% block body_class %}{% endblock %}">
     <noscript>
       <div class="p-5 bg-light-yellow text-center mb-5">
         <h2 class="mt-4">No love for JavaScript?</h2>
@@ -59,21 +61,18 @@
         {% block drawer %}{% endblock %}
         {% block page_container %}
           <q-page-container>
-            <q-page :class="{'q-py-sm q-px-lg': $q.screen.gt.sm, 'bg-white q-pa-none': $q.screen.lt.md}">
+            <q-page :class="{'q-pt-sm': $q.screen.gt.sm}">
               {% block page %}{% endblock %}
             </q-page>
           </q-page-container>
         {% endblock %}
-        <q-footer class="bg-grey-1 text-grey-8 q-pa-lg" :class="{'q-px-xl': $q.screen.gt.xs}">
-          <div class="row justify-between text-caption">
-            <div class="col-12 col-md">
+        <q-footer class="text-grey-8 q-py-lg q-mt-xl" :class="{'bg-grey-1 q-px-lg': $q.screen.gt.sm}">
+          <div class="row justify-between text-body2">
+            <div class="col-12 col-md-8">
               <p>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener" class="inherit">Department of Electronics and Information Systems (ELIS), Ghent University</a></p>
             </div>
-            <div class="col-12 col-md" :class="{'text-right': $q.screen.gt.sm}">
+            <div class="col-12 col-md-4" :class="{'text-right': $q.screen.gt.sm}">
               <div class="q-gutter-x-md">
-                <!--<div>
-                  <a href="{% url 'terms' %}">Terms</a>
-                </div>-->
                 <a href="{% url 'privacy' %}" class="inherit">Privacy</a>
                 <a href="{% url 'disclaimer' %}" class="inherit">Disclaimer</a>
                 <a href="mailto:{{ CONTACT_EMAIL }}" class="inherit">

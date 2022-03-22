@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% load compress %}
+{% load static %}
+
+
+{% block styles %}
+  {% compress css file ugent %}
+    <link href="{% static 'vendor/quasar@2.1.0/quasar.prod.css' %}" type="text/css" rel="stylesheet">
+    <link href="{% static 'scss/ugent.scss' %}" type="text/x-scss" rel="stylesheet">
+    <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
+  {% endcompress %}
+{% endblock %}
+
+{% block body_class %}ugent-huisstijl{% endblock %}
+
+{% block header %}
+  <div class="row ugent__header">
+    <q-toolbar class="col-3 col-md-2 bg-white q-pl-none q-pt-md">
+      <a href="/"><img src="{% static 'images/ugent.svg' %}" class="logo q-mr-sm"></a>
+    </q-toolbar>
+    <q-toolbar class="col-9 col-md-10 bg-ugent text-white q-pl-md q-pb-xs" :class="{'q-pl-lg': $q.screen.gt.sm}" style="align-items: flex-end">
+      <h2 class="q-ma-none">EVAN</h2>
+      <div class="absolute-top-right header-links text-white q-py-sm q-px-md q-gutter-x-md" :class="{'q-py-md q-px-lg': $q.screen.gt.sm}">
+        {% if user.is_authenticated %}
+           {% if user.is_staff %}<a href="/admin/">Admin</a>{% endif %}
+          <a href="{% url 'account_logout' %}">Log out <q-icon name="logout" size="xxs"></q-icon></a>
+        {% else %}
+          <a href="{% url 'account_login' %}">Log in <q-icon name="login" size="xxs"></q-icon></a>
+        {% endif %}
+      </div>
+    </q-toolbar>
+  </div>
+{% endblock %}
+
+{% block page %}
+  {% block content %}{% endblock %}
+{% endblock %}
+
+{% block scripts %}
+{% compress js inline %}
+  <script type="text/javascript">
+    var app = Vue.createApp({
+      data: function () {
+        return {
+          visibleDrawer: true
+        };
+      }
+    });
+    Evan.utils.registerComponents(app, [EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
+  </script>
+{% endcompress %}
+{% endblock %}

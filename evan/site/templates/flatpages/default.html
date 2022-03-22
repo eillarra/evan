@@ -1,4 +1,4 @@
-{% extends 'layout_simple.html' %}
+{% extends 'ugent.html' %}
 
 {% load evan %}
 
@@ -6,8 +6,13 @@
 {% block head_title %}{{ flatpage.title }} - {{ block.super }}{% endblock %}
 
 {% block content %}
-  <h4 class="text-h5 q-my-lg">{{ flatpage.title }}</h4>
-  <div class="marked">
-    {{ flatpage.content | markdown }}
+  <div class="row q-my-lg" :class="{'q-mt-xl': $q.screen.gt.sm}">
+    <div class="col-12 col-md-2 q-pr-xl"></div>
+    <div class="col-12 col-md-9 col-lg-7 q-pb-xl">
+      <h4 class="text-h5 q-my-lg">{{ flatpage.title }}</h4>
+      <div class="marked">
+        {{ flatpage.content | markdown }}
+      </div>
+    </div>
   </div>
 {% endblock %}

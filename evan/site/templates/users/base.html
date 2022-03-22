@@ -5,11 +5,11 @@
 
 
 {% block header %}
-  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+  <q-header class="bg-ugent text-white q-pl-sm">
     <q-toolbar>
       <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
-        <evan-logo fill="#1d1d1d" :width="70"></evan-logo>
+        <evan-logo fill="#ffffff" :width="45"></evan-logo>
       </q-toolbar-title>
       <evan-user-menu username="{{ user }}"></evan-user-menu>
     </q-toolbar>
@@ -56,7 +56,7 @@
 {% block page %}
   <div class="row q-col-gutter-lg">
     <div class="col-12 col-md-9 col-lg-8 q-mt-lg">
-      <q-card flat class="q-pa-lg">
+      <q-card flat class="q-px-lg q-pb-lg">
         {% block content %}{% endblock %}
       </q-card>
     </div>

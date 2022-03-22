@@ -54,10 +54,8 @@ class RegistrationAdmin(admin.ModelAdmin):
         "fee",
         "is_paid",
         "with_coupon",
-        "invoice_requested",
-        "invoice_sent",
-        "visa_requested",
-        "visa_sent",
+        "invoice",
+        "visa",
     )
     list_filter = (
         RegistrationIsPaidFilter,
@@ -100,7 +98,13 @@ class RegistrationAdmin(admin.ModelAdmin):
         ),
     )
     inlines = (InvitationLetterInline,)
-    actions = ("send_reminder", "send_visa_reminder", "send_payment_reminder", "send_delegated_payment", "send_profile_reminder")
+    actions = (
+        "send_reminder",
+        "send_visa_reminder",
+        "send_payment_reminder",
+        "send_delegated_payment",
+        "send_profile_reminder",
+    )
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
@@ -139,14 +143,44 @@ class RegistrationAdmin(admin.ModelAdmin):
             f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.profile.name}</a>, {affiliation}'
         )
 
+    """
+    Custom fields
+    """
+
     def fee(self, obj):
         return format_html(f"{obj.base_fee}&nbsp;+&nbsp;{obj.extra_fees}")
 
     def is_paid(self, obj) -> bool:
         return obj.is_paid
 
+    def invoice(self, obj):
+        requested = "yes" if obj.invoice_requested else "no"
+        sent = "yes" if obj.invoice_sent else "no"
+        return format_html(
+            '<span class="text-nowrap">'
+            f'<img src="/static/admin/img/icon-{requested}.svg" title="Invoice requested: {requested}">'
+            " / "
+            f'<img src="/static/admin/img/icon-{sent}.svg" title="Invoice sent: {sent}">'
+            "<span>"
+        )
+
+    def visa(self, obj):
+        requested = "yes" if obj.visa_requested else "no"
+        sent = "yes" if obj.visa_sent else "no"
+        return format_html(
+            '<span class="text-nowrap">'
+            f'<img src="/static/admin/img/icon-{requested}.svg" title="Visa requested: {requested}">'
+            " / "
+            f'<img src="/static/admin/img/icon-{sent}.svg" title="Visa sent: {sent}">'
+            "</span>"
+        )
+
     def with_coupon(self, obj):
         return obj.coupon is not None
+
+    """
+    Actions
+    """
 
     def send_delegated_payment(self, request, queryset):
         DelegatedPaymentEmail(queryset=queryset).send()

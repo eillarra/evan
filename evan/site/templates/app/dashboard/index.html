@@ -7,11 +7,11 @@
 {% block head_title %}Dashboard - {{ block.super }}{% endblock %}
 
 {% block header %}
-  <q-header :bordered="$q.screen.gt.sm" class="bg-grey-1 text-dark q-pl-sm">
+  <q-header class="bg-ugent text-white q-pl-sm">
     <q-toolbar>
       <q-btn flat round dense @click="visibleDrawer = !visibleDrawer" icon="menu"></q-btn>
       <q-toolbar-title>
-        <evan-logo fill="#1d1d1d" :width="70"></evan-logo>
+        <evan-logo fill="#ffffff" :width="45"></evan-logo>
       </q-toolbar-title>
       <evan-user-menu username="{{ user }}"></evan-user-menu>
     </q-toolbar>
@@ -59,7 +59,7 @@
 
 {% block page %}
   <div id="vars" data-url-user="{% url 'v1:user-detail' user.id %}" data-url-events="{% url 'v1:user-events' %}" data-url-registrations="{% url 'v1:user-registrations' %}"></div>
-  <router-view class="q-pt-lg"></router-view>
+  <router-view></router-view>
 {% endblock %}
 
 {% block vue_templates %}

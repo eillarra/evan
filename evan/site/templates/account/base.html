@@ -1,19 +1,13 @@
-{% extends 'layout_simple.html' %}
+{% extends 'ugent.html' %}
 
 {% load static %}
 
 
 {% block page %}
-  <div class="row q-mx-lg">
-    <div class="col-12 col-md-7 col-lg-6 q-mb-lg">
-      <div class="q-mt-xl q-mb-lg">
-        <a href="{% url 'homepage' %}">
-          <evan-logo></evan-logo>
-        </a>
-      </div>
-      <q-card flat class="q-py-lg" :class="{'q-px-lg': $q.screen.gt.sm}">
-        {% block content %}{% endblock %}
-      </q-card>
+  <div class="row q-my-lg" :class="{'q-mt-xl': $q.screen.gt.sm}">
+    <div class="col-12 col-md-2 q-pr-xl"></div>
+    <div class="col-12 col-md-10 q-pb-xl">
+      {% block content %}{% endblock %}
     </div>
   </div>
 {% endblock %}

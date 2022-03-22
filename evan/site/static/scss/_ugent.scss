@@ -1,0 +1,111 @@
+$ugent-blue: #1e64c8;
+$ugent-yellow: #ffd200;
+$ea-blue: #8bbee8;
+$light-blue-color: #e9f0fa;
+
+
+@font-face {
+  font-family: 'UGent Panno';
+  src: url('../fonts/ugentpannotext-normal-web.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'UGent Panno Medium';
+  src: url('../fonts/ugentpannotext-medium-web.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'UGent Panno SemiLight';
+  src: url('../fonts/ugentpannotext-semilight-web.woff') format('woff');
+}
+
+body {
+  font-family: 'UGent Panno', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 400;
+
+  @media (min-width: 900px) {
+    font-size: 17px;
+  }
+}
+
+
+/* Layout tweaks */
+
+.ugent-huisstijl {
+  .q-layout {
+    padding: 0 12px;
+
+    @media (min-width: 1284px) {
+      margin: 0 auto;
+      max-width: 1284px;
+    }
+  }
+
+  .q-footer .text-body2 {
+    font-size: .875rem;
+  }
+}
+
+
+/* Colors & logo */
+
+.ugent__header {
+  img.logo {
+    height: 90px;
+    max-width: 100%;
+  }
+}
+
+.bg-ugent {
+  background-color: $ugent-blue;
+}
+
+.bg-ea {
+  background-color: $ea-blue;
+}
+
+.bg-tertiary {
+  background-color: $light-blue-color;
+}
+
+
+/* Typography */
+
+h1, h2, h3, h4, h5, .text-panno {
+  font-family: 'UGent Panno Medium', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+h2 {
+  font-size: 35px;
+
+  @media (min-width: 600px) {
+    font-size: 50px;
+  }
+}
+
+h3 {
+  font-size: 35px;
+}
+
+h4 {
+  font-size: 20px;
+}
+
+h6 {
+  text-transform: uppercase;
+  font-size: smaller;
+}
+
+h1, h2, h3 {
+  line-height: 1.15;
+}
+
+h4, h5, h6 {
+  line-height: 1.25;
+}
+
+.text-h6, .text-body1 {
+  line-height: 1.25;
+}
