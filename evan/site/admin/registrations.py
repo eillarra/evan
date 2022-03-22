@@ -104,6 +104,11 @@ class RegistrationAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
 
+    def get_readonly_fields(self, request, obj=None):
+        if request.user.is_superuser:
+            return ("base_fee", "extra_fees", "paid", "saldo")
+        return self.readonly_fields
+
     def get_urls(self):
         my_urls = [
             path("<path:object_id>/letter/", self.pdf_letter_view, name="registration_pdf_letter"),
