@@ -56,7 +56,7 @@ class Event(models.Model):
     country = CountryField()
     presentation = models.TextField(null=True, blank=True)
     website = models.URLField(null=True, blank=True)
-    hashtag = models.CharField(max_length=16, null=True, blank=True)
+    hashtag = models.CharField(max_length=32, null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     registration_start_date = models.DateField()

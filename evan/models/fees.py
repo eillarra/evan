@@ -1,4 +1,3 @@
-from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -18,7 +17,7 @@ class Fee(models.Model):
 
     event = models.ForeignKey("evan.Event", on_delete=models.CASCADE, related_name="fees")
     type = models.CharField(max_length=16, choices=TYPE_CHOICES)
-    value = models.PositiveIntegerField(default=0, validators=[MinValueValidator(1)])
+    value = models.PositiveIntegerField(default=0)
     notes = models.CharField(max_length=190, null=True, blank=True)
     is_early = models.BooleanField(default=False)
     social_events_included = models.BooleanField(default=True)
