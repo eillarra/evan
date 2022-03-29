@@ -56,6 +56,14 @@ class RegistrationReminderEmail(RegistrationEmail):
         return f"[{obj.event.hashtag}] Please update your registration / {obj.uuid}"
 
 
+class DelegatedPaymentEmail(RegistrationEmail):
+    template = "_emails/registrations_delegated_payment.md.html"
+
+    @staticmethod
+    def get_subject(obj) -> str:
+        return f"[{obj.event.hashtag}] Payment link / {obj.uuid}"
+
+
 class PaymentReminderEmail(RegistrationEmail):
     template = "_emails/registrations_payment_reminder.md.html"
 

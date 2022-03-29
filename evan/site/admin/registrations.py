@@ -5,6 +5,7 @@ from django.utils.html import format_html
 
 from evan.models import Registration, InvitationLetter
 from evan.site.emails.registrations import (
+    DelegatedPaymentEmail,
     RegistrationProfileReminderEmail,
     RegistrationReminderEmail,
     PaymentReminderEmail,
@@ -99,7 +100,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         ),
     )
     inlines = (InvitationLetterInline,)
-    actions = ("send_reminder", "send_visa_reminder", "send_payment_reminder", "send_profile_reminder")
+    actions = ("send_reminder", "send_visa_reminder", "send_payment_reminder", "send_delegated_payment", "send_profile_reminder")
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
@@ -144,35 +145,35 @@ class RegistrationAdmin(admin.ModelAdmin):
     def is_paid(self, obj) -> bool:
         return obj.is_paid
 
-    is_paid.boolean = True
-    is_paid.short_description = "Paid"
-
     def with_coupon(self, obj):
         return obj.coupon is not None
 
-    with_coupon.boolean = True
-    with_coupon.short_description = "Coupon"
-
-    def send_reminder(self, request, queryset):
-        RegistrationReminderEmail(queryset=queryset).send()
+    def send_delegated_payment(self, request, queryset):
+        DelegatedPaymentEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
-
-    send_reminder.short_description = "[Mailer] Send general reminder to users"
 
     def send_payment_reminder(self, request, queryset):
         PaymentReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
-    send_payment_reminder.short_description = "[Mailer] Send payment reminder to users"
-
     def send_profile_reminder(self, request, queryset):
         RegistrationProfileReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
-    send_profile_reminder.short_description = "[Mailer] Send profile reminder to users"
+    def send_reminder(self, request, queryset):
+        RegistrationReminderEmail(queryset=queryset).send()
+        admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     def send_visa_reminder(self, request, queryset):
         VisaReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
+    is_paid.boolean = True
+    is_paid.short_description = "Paid"
+    with_coupon.boolean = True
+    with_coupon.short_description = "Coupon"
+    send_delegated_payment.short_description = "[Mailer] Send delegated payment link to users"
+    send_payment_reminder.short_description = "[Mailer] Send payment reminder to users"
+    send_profile_reminder.short_description = "[Mailer] Send profile reminder to users"
+    send_reminder.short_description = "[Mailer] Send general reminder to users"
     send_visa_reminder.short_description = "[Mailer] Send visa reminder to users"
