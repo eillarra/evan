@@ -75,7 +75,7 @@ var CustomFieldsMixin = {
     fixObj: function () {
       var self = this;
 
-      if (!this.event || !this.obj) {
+      if (!this.event || !this.obj) {
         setTimeout(function () { self.fixObj(); }, 25);
         return;
       };

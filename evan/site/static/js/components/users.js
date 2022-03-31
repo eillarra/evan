@@ -62,7 +62,7 @@ var EvanUserComponents = {
     `,
     methods: {
       search: function (q, update, abort) {
-        if (q == '' || q.length < 3) {
+        if (q == '' || q.length < 3) {
           this.options = [];
           abort();
           return;

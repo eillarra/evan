@@ -457,14 +457,14 @@ var EvanFormComponents = {
       <div v-if="mutable" v-for="fieldset in fieldsets" class="q-mt-lg">
         <h6 class="q-mb-md">{{ fieldset.title }}</h6>
         <div class="row q-col-gutter-md items-end">
-          <div v-for="field in fieldset.fields" class="col-12" :class="field.class" v-show="!field.vary_on || mutable.custom_data[field.vary_on]">
+          <div v-for="field in fieldset.fields" class="col-12" :class="field.class" v-show="!field.vary_on || mutable.custom_data[field.vary_on]">
             <div v-if="field.text">{{ field.text }} <strong v-show="field.required" class="text-orange">*</strong></div>
             <div v-if="field.type" :class="{'q-mt-md': field.text}">
 <!-- text -->
-              <q-input v-if="field.type == 'text' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'text'" />
+              <q-input v-if="field.type == 'text' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'text'" />
 <!-- text_list -->
               <evan-text-list v-else-if="field.type == 'text_list'" v-model="mutable.custom_data[field.id]" :fields="field.fields" :limit="field.limit" />
-<!-- single_choice || multiple_choice || variable_choice -->
+<!-- single_choice || multiple_choice || variable_choice -->
               <evan-choice-field v-else-if="field.type == 'single_choice' || field.type == 'multiple_choice'" v-model="mutable.custom_data[field.id]" :options="field.options" :multiple="field.type == 'multiple_choice'" :autocomplete="field.autocomplete" :vary="!!field.vary_on" :vary-on="mutable.custom_data[field.vary_on]" />
 <!-- checkbox -->
               <q-item v-else-if="field.type == 'checkbox'" class="q-pl-none">

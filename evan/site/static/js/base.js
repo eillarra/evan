@@ -223,7 +223,7 @@ var Evan = {
           'unelevated': true,
           'color': 'primary'
         }
-      }).onOk(okCallbackFn || function () {}).onCancel(cancelCallbackFn || function () {});
+      }).onOk(okCallbackFn || function () {}).onCancel(cancelCallbackFn || function () {});
     },
     notifyApiError: function (error) {
       var types = {
@@ -253,7 +253,7 @@ var Evan = {
       }
 
       // 403 Forbidden || 500 Internal Server Error
-      if (error.response.status == 403 || error.response.status == 500) {
+      if (error.response.status == 403 || error.response.status == 500) {
         msg = error.response.data.message || null;
       }
 
@@ -307,14 +307,14 @@ var Evan = {
       if (!Quasar.Cookies.has(cookie)) {
         Quasar.Notify.create({
           timeout: 0,
-          message: msg || 'We use cookies to ensure you get the best experience on our website.',
+          message: msg || 'We use cookies to ensure you get the best experience on our website.',
           position: 'bottom-right',
           color: 'primary',
           classes: 'evan-cookies-notify',
           multiLine: true,
           actions: [
             {
-              label: acceptBtnText || 'Accept',
+              label: acceptBtnText || 'Accept',
               color: 'yellow-7',
               handler: function () {
                 Quasar.Cookies.set(cookie, true, {
@@ -323,7 +323,7 @@ var Evan = {
               }
             },
             {
-              label: privacyBtnText || 'Learn more',
+              label: privacyBtnText || 'Learn more',
               color: 'white',
               handler: function () {
                 Quasar.openURL(privacyUrl || '/privacy/');

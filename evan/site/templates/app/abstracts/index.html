@@ -125,20 +125,20 @@
       computed: _.extend(
         Vuex.mapState(['user', 'event', 'abstract']), {
         templateUrl: function () {
-          if (!this.event || !this.event.files.length) return null;
+          if (!this.event || !this.event.files.length) return null;
           abstractFile = _.findWhere(this.event.files, {'tags': 'abstract-template'});
           return (abstractFile) ? abstractFile.url : null;
         },
         formIsValid: function () {
-          if (!this.obj || !this.event) return false;
+          if (!this.obj || !this.event) return false;
           if (this.event.custom_data.abstracts.abstract_max_length && this.obj.abstract.length > this.event.custom_data.abstracts.abstract_max_length) return false;
           return this.obj.title && this.obj.authors && this.obj.abstract && this.customFormIsValid;
         },
         maxFiles: function () {
-          return this.event.config.abstracts.uploader.max_files || 0;
+          return this.event.config.abstracts.uploader.max_files || 0;
         },
         maxFileSize: function () {
-          return this.event.config.abstracts.uploader.max_file_size * 1024 || 0;  // TODO: Quasar Uploader bug
+          return this.event.config.abstracts.uploader.max_file_size * 1024 || 0;  // TODO: Quasar Uploader bug
         }
       }),
       methods: {
