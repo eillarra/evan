@@ -105,7 +105,6 @@ TIME_ZONE = "Europe/Brussels"
 
 LANGUAGE_CODE = "en"
 USE_I18N = False
-USE_L10N = False
 
 FIRST_DAY_OF_WEEK = 1
 

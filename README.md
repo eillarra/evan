@@ -12,7 +12,7 @@ The Evan api/website uses [Django][django] and the [Django REST Framework][drf].
 Application dependencies
 ------------------------
 
-The application uses [Pipenv][3] to manage Python packages. While in development, you will need to install
+The application uses [Pipenv][pipenv] to manage Python packages. While in development, you will need to install
 all dependencies (includes packages like `debug_toolbar`):
 
     $ pipenv install --dev
