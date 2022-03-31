@@ -1,4 +1,13 @@
-The Evan api/website uses [Django][1] and the [Django REST Framework][2].
+Evan
+====
+
+[![github-actions-badge]][github-actions]
+[![codecov-badge]][codecov]
+[![codefactor-badge]][codefactor]
+[![license-badge]](LICENSE)
+
+
+The Evan api/website uses [Django][django] and the [Django REST Framework][drf].
 
 Application dependencies
 ------------------------
@@ -31,11 +40,20 @@ Run Huey worker
 Style guide
 -----------
 
-Unless otherwise specified, follow [Django Coding Style][4]. Tab size is 4 **spaces**.
-Maximum line length is 120. All changes should include tests and pass `flake8`.
+Tab size is 4 spaces. Max line length is 120. You should run `flake8` and `black` before committing any change.
+
+    $ flake8 evan
+    $ black evan
 
 
-[1]: https://www.djangoproject.com/
-[2]: https://www.django-rest-framework.org/
-[3]: https://docs.pipenv.org/#install-pipenv-today
-[4]: https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/coding-style/
+[codecov]: https://codecov.io/gh/eillarra/evan
+[codecov-badge]: https://codecov.io/gh/eillarra/evan/branch/master/graph/badge.svg
+[codefactor]: https://www.codefactor.io/repository/github/eillarra/evan
+[codefactor-badge]: https://www.codefactor.io/repository/github/eillarra/evan/badge
+[github-actions]: https://github.com/eillarra/evan/actions?query=workflow%3A%22tests%22
+[github-actions-badge]: https://github.com/eillarra/evan/workflows/tests/badge.svg
+[license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+
+[django]: https://www.djangoproject.com/
+[drf]: https://www.django-rest-framework.org/
+[pipenv]: https://docs.pipenv.org/#install-pipenv-today
