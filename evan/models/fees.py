@@ -6,17 +6,8 @@ class Fee(models.Model):
     Coupons are used to pay or reduce registration fees.
     """
 
-    REGULAR = "regular"
-    STUDENT = "student"
-    ONE_DAY = "one_day"
-    TYPE_CHOICES = (
-        (REGULAR, "Regular"),
-        (STUDENT, "Student"),
-        (ONE_DAY, "One day"),
-    )
-
     event = models.ForeignKey("evan.Event", on_delete=models.CASCADE, related_name="fees")
-    type = models.CharField(max_length=16, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=16)
     value = models.PositiveIntegerField(default=0)
     notes = models.CharField(max_length=190, null=True, blank=True)
     is_early = models.BooleanField(default=False)

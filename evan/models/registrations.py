@@ -8,7 +8,6 @@ from django.dispatch import receiver
 from django.urls import reverse
 from hashlib import sha256
 
-from .fees import Fee
 from .sessions import Session
 
 
@@ -41,7 +40,7 @@ class Registration(models.Model):
     visa_requested = models.BooleanField(default=False)
     visa_sent = models.BooleanField(default=False)
 
-    fee_type = models.CharField(max_length=8, default=Fee.REGULAR, choices=Fee.TYPE_CHOICES)
+    fee_type = models.CharField(max_length=16)
     base_fee = models.PositiveSmallIntegerField(default=0, editable=False)
     extra_fees = models.PositiveSmallIntegerField(default=0, editable=False)
     manual_extra_fees = models.PositiveSmallIntegerField(default=0)
@@ -72,7 +71,7 @@ class Registration(models.Model):
         `extra_fees` are recalculated every time (accompanying persons, for example).
         """
         is_early = self.is_early if self.pk else self.event.is_early
-        key = (self.fee_type, is_early) if self.fee_type != Fee.ONE_DAY else (self.fee_type, False)
+        key = (self.fee_type, is_early)
         self.base_fee = self.event.fees_dict[key] if key in self.event.fees_dict else 0
         try:
             self.extra_fees = calculate_accompanying_fees(self.custom_data["accompanying_persons"])
