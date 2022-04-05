@@ -85,8 +85,8 @@
     </div>
     {% block vue_templates %}{% endblock %}
     {% if not debug %}
-      <script src="https://browser.sentry-cdn.com/6.12.0/bundle.tracing.min.js" integrity="sha384-S3qfdh3AsT1UN84WIYNuOX9vVOoFg3nB17Jp5/pTFGDBGBt+dtz7MGAV845efkZr" crossorigin="anonymous"></script>
-      <script src="https://browser.sentry-cdn.com/6.12.0/vue.min.js" integrity="sha384-CuCDTHNwfKKxDsiqbSI4p7MpikMED/z+znW6nnr6374xyEHle52d+p36HADU+N7M" crossorigin="anonymous"></script>
+      <script src="https://browser.sentry-cdn.com/6.19.3/bundle.tracing.min.js" integrity="sha384-u/dqcM1j6egSEhWjOpjx4ali0U4WHOJNVqX2hrtpYorMs8e0ILJUbP9HAdbV0UQU" crossorigin="anonymous"></script>
+      <script src="https://browser.sentry-cdn.com/6.19.3/vue.min.js" integrity="sha384-h2lUWWxYaLyQLqC92rF4txv+DhVMic+DnEeEbh8z5MsrmzfNmkbgExQs+FSGrrK0" crossorigin="anonymous"></script>
       <script src="{% static 'js/sentry.js' %}"></script>
     {% endif %}
     {% compress js file helpers %}
