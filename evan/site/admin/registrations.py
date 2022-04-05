@@ -63,7 +63,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         "invoice_sent",
         "visa_requested",
         "visa_sent",
-        "event",
+        ("event", admin.RelatedOnlyFieldListFilter)
     )
     search_fields = ("id", "uuid", "user__email", "user__username", "user__first_name", "user__last_name")
 
@@ -107,7 +107,12 @@ class RegistrationAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
+        qs = super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
+        if request.user.is_superuser:
+            return qs
+        if request.user.groups.filter(name="Administration").exists():
+            return qs.filter(event__acl__user_id__exact=request.user.id)
+        return qs.none()
 
     def get_readonly_fields(self, request, obj=None):
         if request.user.is_superuser:
