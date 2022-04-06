@@ -36,7 +36,7 @@
         </template>
         <template v-slot:body-cell-score="props">
           <q-td auto-width :props="props">
-            <q-icon :name="(props.row.reviews_with_score.length == event.custom_data.reviewers) ? 'done_all' : 'warning_amber'" :color="(props.row.reviews_with_score.length  == 0) ? 'red' : ((props.row.reviews_with_score.length == event.custom_data.reviewers) ? 'positive' : 'orange')" class="q-mr-xs" />
+            <q-icon :name="(props.row.reviewers > 0 && props.row.reviews_with_score.length == props.row.reviewers) ? 'done_all' : 'warning_amber'" :color="(props.row.reviews_with_score.length  == 0) ? 'red' : ((props.row.reviews_with_score.length == props.row.reviewers) ? 'positive' : 'orange')" class="q-mr-xs" />
             <span><span v-if="props.row.score">{{ props.row.score }}</span><span v-else>-</span> / {{ event.custom_data.abstracts.review_criteria.length * 5 }} ({{ props.row.reviews_with_score.length }})</span>
           </q-td>
         </template>
@@ -114,7 +114,7 @@
                 <strong v-else>not accepted</strong></q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-btn @click="toggleStatus(tmpObj)" dense flat icon="change_circle" color="primary" />
+              <q-btn @click="toggleStatus(tmpObj)" dense flat :icon="(tmpObj.is_accepted) ? 'thumb_down' : 'thumb_up'" color="primary" />
             </q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>

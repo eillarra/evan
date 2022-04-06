@@ -21,6 +21,7 @@ class AbstractsSheet(ModelExcelWriter):
                         "created_at",
                         "updated_at",
                         "is_accepted",
+                        "abstract",
                     ]
                 ],
             }
@@ -55,6 +56,7 @@ class AbstractsSheet(ModelExcelWriter):
                 obj.created_at.replace(tzinfo=None),
                 obj.updated_at.replace(tzinfo=None),
                 obj.is_accepted,
+                obj.abstract,
             ]
 
             # Custom fields

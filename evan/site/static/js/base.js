@@ -68,6 +68,10 @@ var Evan = {
         });
         obj.reviews_with_score = obj.reviews.filter(function (r) { return r.score != null; });
         obj.score = _.pluck(obj.reviews_with_score, 'score').reduce(function (a, b) { return a + b; }, null);
+
+        if (obj.reviews_with_score.length > 0) {
+          obj.score = Math.round((obj.score / obj.reviews_with_score.length) * 10) / 10;
+        }
       } else {
         obj.reviewers = 0;
         obj.score = null;
