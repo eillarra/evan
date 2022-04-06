@@ -10,7 +10,7 @@
           <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add topic" />
         </div>
       </div>
-      <q-table :dense="$q.screen.gt.sm" row-key="id" :rows="topics" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table :dense="$q.screen.gt.sm" row-key="id" :rows="topics || []" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />

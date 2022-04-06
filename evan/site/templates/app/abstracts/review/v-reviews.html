@@ -8,7 +8,7 @@
       </div>
 
       <evan-search-bar v-model="query" placeholder="Search by ID, author, title..." />
-      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="reviews" :columns="table.columns" :pagination="table.pagination" :filter="query" :filter-method="customFilter" @row-click="function (e, row) { cloneObj(row) }">
+      <q-table :dense="$q.screen.gt.sm" row-key="uuid" :rows="reviews || []" :columns="table.columns" :pagination="table.pagination" :filter="query" :filter-method="customFilter" @row-click="function (e, row) { cloneObj(row) }">
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />
         </template>
@@ -45,7 +45,7 @@
       </q-table>
 
       <evan-editor size="lg" position="standard" :obj="tmpObj">
-        <q-list dense>
+        <q-list v-if="tmpObj.abstract" dense>
           <q-item>
             <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
             <q-item-section><strong>{{ tmpObj.abstract.user_name }}</strong></q-item-section>
