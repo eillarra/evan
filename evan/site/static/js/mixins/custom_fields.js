@@ -80,7 +80,7 @@ var CustomFieldsMixin = {
         return;
       };
 
-      if (this.fieldsets.length) {
+      if (this.fieldsets && this.fieldsets.length) {
         _.each(this.fieldsets, function (fieldset) {
           _.each(fieldset.fields, function (f) {
             if (!_.has(self.obj.custom_data, f.id)) {
