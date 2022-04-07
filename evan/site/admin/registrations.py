@@ -129,9 +129,9 @@ class RegistrationAdmin(admin.ModelAdmin):
         obj = self.get_object(request, unquote(object_id))
         extra_context = extra_context or {}
         extra_context["has_letter"] = InvitationLetter.objects.filter(registration_id=object_id).exists()
-        extra_context["payment_delegated_url"] = obj.get_payment_delegated_url() if not obj.paid else None
-        extra_context["certificate_url"] = obj.get_certificate_url() if obj.event.is_closed and obj.paid else None
-        extra_context["receipt_url"] = obj.get_receipt_url() if obj.paid else None
+        extra_context["payment_delegated_url"] = obj.get_payment_delegated_url() if not obj.is_paid else None
+        extra_context["certificate_url"] = obj.get_certificate_url() if obj.event.is_closed and obj.is_paid else None
+        extra_context["receipt_url"] = obj.get_receipt_url() if obj.is_paid else None
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     def pdf_letter_view(self, request, object_id, extra_context=None):
