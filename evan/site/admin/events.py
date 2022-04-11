@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.db.models import Count
 from django.urls import reverse
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from evan.models import Event, Fee
-from .generic import PermissionsInline
+from .permissions import PermissionsInline
 
 
 class FeesInline(admin.TabularInline):
@@ -28,7 +28,7 @@ class EventAdmin(admin.ModelAdmin):
     )
     list_per_page = 30
     search_fields = ("city", "country", "start_date__year")
-
+    # form
     readonly_fields = ("registrations_count",)
     inlines = (
         FeesInline,
@@ -43,30 +43,29 @@ class EventAdmin(admin.ModelAdmin):
             return qs.filter(acl__user_id__exact=request.user.id)
         return qs.none()
 
+    # custom fields
+
     def is_active(self, obj) -> bool:
         return obj.is_active
 
-    is_active.boolean = True
-    is_active.short_description = "Active"
-
     def is_open(self, obj) -> bool:
         return obj.is_open_for_registration
-
-    is_open.boolean = True
-    is_open.short_description = "Open"
 
     def registrations_link(self, obj):
         if obj.registrations_count == 0:
             return "-"
         url = reverse("admin:evan_registration_changelist")
-        return mark_safe(f'<a href="{url}?event__id__exact={obj.id}">{obj.registrations_count}</a>')
-
-    registrations_link.short_description = "Registrations"
+        return format_html(f'<a href="{url}?event__id__exact={obj.id}">{obj.registrations_count}</a>')
 
     def sessions_link(self, obj):
         if obj.sessions__count == 0:
             return "-"
         url = reverse("admin:evan_session_changelist")
-        return mark_safe(f'<a href="{url}?event__id__exact={obj.id}">{obj.sessions__count}</a>')
+        return format_html(f'<a href="{url}?event__id__exact={obj.id}">{obj.sessions__count}</a>')
 
+    is_active.boolean = True
+    is_active.short_description = "Active"
+    is_open.boolean = True
+    is_open.short_description = "Open"
+    registrations_link.short_description = "Registrations"
     sessions_link.short_description = "Sessions"

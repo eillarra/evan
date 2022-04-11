@@ -66,7 +66,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         ("event", admin.RelatedOnlyFieldListFilter)
     )
     search_fields = ("id", "uuid", "user__email", "user__username", "user__first_name", "user__last_name")
-
+    # form
     raw_id_fields = ("event", "user", "coupon")
     readonly_fields = ("event", "base_fee", "extra_fees", "paid", "saldo")
     fieldsets = (
@@ -77,7 +77,7 @@ class RegistrationAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "PAYMENT",
+            "Payment",
             {
                 "fields": (
                     "fee_type",
@@ -91,7 +91,7 @@ class RegistrationAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "EXTRA INFORMATION",
+            "Extra information",
             {
                 "fields": ("visa_requested", "visa_sent"),
             },
