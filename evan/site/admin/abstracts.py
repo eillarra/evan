@@ -8,6 +8,7 @@ from .files import FilesInline
 class AbstractAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "user")
     list_filter = (("event", admin.RelatedOnlyFieldListFilter),)
+    search_fields = ("id", "uuid", "user__email", "user__username", "user__first_name", "user__last_name", "title")
     # form
     raw_id_fields = ("event", "user")
     readonly_fields = ("created_at", "updated_at")

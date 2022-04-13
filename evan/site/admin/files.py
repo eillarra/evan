@@ -7,3 +7,4 @@ class FilesInline(GenericTabularInline):
     model = File
     classes = ("collapse",)
     extra = 0
+    readonly_fields = ("tags",)
