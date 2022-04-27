@@ -10,6 +10,10 @@
           <q-btn no-caps outline rounded @click="addObj" color="primary" label="Add date" />
         </div>
       </div>
+      <q-banner v-else rounded inline-actions class="bg-orange-1 text-dark q-mb-lg text-body2">
+        <template v-slot:avatar><q-icon name="help_outline" size="sm" /></template>
+        Keep in mind that these dates are just informative and have no real effect on how Evan will work. Don't forget to change the event settings too if you want to change registration dates/deadlines. <span v-if="event.config.abstracts">Check also abstract settings to change abstract submission dates/deadlines.</span>
+      </q-banner>
       <q-table :dense="$q.screen.gt.sm" row-key="key" :rows="dates || []" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
         <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
