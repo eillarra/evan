@@ -26,7 +26,7 @@ from ..viewsets import EventRelatedViewSet
 
 
 class AbstractsViewSet(EventRelatedViewSet):
-    queryset = Abstract.objects.prefetch_related("files")
+    queryset = Abstract.objects.select_related("event", "user__profile").prefetch_related("files", "reviews")
     serializer_class = AbstractSerializer
 
     def get_serializer_class(self):
@@ -57,7 +57,7 @@ class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
 class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     lookup_field = "uuid"
     permission_classes = (AbstractPermission,)
-    queryset = Abstract.objects.select_related("event", "user__profile")
+    queryset = Abstract.objects.select_related("event", "user__profile").prefetch_related("files", "reviews")
     serializer_class = AbstractSerializer
 
     def get_serializer_class(self):

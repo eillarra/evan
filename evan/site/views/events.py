@@ -7,7 +7,8 @@ from django.views import generic
 from os import environ
 
 from evan.models import Event
-from evan.site.views.file_makers.excel import AbstractsSheet, RegistrationsSheet
+from evan.site.sheets.abstracts import AbstractsSheet
+from evan.site.sheets.registrations import RegistrationsSheet
 
 
 class EventView(generic.DetailView):
