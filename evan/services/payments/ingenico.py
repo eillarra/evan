@@ -15,11 +15,11 @@ def get_absolute_uri():
 class Ingenico:
     PRODUCTION_URL = os.environ.get("INGENICO_PRODUCTION_URL")
     TEST_URL = os.environ.get("INGENICO_TEST_URL")
-    SUCCESS_STATUSES = ("5", "51", "9", "91")
-    EXCEPTION_STATUSES = ("52", "92")
-    DECLINE_STATUSES = ("2",)
-    CANCEL_STATUSES = ("1",)
-    INVALID_STATUSES = ("0",)
+    SUCCESS_STATUSES = {"5", "51", "9", "91"}
+    EXCEPTION_STATUSES = {"52", "92"}
+    DECLINE_STATUSES = {"2"}
+    CANCEL_STATUSES = {"1"}
+    INVALID_STATUSES = {"0"}
 
     def __init__(self, *, pspid: str = "", salt: str = "", test_mode: bool = True):
         self.pspid = pspid
