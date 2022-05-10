@@ -45,6 +45,6 @@ class PrivateFileView(SendfileView):
     def dispatch(self, request, *args, **kwargs):
         if not self.request.user.is_authenticated:
             raise PermissionDenied
-        if not self.get_object().content_object.viewable_by_user(self.request.user):
+        if not self.get_object().content_object.files_viewable_by_user(self.request.user):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)

@@ -47,6 +47,11 @@ class Abstract(models.Model):
             or self.reviews.filter(user_id=user.id).exists()
         )
 
+    def files_viewable_by_user(self, user) -> bool:
+        return self.viewable_by_user(user) or (
+            self.is_accepted and self.event.registrations.filter(user_id=user.id).exists()
+        )
+
     def get_absolute_url(self) -> str:
         return reverse("abstract:app", args=[self.uuid])
 
