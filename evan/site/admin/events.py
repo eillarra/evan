@@ -37,7 +37,7 @@ class EventAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).annotate(Count("sessions", distinct=True))
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.groups.filter(name="Management").exists():
             return qs
         if request.user.groups.filter(name="Administration").exists():
             return qs.filter(acl__user_id__exact=request.user.id)
