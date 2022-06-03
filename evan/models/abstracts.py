@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
+from typing import Optional
 
 
 class Abstract(models.Model):
@@ -54,6 +55,10 @@ class Abstract(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("abstract:app", args=[self.uuid])
+
+    @property
+    def file(self) -> Optional["evan.File"]:
+        return self.files.first()
 
 
 @receiver(post_save, sender=Abstract)

@@ -9,9 +9,9 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, File
+from evan.models import Event, Abstract, File
 from ..permissions import EventPermission, EventAttendeePermission
-from ..serializers import AttendeeSerializer, EventSerializer
+from ..serializers import AttendeeSerializer, EventSerializer, PublicAbstractSerializer
 
 
 class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
@@ -99,3 +99,16 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         file = File(content_object=self.get_object(), type=file_type, tags=file_tags, file=request.data["file"])
         file.save()
         return self.retrieve(request, *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        pagination_class=None,
+        serializer_class=PublicAbstractSerializer,
+    )
+    @method_decorator(never_cache)
+    def public_abstracts(self, request, *args, **kwargs):
+        self.queryset = Abstract.objects.filter(event_id=self.get_object().id, is_accepted=True).prefetch_related(
+            "files"
+        )
+        return ListModelMixin.list(self, request, *args, **kwargs)

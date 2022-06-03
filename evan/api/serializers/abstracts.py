@@ -43,3 +43,11 @@ class ManagedAbstractSerializer(AbstractSerializer):
 class FullAbstractReviewSerializer(AbstractReviewSerializer):
     abstract = AbstractSerializer(read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+
+class PublicAbstractSerializer(AbstractSerializer):
+    file = FileSerializer(read_only=True)
+
+    class Meta:
+        model = Abstract
+        fields = ("id", "title", "authors", "custom_data", "abstract", "file")
