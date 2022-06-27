@@ -4,6 +4,26 @@ var CommonMarkWriter = new commonmark.HtmlRenderer();
 
 var EvanCommonComponents = {
 
+  'version-hash': {
+    data: function () {
+      return {
+        rev: document.querySelector('html').dataset.rev || 'revhash'
+      };
+    },
+    props: {
+      size: {
+        type: Number,
+        default: 7
+      }
+    },
+    template: '<span>{{ hash }}</span>',
+    computed: {
+      hash: function () {
+        return this.rev.slice(0, this.size);
+      }
+    }
+  },
+
   'django-form-error': {
     props: {
       field: {

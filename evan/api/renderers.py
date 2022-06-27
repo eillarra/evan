@@ -4,7 +4,7 @@ from rest_framework.renderers import BrowsableAPIRenderer
 class NoFormBrowsableAPIRenderer(BrowsableAPIRenderer):
     """
     We don't want the HTML forms and filters to be rendered in the browsable API.
-    It can be very slow for Porras for example, where the view tries to load all Dorsals.
+    It can be very slow when there are lots of entries in related fiels.
     The browsable API is only used in DEBUG mode anyway, so it only affects development.
     """
 

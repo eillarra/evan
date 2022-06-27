@@ -66,21 +66,21 @@
             </q-page>
           </q-page-container>
         {% endblock %}
-        <q-footer class="text-grey-8 q-py-lg q-mt-xl" :class="{'bg-grey-1 q-px-lg': $q.screen.gt.sm}">
-          <div class="row justify-between text-body2">
-            <div class="col-12 col-md-8">
-              <p>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener" class="inherit">Department of Electronics and Information Systems (ELIS), Ghent University</a></p>
+        <div class="ugent__footer q-py-lg q-mt-xl full-width q-px-md" :class="{'q-px-lg': $q.screen.gt.sm}">
+          <div class="row justify-between">
+            <div class="col-12 col-md-3">
+              <p>Version <version-hash></version-hash></p>
             </div>
-            <div class="col-12 col-md-4" :class="{'text-right': $q.screen.gt.sm}">
-              <div class="q-gutter-x-md">
-                <a href="{% url 'privacy' %}" class="inherit">Privacy</a>
-                <a href="{% url 'disclaimer' %}" class="inherit">Disclaimer</a>
-                <a href="mailto:{{ CONTACT_EMAIL }}" class="inherit">
-                  <q-icon name="alternate_email" class="q-mr-xs"></q-icon>Contact</a>
+            <div class="col-12 col-md-9">
+              <ul :class="{'text-right q-gutter-x-md': $q.screen.gt.sm}">
+                <li :class="{'inline': $q.screen.gt.sm}"><a href="{% url 'privacy' %}">Privacy</a></li>
+                <li :class="{'inline': $q.screen.gt.sm}"><a href="{% url 'disclaimer' %}">Disclaimer</a></li>
+                <li :class="{'inline': $q.screen.gt.sm}"><a href="mailto:{{ CONTACT_EMAIL }}">Contact</a></li>
+                <li :class="{'inline': $q.screen.gt.sm}"><span>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener">Department of Electronics and Information Systems (ELIS)</a>, <span class="text-no-wrap">Ghent University</span></span></li>
               </div>
             </div>
           </div>
-        </q-footer>
+        </div>
       </q-layout>
     </div>
     {% block vue_templates %}{% endblock %}

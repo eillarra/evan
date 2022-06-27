@@ -1,6 +1,6 @@
 $ugent-blue: #1e64c8;
 $ugent-yellow: #ffd200;
-$ea-blue: #8bbee8;
+$ea-color: #8bbee8;
 $light-blue-color: #e9f0fa;
 
 
@@ -58,12 +58,42 @@ body {
   }
 }
 
+.ugent__footer {
+  color: white;
+  font-size: 0.875rem;  // text-body2
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: none;
+      border-bottom: 1px solid white;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li.inline {
+      display: inline;
+    }
+
+    li:last-child {
+      margin-top: 16px;
+    }
+  }
+}
+
+.ugent__footer,
 .bg-ugent {
   background-color: $ugent-blue;
 }
 
 .bg-ea {
-  background-color: $ea-blue;
+  background-color: $ea-color;
 }
 
 .bg-tertiary {

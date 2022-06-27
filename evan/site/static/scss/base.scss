@@ -37,6 +37,35 @@ body {
 
 /* Colors & logo */
 
+.ugent__footer {
+  font-size: 0.75rem;
+  color: $font-color-light;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: none;
+      border-bottom: 1px solid $font-color-light;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li.inline {
+      display: inline;
+    }
+
+    li:last-child {
+      margin-top: 16px;
+    }
+  }
+}
+
 .bg-ugent {
   background-color: $ugent-blue;
 }

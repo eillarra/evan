@@ -10,10 +10,10 @@
         </div>
         <div v-else>
           <display-5>Register now for #{{ event.hashtag }}</display-5>
-          <q-banner v-if="isEarly" rounded dense class="bg-grey-2 text-grey-8">
+          <q-banner v-if="isEarly" rounded dense class="bg-yellow-1 text-grey-8 q-mb-md">
             Early registration deadline: {{ event.registrationEarlyDeadline }}
           </q-banner>
-          <q-banner v-else rounded dense class="bg-grey-2 text-grey-8">
+          <q-banner v-else rounded dense class="bg-yellow-1 text-grey-8 q-mb-md">
             Registration deadline: {{ event.registrationDeadline }}
           </q-banner>
         </div>
