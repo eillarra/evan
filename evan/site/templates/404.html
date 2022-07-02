@@ -1,12 +1,13 @@
 {% extends 'ugent.html' %}
 
-{% load static %}
-
 
 {% block content %}
-  <div>
-    <h2 class="text-display-2">404 Not Found</h2>
-    <p>Something is wrong here... we couldn't find the URL you requested.</p>
-    <p class="text-caption q-mt-lg">Did we miss something? <a href="mailto:{{ CONTACT_EMAIL }}">Contact us</a> if you were hoping to find something here.<br>Or just take a shortcut to our <a href="{% url 'homepage' %}">homepage</a> and start again...</p>
+  <div class="row q-my-lg" :class="{'q-mt-xl': $q.screen.gt.sm}">
+    <div class="col-12 col-md-2 q-pr-xl"></div>
+    <div class="col-12 col-md-6 col-lg-4 q-pb-xl">
+      <h2 class="text-display-2">404 Not Found</h2>
+      <p>Something is wrong here... we couldn't find the URL you requested.</p>
+      <p class="text-caption q-mt-lg">Did we miss something? <a href="mailto:{{ CONTACT_EMAIL }}">Contact us</a> if you were hoping to find something here.<br>Or just take a shortcut to our <a href="{% url 'homepage' %}">homepage</a> and start again...</p>
+    </div>
   </div>
 {% endblock %}
