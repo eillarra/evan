@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from evan.site import views
+from .urls_custom import custom_patterns
 
 
 # fmt: off
@@ -53,6 +54,8 @@ urlpatterns = [
     path("terms/", flatpage, {"url": "/terms/"}, name="terms"),
     path("done/", TemplateView.as_view(template_name="pages/done.html"), name="done"),
     path("", TemplateView.as_view(template_name="pages/homepage.html"), name="homepage"),
+    # Custom endpoints
+    path("c/", include(custom_patterns, namespace="_custom")),
     # Files
     re_path(
         r"media/private/(?P<content_type>\d+)/(?P<object_id>\d+)/(?P<filename>[\w.-]+)",
