@@ -1,9 +1,11 @@
 import os
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.views.generic import View
 from mimetypes import guess_type
 
@@ -42,9 +44,8 @@ class PrivateFileView(SendfileView):
     Serves `private` files, checking basic permissions beforehand.
     """
 
+    @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_authenticated:
-            raise PermissionDenied
         if not self.get_object().content_object.files_viewable_by_user(self.request.user):
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
