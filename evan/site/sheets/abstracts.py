@@ -63,9 +63,9 @@ class AbstractsSheet(ModelExcelWriter):
 
             # Custom fields
 
-            if custom_fields:
-                custom_data = []
+            custom_data = []
 
+            if custom_fields:
                 for f in custom_fields:
                     v = obj.custom_data[f] if f in obj.custom_data else None
                     custom_data.append(json.dumps(v) if type(v) in {dict, list} else v)
