@@ -112,6 +112,9 @@ class Event(models.Model):
     def can_be_managed_by(self, user) -> bool:
         return user.is_staff or self.acl.filter(user_id=user.id, level__gte=Permission.ADMIN).exists()
 
+    def files_viewable_by_user(self, user) -> bool:
+        return self.editable_by_user(user) or self.registrations.filter(user_id=user.id).exists()
+
     def get_absolute_url(self) -> str:
         return reverse("event:app", args=[self.code])
 

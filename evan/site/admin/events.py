@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from evan.models import Event, Fee
+from .files import FilesInline
 from .permissions import PermissionsInline
 
 
@@ -33,6 +34,7 @@ class EventAdmin(admin.ModelAdmin):
     inlines = (
         FeesInline,
         PermissionsInline,
+        FilesInline,
     )
 
     def get_queryset(self, request):
