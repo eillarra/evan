@@ -29,4 +29,4 @@ class AbstractCreatedEmail(AbstractEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Your abstract submission / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Your abstract submission / {obj.uuid}"

@@ -37,7 +37,7 @@ class RegistrationCreatedEmail(RegistrationEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Your registration / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Your registration / {obj.uuid}"
 
 
 class RegistrationProfileReminderEmail(RegistrationEmail):
@@ -45,7 +45,7 @@ class RegistrationProfileReminderEmail(RegistrationEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Please update your profile / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Please update your profile / {obj.uuid}"
 
 
 class RegistrationReminderEmail(RegistrationEmail):
@@ -53,7 +53,7 @@ class RegistrationReminderEmail(RegistrationEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Please update your registration / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Please update your registration / {obj.uuid}"
 
 
 class DelegatedPaymentEmail(RegistrationEmail):
@@ -61,7 +61,7 @@ class DelegatedPaymentEmail(RegistrationEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Payment link / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Payment link / {obj.uuid}"
 
 
 class PaymentReminderEmail(RegistrationEmail):
@@ -69,7 +69,7 @@ class PaymentReminderEmail(RegistrationEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Payment reminder / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Payment reminder / {obj.uuid}"
 
 
 class VisaReminderEmail(RegistrationEmail):
@@ -77,4 +77,4 @@ class VisaReminderEmail(RegistrationEmail):
 
     @staticmethod
     def get_subject(obj) -> str:
-        return f"[{obj.event.hashtag}] Your visa application / {obj.uuid}"
+        return f"[#{obj.event.hashtag}] Your visa application / {obj.uuid}"
