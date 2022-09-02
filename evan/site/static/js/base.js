@@ -51,6 +51,9 @@ var Evan = {
     }
   },
   map: {
+    none: function (obj) {
+      return obj;
+    },
     abstract: function (obj) {
       obj.user_name = [obj.user.first_name, obj.user.last_name].join(' ');
       obj.user_affiliation = (obj.user.profile.affiliation) ? obj.user.profile.affiliation : '-';
@@ -171,6 +174,7 @@ var Evan = {
       var qs = [];
       _.each(obj.custom_data, function (value, key) {
         if (_.isString(value)) qs.push(key + ':' + value);
+        if (_.isBoolean(value)) qs.push(key + ':' + ((value) ? 'yes' : 'no'));
       });
       obj._q += ' ' + qs.join(' ');
     }

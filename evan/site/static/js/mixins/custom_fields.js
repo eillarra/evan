@@ -4,7 +4,8 @@ var CustomFieldsMixin = {
       module: 'default',
       createUrl: null,
       fieldsetTarget: null,
-      obj: null
+      obj: null,
+      mapper: Evan.map.none
     };
   },
   computed: _.extend(
@@ -23,7 +24,7 @@ var CustomFieldsMixin = {
       if (this.target) {
         var target = this.target;
         return this.event.custom_fields[this.module].fieldsets.filter(function (fs) {
-          return fs.target.indexOf(target) !== -1;
+          return !fs.target || fs.target.indexOf(target) !== -1;
         });
       }
 
@@ -62,13 +63,13 @@ var CustomFieldsMixin = {
 
       if (_.has(obj, 'self')) {
         Evan.api.update(obj, function (res) {
-          self.obj = res.data;
+          self.obj = self.mapper(res.data);
         });
       } else {
         Evan.api.create(this.createUrl, obj, function (res) {
           window.history.pushState('', '', res.data.url + self.$route.href);
           window.scrollTo(0, 0);
-          self.obj = res.data;
+          self.obj = self.mapper(res.data);
         });
       }
     },
@@ -89,7 +90,7 @@ var CustomFieldsMixin = {
                 'text_list': [],
                 'single_choice': null,
                 'multiple_choice': [],
-                'checkbox': f.default
+                'checkbox': f.default || false
               }[f.type];
             }
           });

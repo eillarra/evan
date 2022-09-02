@@ -226,6 +226,7 @@
         return {
           module: 'registrations',
           createUrl: VARS.urlRegister,
+          mapper: Evan.map.registration,
           //
           dietaryOptions: EvanMetadata.getQuasarOptions('dietary'),
           now: moment(),
@@ -233,7 +234,7 @@
         };
       },
       computed: _.extend(
-        Vuex.mapState(['event', 'registration', 'firstDay']), {
+        Vuex.mapState(['event', 'registration', 'firstDay', 'user']), {
         target: function () {
           if (!this.obj) return null;
           return this.obj.fee_type;

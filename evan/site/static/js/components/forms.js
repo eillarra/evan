@@ -436,7 +436,8 @@ var EvanFormComponents = {
     emits: ['update:modelValue'],
     data: function () {
       return {
-        mutable: null
+        mutable: null,
+        requiredStar: ' <strong class="text-orange">*</strong>'
       };
     },
     props: {
@@ -458,7 +459,9 @@ var EvanFormComponents = {
         <h6 class="q-mb-md">{{ fieldset.title }}</h6>
         <div class="row q-col-gutter-md items-end">
           <div v-for="field in fieldset.fields" class="col-12" :class="field.class" v-show="!field.vary_on || mutable.custom_data[field.vary_on]">
-            <div v-if="field.text">{{ field.text }} <strong v-show="field.required" class="text-orange">*</strong></div>
+            <div v-if="field.text">
+              <marked :text="field.text + ((field.required) ? requiredStar : '')"></marked>
+            </div>
             <div v-if="field.type" :class="{'q-mt-md': field.text}">
 <!-- text -->
               <q-input v-if="field.type == 'text' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'text'" />
@@ -499,6 +502,12 @@ var EvanFormComponents = {
       }
     },
     watch: {
+      'modelValue': {
+        deep: true,
+        handler: function (val) {
+          this.mutable = val;
+        }
+      },
       'mutable': {
         deep: true,
         handler: function (val) {

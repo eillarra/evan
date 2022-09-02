@@ -5,6 +5,12 @@
     <div class="col-12 col-md-8">
       <q-card flat class="q-pa-lg full-height">
         <display-5>Abstract submission</display-5>
+
+        <div v-if="user" class="q-col-gutter-md row items-start q-mb-md">
+          <q-input filled dense v-model="user.first_name" label="First name" class="col-12 col-sm-4" readonly></q-input>
+          <q-input filled dense v-model="user.last_name" label="Last name" class="col-12 col-sm-8" readonly></q-input>
+        </div>
+
         <marked v-if="event.custom_data.abstracts.help" :text="event.custom_data.abstracts.help" />
 
         <div class="q-mt-lg q-gutter-md">
@@ -26,18 +32,23 @@
     </div>
 
     <div v-if="event.config.abstracts.uploader" class="col-12 col-md-4 q-gutter-lg">
-      <q-card v-if="obj.self" flat class="q-pa-lg">
+      <q-card v-if="obj.self" flat class="q-py-lg">
         <display-5>Files</display-5>
-        <evan-file-list :files="obj.files" />
+        <evan-file-list :files="obj.files" class="q-mb-lg" />
         <div class="rounded-borders" v-show="obj.files.length < event.config.abstracts.uploader.max_files">
           <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" :accept="event.config.abstracts.uploader.accept" :max-files="maxFiles" :max-file-size="maxFileSize" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" :label="event.config.abstracts.uploader.label" color="primary" class="full-width bg-grey-2" />
         </div>
+        <div v-if="event.config.abstracts.uploader.help" class="rounded-borders bg-blue-grey-1 q-pa-md q-mt-md text-body2">
+          <marked  :text="event.config.abstracts.uploader.help" />
+        </div>
       </q-card>
-      <q-card v-else flat class="q-pa-lg">
+
+      <q-card v-else flat class="q-py-lg">
         <display-5>Files</display-5>
-        <display-3>Please submit your abstract information before uploading a PDF file.</display-3>
+        <display-3>Please submit some basic information before uploading the related file<span v-if="event.config.abstracts.uploader.max_files && event.config.abstracts.uploader.max_files > 1">(s)</span>.</display-3>
       </q-card>
-      <q-card v-if="templateUrl" flat class="q-pa-lg">
+
+      <q-card v-if="templateUrl" flat class="q-py-lg">
         <q-list>
           <q-item clickable tag="a" :href="templateUrl" target="_blank" rel="noopener">
             <q-item-section avatar>

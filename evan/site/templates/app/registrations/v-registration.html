@@ -6,16 +6,21 @@
       <q-card flat class="q-pa-lg">
 
         <div v-if="obj.self">
-          <h5 class="q-mt-none q-mb-lg text-weight-bold">Your #{{ event.hashtag }} registration</h5>
+          <display-5>Your #{{ event.hashtag }} registration</display-5>
         </div>
         <div v-else>
-          <h5 class="q-mt-none q-mb-lg text-weight-bold">Register now for #{{ event.hashtag }}</h5>
+          <display-5>Register now for #{{ event.hashtag }}</display-5>
           <q-banner v-if="isEarly" rounded dense class="bg-grey-2 text-grey-8">
             Early registration deadline: {{ event.registrationEarlyDeadline }}
           </q-banner>
           <q-banner v-else rounded dense class="bg-grey-2 text-grey-8">
             Registration deadline: {{ event.registrationDeadline }}
           </q-banner>
+        </div>
+
+        <div v-if="user" class="q-col-gutter-md row items-start q-mb-md">
+          <q-input filled dense v-model="user.first_name" label="First name" class="col-12 col-sm-4" readonly></q-input>
+          <q-input filled dense v-model="user.last_name" label="Last name" class="col-12 col-sm-8" readonly></q-input>
         </div>
 
         <h6 class="q-mb-sm">Registration fee</h6>
@@ -84,43 +89,45 @@
       </q-card>
     </div>
 
-
-    <div v-if="obj.self" class="col-12 col-md-3 col-lg-4">
-
-      <q-list class="bg-grey-3 rounded-borders q-py-md q-px-sm">
-        <q-item>
-          <q-item-section>
-            <q-item-label>Registration ID</q-item-label>
-            <q-item-label caption>{{ obj.uuid }}</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item>
-          <q-item-section>
-            <q-item-label>Last updated</q-item-label>
-            <q-item-label caption>{{ obj.updated_at }}</q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-item>
-          <q-item-section>
-            <q-item-label>Total fee</q-item-label>
-            <q-item-label caption>{{ obj.base_fee }} EUR <span v-if="obj.extra_fees">+ {{ obj.extra_fees }} EUR</span></q-item-label>
-          </q-item-section>
-          <q-item-section side top class="q-mt-sm">
-            <q-badge v-if="obj.is_paid" label="PAID" color="positive" />
-            <q-badge v-else label="PENDING" color="dark" />
-          </q-item-section>
-        </q-item>
-        <q-item class="q-mt-lg">
-          <q-item-section>
-            <q-btn v-if="obj.is_paid" outline rounded no-caps icon="done_all" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url" />
-            <span v-else-if="event.allows_payments">
-              <q-btn v-if="!obj.invoice_requested" outline rounded no-caps icon="credit_card" color="primary" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url" />
-              <q-btn v-else disabled outline rounded no-caps icon="notes" color="dark" label="Invoice is being prepared" class="full-width" />
-            </span>
-            <q-btn v-else disabled outline rounded no-caps icon="credit_card_off" color="dark" label="Payments not active yet" class="full-width" />
-          </q-item-section>
-        </q-item>
-      </q-list>
+    <div v-if="obj.self" class="col-12 col-md-3 col-lg-4 q-gutter-lg">
+      <div class="q-py-lg">
+        <div class="rounded-borders bg-blue-grey-1 q-py-sm q-mt-md text-body2">
+          <q-list>
+            <q-item>
+              <q-item-section>
+                <q-item-label>Registration ID</q-item-label>
+                <q-item-label caption>{{ obj.uuid }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item>
+              <q-item-section>
+                <q-item-label>Last updated</q-item-label>
+                <q-item-label caption>{{ obj.updated_at }}</q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item>
+              <q-item-section>
+                <q-item-label>Total fee</q-item-label>
+                <q-item-label caption>{{ obj.base_fee }} EUR <span v-if="obj.extra_fees">+ {{ obj.extra_fees }} EUR</span></q-item-label>
+              </q-item-section>
+              <q-item-section side top class="q-mt-sm">
+                <q-badge v-if="obj.is_paid" label="PAID" color="positive" />
+                <q-badge v-else label="PENDING" color="dark" />
+              </q-item-section>
+            </q-item>
+            <q-item class="q-mt-lg">
+              <q-item-section>
+                <q-btn v-if="obj.is_paid" outline rounded no-caps icon="done_all" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url" />
+                <span v-else-if="event.allows_payments">
+                  <q-btn v-if="!obj.invoice_requested" outline rounded no-caps icon="credit_card" color="primary" label="Proceed with payment" class="full-width" type="a" :href="obj.payment_url" />
+                  <q-btn v-else disabled outline rounded no-caps icon="notes" color="dark" label="Invoice is being prepared" class="full-width" />
+                </span>
+                <q-btn v-else disabled outline rounded no-caps icon="credit_card_off" color="dark" label="Payments not active yet" class="full-width" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+      </div>
 
     </div>
 

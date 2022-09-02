@@ -61,7 +61,8 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     serializer_class = AbstractSerializer
 
     def get_serializer_class(self):
-        if self.get_object().event.can_be_managed_by(self.request.user):
+        abstract = self.get_object()
+        if abstract.user != self.request.user and abstract.event.can_be_managed_by(self.request.user):
             return ManagedAbstractSerializer
         return super().get_serializer_class()
 
