@@ -18,9 +18,10 @@
 
     <q-item clickable v-ripple tag="a" href="{% provider_login_url provider.id process=process scope=scope auth_params=auth_params %}" class="col-12 col-sm">
       <q-item-section avatar>
-        <socialaccount-provider provider="{{ provider.name }}"></socialaccount-provider>
+        <socialaccount-provider provider="{{ provider.id }}"></socialaccount-provider>
       </q-item-section>
-      <q-item-section>{{ provider.name }}</q-item-section>
+      <q-item-section>{% if provider.name == 'Microsoft Graph' %}UGent{% else %}{{ provider.name }}</q-item-section>
+      {% endif %}
     </q-item>
   {% endfor %}
 </q-list>

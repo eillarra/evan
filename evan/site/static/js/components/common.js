@@ -252,9 +252,9 @@ var EvanCommonComponents = {
     `
   },
 
-  'ugent-logo': {
+  'ugent-micro-logo': {
     template: `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 75.77 76.25"><path fill="#0077b5" d="M0 5.47C0 2.45 2.51 0 5.6 0h64.57c3.1 0 5.6 2.45 5.6 5.46v65.33c0 3.02-2.5 5.46-5.6 5.46H5.6c-3.09 0-5.6-2.44-5.6-5.46z"/><path fill="#fff" fill-rule="evenodd" d="M22.97 63.83V29.4H11.53v34.43zM17.25 24.7c3.99 0 6.47-2.64 6.47-5.95-.07-3.38-2.48-5.95-6.4-5.95-3.91 0-6.47 2.57-6.47 5.95 0 3.3 2.48 5.95 6.32 5.95zM29.3 63.83h11.45V44.6c0-1.03.07-2.05.37-2.79.83-2.05 2.71-4.18 5.87-4.18 4.15 0 5.8 3.15 5.8 7.78v18.42h11.45V44.09c0-10.58-5.65-15.5-13.18-15.5-6.17 0-8.88 3.45-10.39 5.8h.08V29.4H29.3c.15 3.23 0 34.43 0 34.43z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25.233 25.35"><path fill="#1e64c8" d="M12.197 9.822h1.479v9.608h-1.479zm-2.96 0h1.481v9.608H9.237Zm-2.96 0h1.479v9.608h-1.48Zm-2.96 0h1.48v9.608h-1.48Zm11.84 0h1.48v9.608h-1.48zm2.96 0h1.48v9.608h-1.478zm2.96 0h1.48v9.608h-1.48ZM1.801 20.912h22.273v1.48H1.8ZM22.556 8.34H3.316L1.839 6.86h22.2l-1.482 1.482M.322 23.869h25.23v1.481H.32Zm25.23-19.402L12.939 0 .32 4.467V6.04l12.613-4.467L25.551 6.04V4.467" /></svg>
     `
   },
 
@@ -274,7 +274,10 @@ var EvanCommonComponents = {
     `,
     computed: {
       comp: function () {
-        return this.provider.toLowerCase() + '-logo';
+        var provider = this.provider.toLowerCase();
+        if (provider == 'microsoft') { provider = 'ugent-micro' };
+        if (provider == 'linkedin_oauth2') { provider = 'linkedin' };
+        return provider + '-logo';
       }
     }
   },

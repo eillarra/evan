@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.github",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.linkedin_oauth2",
-    # 'allauth.socialaccount.providers.twitter',
+    "allauth.socialaccount.providers.microsoft",
     # evan
     "corsheaders",
     "rest_framework",
@@ -167,6 +167,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": ["r_emailaddress", "r_liteprofile"],
         "PROFILE_FIELDS": ["id", "firstName", "lastName", "emailAddress"],
     },
+    "microsoft": {"TENANT": "organizations"},
 }
 
 

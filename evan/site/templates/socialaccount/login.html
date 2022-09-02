@@ -1,0 +1,29 @@
+{% extends 'account/base.html' %}
+
+{% load compress %}
+
+
+{% block head_title %}Thrid party account sign in - {{ block.super }}{% endblock %}
+
+{% block content %}
+  {% if process == 'connect' %}
+    <display-5>Connect with {% if provider.name == 'Microsoft Graph' %}UGent login{% else %}{{ provider.name }}{% endif %}</display-5>
+    <p>You are about to connect a new third party account from {% if provider.name == 'Microsoft Graph' %}UGent{% else %}{{ provider.name }}{% endif %}.</p>
+  {% else %}
+    <display-5>Sign in via {% if provider.name == 'Microsoft Graph' %}UGent login{% else %}{{ provider.name }}{% endif %}</display-5>
+    <p>You are about to sign in using a third party account from {% if provider.name == 'Microsoft Graph' %}UGent{% else %}{{ provider.name }}{% endif %}.</p>
+  {% endif %}
+
+  <django-form action="" btn-text="Continue" class="q-mb-lg"></django-form>
+{% endblock %}
+
+{% block scripts %}
+{% compress js inline %}
+  <script type="text/javascript">
+    var app = Vue.createApp({});
+    Evan.utils.registerComponents(app, [DjangoComponents, EvanCommonComponents]);
+    app.use(Quasar);
+    app.mount('#vue');
+  </script>
+{% endcompress %}
+{% endblock %}
