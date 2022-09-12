@@ -458,7 +458,7 @@ var EvanFormComponents = {
       <div v-if="mutable" v-for="fieldset in fieldsets" class="q-mt-lg">
         <h6 class="q-mb-md">{{ fieldset.title }}</h6>
         <div class="row q-col-gutter-md items-end">
-          <div v-for="field in fieldset.fields" class="col-12" :class="field.class" v-show="!field.vary_on || mutable.custom_data[field.vary_on]">
+          <div v-for="field in fieldset.fields" class="col-12" :class="field.class" v-show="!field.show_if_in || (field.show_if_in && field.show_if_in[1].indexOf(mutable.custom_data[field.show_if_in[0]]) > -1)">
             <div v-if="field.text">
               <marked :text="field.text + ((field.required) ? requiredStar : '')"></marked>
             </div>
