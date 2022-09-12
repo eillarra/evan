@@ -16,7 +16,7 @@
         <div class="q-mt-lg q-gutter-md">
           <q-input filled dense v-model="obj.title" label="Title *" />
           <q-input filled dense v-model="obj.authors" label="Authors *" autogrow />
-          <q-input filled dense v-model="obj.abstract" type="textarea" label="Short abstract *" :rules="(event.custom_data.abstracts.abstract_max_length) ? [txt => txt.length <= event.custom_data.abstracts.abstract_max_length || 'Please use maximum ' + event.custom_data.abstracts.abstract_max_length + ' characters'] : null" />
+          <q-input filled dense v-model="obj.abstract" type="textarea" label="Short abstract *" :rules="[txt => (txt.split(/\s+/).length >= minWords && txt.split(/\s+/).length <= maxWords) || 'Please use between ' + minWords + ' and ' + maxWords + ' words.']" />
           <evan-custom-fieldsets v-model="obj" :fieldsets="fieldsets" :event="event" />
         </div>
 
@@ -39,7 +39,7 @@
           <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" :accept="event.config.abstracts.uploader.accept" :max-files="maxFiles" :max-file-size="maxFileSize" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" :label="event.config.abstracts.uploader.label" color="primary" class="full-width bg-grey-2" />
         </div>
         <div v-if="event.config.abstracts.uploader.help" class="rounded-borders bg-blue-grey-1 q-pa-md q-mt-md text-body2">
-          <marked  :text="event.config.abstracts.uploader.help" />
+          <marked :text="event.config.abstracts.uploader.help" />
         </div>
       </q-card>
 

@@ -132,7 +132,7 @@
         },
         formIsValid: function () {
           if (!this.obj || !this.event) return false;
-          if (this.event.custom_data.abstracts.abstract_max_length && this.obj.abstract.length > this.event.custom_data.abstracts.abstract_max_length) return false;
+          if (this.obj.abstract.split(/\s+/).length < this.minWords || this.obj.abstract.split(/\s+/).length > this.maxWords) return false;
           return this.obj.title && this.obj.authors && this.obj.abstract && this.customFormIsValid;
         },
         maxFiles: function () {
@@ -140,6 +140,16 @@
         },
         maxFileSize: function () {
           return this.event.config.abstracts.uploader.max_file_size * 1024 || 0;  // TODO: Quasar Uploader bug
+        },
+        maxWords: function () {
+          if (this.event.custom_data.abstracts.abstract_max_words > 100) {
+            return this.event.custom_data.abstracts.abstract_max_words;
+          } else {
+            return 100;
+          }
+        },
+        minWords: function () {
+          return this.event.custom_data.abstracts.abstract_min_words || 10;
         }
       }),
       methods: {

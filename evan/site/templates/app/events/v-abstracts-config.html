@@ -27,7 +27,10 @@
               <q-uploader ref="uploader" flat auto-upload :factory="uploaderFactory" :max-files="1" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" color="blue-grey" class="full-width bg-grey-2" />
             </div>
             <q-input filled dense v-model="event.custom_data.abstracts.help" type="textarea" label="Form introduction"></q-input>
-            <q-input filled dense v-model.number="event.custom_data.abstracts.abstract_max_length" type="number" label="Max characters abstract field"></q-input>
+            <div class="row q-pl-md q-col-gutter-x-md">
+              <q-input filled dense v-model.number="event.custom_data.abstracts.abstract_min_words" type="number" label="Min words abstract field" class="col-6 q-pb-none" :rules="[val => +val >= 10 || 'Minimum of 10 words.']"></q-input>
+              <q-input filled dense v-model.number="event.custom_data.abstracts.abstract_max_words" type="number" label="Max words abstract field" class="col-6 q-pb-none" :rules="[val => +val >= 100 || 'Minimum of 100 words.']"></q-input>
+            </div>
             <evan-datepicker v-model="event.custom_data.abstracts.submission_start_date" label="Submission start date" :allow-null="true"></evan-datepicker>
             <evan-datepicker v-model="event.custom_data.abstracts.submission_deadline" label="Submission deadline" :allow-null="true" :with-time="true"></evan-datepicker>
           </div>
