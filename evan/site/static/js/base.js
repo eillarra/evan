@@ -63,7 +63,7 @@ var Evan = {
         obj.reviewers = obj.reviews.length;
         obj.reviews.map(function (r) {
           try {
-            r.score = _.values(r.custom_data.reviews).reduce(function (a, b) { return a + b; }, null);
+            r.score = _.values(r.custom_data.ratings).reduce(function (a, b) { return a + b; }, null);
           } catch (e) {
             r.score = null;
           }
@@ -108,6 +108,14 @@ var Evan = {
         return moment(a.start_date) - moment(b.start_date);
       });
 
+      if (_.has(obj.custom_data, 'abstracts')) {
+        try {
+          obj.custom_data.abstracts.reviewers = _.sortBy(obj.custom_data.abstracts.reviewers, 'name');
+        } catch (e) {
+          obj.custom_data.abstracts.reviewers = [];
+        }
+      }
+
       _.each(obj.sessions, function (s) {
         sessionMap(s);
       });
@@ -151,6 +159,19 @@ var Evan = {
         ['visa.requested', 'visa_requested'],
         ['visa.sent', 'visa_sent'],
       ]);
+
+      return obj;
+    },
+    review: function (obj) {
+      obj.abstract = this.abstract(obj.abstract);
+
+      if (obj.custom_data.ratings) {
+        obj.is_reviewed = !_.isEmpty(obj.custom_data.ratings);
+        obj.score = _.values(obj.custom_data.ratings).reduce(function (a, b) { return a + b; }, null);
+      } else {
+        obj.is_reviewed = false;
+        obj.score = null;
+      }
 
       return obj;
     },

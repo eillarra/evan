@@ -49,63 +49,23 @@
       </q-table>
 
       <evan-editor size="lg" position="standard" :obj="tmpObj">
+
+        <template v-slot:header>
+          <q-tabs v-model="tmpTab" align="left" active-color="primary" indicator-color="primary" class="text-grey-6 q-pt-md q-pl-lg">
+              <q-tab name="main" label="Overview" />
+              <q-tab name="abstract" label="Abstract" />
+              <q-tab name="reviews" label="Reviews" />
+          </q-tabs>
+          <q-separator></q-separator>
+        </template>
+
         <q-list dense>
           <q-item>
-            <q-item-section avatar><q-icon name="tag" /></q-item-section>
-            <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
-          </q-item>
-          <q-separator inset="item"></q-separator>
-          <q-item>
-            <q-item-section avatar><q-icon name="schedule" /></q-item-section>
-            <q-item-section>{{ tmpObj.date }}</q-item-section>
-          </q-item>
-          <q-separator inset="item"></q-separator>
-          <q-item>
-            <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
-            <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
-            <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
-              <q-icon :name="tmpObj.user.profile.custom_data.gender" size="14px" />
-            </q-item-section>
-          </q-item>
-          <q-separator inset="item"></q-separator>
-          <q-item>
-            <q-item-section avatar><q-icon name="email" /></q-item-section>
-            <q-item-section>{{ tmpObj.user.email }}</q-item-section>
-            <q-item-section side>
-              <evan-copy-icon :text="tmpObj.user.email" size="14px" />
-            </q-item-section>
-          </q-item>
-          <q-separator inset="item"></q-separator>
-          <q-item>
-            <q-item-section avatar><q-icon name="business" /></q-item-section>
-            <q-item-section>{{ tmpObj.user_affiliation }}</q-item-section>
-          </q-item>
-          <q-separator v-if="tmpObj.user.profile.country" inset="item" />
-          <q-item v-if="tmpObj.user.profile.country">
-            <q-item-section avatar>
-              <country-flag :code="tmpObj.user.profile.country.code"></country-flag>
-            </q-item-section>
-            <q-item-section>{{ tmpObj.user.profile.country.name }}</q-item-section>
-          </q-item>
-          <q-separator inset="item" class="q-mb-lg"></q-separator>
-          <q-item>
-            <q-item-section avatar><q-icon name="description" /></q-item-section>
+            <q-item-section avatar><q-icon name="title" /></q-item-section>
             <q-item-section>
-              <p class="text-serif q-mb-sm text-body2">
-                <em>{{ tmpObj.title }}</em><br>
-                <small>{{ tmpObj.authors }}</small>
-              </p>
-              <marked :text="tmpObj.abstract" class="text-caption"></marked>
-              <p class="text-caption q-mt-sm q-mb-none text-grey-8">
-                <template v-for="tag in tmpObj._tags" class="q-pr-md">#{{ tag }} &nbsp;&nbsp; </template>
-              </p>
-            </q-item-section>
-            <q-item-section side v-if="tmpObj.files && tmpObj.files.length">
-              <q-btn dense flat icon="launch" type="a" :href="tmpObj.files[0].url" target="_blank" rel="noopener" />
+              <q-item-label class="ellipsis">{{ tmpObj.title }}</q-item-label>
             </q-item-section>
           </q-item>
-        </q-list>
-        <q-list dense class="q-mt-lg">
           <q-separator inset="item"></q-separator>
           <q-item>
             <q-item-section avatar><q-icon :name="(tmpObj.is_accepted) ? 'check_circle_outline' : 'help_outline'" /></q-item-section>
@@ -113,34 +73,140 @@
               <q-item-label>Status: <strong v-if="tmpObj.is_accepted" class="text-positive">accepted</strong>
                 <strong v-else>not accepted</strong></q-item-label>
             </q-item-section>
-            <q-item-section side>
-              <q-btn @click="toggleStatus(tmpObj)" dense flat :icon="(tmpObj.is_accepted) ? 'thumb_down' : 'thumb_up'" color="primary" />
+          </q-item>
+          <q-separator inset="item"></q-separator>
+          <q-item>
+            <q-item-section avatar><q-icon name="label_important_outline" /></q-item-section>
+            <q-item-section>
+              <q-item-label><q-badge v-for="tag in tmpObj._tags" rounded outline color="dark" class="q-mr-sm">{{ tag }}</q-badge></q-item-label>
             </q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
-          <q-item class="q-mt-sm">
-            <q-item-section avatar top><q-icon name="how_to_reg" class="q-mt-sm" /></q-item-section>
-            <q-item-section>
-              <q-select dense filled counter v-model="reviewers" :options="filteredReviewers" option-value="id" option-label="name" emit-value map-options hint="Reviewers" multiple use-chips :max-values="event.custom_data.abstracts.max_reviewers">
-                <template v-slot:selected-item="scope">
-                  <q-chip
-                    removable
-                    dense
-                    @remove="scope.removeAtIndex(scope.index)"
-                    :tabindex="scope.tabindex"
-                    class="q-ma-none q-mr-sm"
-                  >
-                    <q-avatar :color="(reviewerIdsWithScore.indexOf(scope.opt.id) > -1) ? 'positive' : 'orange'" text-color="white" :icon="(reviewerIdsWithScore.indexOf(scope.opt.id) > -1) ? 'check' : 'priority_high'" />
-                    <span class="q-px-xs">{{ scope.opt.name }}</span>
-                  </q-chip>
-                </template>
-              </q-select>
-            </q-item-section>
-            <q-item-section side top>
-              <q-btn @click="saveReviewers(tmpObj.id)" dense flat icon="save" color="primary" class="q-mt-xs" />
-            </q-item-section>
-          </q-item>
         </q-list>
+
+        <q-tab-panels v-model="tmpTab">
+
+          <q-tab-panel name="main" class="q-pa-none">
+            <q-list dense>
+              <q-item>
+                <q-item-section avatar><q-icon name="tag" /></q-item-section>
+                <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
+              </q-item>
+              <q-separator inset="item"></q-separator>
+              <q-item>
+                <q-item-section avatar><q-icon name="schedule" /></q-item-section>
+                <q-item-section>{{ tmpObj.date }}</q-item-section>
+              </q-item>
+              <q-separator inset="item"></q-separator>
+              <q-item>
+                <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
+                <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
+                <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
+                  <q-icon :name="tmpObj.user.profile.custom_data.gender" size="14px" />
+                </q-item-section>
+              </q-item>
+              <q-separator inset="item"></q-separator>
+              <q-item>
+                <q-item-section avatar><q-icon name="mail_outline" /></q-item-section>
+                <q-item-section>{{ tmpObj.user.email }}</q-item-section>
+                <q-item-section side>
+                  <evan-copy-icon :text="tmpObj.user.email" size="14px" />
+                </q-item-section>
+              </q-item>
+              <q-separator inset="item"></q-separator>
+              <q-item>
+                <q-item-section avatar><q-icon name="business" /></q-item-section>
+                <q-item-section>{{ tmpObj.user_affiliation }}</q-item-section>
+              </q-item>
+              <q-separator v-if="tmpObj.user.profile.country" inset="item" />
+              <q-item v-if="tmpObj.user.profile.country">
+                <q-item-section avatar>
+                  <country-flag :code="tmpObj.user.profile.country.code"></country-flag>
+                </q-item-section>
+                <q-item-section>{{ tmpObj.user.profile.country.name }}</q-item-section>
+              </q-item>
+            </q-list>
+          </q-tab-panel>
+
+          <q-tab-panel name="abstract" class="q-pa-none">
+            <q-list dense>
+              <template v-for="file in tmpObj.files">
+                <q-item>
+                  <q-item-section avatar><q-icon name="attachment" /></q-item-section>
+                  <q-item-section class="ellipsis"><a :href="file.url" target="_blank" rel="noopener" class="inherit">{{ file.url }}</a></q-item-section>
+                  <q-item-section side>
+                    <evan-copy-icon :text="file.url" size="14px" />
+                  </q-item-section>
+                </q-item>
+                <q-separator inset="item"></q-separator>
+              </template>
+              <q-item class="q-mb-md">
+                <q-item-section avatar><q-icon name="notes" /></q-item-section>
+                <q-item-section class="q-pt-md">
+                  <p class="text-serif text-body2 q-mb-xs"><em>{{ tmpObj.title }}</em></p>
+                  <p class="text-serif text-sm q-mb-md">{{ tmpObj.authors }}</p>
+                  <marked :text="tmpObj.abstract" class="text-caption" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-tab-panel>
+
+          <q-tab-panel name="reviews" class="q-pa-none">
+            <q-list dense>
+              <q-item class="q-my-sm">
+                <q-item-section avatar top><q-icon name="how_to_reg" class="q-mt-sm" /></q-item-section>
+                <q-item-section>
+                  <q-select dense filled counter v-model="reviewers" :options="filteredReviewers" option-value="id" option-label="name" emit-value map-options hint="Reviewers" multiple use-chips :max-values="event.custom_data.abstracts.max_reviewers">
+                    <template v-slot:selected-item="scope">
+                      <q-chip
+                        removable
+                        dense
+                        @remove="scope.removeAtIndex(scope.index)"
+                        :tabindex="scope.tabindex"
+                        class="q-ma-none q-mr-sm"
+                      >
+                        <q-avatar :color="(reviewerIdsWithScore.indexOf(scope.opt.id) > -1) ? 'positive' : 'orange'" text-color="white" :icon="(reviewerIdsWithScore.indexOf(scope.opt.id) > -1) ? 'check' : 'priority_high'" />
+                        <span class="q-px-xs">{{ scope.opt.name }}</span>
+                      </q-chip>
+                    </template>
+                  </q-select>
+                </q-item-section>
+              </q-item>
+              <template v-for="review in reviews">
+                <q-separator inset="item"></q-separator>
+                <q-item class="q-mb-md">
+                  <q-item-section avatar class="q-pt-sm">
+                    <q-icon v-if="!review.ratings.length" name="error_outline"></q-icon>
+                    <q-icon v-else name="chat_bubble_outline" />
+                  </q-item-section>
+                  <q-item-section class="q-pt-md">
+                    <strong class="q-mr-lg">{{review.reviewer_name }}</strong>
+                    <div class="q-gutter-xs q-mt-sm">
+                      <q-chip v-for="rating in review.ratings" size="sm">
+                        <q-avatar :color="'blue-' + ((rating[1] * 2) - 1)" text-color="white">{{ rating[1] }}</q-avatar>
+                        <span>{{ rating[0] }}</span>
+                      </q-chip>
+                    </div>
+                    <div v-if="review.evaluation">
+                      <h6 class="q-my-md text-grey-8 text-underline">Internal evaluation</h6>
+                      <marked :text="review.evaluation" class="text-caption q-mt-md" />
+                    </div>
+                    <div v-if="review.comments">
+                      <h6 class="q-my-md text-grey-8 text-underline">General comments</h6>
+                      <marked v-if="review.comments" :text="review.comments" class="text-caption q-mt-md" />
+                    </div>
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-list>
+          </q-tab-panel>
+
+        </q-tab-panels>
+
+        <template v-slot:buttons>
+          <q-btn unelevated v-show="tmpTab == 'reviews'" @click="saveReviewers(tmpObj.id)" label="Update reviewers" color="primary" class="q-px-md" />
+          <q-btn @click="toggleStatus(tmpObj)" unelevated :label="(tmpObj.is_accepted) ? 'Reset status' : 'Accept'" :color="(tmpObj.is_accepted) ? 'grey-8' : 'primary'" class="q-px-md" />
+        </template>
       </evan-editor>
 
     </q-card>

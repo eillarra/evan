@@ -71,15 +71,7 @@
           var self = this;
           Evan.api.request('get', VARS.urlReviews).then(function (res) {
             state.reviews = Object.freeze(res.data.map(function (obj) {
-              obj.abstract = Evan.map.abstract(obj.abstract);
-              if (obj.custom_data.reviews) {
-                obj.is_reviewed = !_.isEmpty(obj.custom_data.reviews);
-                obj.score = _.values(obj.custom_data.reviews).reduce(function (a, b) { return a + b; }, null);
-              } else {
-                obj.is_reviewed = false;
-                obj.score = null;
-              }
-              return obj;
+              return Evan.map.review(obj);
             }));
           });
         }
@@ -155,12 +147,12 @@
           var tmp = JSON.parse(JSON.stringify(obj));
 
           try {
-            if (!_.has(tmp.custom_data, 'reviews')) {
-              tmp.custom_data.reviews = {};
+            if (!_.has(tmp.custom_data, 'ratings')) {
+              tmp.custom_data.ratings = {};
             }
             _.each(this.event.custom_data.abstracts.review_criteria, function (crit) {
-              if (!_.has(tmp.custom_data.reviews, crit)) {
-                tmp.custom_data.reviews[crit] = 0;
+              if (!_.has(tmp.custom_data.ratings, crit)) {
+                tmp.custom_data.ratings[crit] = 0;
               }
             });
           } catch (e) {

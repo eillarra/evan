@@ -35,15 +35,18 @@ var EvanFormComponents = {
     template: `
       <q-dialog :position="position" v-model="showDialog" @show="dialogVisible = true">
         <q-card v-if="obj" style="max-width: 95vw;" :style="{'width': sizePx}">
-          <q-card-section class="scroll q-px-lg q-py-xl" style="min-height: 250px; max-height: 75vh;">
+          <slot name="header"></slot>
+          <q-card-section class="scroll q-pa-lg" style="min-height: 200px; max-height: 75vh;">
             <slot></slot>
           </q-card-section>
           <q-separator />
           <q-card-actions align="right" class="q-py-md q-px-lg">
             <q-btn flat v-close-popup label="Close" color="grey-8" />
             <q-space />
-            <q-btn v-if="saveEventName" unelevated @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
-            <q-btn v-if="externalUrl" unelevated type="a" :href="externalUrl" label="View" color="primary" class="q-px-md" />
+            <slot name="buttons">
+              <q-btn v-if="saveEventName" unelevated @click="save" :label="(objKey in obj) ? 'Update' : 'Create'" color="primary" class="q-px-md" />
+              <q-btn v-if="externalUrl" unelevated type="a" :href="externalUrl" label="View" color="primary" class="q-px-md" />
+            </slot>
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -53,7 +56,7 @@ var EvanFormComponents = {
         return {
           'sm': '400px',
           'md': '550px',
-          'lg': '900px'
+          'lg': '800px'
         }[this.size] || '400px';
       },
       showDialog: {

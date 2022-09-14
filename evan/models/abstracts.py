@@ -86,6 +86,8 @@ class AbstractReview(models.Model):
     abstract = models.ForeignKey(Abstract, related_name="reviews", on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), related_name="abstract_reviews", on_delete=models.SET_NULL, null=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=ASSIGNED)
+    evaluation = models.TextField(null=True)
+    comments = models.TextField(null=True, help_text="These can be shared with the applicant.")
 
     custom_data = models.JSONField(default=dict)
 

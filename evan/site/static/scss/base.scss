@@ -93,14 +93,22 @@ a {
   }
 }
 
-.text-serif {
-  font-family: Georgia, 'Times New Roman', Times, serif;
-}
-
 code, kbd, pre, samp,
 .text-mono {
   font-family: 'IBM Plex Mono', monospace;
   font-weight: 400;
+}
+
+.text-serif {
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.text-underline {
+  text-decoration: underline;
+}
+
+.text-sm {
+  font-size: smaller;
 }
 
 .q-field.text-mono {
@@ -137,6 +145,11 @@ code, kbd, pre, samp,
 
 .q-field__messages {
   line-height: 1.2;
+}
+
+.q-card__actions .q-btn {
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .evan-ma-none {

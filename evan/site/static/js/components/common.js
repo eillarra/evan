@@ -115,7 +115,7 @@ var EvanCommonComponents = {
         default: ''
       }
     },
-    template: '<div class="marked" v-html="compiledText"></div>',
+    template: '<div v-if="compiledText" class="marked" v-html="compiledText"></div>',
     computed: {
       compiledText: function () {
         if (!this.text || this.text == '') return this.text;

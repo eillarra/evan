@@ -363,6 +363,18 @@
           } catch (e) {
             return [];
           }
+        },
+        reviews: function () {
+          if (!this.event || !this.tmpObj) return {};
+          var reviewerMap = _.indexBy(this.event.custom_data.abstracts.reviewers, 'id');
+
+          return _.sortBy(this.tmpObj.reviews.map(function (obj) {
+            obj.ratings = _.pairs(obj.custom_data.ratings).sort(function (a, b) {
+              return Evan.utils.sortText(a[0], b[0]);
+            });
+            obj.reviewer_name = reviewerMap[obj.user].name;
+            return obj;
+          }), 'reviewer_name');
         }
       }),
       methods: {

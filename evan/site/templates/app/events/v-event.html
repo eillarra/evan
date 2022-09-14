@@ -46,7 +46,7 @@
                 <span v-if="event.is_virtual"><q-icon name="devices" class="q-mr-sm" />Virtual event</span>
                 <span v-else><q-icon name="place" class="q-mr-sm" />{{ event.city }}, {{ event.country.name }}</span>
               </p>
-              <marked :text="event.presentation"></marked>
+              <marked :text="event.presentation" />
             </q-card-section>
             <q-separator inset />
             <q-card-section>
