@@ -17,21 +17,28 @@ class ModelExcelWriter:
     def __init__(self, *, queryset, filename: str):
         self.queryset = queryset
         self.filename = filename
+        self.workbook = None
 
     def get_sheets(self) -> List[Dict]:
         raise NotImplementedError
 
+    def set_custom_styles(self) -> None:
+        pass
+
     @property
     def response(self) -> ExcelResponse:
-        wb = Workbook(write_only=True)
+        self.workbook = Workbook()
+        del self.workbook["Sheet"]
 
         for sheet in self.get_sheets():
-            ws = wb.create_sheet(title=sheet["title"])
+            ws = self.workbook.create_sheet(title=sheet["title"])
             for entry in sheet["data"]:
                 ws.append(entry)
 
+        self.set_custom_styles()
+
         with NamedTemporaryFile() as tmp:
-            wb.save(tmp.name)
+            self.workbook.save(tmp.name)
             tmp.seek(0)
             stream = tmp.read()
 
