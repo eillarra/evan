@@ -165,7 +165,7 @@
       }),
       methods: {
         openUrl: function (e, row) {
-          Quasar.openURL(row.url);
+          window.location.replace(row.url);
         }
       }
     };
@@ -228,12 +228,7 @@
             return obj;
           });
         }
-      }),
-      methods: {
-        openUrl: function (e, row) {
-          Quasar.openURL(row.url);
-        }
-      }
+      })
     };
 
     var Router = VueRouter.createRouter({
