@@ -23,6 +23,8 @@
           <q-input filled dense v-model="user.last_name" label="Last name" class="col-12 col-sm-8" readonly></q-input>
         </div>
 
+        <marked v-if="event.custom_fields.registrations.help" :text="event.custom_fields.registrations.help" />
+
         <h6 class="q-mb-sm">Registration fee</h6>
         <p>Please select the appropriate fee. <span v-show="fees.length > 1">Students might be required to present some kind of identification. </span><strong class="text-orange">*</strong></p>
 

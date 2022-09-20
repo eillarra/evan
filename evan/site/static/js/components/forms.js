@@ -467,7 +467,14 @@ var EvanFormComponents = {
             </div>
             <div v-if="field.type" :class="{'q-mt-md': field.text}">
 <!-- text -->
-              <q-input v-if="field.type == 'text' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'text'" />
+              <q-input v-if="field.type == 'text' || field.type == 'textarea' || field.type == 'email'" v-model="mutable.custom_data[field.id]" :type="field.type" filled dense :autogrow="field.type == 'textarea'" :bottom-slots="(field.min_words && field.min_words > 0) || (field.max_words && field.max_words > 0)">
+                <template v-if="(field.min_words && field.min_words > 0) || (field.max_words && field.max_words > 0)" v-slot:hint>
+                  <div>
+                    <span v-if="field.min_words">Min. words: {{ field.min_words }}<span v-if="field.max_words"> / </span></span>
+                    <span v-if="field.max_words">Max. words: {{ field.max_words }}</span>
+                  </div>
+                </template>
+              </q-input>
 <!-- text_list -->
               <evan-text-list v-else-if="field.type == 'text_list'" v-model="mutable.custom_data[field.id]" :fields="field.fields" :limit="field.limit" />
 <!-- single_choice || multiple_choice || variable_choice -->

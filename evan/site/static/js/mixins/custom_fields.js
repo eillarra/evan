@@ -40,6 +40,8 @@ var CustomFieldsMixin = {
             if (
               (f.required && (!_.has(obj.custom_data, f.id) || _.isEmpty(obj.custom_data[f.id])))
               || (f.mandatory && _.has(obj.custom_data, f.id) && obj.custom_data[f.id] === false)
+              || (f.min_words && f.min_words > 0 && _.has(obj.custom_data, f.id) && obj.custom_data[f.id].split(/\s+/).length < f.min_words)
+              || (f.max_words && f.max_words > 0 && _.has(obj.custom_data, f.id) && obj.custom_data[f.id].split(/\s+/).length > f.max_words)
             ) {
               errors.push(true);
             }
@@ -86,7 +88,9 @@ var CustomFieldsMixin = {
           _.each(fieldset.fields, function (f) {
             if (!_.has(self.obj.custom_data, f.id)) {
               self.obj.custom_data[f.id] = {
-                'text': null,
+                'email': null,
+                'text': "",
+                'textarea': "",
                 'text_list': [],
                 'single_choice': null,
                 'multiple_choice': [],
