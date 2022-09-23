@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400&&amp;display=swap" rel="stylesheet">
     {% block styles %}
       {% compress css file base %}
-        <link href="{% static 'vendor/quasar@2.1.0/quasar.prod.css' %}" type="text/css" rel="stylesheet">
+        <link href="{% static 'vendor/quasar@2.8.4/quasar.prod.css' %}" type="text/css" rel="stylesheet">
         <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
         <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
       {% endcompress %}
@@ -90,25 +90,25 @@
       <script src="{% static 'js/sentry.js' %}"></script>
     {% endif %}
     {% compress js file helpers %}
-      <script src="{% static 'vendor/axios@0.21.4/axios.min.js' %}"></script>
+      <script src="{% static 'vendor/axios@0.27.2/axios.min.js' %}"></script>
       <script src="{% static 'vendor/commonmark@0.30.0/commonmark.min.js' %}"></script>
-      <script src="{% static 'vendor/moment@2.29.1/moment.min.js' %}"></script>
+      <script src="{% static 'vendor/moment@2.29.4/moment.min.js' %}"></script>
       <script src="{% static 'vendor/moment-range@4.0.2/moment-range.min.js' %}"></script>
-      <script src="{% static 'vendor/slugify@1.6.0/slugify.js' %}"></script>
+      <script src="{% static 'vendor/slugify@1.6.5/slugify.js' %}"></script>
       <script src="{% static 'vendor/tiny-emitter@2.1.0/tinyemitter.min.js' %}"></script>
-      <script src="{% static 'vendor/underscore@1.13.1/underscore.umd.min.js' %}"></script>
+      <script src="{% static 'vendor/underscore@1.13.4/underscore.umd.min.js' %}"></script>
     {% endcompress %}
     {% compress js file vue %}
       {% if debug %}
-        <script src="{% static 'vendor/vue@3.2.12/vue.global.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.2.39/vue.global.js' %}"></script>
         <script src="{% static 'vendor/vuex@4.0.2/vuex.global.js' %}"></script>
-        <script src="{% static 'vendor/vue-router@4.0.11/vue-router.global.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.1.0/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/vue-router@4.1.5/vue-router.global.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.8.4/quasar.umd.js' %}"></script>
       {% else %}
-        <script src="{% static 'vendor/vue@3.2.12/vue.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.2.39/vue.global.prod.js' %}"></script>
         <script src="{% static 'vendor/vuex@4.0.2/vuex.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/vue-router@4.0.11/vue-router.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.1.0/quasar.umd.prod.js' %}"></script>
+        <script src="{% static 'vendor/vue-router@4.1.5/vue-router.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.8.4/quasar.umd.prod.js' %}"></script>
       {%endif %}
     {% endcompress %}
     {% compress js file evan %}
