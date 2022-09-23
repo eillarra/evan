@@ -8,10 +8,10 @@
       <h3 class="q-my-xl">Evan is an event assistant that helps you collect registration fees, manage attendees, organize your website and track the real-time status of your event.</h3>
       <div class="q-gutter-md">
         {% if user.is_authenticated %}
-          <q-btn type="a" href="{% url 'dashboard' %}" unelevated color="primary" icon="donut_large" label="My dashboard"></q-btn>
+          <q-btn unelevated square type="a" href="{% url 'dashboard' %}" color="primary" icon="donut_large" label="My dashboard"></q-btn>
         {% else %}
-          <q-btn type="a" href="{% url 'account_signup' %}" unelevated color="primary" icon="edit" label="Sign up"></q-btn>
-          <q-btn type="a" href="{% url 'account_login' %}" outline color="primary" label="Log in"></q-btn>
+          <q-btn unelevated square type="a" href="{% url 'account_signup' %}" color="primary" icon="edit" label="Sign up"></q-btn>
+          <q-btn outline square type="a" href="{% url 'account_login' %}" color="primary" label="Log in"></q-btn>
         {% endif %}
       </div>
     </div>
