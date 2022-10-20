@@ -35,6 +35,7 @@ class Session(models.Model):
     is_social_event = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    files = GenericRelation("evan.File")
     acl = GenericRelation("evan.Permission")
 
     class Meta:
@@ -54,3 +55,6 @@ class Session(models.Model):
 
     def editable_by_user(self, user) -> bool:
         return user.is_staff or self.acl.filter(user_id=user.id, level__gte=Permission.ADMIN).exists()
+
+    def files_viewable_by_user(self, user) -> bool:
+        return self.editable_by_user(user) or self.event.registrations.filter(user_id=user.id).exists()

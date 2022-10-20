@@ -22,19 +22,19 @@
       </q-table>
     </q-card>
 
-    <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
+    <evan-editor size="lg" :obj="obj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
-        <q-input filled dense v-model="tmpObj.key" readonly label="Key"></q-input>
-        <evan-markdown v-if="tmpObj.config.marked" v-model="tmpObj.value" label="Content" :preview-class="tmpObj.config.preview_class || null"></evan-markdown>
-        <q-input v-else filled dense v-model="tmpObj.value" label="Content" type="textarea" autogrow></q-input>
+        <q-input filled dense v-model="obj.key" readonly label="Key"></q-input>
+        <evan-markdown v-if="obj.config.marked" v-model="obj.value" label="Content" :preview-class="obj.config.preview_class || null"></evan-markdown>
+        <q-input v-else filled dense v-model="obj.value" label="Content" type="textarea" autogrow></q-input>
 
-        <div v-if="tmpObj.files.length">
+        <div v-if="obj.files.length">
           <h6 class="q-mt-lg q-mb-md">Files</h6>
-          <evan-file-list :files="tmpObj.files" />
+          <evan-file-list :files="obj.files" />
         </div>
 
-        <div v-show="tmpObj.config.uploader && tmpObj.files.length < tmpObj.config.uploader.max_files" class="q-mt-lg">
-          <q-uploader ref="uploader" flat auto-upload no-thumbnails :factory="uploaderFactory" :accept="tmpObj.config.uploader.accept" :max-files="tmpObj.config.uploader.max_files" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" :label="tmpObj.config.uploader.label || 'Upload a file'" color="grey-7" class="full-width bg-grey-2" />
+        <div v-show="obj.config.uploader && obj.files.length < obj.config.uploader.max_files" class="q-mt-lg">
+          <q-uploader ref="uploader" flat auto-upload no-thumbnails :factory="uploaderFactory" :accept="obj.config.uploader.accept" :max-files="obj.config.uploader.max_files" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" :label="obj.config.uploader.label || 'Upload a file'" color="grey-7" class="full-width bg-grey-2" />
         </div>
 
       </div>

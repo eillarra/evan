@@ -58,53 +58,53 @@
       </q-table>
     </q-card>
 
-    <evan-editor size="md" position="standard" :obj="tmpObj">
+    <evan-editor size="md" position="standard" :obj="obj">
       <q-list dense>
         <q-item>
           <q-item-section avatar><q-icon name="tag" /></q-item-section>
-          <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
+          <q-item-section><samp>{{ obj.uuid }}</samp></q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
         <q-item>
           <q-item-section avatar><q-icon name="schedule" /></q-item-section>
-          <q-item-section>{{ tmpObj.date }}</q-item-section>
+          <q-item-section>{{ obj.date }}</q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
         <q-item>
           <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
-          <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
-          <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
-            <q-icon :name="tmpObj.user.profile.custom_data.gender" size="14px" />
+          <q-item-section><strong>{{ obj.user_name }}</strong></q-item-section>
+          <q-item-section side v-if="obj.user.profile.custom_data.gender">
+            <q-icon :name="obj.user.profile.custom_data.gender" size="14px" />
           </q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
         <q-item>
           <q-item-section avatar><q-icon name="mail_outline" /></q-item-section>
-          <q-item-section>{{ tmpObj.user.email }}</q-item-section>
+          <q-item-section>{{ obj.user.email }}</q-item-section>
           <q-item-section side>
-            <evan-copy-icon :text="tmpObj.user.email" size="14px" />
+            <evan-copy-icon :text="obj.user.email" size="14px" />
           </q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
         <q-item>
           <q-item-section avatar><q-icon name="business" /></q-item-section>
-          <q-item-section>{{ tmpObj.user_affiliation }}</q-item-section>
+          <q-item-section>{{ obj.user_affiliation }}</q-item-section>
         </q-item>
-        <q-separator v-if="tmpObj.user.profile.country" inset="item" />
-        <q-item v-if="tmpObj.user.profile.country">
+        <q-separator v-if="obj.user.profile.country" inset="item" />
+        <q-item v-if="obj.user.profile.country">
           <q-item-section avatar>
-            <country-flag :code="tmpObj.user.profile.country.code"></country-flag>
+            <country-flag :code="obj.user.profile.country.code"></country-flag>
           </q-item-section>
-          <q-item-section>{{ tmpObj.user.profile.country.name }}</q-item-section>
+          <q-item-section>{{ obj.user.profile.country.name }}</q-item-section>
         </q-item>
-        <q-separator v-if="tmpObj.invoice_requested" inset="item"></q-separator>
-        <q-item v-if="tmpObj.invoice_requested">
-          <q-item-section avatar><q-icon name="grading" :color="(tmpObj.invoice_sent) ? 'positive' : 'orange-7'" /></q-item-section>
-          <q-item-section v-if="tmpObj.invoice_sent" class="text-positive text-bold">Invoice sent</q-item-section>
+        <q-separator v-if="obj.invoice_requested" inset="item"></q-separator>
+        <q-item v-if="obj.invoice_requested">
+          <q-item-section avatar><q-icon name="grading" :color="(obj.invoice_sent) ? 'positive' : 'orange-7'" /></q-item-section>
+          <q-item-section v-if="obj.invoice_sent" class="text-positive text-bold">Invoice sent</q-item-section>
           <q-item-section v-else class="text-orange-7 text-bold">Invoice requested (not sent)</q-item-section>
         </q-item>
         <q-separator inset="item"></q-separator>
-        <q-item v-if="tmpObj.is_paid">
+        <q-item v-if="obj.is_paid">
           <q-item-section avatar><q-icon name="done_outline" color="positive" /></q-item-section>
           <q-item-section class="text-positive text-bold">Paid</q-item-section>
         </q-item>
@@ -112,12 +112,12 @@
           <q-item-section avatar><q-icon name="radio_button_unchecked" color="orange-7" /></q-item-section>
           <q-item-section class="text-orange-7 text-bold">Pending payment</q-item-section>
         </q-item>
-        <q-separator v-if="tmpObj.coupon" inset="item" class="q-mb-sm"/>
-        <q-item v-if="tmpObj.coupon">
+        <q-separator v-if="obj.coupon" inset="item" class="q-mb-sm"/>
+        <q-item v-if="obj.coupon">
           <q-item-section avatar><q-icon name="local_activity" /></q-item-section>
           <q-item-section>
-            <q-item-label><samp>{{ tmpObj.coupon.code }}</samp></q-item-label>
-            <q-item-label caption>{{ tmpObj.coupon.notes }} (€ {{ tmpObj.coupon.value }})</q-item-label>
+            <q-item-label><samp>{{ obj.coupon.code }}</samp></q-item-label>
+            <q-item-label caption>{{ obj.coupon.notes }} (€ {{ obj.coupon.value }})</q-item-label>
           </q-item-section>
         </q-item>
       </q-list>

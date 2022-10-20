@@ -1,7 +1,7 @@
 var EventRelatedMixin = {
   data: function () {
     return {
-      tmpObj: null,
+      obj: null,
       tmpTab: 'main',
       createUrl: null,
       stateVar: null,
@@ -11,11 +11,11 @@ var EventRelatedMixin = {
   },
   methods: {
     clearObj: function () {
-      this.tmpObj = null;
+      this.obj = null;
       this.tmpTab = 'main';
     },
     cloneObj: function (obj) {
-      this.tmpObj = JSON.parse(JSON.stringify(obj));
+      this.obj = JSON.parse(JSON.stringify(obj));
     },
     createOrUpdate: function (obj) {
       var self = this;

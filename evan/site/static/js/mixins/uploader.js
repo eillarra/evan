@@ -19,11 +19,18 @@ var UploaderMixin = {
     }
   },
   methods: {
-    removeFile: function (obj) {
-      alert('NotImplementedError');
+    removeFile: function (file) {
+      this.obj.files = _.reject(_.clone(this.obj.files), function (f) {
+        return f.self == file.self;
+      });
+      this.updateState();
     },
     updateObj: function (obj) {
-      alert('NotImplementedError');
+      this.obj = obj;
+      this.updateState();
+    },
+    updateState: function () {
+      this.$store.commit('update', {var: this.stateVar, action: 'update', obj: _.clone(this.obj)});
     },
     uploaderFactory: function (files) {
       var filename = slugify(files[0].name).toLowerCase();

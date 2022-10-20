@@ -29,13 +29,13 @@
       </q-table>
     </q-card>
 
-    <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
+    <evan-editor size="lg" :obj="obj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
-        <q-input filled dense v-model="tmpObj.name" label="Venue name"></q-input>
-        <q-input filled dense v-model="tmpObj.city" label="City"></q-input>
-        <evan-markdown v-model="tmpObj.presentation" label="Presentation"></evan-markdown>
-        <q-input filled dense v-model="tmpObj.website" label="Website"></q-input>
-        <q-input filled dense v-model="tmpObj.gmaps" label="Google Maps"></q-input>
+        <q-input filled dense v-model="obj.name" label="Venue name"></q-input>
+        <q-input filled dense v-model="obj.city" label="City"></q-input>
+        <evan-markdown v-model="obj.presentation" label="Presentation"></evan-markdown>
+        <q-input filled dense v-model="obj.website" label="Website"></q-input>
+        <q-input filled dense v-model="obj.gmaps" label="Google Maps"></q-input>
       </div>
     </evan-editor>
 

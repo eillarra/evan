@@ -1,10 +1,13 @@
 from rest_framework import serializers
 
 from evan.models import Event, Session, validate_date
+from .files import FileSerializer
 
 
 class SessionSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:session-detail")
+    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:session-files")
+    files = FileSerializer(many=True, read_only=True)
 
     class Meta:
         model = Session

@@ -44,43 +44,43 @@
         </template>
       </q-table>
 
-      <evan-editor size="lg" :obj="tmpObj">
-        <q-list v-if="tmpObj.abstract" dense>
+      <evan-editor size="lg" :obj="obj">
+        <q-list v-if="obj.abstract" dense>
           <q-item>
             <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
-            <q-item-section><strong>{{ tmpObj.abstract.user_name }}</strong></q-item-section>
+            <q-item-section><strong>{{ obj.abstract.user_name }}</strong></q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
           <q-item>
             <q-item-section avatar><q-icon name="mail_outline" /></q-item-section>
-            <q-item-section>{{ tmpObj.abstract.user.email }}</q-item-section>
+            <q-item-section>{{ obj.abstract.user.email }}</q-item-section>
             <q-item-section side>
-              <evan-copy-icon :text="tmpObj.abstract.user.email" size="14px" />
+              <evan-copy-icon :text="obj.abstract.user.email" size="14px" />
             </q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
           <q-item>
             <q-item-section avatar><q-icon name="business" /></q-item-section>
-            <q-item-section>{{ tmpObj.abstract.user_affiliation }}</q-item-section>
+            <q-item-section>{{ obj.abstract.user_affiliation }}</q-item-section>
           </q-item>
-          <q-separator v-if="tmpObj.abstract.user.profile.country" inset="item" />
-          <q-item v-if="tmpObj.abstract.user.profile.country">
+          <q-separator v-if="obj.abstract.user.profile.country" inset="item" />
+          <q-item v-if="obj.abstract.user.profile.country">
             <q-item-section avatar>
-              <country-flag :code="tmpObj.abstract.user.profile.country.code"></country-flag>
+              <country-flag :code="obj.abstract.user.profile.country.code"></country-flag>
             </q-item-section>
-            <q-item-section>{{ tmpObj.abstract.user.profile.country.name }}</q-item-section>
+            <q-item-section>{{ obj.abstract.user.profile.country.name }}</q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
           <q-item>
             <q-item-section avatar><q-icon name="label_important_outline" /></q-item-section>
             <q-item-section>
-              <q-item-label><q-badge v-for="tag in tmpObj.abstract._tags" rounded outline color="dark" class="q-mr-sm">{{ tag }}</q-badge></q-item-label>
+              <q-item-label><q-badge v-for="tag in obj.abstract._tags" rounded outline color="dark" class="q-mr-sm">{{ tag }}</q-badge></q-item-label>
             </q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
         </q-list>
         <q-list dense>
-          <template v-for="file in tmpObj.abstract.files">
+          <template v-for="file in obj.abstract.files">
             <q-item>
               <q-item-section avatar><q-icon name="attachment" /></q-item-section>
               <q-item-section class="ellipsis"><a :href="file.url" target="_blank" rel="noopener" class="inherit">{{ file.url }}</a></q-item-section>
@@ -93,9 +93,9 @@
           <q-item class="q-mb-md">
             <q-item-section avatar><q-icon name="notes" /></q-item-section>
             <q-item-section class="q-pt-md">
-              <p class="text-serif text-body2 q-mb-xs"><em>{{ tmpObj.abstract.title }}</em></p>
-              <p class="text-serif text-sm q-mb-md">{{ tmpObj.abstract.authors }}</p>
-              <marked :text="tmpObj.abstract.abstract" class="text-caption" />
+              <p class="text-serif text-body2 q-mb-xs"><em>{{ obj.abstract.title }}</em></p>
+              <p class="text-serif text-sm q-mb-md">{{ obj.abstract.authors }}</p>
+              <marked :text="obj.abstract.abstract" class="text-caption" />
             </q-item-section>
           </q-item>
         </q-list>
@@ -107,10 +107,10 @@
               <div class="row q-col-gutter-md">
                 <div v-for="crit in event.custom_data.abstracts.review_criteria" class="col-12 col-md text-body2">
                   <small>{{ crit }}</small>
-                  <q-rating no-reset v-model="tmpObj.custom_data.ratings[crit]" size="xs" :max="5" color="grey" color-selected="grey-8" class="q-mr-sm" icon="star_border" icon-selected="star" />
+                  <q-rating no-reset v-model="obj.custom_data.ratings[crit]" size="xs" :max="5" color="grey" color-selected="grey-8" class="q-mr-sm" icon="star_border" icon-selected="star" />
                 </div>
                 <div class="col-12">
-                  <q-input dense filled autogrow bottom-slots type="textarea" v-model="tmpObj.evaluation" label="Internal evaluation">
+                  <q-input dense filled autogrow bottom-slots type="textarea" v-model="obj.evaluation" label="Internal evaluation">
                     <template v-slot:hint><strong>Required.</strong> These comments will only be visible to the program committee.</template>
                   </q-input>
                 </div>
@@ -123,7 +123,7 @@
             <q-item-section class="q-pt-xs">
               <div class="row q-col-gutter-md">
                 <div class="col-12">
-                  <q-input dense filled autogrow bottom-slots type="textarea" v-model="tmpObj.comments" label="General comments">
+                  <q-input dense filled autogrow bottom-slots type="textarea" v-model="obj.comments" label="General comments">
                     <template v-slot:hint>Optional. These can be shared with the applicant by the program committee.</template>
                   </q-input>
                 </div>
@@ -133,7 +133,7 @@
         </q-list>
 
         <template v-slot:buttons>
-          <q-btn @click="saveReview(tmpObj)" :disable="!tmpObj.evaluation" unelevated label="Save" color="primary" class="q-px-md" />
+          <q-btn @click="saveReview(obj)" :disable="!obj.evaluation" unelevated label="Save" color="primary" class="q-px-md" />
         </template>
       </evan-editor>
 

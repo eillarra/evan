@@ -36,16 +36,16 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
+    <evan-editor :obj="obj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
-        <q-input filled dense v-model="tmpObj.name" label="Name" type="text"></q-input>
-        <q-select filled dense v-model="tmpObj.level" emit-value map-options :options="levelOptions" label="Sponsorship level"></q-select>
-        <q-input filled dense v-model="tmpObj.website" label="Website" type="url"></q-input>
+        <q-input filled dense v-model="obj.name" label="Name" type="text"></q-input>
+        <q-select filled dense v-model="obj.level" emit-value map-options :options="levelOptions" label="Sponsorship level"></q-select>
+        <q-input filled dense v-model="obj.website" label="Website" type="url"></q-input>
 
-        <div v-if="tmpObj.self">
-          <div v-if="tmpObj.files.length">
+        <div v-if="obj.self">
+          <div v-if="obj.files.length">
             <h6 class="q-mt-lg q-mb-md">Files</h6>
-            <evan-file-list :files="tmpObj.files" />
+            <evan-file-list :files="obj.files" />
           </div>
           <div v-else class="q-mt-lg">
             <q-uploader ref="uploader" flat auto-upload no-thumbnails :factory="uploaderFactory" accept=".png, image/*" :max-files="1" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" label="Upload sponsor logo" color="grey-7" class="full-width bg-grey-2" />

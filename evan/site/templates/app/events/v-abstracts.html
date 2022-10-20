@@ -48,7 +48,7 @@
         </template>
       </q-table>
 
-      <evan-editor size="lg" position="standard" :obj="tmpObj">
+      <evan-editor size="lg" position="standard" :obj="obj">
 
         <template v-slot:header>
           <q-tabs v-model="tmpTab" align="left" active-color="primary" indicator-color="primary" class="text-grey-6 q-pt-md q-pl-lg">
@@ -63,14 +63,14 @@
           <q-item>
             <q-item-section avatar><q-icon name="title" /></q-item-section>
             <q-item-section>
-              <q-item-label class="ellipsis">{{ tmpObj.title }}</q-item-label>
+              <q-item-label class="ellipsis">{{ obj.title }}</q-item-label>
             </q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
           <q-item>
-            <q-item-section avatar><q-icon :name="(tmpObj.is_accepted) ? 'check_circle_outline' : 'help_outline'" /></q-item-section>
+            <q-item-section avatar><q-icon :name="(obj.is_accepted) ? 'check_circle_outline' : 'help_outline'" /></q-item-section>
             <q-item-section>
-              <q-item-label>Status: <strong v-if="tmpObj.is_accepted" class="text-positive">accepted</strong>
+              <q-item-label>Status: <strong v-if="obj.is_accepted" class="text-positive">accepted</strong>
                 <strong v-else>not accepted</strong></q-item-label>
             </q-item-section>
           </q-item>
@@ -78,7 +78,7 @@
           <q-item>
             <q-item-section avatar><q-icon name="label_important_outline" /></q-item-section>
             <q-item-section>
-              <q-item-label><q-badge v-for="tag in tmpObj._tags" rounded outline color="dark" class="q-mr-sm">{{ tag }}</q-badge></q-item-label>
+              <q-item-label><q-badge v-for="tag in obj._tags" rounded outline color="dark" class="q-mr-sm">{{ tag }}</q-badge></q-item-label>
             </q-item-section>
           </q-item>
           <q-separator inset="item"></q-separator>
@@ -90,47 +90,47 @@
             <q-list dense>
               <q-item>
                 <q-item-section avatar><q-icon name="tag" /></q-item-section>
-                <q-item-section><samp>{{ tmpObj.uuid }}</samp></q-item-section>
+                <q-item-section><samp>{{ obj.uuid }}</samp></q-item-section>
               </q-item>
               <q-separator inset="item"></q-separator>
               <q-item>
                 <q-item-section avatar><q-icon name="schedule" /></q-item-section>
-                <q-item-section>{{ tmpObj.date }}</q-item-section>
+                <q-item-section>{{ obj.date }}</q-item-section>
               </q-item>
               <q-separator inset="item"></q-separator>
               <q-item>
                 <q-item-section avatar><q-icon name="accessibility_new" /></q-item-section>
-                <q-item-section><strong>{{ tmpObj.user_name }}</strong></q-item-section>
-                <q-item-section side v-if="tmpObj.user.profile.custom_data.gender">
-                  <q-icon :name="tmpObj.user.profile.custom_data.gender" size="14px" />
+                <q-item-section><strong>{{ obj.user_name }}</strong></q-item-section>
+                <q-item-section side v-if="obj.user.profile.custom_data.gender">
+                  <q-icon :name="obj.user.profile.custom_data.gender" size="14px" />
                 </q-item-section>
               </q-item>
               <q-separator inset="item"></q-separator>
               <q-item>
                 <q-item-section avatar><q-icon name="mail_outline" /></q-item-section>
-                <q-item-section>{{ tmpObj.user.email }}</q-item-section>
+                <q-item-section>{{ obj.user.email }}</q-item-section>
                 <q-item-section side>
-                  <evan-copy-icon :text="tmpObj.user.email" size="14px" />
+                  <evan-copy-icon :text="obj.user.email" size="14px" />
                 </q-item-section>
               </q-item>
               <q-separator inset="item"></q-separator>
               <q-item>
                 <q-item-section avatar><q-icon name="business" /></q-item-section>
-                <q-item-section>{{ tmpObj.user_affiliation }}</q-item-section>
+                <q-item-section>{{ obj.user_affiliation }}</q-item-section>
               </q-item>
-              <q-separator v-if="tmpObj.user.profile.country" inset="item" />
-              <q-item v-if="tmpObj.user.profile.country">
+              <q-separator v-if="obj.user.profile.country" inset="item" />
+              <q-item v-if="obj.user.profile.country">
                 <q-item-section avatar>
-                  <country-flag :code="tmpObj.user.profile.country.code"></country-flag>
+                  <country-flag :code="obj.user.profile.country.code"></country-flag>
                 </q-item-section>
-                <q-item-section>{{ tmpObj.user.profile.country.name }}</q-item-section>
+                <q-item-section>{{ obj.user.profile.country.name }}</q-item-section>
               </q-item>
             </q-list>
           </q-tab-panel>
 
           <q-tab-panel name="abstract" class="q-pa-none">
             <q-list dense>
-              <template v-for="file in tmpObj.files">
+              <template v-for="file in obj.files">
                 <q-item>
                   <q-item-section avatar><q-icon name="attachment" /></q-item-section>
                   <q-item-section class="ellipsis"><a :href="file.url" target="_blank" rel="noopener" class="inherit">{{ file.url }}</a></q-item-section>
@@ -143,9 +143,9 @@
               <q-item class="q-mb-md">
                 <q-item-section avatar><q-icon name="notes" /></q-item-section>
                 <q-item-section class="q-pt-md">
-                  <p class="text-serif text-body2 q-mb-xs"><em>{{ tmpObj.title }}</em></p>
-                  <p class="text-serif text-sm q-mb-md">{{ tmpObj.authors }}</p>
-                  <marked :text="tmpObj.abstract" class="text-caption" />
+                  <p class="text-serif text-body2 q-mb-xs"><em>{{ obj.title }}</em></p>
+                  <p class="text-serif text-sm q-mb-md">{{ obj.authors }}</p>
+                  <marked :text="obj.abstract" class="text-caption" />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -204,8 +204,8 @@
         </q-tab-panels>
 
         <template v-slot:buttons>
-          <q-btn unelevated v-show="tmpTab == 'reviews'" @click="saveReviewers(tmpObj.id)" label="Update reviewers" color="primary" class="q-px-md" />
-          <q-btn @click="toggleStatus(tmpObj)" unelevated :label="(tmpObj.is_accepted) ? 'Reset status' : 'Accept'" :color="(tmpObj.is_accepted) ? 'grey-8' : 'primary'" class="q-px-md" />
+          <q-btn unelevated v-show="tmpTab == 'reviews'" @click="saveReviewers(obj.id)" label="Update reviewers" color="primary" class="q-px-md" />
+          <q-btn @click="toggleStatus(obj)" unelevated :label="(obj.is_accepted) ? 'Reset status' : 'Accept'" :color="(obj.is_accepted) ? 'grey-8' : 'primary'" class="q-px-md" />
         </template>
       </evan-editor>
 

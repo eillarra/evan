@@ -35,26 +35,26 @@
       </q-table>
     </q-card>
 
-    <evan-editor size="lg" :obj="tmpObj" :save-event-name="saveEventName">
+    <evan-editor size="lg" :obj="obj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
-        <q-input filled dense v-model="tmpObj.title" label="Title *" />
+        <q-input filled dense v-model="obj.title" label="Title *" />
         <div class="row q-col-gutter-md q-ma-none">
-          <evan-datepicker :with-time="true" v-model="tmpObj.start_at" label="Start *" class="col-12 col-md" :options="dateRange" />
-          <evan-datepicker :with-time="true" v-model="tmpObj.end_at" label="End *" class="col-12 col-md" :options="dateRange" />
-          <q-input filled dense readonly v-model="tmpObj.duration" label="Duration" class="col-12 col-md" />
+          <evan-datepicker :with-time="true" v-model="obj.start_at" label="Start *" class="col-12 col-md" :options="dateRange" />
+          <evan-datepicker :with-time="true" v-model="obj.end_at" label="End *" class="col-12 col-md" :options="dateRange" />
+          <q-input filled dense readonly v-model="obj.duration" label="Duration" class="col-12 col-md" />
         </div>
         <div class="row q-col-gutter-md q-ma-none">
           <q-field filled stack-label label="Mark here if this is a social event..." class="col-12 col-md">
             <template v-slot:control>
               <div class="q-mt-sm">
-                <q-checkbox v-model="tmpObj.is_social_event" label="Social event" size="xs" @input="tmpObj.track = null" />
+                <q-checkbox v-model="obj.is_social_event" label="Social event" size="xs" @input="obj.track = null" />
               </div>
             </template>
           </q-field>
-          <q-field v-show="!tmpObj.is_social_event && tracks.length" filled stack-label label="...or choose a track (optional)" class="col-12 col-md-8">
+          <q-field v-show="!obj.is_social_event && tracks.length" filled stack-label label="...or choose a track (optional)" class="col-12 col-md-8">
             <template v-slot:control>
               <div class="q-gutter-x-sm q-mt-sm">
-                <q-radio v-for="track in tracksSorted" v-model="tmpObj.track" :val="track.id" :label="track.name" size="xs" />
+                <q-radio v-for="track in tracksSorted" v-model="obj.track" :val="track.id" :label="track.name" size="xs" />
               </div>
             </template>
           </q-field>
@@ -62,17 +62,27 @@
         <q-field v-if="topics.length" filled stack-label label="Topics">
           <template v-slot:control>
             <div class="q-gutter-x-sm q-mt-sm">
-              <q-checkbox v-for="topic in topicsSorted" v-model="tmpObj.topics" :val="topic.id" :label="topic.name" size="xs" />
+              <q-checkbox v-for="topic in topicsSorted" v-model="obj.topics" :val="topic.id" :label="topic.name" size="xs" />
             </div>
           </template>
         </q-field>
         <div class="row q-col-gutter-md q-ma-none">
-          <q-input filled dense v-model.number="tmpObj.room" label="Room *" class="col-12 col-md" />
-          <q-input filled dense v-model.number="tmpObj.max_attendees" label="Max. attendees" type="number" hint="Leave as `0` if there is no limit." class="col-12 col-md" />
-          <q-input v-if="tmpObj.is_social_event" filled dense v-model.number="tmpObj.extra_attendees_fee" label="Extra attendees fee" type="number" prefix="€" hint="It will be applied to accompanying persons." class="col-12 col-md" />
+          <q-input filled dense v-model.number="obj.room" label="Room *" class="col-12 col-md" />
+          <q-input filled dense v-model.number="obj.max_attendees" label="Max. attendees" type="number" hint="Leave as `0` if there is no limit." class="col-12 col-md" />
+          <q-input v-if="obj.is_social_event" filled dense v-model.number="obj.extra_attendees_fee" label="Extra attendees fee" type="number" prefix="€" hint="It will be applied to accompanying persons." class="col-12 col-md" />
         </div>
-        <evan-markdown v-model="tmpObj.summary" label="Summary"></evan-markdown>
-        <q-input filled dense v-model="tmpObj.website" label="External website" type="url" />
+        <evan-markdown v-model="obj.summary" label="Summary" :preview-class="{'avatars': true}"></evan-markdown>
+        <q-input filled dense v-model="obj.website" label="External website" type="url" />
+
+        <div v-if="obj.files.length">
+          <h6 class="q-mt-lg q-mb-md">Files</h6>
+          <evan-file-list :files="obj.files" />
+        </div>
+
+        <div class="q-mt-lg">
+          <q-uploader ref="uploader" flat auto-upload no-thumbnails :factory="uploaderFactory" accept=".pdf,.xlsm,.json" :max-files="30" :max-file-size="10485760" @failed="uploadFailed" @rejected="uploadRejected" @uploaded="uploaded" label="Upload PDF file(s)" color="grey-7" class="full-width bg-grey-2" />
+        </div>
+
       </div>
     </evan-editor>
   </div>

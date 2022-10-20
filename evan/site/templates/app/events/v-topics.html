@@ -29,9 +29,9 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" :save-event-name="saveEventName">
+    <evan-editor :obj="obj" :save-event-name="saveEventName">
       <div class="q-gutter-md">
-        <q-input filled dense v-model="tmpObj.name" label="Topic"></q-input>
+        <q-input filled dense v-model="obj.name" label="Topic"></q-input>
       </div>
     </evan-editor>
 

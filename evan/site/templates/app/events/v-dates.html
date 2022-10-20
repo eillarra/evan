@@ -14,7 +14,7 @@
         <template v-slot:avatar><q-icon name="help_outline" size="sm" /></template>
         Keep in mind that these dates are just informative and have no real effect on how Evan will work. Don't forget to change the event settings too if you want to change registration dates/deadlines. <span v-if="event.config.abstracts">Check also abstract settings to change abstract submission dates/deadlines.</span>
       </q-banner>
-      <q-table :dense="$q.screen.gt.sm" row-key="key" :rows="dates || []" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { tmpObj = row }">
+      <q-table :dense="$q.screen.gt.sm" row-key="key" :rows="dates || []" :columns="table.columns" :pagination="table.pagination" @row-click="function (e, row) { obj = row }">
         <template v-slot:bottom></template>
         <template v-slot:no-data="{ icon, message, filter }">
           <evan-no-data :message="message" :filter="filter" />
@@ -35,14 +35,14 @@
       </q-table>
     </q-card>
 
-    <evan-editor :obj="tmpObj" obj-key="key" :save-event-name="saveEventName">
+    <evan-editor :obj="obj" obj-key="key" :save-event-name="saveEventName">
       <div class="row q-col-gutter-md items-center q-mb-md">
-        <evan-datepicker v-model="tmpObj.start_date" label="Start date *" class="col-12 col-sm-6"></evan-datepicker>
-        <evan-datepicker v-model="tmpObj.end_date" label="End date" class="col-12 col-sm-6"></evan-datepicker>
+        <evan-datepicker v-model="obj.start_date" label="Start date *" class="col-12 col-sm-6"></evan-datepicker>
+        <evan-datepicker v-model="obj.end_date" label="End date" class="col-12 col-sm-6"></evan-datepicker>
       </div>
       <div class="q-gutter-md q-mt-none">
-        <q-input filled dense v-model="tmpObj.label" label="Label *" class="col-12 col-sm-4"></q-input>
-        <q-select filled dense v-model="tmpObj.format" emit-value map-options :options="formatOptions" label="Format" class="col-12 col-sm-3"></q-select>
+        <q-input filled dense v-model="obj.label" label="Label *" class="col-12 col-sm-4"></q-input>
+        <q-select filled dense v-model="obj.format" emit-value map-options :options="formatOptions" label="Format" class="col-12 col-sm-3"></q-select>
       </div>
     </evan-editor>
 
