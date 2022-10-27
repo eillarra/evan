@@ -114,10 +114,11 @@
               </q-item-section>
               <q-item-section side top class="q-mt-sm">
                 <q-badge v-if="obj.is_paid" label="PAID" color="positive" />
-                <q-badge v-else label="PENDING" color="dark" />
+                <q-badge v-else-if="obj.is_accepted" label="PENDING" color="dark" />
+                <q-badge v-else label="NOT ACCEPTED" color="dark" />
               </q-item-section>
             </q-item>
-            <q-item class="q-mt-lg">
+            <q-item v-if="obj.is_accepted" class="q-mt-lg">
               <q-item-section>
                 <q-btn v-if="obj.is_paid" outline rounded no-caps icon="done_all" color="primary" label="View payment info" class="full-width" type="a" :href="obj.payment_url" />
                 <span v-else-if="event.allows_payments">

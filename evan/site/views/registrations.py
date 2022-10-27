@@ -73,6 +73,10 @@ class RegistrationPaymentBaseView(generic.TemplateView):
             messages.error(request, "Payments are not active for this event.")
             raise PermissionDenied
 
+        if not self.get_object().is_accepted:
+            messages.error(request, "Your registration has not been accepted.")
+            raise PermissionDenied
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None) -> Registration:

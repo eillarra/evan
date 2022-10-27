@@ -28,7 +28,7 @@
 
         {% if registration.is_paid %}
           <p>{{ registration.user.profile.name }}'s registration is fully paid.</p>
-        {% else %}
+        {% elif registration.is_accepted %}
           {% if not registration.invoice_requested %}
             <div class="clearfix">
               <p>Pay <strong>{{ registration.remaining_fee }} EUR</strong> for {{ registration.user.profile.name }}'s "{{ registration.event }}" registration. Once the payment is complete {{ registration.user.first_name }} will be able to download a receipt <strong>&mdash;no invoice&mdash;</strong>:</p>
@@ -46,6 +46,8 @@
           {% else %}
             <p>Delegated payment not available: the user has already requested an invoice.</p>
           {% endif %}
+        {% else %}
+          <p>Your registration has not been accepted yet.</p>
         {% endif %}
 
       </q-card>

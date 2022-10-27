@@ -51,6 +51,7 @@ class Registration(models.Model):
     paid_via_invoice = models.PositiveSmallIntegerField(default=0)
     saldo = models.IntegerField(default=0, editable=False)
 
+    is_accepted = models.BooleanField(default=True, null=True)
     custom_data = models.JSONField(default=dict)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -70,6 +71,9 @@ class Registration(models.Model):
         `base_fee` is only calculated when the registration is created.
         `extra_fees` are recalculated every time (accompanying persons, for example).
         """
+        if not self.pk:
+            self.is_accepted = True if self.event.accept_by_default else None
+
         is_early = self.is_early if self.pk else self.event.is_early
         key = (self.fee_type, is_early)
         self.base_fee = self.event.fees_dict[key] if key in self.event.fees_dict else 0

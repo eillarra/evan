@@ -80,6 +80,7 @@ class Event(models.Model):
     custom_fields = models.JSONField(default=dict)
 
     registrations_count = models.PositiveIntegerField(default=0)
+    accept_by_default = models.BooleanField(default=True)
 
     objects = EventManager()
 

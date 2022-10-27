@@ -51,8 +51,9 @@ class RegistrationAdmin(admin.ModelAdmin):
         "id",
         "created_at",
         "name",
+        "accepted_col",
         "fee",
-        "is_paid",
+        "paid_col",
         "with_coupon",
         "invoice",
         "visa",
@@ -64,6 +65,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         "visa_requested",
         "visa_sent",
         ("event", admin.RelatedOnlyFieldListFilter),
+        "is_accepted",
     )
     search_fields = ("id", "uuid", "user__email", "user__username", "user__first_name", "user__last_name")
     # form
@@ -73,7 +75,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         (
             None,
             {
-                "fields": ("event", "user"),
+                "fields": ("event", "user", "is_accepted"),
             },
         ),
         (
@@ -152,10 +154,13 @@ class RegistrationAdmin(admin.ModelAdmin):
     Custom fields
     """
 
+    def accepted_col(self, obj) -> bool:
+        return obj.is_accepted
+
     def fee(self, obj):
         return format_html(f"{obj.base_fee}&nbsp;+&nbsp;{obj.extra_fees}")
 
-    def is_paid(self, obj) -> bool:
+    def paid_col(self, obj) -> bool:
         return obj.is_paid
 
     def invoice(self, obj):
@@ -207,8 +212,10 @@ class RegistrationAdmin(admin.ModelAdmin):
         VisaReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
-    is_paid.boolean = True
-    is_paid.short_description = "Paid"
+    accepted_col.boolean = True
+    accepted_col.short_description = "Accepted"
+    paid_col.boolean = True
+    paid_col.short_description = "Paid"
     with_coupon.boolean = True
     with_coupon.short_description = "Coupon"
     send_delegated_payment.short_description = "[Mailer] Send delegated payment link to users"

@@ -68,7 +68,7 @@
           {% if registration.paid > 0 %}
             <q-btn outline rounded no-caps type="a" target="_blank" rel="noopener" href="{{ registration.get_receipt_url }}" icon="receipt" color="primary" label="Download receipt" class="q-mt-md q-px-lg" />
           {% endif %}
-        {% else %}
+        {% elif registration.is_accepted %}
           <p class="text-negative">You still have to pay <strong>{{ registration.remaining_fee }} EUR</strong> for your "{{ registration.event }}" registration.</p>
           {% if registration.paid > 0 %}
             <p>You have already paid <strong>{{ registration.paid }} EUR</strong>.</p>
@@ -110,6 +110,8 @@
               {% endif %}
             </div>
           {% endif %}
+        {% else %}
+          <p>Your registration has not been accepted yet.</p>
         {% endif %}
 
       </q-card>
