@@ -127,6 +127,8 @@ class Event(models.Model):
 
     @property
     def allows_payments(self) -> bool:
+        if self.ingenico_salt is None:
+            return False
         if self.payments_activation:
             return self.payments_activation <= timezone.now()
         return True
