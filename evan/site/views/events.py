@@ -7,6 +7,7 @@ from django.views import generic
 from os import environ
 
 from evan.models import Event
+from evan.site.pdfs.badges import BadgesPdfMaker
 from evan.site.sheets.abstracts import AbstractsSheet
 from evan.site.sheets.registrations import RegistrationsSheet
 
@@ -37,29 +38,10 @@ class EventView(generic.DetailView):
 
 class EventBadgesPdf(EventView):
     def get(self, request, *args, **kwargs):
-        pass
-        """
         event = self.get_object()
-        registrations = event.registrations.select_related('user__profile') \
-                             .order_by('user__{0}'.format(event.json_badge['order_by']))
-        if 'r' in request.GET:
-            registrations = registrations.filter(uuid__in=[request.GET['r']])
-
-        return PDFTemplateResponse(
-            request=request,
-            template='badges/standard.pdf.html',
-            filename='{0}-badges.pdf'.format(event.code),
-            context={
-                'event': event,
-                'registrations': registrations,
-            },
-            cmd_options={
-                'margin-right': 0,
-                'margin-left': 0,
-            },
-            show_content_in_browser=True
-        )
-        """
+        registrations = event.registrations.select_related('user__profile')
+        maker = BadgesPdfMaker(registrations=registrations, filename="badges.pdf")
+        return maker.response
 
 
 class EventAbstractsSheet(EventView):
