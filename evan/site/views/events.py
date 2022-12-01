@@ -39,7 +39,7 @@ class EventView(generic.DetailView):
 class EventBadgesPdf(EventView):
     def get(self, request, *args, **kwargs):
         event = self.get_object()
-        registrations = event.registrations.select_related('user__profile')
+        registrations = event.registrations.filter(is_accepted=True).select_related("user__profile")
         maker = BadgesPdfMaker(registrations=registrations, filename="badges.pdf")
         return maker.response
 

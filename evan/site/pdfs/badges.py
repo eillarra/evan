@@ -130,9 +130,8 @@ def draw_badge(
 class BadgesPdfMaker:
     def __init__(self, *, registrations, filename: str, as_attachment: bool = True):
         self._response = PdfResponse(filename=filename, as_attachment=as_attachment)
-        self.registrations = (
-            registrations.select_related("coupon", "event", "user__profile")
-            .order_by("user__first_name", "user__last_name")
+        self.registrations = registrations.select_related("coupon", "event", "user__profile").order_by(
+            "user__first_name", "user__last_name"
         )
         self.make_pdf()
 
@@ -142,18 +141,19 @@ class BadgesPdfMaker:
         with Wrapdf(margins=[10 * mm, 0, 10 * mm, side_margin]) as pdf:
             i = 0
 
+            event = self.registrations.first().event
+
             for reg in self.registrations:
                 i += 1
                 badge_color = HexColor(UGENT_BLUE)
-                event_name = reg.event.name
                 event_info = (
                     f"{date_filter(reg.event.start_date, ('F j'))}-{date_filter(reg.event.end_date, ('j'))}, "
                     f"{reg.event.city}, {reg.event.country.name}"
                 )
 
                 draw = draw_badge(
-                    event_name=event_name,
-                    event_hashtag=reg.event.hashtag,
+                    event_name=event.name,
+                    event_hashtag=event.hashtag,
                     event_info=event_info,
                     attendee_name=reg.user.profile.name,
                     color=badge_color,
@@ -164,24 +164,27 @@ class BadgesPdfMaker:
 
                 pdf.parts.append(draw)
 
-                """
-                TODO: fix
-                if reg.custom_data['accompanying_persons']:
-                    print(reg.custom_data['accompanying_persons'])
-                    for person in reg.accompanying_persons.all():
-                        i += 1
-                        draw = draw_badge(
-                            event_name=event_name,
-                            event_hashtag=reg.event.hashtag,
-                            event_info=event_info,
-                            attendee_name=person.name,
-                            color=HexColor(UGENT_YELLOW),
-                            institution=None,
-                            country="-",
-                            show_social=False,
-                        )
-                        pdf.parts.append(draw)
-                """
+                if i % 3 == 0:
+                    pdf.add_page_break()
+
+            pdf.add_page_break()
+
+            i = 0
+
+            for extra in event.extra_badges.all():
+                i += 1
+                draw = draw_badge(
+                    event_name=event.name,
+                    event_hashtag=event.hashtag,
+                    event_info=event_info,
+                    attendee_name=extra.name,
+                    color=badge_color,
+                    institution=extra.affiliation,
+                    country=extra.country.name,
+                    show_social=False,
+                )
+
+                pdf.parts.append(draw)
 
                 if i % 3 == 0:
                     pdf.add_page_break()

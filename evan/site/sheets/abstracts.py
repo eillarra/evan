@@ -102,7 +102,8 @@ class AbstractsSheet(ModelExcelWriter):
                     else:
                         ratings_txt = ""
 
-                    reviews_data.append(f"""{review.user.profile.name}
+                    reviews_data.append(
+                        f"""{review.user.profile.name}
 ----------------------------------------
 {ratings_txt}
 ----------------------------------------
@@ -111,7 +112,8 @@ EVALUATION:
 {review.evaluation}
 
 COMMENTS:
-{review.comments}""")
+{review.comments}"""
+                    )
 
             sheets[0]["data"].append(user_base_data + abstract_data + custom_data + reviews_data)
 
