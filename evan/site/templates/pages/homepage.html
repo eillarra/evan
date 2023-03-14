@@ -10,8 +10,7 @@
         {% if user.is_authenticated %}
           <q-btn unelevated square type="a" href="{% url 'dashboard' %}" color="primary" icon="donut_large" label="My dashboard"></q-btn>
         {% else %}
-          <q-btn unelevated square type="a" href="{% url 'account_signup' %}" color="primary" icon="edit" label="Sign up"></q-btn>
-          <q-btn outline square type="a" href="{% url 'account_login' %}" color="primary" label="Log in"></q-btn>
+          <q-btn outline square type="a" href="{% url 'account_login' %}" icon="vpn_key" color="primary" label="Sign in"></q-btn>
         {% endif %}
       </div>
     </div>
