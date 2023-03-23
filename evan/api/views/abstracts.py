@@ -27,16 +27,7 @@ from ..viewsets import EventRelatedViewSet
 
 class AbstractsViewSet(EventRelatedViewSet):
     queryset = Abstract.objects.select_related("event", "user__profile").prefetch_related("files", "reviews")
-    serializer_class = AbstractSerializer
-
-    def get_serializer_class(self):
-        if Event.objects.get(code=self.kwargs.get("code")).can_be_managed_by(self.request.user):
-            return ManagedAbstractSerializer
-        return super().get_serializer_class()
-
-    def list(self, request, *args, **kwargs):
-        self.serializer_class = AbstractSerializer
-        return super().list(request, *args, **kwargs)
+    serializer_class = ManagedAbstractSerializer
 
 
 class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
@@ -55,15 +46,20 @@ class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
 
 
 class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    """
+    This viewset is used for retrieving and updating abstracts and is open to all users.
+    """
+
     lookup_field = "uuid"
     permission_classes = (AbstractPermission,)
     queryset = Abstract.objects.select_related("event", "user__profile").prefetch_related("files", "reviews")
     serializer_class = AbstractSerializer
 
     def get_serializer_class(self):
-        abstract = self.get_object()
-        if abstract.user != self.request.user and abstract.event.can_be_managed_by(self.request.user):
-            return ManagedAbstractSerializer
+        if self.action == "retrieve":
+            abstract = self.get_object()
+            if abstract.user != self.request.user and abstract.event.can_be_managed_by(self.request.user):
+                return ManagedAbstractSerializer
         return super().get_serializer_class()
 
     @method_decorator(never_cache)
