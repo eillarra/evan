@@ -167,7 +167,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": ["r_emailaddress", "r_liteprofile"],
         "PROFILE_FIELDS": ["id", "firstName", "lastName", "emailAddress"],
     },
-    "microsoft": {"TENANT": "organizations"},
+    "microsoft": {"TENANT": os.environ.get("UGENT_TENANT_ID", "organizations")},
 }
 
 
