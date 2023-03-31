@@ -7,11 +7,11 @@
 
 {% block content %}
   {% if process == 'connect' %}
-    <display-5>Connect with {% if provider.name == 'Microsoft Graph' %}UGent login{% else %}{{ provider.name }}{% endif %}</display-5>
-    <p>You are about to connect a new third party account from {% if provider.name == 'Microsoft Graph' %}UGent{% else %}{{ provider.name }}{% endif %}.</p>
+    <display-5>Connect with {{ provider.name }}</display-5>
+    <p>You are about to connect a new third party account from {{ provider.name }}.</p>
   {% else %}
-    <display-5>Sign in via {% if provider.name == 'Microsoft Graph' %}UGent login{% else %}{{ provider.name }}{% endif %}</display-5>
-    <p>You are about to sign in using a third party account from {% if provider.name == 'Microsoft Graph' %}UGent{% else %}{{ provider.name }}{% endif %}.</p>
+    <display-5>Sign in via {{ provider.name }}</display-5>
+    <p>You are about to sign in using a third party account from {{ provider.name }}.</p>
   {% endif %}
 
   <django-form action="" btn-text="Continue" class="q-mb-lg"></django-form>

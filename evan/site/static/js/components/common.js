@@ -272,7 +272,7 @@ var EvanCommonComponents = {
     `
   },
 
-  'ugent-micro-logo': {
+  'ugent-logo': {
     template: `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25.233 25.35"><path fill="#1e64c8" d="M12.197 9.822h1.479v9.608h-1.479zm-2.96 0h1.481v9.608H9.237Zm-2.96 0h1.479v9.608h-1.48Zm-2.96 0h1.48v9.608h-1.48Zm11.84 0h1.48v9.608h-1.48zm2.96 0h1.48v9.608h-1.478zm2.96 0h1.48v9.608h-1.48ZM1.801 20.912h22.273v1.48H1.8ZM22.556 8.34H3.316L1.839 6.86h22.2l-1.482 1.482M.322 23.869h25.23v1.481H.32Zm25.23-19.402L12.939 0 .32 4.467V6.04l12.613-4.467L25.551 6.04V4.467" /></svg>
     `
@@ -295,7 +295,6 @@ var EvanCommonComponents = {
     computed: {
       comp: function () {
         var provider = this.provider.toLowerCase();
-        if (provider == 'microsoft') { provider = 'ugent-micro' };
         if (provider == 'linkedin_oauth2') { provider = 'linkedin' };
         return provider + '-logo';
       }

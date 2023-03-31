@@ -20,8 +20,7 @@
       <q-item-section avatar>
         <socialaccount-provider provider="{{ provider.id }}"></socialaccount-provider>
       </q-item-section>
-      <q-item-section>{% if provider.name == 'Microsoft Graph' %}UGent{% else %}{{ provider.name }}</q-item-section>
-      {% endif %}
+      <q-item-section>{{ provider.name }}</q-item-section>
     </q-item>
   {% endfor %}
 </q-list>

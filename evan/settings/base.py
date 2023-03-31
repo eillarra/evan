@@ -38,7 +38,6 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.github",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.linkedin_oauth2",
-    "allauth.socialaccount.providers.microsoft",
     # evan
     "corsheaders",
     "rest_framework",
@@ -46,6 +45,7 @@ INSTALLED_APPS = [
     "evan",
     "evan.api",
     "evan.site",
+    "evan.ugent_provider",
     # tasks
     "huey.contrib.djhuey",
     # admin
@@ -167,7 +167,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": ["r_emailaddress", "r_liteprofile"],
         "PROFILE_FIELDS": ["id", "firstName", "lastName", "emailAddress"],
     },
-    "microsoft": {"TENANT": os.environ.get("UGENT_TENANT_ID", "organizations")},
+    "ugent": {"TENANT": os.environ.get("UGENT_TENANT_ID", "organizations")},
 }
 
 
