@@ -3,7 +3,7 @@ FROM python:3.11-slim
 EXPOSE 5000
 
 RUN apt-get update && \
-  apt-get install -y build-essential default-libmysqlclient-dev && \
+  apt-get install -y build-essential default-libmysqlclient-dev libcairo2-dev && \
   rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
