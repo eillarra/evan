@@ -74,7 +74,7 @@
         <evan-markdown v-model="obj.summary" label="Summary" :preview-class="{'avatars': true}"></evan-markdown>
         <q-input filled dense v-model="obj.website" label="External website" type="url" />
 
-        <div v-if="obj.files.length">
+        <div v-if="obj.files && obj.files.length">
           <h6 class="q-mt-lg q-mb-md">Files</h6>
           <evan-file-list :files="obj.files" />
         </div>
