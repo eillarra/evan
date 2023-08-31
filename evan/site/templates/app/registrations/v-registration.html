@@ -113,9 +113,10 @@
                 <q-item-label caption>{{ obj.base_fee }} EUR <span v-if="obj.extra_fees">+ {{ obj.extra_fees }} EUR</span></q-item-label>
               </q-item-section>
               <q-item-section side top class="q-mt-sm">
-                <q-badge v-if="obj.is_paid" label="PAID" color="positive" />
-                <q-badge v-else-if="obj.is_accepted" label="PENDING" color="dark" />
-                <q-badge v-else label="NOT ACCEPTED" color="dark" />
+                <q-badge v-if="obj.is_accepted == null" label="PENDING ACCEPTANCE" color="orange" />
+                <q-badge v-else-if="obj.is_accepted == false" label="NOT ACCEPTED" color="dark" />
+                <q-badge v-else-if="obj.is_paid" label="PAID" color="positive" />
+                <q-badge v-else label="PENDING PAYMENT" color="orange" />
               </q-item-section>
             </q-item>
             <q-item v-if="obj.is_accepted" class="q-mt-lg">

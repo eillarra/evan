@@ -197,6 +197,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     def send_payment_reminder(self, request, queryset):
+        queryset = queryset.filter(is_accepted=True, saldo__lt=0, invoice_requested=False)  # TODO: CHECK
         PaymentReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
