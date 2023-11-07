@@ -101,6 +101,7 @@ class RegistrationAdmin(admin.ModelAdmin):
     )
     inlines = (InvitationLetterInline,)
     actions = (
+        "mark_as_accepted",
         "send_reminder",
         "send_visa_reminder",
         "send_payment_reminder",
@@ -192,23 +193,33 @@ class RegistrationAdmin(admin.ModelAdmin):
     Actions
     """
 
+    @admin.action(description="[Bulk] Mark registrations as accepted")
+    def mark_as_accepted(self, request, queryset):
+        queryset.update(is_accepted=True)
+        admin.ModelAdmin.message_user(self, request, "Registrations are marked as accepted.")
+
+    @admin.action(description="[Mailer] Send delegated payment link to users")
     def send_delegated_payment(self, request, queryset):
         DelegatedPaymentEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
+    @admin.action(description="[Mailer] Send payment reminder to users")
     def send_payment_reminder(self, request, queryset):
         queryset = queryset.filter(is_accepted=True, saldo__lt=0, invoice_requested=False)  # TODO: CHECK
         PaymentReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
+    @admin.action(description="[Mailer] Send profile reminder to users")
     def send_profile_reminder(self, request, queryset):
         RegistrationProfileReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
+    @admin.action(description="[Mailer] Send general reminder to users")
     def send_reminder(self, request, queryset):
         RegistrationReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
+    @admin.action(description="[Mailer] Send visa reminder to users")
     def send_visa_reminder(self, request, queryset):
         VisaReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
@@ -219,8 +230,3 @@ class RegistrationAdmin(admin.ModelAdmin):
     paid_col.short_description = "Paid"
     with_coupon.boolean = True
     with_coupon.short_description = "Coupon"
-    send_delegated_payment.short_description = "[Mailer] Send delegated payment link to users"
-    send_payment_reminder.short_description = "[Mailer] Send payment reminder to users"
-    send_profile_reminder.short_description = "[Mailer] Send profile reminder to users"
-    send_reminder.short_description = "[Mailer] Send general reminder to users"
-    send_visa_reminder.short_description = "[Mailer] Send visa reminder to users"
