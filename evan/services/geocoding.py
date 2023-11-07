@@ -1,10 +1,9 @@
+from os import environ
+
 import requests
 
-from os import environ
-from typing import Tuple
 
-
-def geocode(address) -> Tuple[float, float]:
+def geocode(address) -> tuple[float, float]:
     """
     Given an text address it requests the Google Geocoding API to return a (latitude, longitude) tuple.
     Help: https://developers.google.com/maps/documentation/geocoding/start

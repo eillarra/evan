@@ -29,8 +29,8 @@ class FileUploadMixin:
             max_files = self.max_files or obj.config["uploader"]["max_files"]
             if obj.files.count() >= max_files:
                 raise ValidationError({"files": [f"You have reached the limit on number of files ({max_files})."]})
-        except KeyError:
-            raise ValidationError({"files": ["Content is not accepting files."]})
+        except KeyError as exc:
+            raise ValidationError({"files": ["Content is not accepting files."]}) from exc
 
         File(content_object=obj, type=self.get_file_type(), file=request.data["file"]).save()
 

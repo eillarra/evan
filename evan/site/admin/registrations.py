@@ -3,12 +3,12 @@ from django.contrib.admin.utils import unquote
 from django.urls import path, reverse
 from django.utils.html import format_html
 
-from evan.models import Registration, InvitationLetter
+from evan.models import InvitationLetter, Registration
 from evan.site.emails.registrations import (
     DelegatedPaymentEmail,
+    PaymentReminderEmail,
     RegistrationProfileReminderEmail,
     RegistrationReminderEmail,
-    PaymentReminderEmail,
     VisaReminderEmail,
 )
 

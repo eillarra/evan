@@ -1,6 +1,6 @@
-import pytz
-
 from datetime import datetime
+
+import pytz
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.sites.shortcuts import get_current_site
@@ -103,9 +103,9 @@ class Event(models.Model):
     def dates_display(self) -> str:
         two_months = self.start_date.month != self.end_date.month
         if two_months:
-            return "{0} - {1}".format(date_filter(self.start_date, "F j"), date_filter(self.end_date, "F j, Y"))
+            return f'{date_filter(self.start_date, "F j")} - {date_filter(self.end_date, "F j, Y")}'
         else:
-            return "{0}-{1}".format(date_filter(self.start_date, "F j"), date_filter(self.end_date, "j, Y"))
+            return f'{date_filter(self.start_date, "F j")}-{date_filter(self.end_date, "j, Y")}'
 
     def editable_by_user(self, user) -> bool:
         return self.can_be_managed_by(user)

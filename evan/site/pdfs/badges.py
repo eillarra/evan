@@ -5,10 +5,9 @@ from django.template.defaultfilters import date as date_filter
 from reportlab.graphics.shapes import Drawing, Image, Rect, String
 from reportlab.lib.colors import HexColor
 from reportlab.lib.units import mm
-from typing import Optional
 
 from evan.services.pdf import PdfResponse
-from evan.services.pdf.styles import UGENT_BLUE, UGENT_YELLOW
+from evan.services.pdf.styles import UGENT_BLUE
 from evan.services.pdf.wrapdf import Wrapdf
 
 
@@ -26,8 +25,8 @@ def draw_badge(
     attendee_name: str,
     color: HexColor,
     show_social: bool = False,
-    institution: Optional[str] = None,
-    country: Optional[str] = None,
+    institution: str | None = None,
+    country: str | None = None,
 ) -> Drawing:
     side_margin = 6 * mm  # a minimum on the sides for the printers
     width = (210 * mm) - (2 * side_margin)

@@ -2,13 +2,14 @@ from django.db import IntegrityError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Coupon, Registration
+from evan.models import Coupon, Event, Registration
+
 from ..permissions import EventRelatedObjectPermission, RegistrationPermission
-from ..serializers import CouponSerializer, RegistrationSerializer, RegistrationRetrieveSerializer
+from ..serializers import CouponSerializer, RegistrationRetrieveSerializer, RegistrationSerializer
 from ..viewsets import EventRelatedViewSet
 
 
@@ -43,8 +44,8 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
                 user=self.request.user,
                 event=Event.objects.get(code=self.kwargs.get("code")),
             )
-        except IntegrityError:
-            raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]})
+        except IntegrityError as exc:
+            raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]}) from exc
 
 
 class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):

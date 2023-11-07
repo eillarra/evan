@@ -1,7 +1,7 @@
+from tempfile import NamedTemporaryFile
+
 from django.http import HttpResponse
 from openpyxl import Workbook
-from tempfile import NamedTemporaryFile
-from typing import Dict, List
 
 
 class ExcelResponse(HttpResponse):
@@ -19,7 +19,7 @@ class ModelExcelWriter:
         self.filename = filename
         self.workbook = None
 
-    def get_sheets(self) -> List[Dict]:
+    def get_sheets(self) -> list[dict]:
         raise NotImplementedError
 
     def set_custom_styles(self) -> None:

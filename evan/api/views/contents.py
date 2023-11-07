@@ -7,6 +7,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Content, File
+
 from ..permissions import ContentPermission
 from ..serializers import ContentSerializer
 from ..viewsets import EventRelatedListOnlyViewSet
@@ -38,8 +39,8 @@ class ContentViewSet(UpdateModelMixin, GenericViewSet):
             max_files = content.config["uploader"]["max_files"]
             if content.files.count() >= max_files:
                 raise ValidationError({"files": [f"You have reached the limit on number of files ({max_files})."]})
-        except KeyError:
-            raise ValidationError({"files": ["Content is not accepting files."]})
+        except KeyError as exc:
+            raise ValidationError({"files": ["Content is not accepting files."]}) from exc
 
         File(content_object=content, type=File.PUBLIC, file=request.data["file"]).save()
 

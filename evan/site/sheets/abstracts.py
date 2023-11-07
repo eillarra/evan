@@ -1,14 +1,12 @@
 import json
 
 from openpyxl.styles import Alignment
-from textwrap import dedent
-from typing import Dict, List
 
 from evan.services.excel import ModelExcelWriter
 
 
 class AbstractsSheet(ModelExcelWriter):
-    def get_sheets(self) -> List[Dict]:
+    def get_sheets(self) -> list[dict]:
         qs = self.queryset.select_related("user__profile").prefetch_related("event", "files", "reviews__user__profile")
         base_data = ["uuid", "email", "first_name", "last_name", "affiliation", "country"]
         event = qs.first().event
@@ -36,7 +34,7 @@ class AbstractsSheet(ModelExcelWriter):
         custom_fields = []
 
         for obj in qs:
-            for k in obj.custom_data.keys():
+            for k in obj.custom_data:
                 if k not in custom_fields:
                     custom_fields.append(k)
 

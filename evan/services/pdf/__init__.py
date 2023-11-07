@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.template.defaultfilters import escape
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Flowable, PageBreak, Paragraph, Image, Spacer
+from reportlab.platypus import Flowable, Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer
 from svglib.svglib import svg2rlg
 
 from .styles import PDF_STYLES

@@ -1,12 +1,12 @@
 import uuid
+from hashlib import sha256
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from hashlib import sha256
 
 from .sessions import Session
 
@@ -135,7 +135,7 @@ class Registration(models.Model):
 
     @property
     def secret(self) -> str:
-        return sha256(f"{self.uuid}{settings.SECRET_KEY}".encode("utf-8")).hexdigest()
+        return sha256(f"{self.uuid}{settings.SECRET_KEY}".encode()).hexdigest()
 
     @property
     def total_fee(self):

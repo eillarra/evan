@@ -10,7 +10,6 @@ def connect_participants(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("evan", "0035_auto_20210626_1604"),
     ]

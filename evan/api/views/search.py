@@ -3,9 +3,6 @@ from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
-
 from ..permissions import EventManagerPermission
 from ..serializers import UserBasicSerializer
 

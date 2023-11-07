@@ -1,4 +1,5 @@
 import uuid
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.fields import GenericRelation
@@ -6,7 +7,10 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
-from typing import Optional
+
+
+if TYPE_CHECKING:
+    from evan.models import File
 
 
 class Abstract(models.Model):
@@ -57,7 +61,7 @@ class Abstract(models.Model):
         return reverse("abstract:app", args=[self.uuid])
 
     @property
-    def file(self) -> Optional["evan.File"]:
+    def file(self) -> Optional["File"]:
         return self.files.first()
 
 

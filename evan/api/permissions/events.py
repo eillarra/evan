@@ -1,5 +1,5 @@
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, IsAuthenticatedOrReadOnly
 
 from evan.models import Event
 
@@ -27,8 +27,8 @@ class EventRelatedPermission(IsAuthenticated):
     def has_permission(self, request, view):
         try:
             event = Event.objects.get(code=view.kwargs.get("code"))
-        except Event.DoesNotExist:
-            raise NotFound("Event does not exist.")
+        except Event.DoesNotExist as exc:
+            raise NotFound("Event does not exist.") from exc
         return event.editable_by_user(request.user)
 
     def has_object_permission(self, request, view, obj):

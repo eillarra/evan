@@ -7,43 +7,62 @@ Evan
 [![license-badge]](LICENSE)
 
 
+## Backend
+
 The Evan api/website uses [Django][django] and the [Django REST Framework][drf].
 
-Application dependencies
-------------------------
+### Application dependencies
 
 The application uses [Pipenv][pipenv] to manage Python packages. While in development, you will need to install
 all dependencies (includes packages like `debug_toolbar`):
 
-    $ pipenv install --dev
-    $ pipenv shell
+```bash
+pipenv install --dev
+pipenv shell
+```
 
 Update dependencies (and manually update `requirements.txt`):
 
-    $ pipenv update --dev && pipenv lock -r
+```bash
+pipenv update --dev && pipenv lock && pipenv requirements
+```
 
-Running the server
-------------------
+### Run the app in development mode
 
-    $ python manage.py runserver
+```bash
+python manage.py runserver
+```
 
-Running tests
--------------
+### Run Huey worker
 
-    $ pytest --cov=evan --cov-report=term
+```bash
+python manage.py run_huey
+```
 
-Run Huey worker
----------------
+### Run the tests
 
-    $ python manage.py run_huey
+```bash
+pytest --cov=evan --cov-report=term
+```
 
-Style guide
------------
+### Style guide
 
-Tab size is 4 spaces. Max line length is 120. You should run `flake8` and `black` before committing any change.
+Tab size is 4 spaces. Max line length is 120. You should run `ruff` before committing any change.
 
-    $ flake8 evan
-    $ black evan
+```bash
+ruff format . && ruff check evan
+```
+
+## Frontend
+
+Some parts of the website are developed as one page applications with [Vue][vue] (`vue` folder).
+When working on these, it is necessary to start a node server in parallel, so Django can access the
+modules via [Inertia][inertia].
+
+```bash
+yarn
+yarn dev
+```
 
 
 [codecov]: https://codecov.io/gh/eillarra/evan
@@ -56,4 +75,6 @@ Tab size is 4 spaces. Max line length is 120. You should run `flake8` and `black
 
 [django]: https://www.djangoproject.com/
 [drf]: https://www.django-rest-framework.org/
+[inertia]: https://inertiajs.com/
 [pipenv]: https://docs.pipenv.org/#install-pipenv-today
+[vue]: https://vuejs.org/

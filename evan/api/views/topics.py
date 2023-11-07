@@ -1,7 +1,8 @@
-from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import DestroyModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Topic
+
 from ..permissions import EventRelatedObjectPermission
 from ..serializers import TopicSerializer
 from ..viewsets import EventRelatedCreateOnlyViewSet

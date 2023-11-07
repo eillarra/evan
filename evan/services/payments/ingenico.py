@@ -1,10 +1,10 @@
 import os
 import time
+from hashlib import sha512
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.http import QueryDict
-from hashlib import sha512
 
 
 def get_absolute_uri():

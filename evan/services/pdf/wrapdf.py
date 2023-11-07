@@ -1,14 +1,10 @@
 import io
 import os
 
-from reportlab.graphics.shapes import Drawing, Rect, String
+from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Flowable, PageBreak, Paragraph, Image, Spacer
-from svglib.svglib import svg2rlg
-from typing import List
+from reportlab.platypus import PageBreak, SimpleDocTemplate
 
 
 FONTS_DIR = os.path.join(os.path.dirname(__file__), "fonts")
@@ -19,7 +15,10 @@ pdfmetrics.registerFont(TTFont("Roboto Bold", os.path.join(FONTS_DIR, "IBMPlexSa
 
 
 class Wrapdf:
-    def __init__(self, *, page_size: tuple = A4, margins: List[float] = [3.5, 2, 3, 2]) -> None:
+    def __init__(self, *, page_size: tuple = A4, margins: list[float] | None = None) -> None:
+        if not margins:
+            margins = [3.5, 2, 3, 2]
+
         self.buffer = io.BytesIO()
         self.parts = []
         self.doc = SimpleDocTemplate(

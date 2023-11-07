@@ -7,10 +7,10 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import generic
 
-from evan.models import Event, Registration, Coupon
+from evan.models import Coupon, Event, Registration
+from evan.services.payments.ingenico import Ingenico
 from evan.site.emails.registrations import PaymentReminderEmail
 from evan.site.views.file_makers.pdf import CertificatePdfMaker, ReceiptPdfMaker
-from evan.services.payments.ingenico import Ingenico
 
 
 class RegistrationRedirectView(generic.DetailView):
@@ -138,8 +138,8 @@ class RegistrationPaymentView(RegistrationPaymentBaseView):
             messages.error(request, "Please check your coupon code. We can't find the one you've introduced.")
         except IntegrityError:
             messages.error(request, "Sorry but the coupon you have introduced has already been used.")
-        except Exception as e:
-            messages.error(request, "Error %s (%s)" % (e.message, type(e).__name__))
+        except Exception as exc:
+            messages.error(request, f"Error {exc.message} ({type(exc).__name__})")
         return redirect(registration.get_payment_url())
 
 

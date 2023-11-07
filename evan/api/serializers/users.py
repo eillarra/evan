@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django_countries.serializer_fields import CountryField
-from drf_writable_nested import UniqueFieldsMixin, NestedUpdateMixin, WritableNestedModelSerializer
+from drf_writable_nested import NestedUpdateMixin, UniqueFieldsMixin, WritableNestedModelSerializer
 from rest_framework import serializers
 
 from evan.models import Profile

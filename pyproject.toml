@@ -1,2 +1,27 @@
-[tool.black]
+[tool.coverage.run]
+omit = ["*apps.py", "*migrations/*", "*settings/*", "*tests/*", "*migratedata.py", "*urls.py", "*wsgi.py", "manage.py"]
+
+[tool.coverage.report]
+exclude_lines = ["pragma: no cover", "raise NotImplementedError", "def __repr__"]
+show_missing = true
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "evan.settings"
+
+[tool.pytest.ini_options]
+addopts = "--cov=evan --cov-report=html"
+DJANGO_SETTINGS_MODULE = "evan.settings.test"
+
+[tool.ruff]
+target-version = "py311"
 line-length = 120
+
+[tool.ruff.isort]
+lines-after-imports = 2
+
+[tool.ruff.lint]
+select = ["E", "F", "UP", "B", "SIM", "I"]
+ignore = ["B026", "SIM105"]

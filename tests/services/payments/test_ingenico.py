@@ -1,5 +1,4 @@
 import pytest
-
 from django.http import QueryDict
 
 from evan.services.payments.ingenico import Ingenico

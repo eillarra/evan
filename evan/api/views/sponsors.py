@@ -2,11 +2,12 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.parsers import FileUploadParser
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Sponsor, File
+from evan.models import File, Sponsor
+
 from ..permissions import EventRelatedObjectPermission
 from ..serializers import SponsorSerializer
 from ..viewsets import EventRelatedCreateOnlyViewSet

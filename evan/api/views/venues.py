@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import DestroyModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Venue, Room
+from evan.models import Room, Venue
+
 from ..permissions import EventRelatedObjectPermission, RoomPermission
-from ..serializers import VenueSerializer, RoomSerializer
+from ..serializers import RoomSerializer, VenueSerializer
 from ..viewsets import EventRelatedCreateOnlyViewSet
 
 

@@ -4,6 +4,7 @@ from django.contrib.auth.admin import UserAdmin as AuthUserAdmin
 
 from evan.models import Profile
 
+
 admin.site.unregister(get_user_model())
 
 

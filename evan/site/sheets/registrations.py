@@ -1,12 +1,10 @@
 import json
 
-from typing import Dict, List
-
 from evan.services.excel import ModelExcelWriter
 
 
 class RegistrationsSheet(ModelExcelWriter):
-    def get_sheets(self) -> List[Dict]:
+    def get_sheets(self) -> list[dict]:
         qs = self.queryset.select_related("user__profile", "coupon").prefetch_related("sessions")
         base_data = ["uuid", "email", "first_name", "last_name", "affiliation", "country"]
 
@@ -68,7 +66,7 @@ class RegistrationsSheet(ModelExcelWriter):
 
         for obj in qs:
             event = obj.event
-            for k in obj.custom_data.keys():
+            for k in obj.custom_data:
                 if k not in custom_fields:
                     custom_fields.append(k)
 

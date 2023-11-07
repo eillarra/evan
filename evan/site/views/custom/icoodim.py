@@ -1,8 +1,9 @@
+from io import BytesIO
+
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from io import BytesIO
 from PyPDF2 import PdfMerger
 
 from evan.models import Abstract
@@ -41,7 +42,7 @@ class IcoodimPdfBundleView(View):
 
         bundle.sort(key=lambda x: x[0])
 
-        for (_, abstract) in bundle:
+        for _, abstract in bundle:
             if abstract.file:
                 merger.append(abstract.file.file.path)
 

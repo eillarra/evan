@@ -1,4 +1,5 @@
 import os
+from mimetypes import guess_type
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -7,7 +8,6 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.generic import View
-from mimetypes import guess_type
 
 from evan.models import File
 

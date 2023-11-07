@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("evan", "0048_alter_fee_type_alter_registration_fee_type"),
     ]

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from evan.models import Permission
+
 from .users import BasicUserSerializer
 
 

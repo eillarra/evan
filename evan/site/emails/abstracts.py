@@ -1,5 +1,3 @@
-from typing import List
-
 from .generic import TemplateEmail
 
 
@@ -10,7 +8,7 @@ class AbstractEmail(TemplateEmail):
         return self.from_email
 
     @staticmethod
-    def get_to_emails(obj) -> List[str]:
+    def get_to_emails(obj) -> list[str]:
         return [obj.user.email]
 
     @staticmethod

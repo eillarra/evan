@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import TemplateView
 
 from evan.site import views
+
 from .urls_custom import custom_patterns
 
 
@@ -38,7 +39,11 @@ registration_patterns = ([
     ])),
     path("<uuid:uuid>/d/p/<slug:secret>/", include([
         path("", never_cache(views.RegistrationPaymentDelegatedView.as_view()), name="payment_delegated"),
-        path("result/", never_cache(views.RegistrationPaymentDelegatedResultView.as_view()), name="payment_delegated_result"),
+        path(
+            "result/",
+            never_cache(views.RegistrationPaymentDelegatedResultView.as_view()),
+            name="payment_delegated_result"
+        ),
     ])),
     path("<slug:code>/", views.RegistrationRedirectView.as_view(), name="redirect"),
 ], "registration_patterns")

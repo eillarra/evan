@@ -11,9 +11,9 @@ class UgentMicrosoftOAuth2Adapter(MicrosoftGraphOAuth2Adapter):
     settings = app_settings.PROVIDERS.get(provider_id, {})
     tenant = settings.get("TENANT")
 
-    provider_base_url = "https://login.microsoftonline.com/{0}".format(tenant)
-    access_token_url = "{0}/oauth2/v2.0/token".format(provider_base_url)
-    authorize_url = "{0}/oauth2/v2.0/authorize".format(provider_base_url)
+    provider_base_url = f"https://login.microsoftonline.com/{tenant}"
+    access_token_url = f"{provider_base_url}/oauth2/v2.0/token"
+    authorize_url = f"{provider_base_url}/oauth2/v2.0/authorize"
 
 
 oauth2_login = OAuth2LoginView.adapter_view(UgentMicrosoftOAuth2Adapter)

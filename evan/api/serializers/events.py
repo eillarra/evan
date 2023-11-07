@@ -2,6 +2,7 @@ from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
 
 from evan.models import Event, Fee, validate_event_dates
+
 from .files import FileSerializer
 from .sessions import SessionSerializer
 from .sponsors import SponsorSerializer

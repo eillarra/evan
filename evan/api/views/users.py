@@ -6,8 +6,9 @@ from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateMode
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event, Permission, Registration
+
 from ..permissions import UserPermission
-from ..serializers import EventListSerializer, AuthRegistrationRetrieveSerializer, UserSerializer
+from ..serializers import AuthRegistrationRetrieveSerializer, EventListSerializer, UserSerializer
 
 
 class UserViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):

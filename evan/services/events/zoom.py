@@ -1,22 +1,20 @@
 import csv
-
 from datetime import datetime
-from typing import Dict, Optional, Union
 
 
 def to_bool(val: str) -> bool:
     return val == "Yes"
 
 
-def to_datetime(dt: str) -> Optional[datetime]:
+def to_datetime(dt: str) -> datetime | None:
     return datetime.strptime(dt, "%b %d, %Y %H:%M:%S") if dt != "--" else None
 
 
-def to_minutes(minutes: Union[str, int]) -> int:
+def to_minutes(minutes: str | int) -> int:
     return int(minutes) if minutes != "--" else 0
 
 
-def attendee_report(csv_path: str) -> Dict:
+def attendee_report(csv_path: str) -> dict:
     """Given a standard Zoom CSV attendee report, returns massaged information."""
     report = []
     field_map = {
@@ -46,7 +44,7 @@ def attendee_report(csv_path: str) -> Dict:
                 fields = row
                 continue
 
-            tmp = dict(zip(fields, row))
+            tmp = dict(zip(fields, row, strict=True))
             report.append({k: v[1](tmp[v[0]]) for k, v in field_map.items()})
 
     return report

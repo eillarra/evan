@@ -35,7 +35,6 @@ def migrate_metadata(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("evan", "0031_auto_20210621_1620"),
     ]

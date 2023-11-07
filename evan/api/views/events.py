@@ -9,8 +9,9 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Abstract, File
-from ..permissions import EventPermission, EventAttendeePermission
+from evan.models import Abstract, Event, File
+
+from ..permissions import EventAttendeePermission, EventPermission
 from ..serializers import AttendeeSerializer, EventSerializer, PublicAbstractSerializer
 
 
@@ -78,9 +79,9 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
             return Response({"message": "Your message has been sent."})
 
-        except Exception as e:
+        except Exception as exc:
             return Response(
-                {"message": "We could not send your message.", "detail": str(e)},
+                {"message": "We could not send your message.", "detail": str(exc)},
                 status=HTTPStatus.INTERNAL_SERVER_ERROR,
             )
 

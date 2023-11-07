@@ -12,7 +12,6 @@ def migrate_config(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("evan", "0034_rename_main_config_event_config"),
     ]

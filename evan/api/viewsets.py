@@ -1,10 +1,11 @@
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
-from rest_framework.mixins import ListModelMixin, CreateModelMixin
+from rest_framework.mixins import CreateModelMixin, ListModelMixin
 from rest_framework.schemas import AutoSchema
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event
+
 from .permissions import EventRelatedPermission, EventRelatedViewOnlyPermission
 from .schema import event_code_field
 

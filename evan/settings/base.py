@@ -1,7 +1,7 @@
 import os
+from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
-from urllib.parse import urlparse
 
 
 PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -65,6 +65,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "dnt.middleware.DoNotTrackMiddleware",
     "django.middleware.cache.FetchFromCacheMiddleware",

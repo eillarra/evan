@@ -4,23 +4,24 @@ from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.mixins import (
-    ListModelMixin,
     CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
-    DestroyModelMixin,
 )
 from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Abstract, AbstractReview, File
+from evan.models import Abstract, AbstractReview, Event, File
+
 from ..permissions import AbstractPermission, AbstractReviewPermission
 from ..serializers import (
-    AbstractSerializer,
-    ManagedAbstractSerializer,
     AbstractReviewSerializer,
+    AbstractSerializer,
     FullAbstractReviewSerializer,
+    ManagedAbstractSerializer,
 )
 from ..viewsets import EventRelatedViewSet
 
@@ -41,8 +42,8 @@ class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
                 user=self.request.user,
                 event=Event.objects.get(code=self.kwargs.get("code")),
             )
-        except IntegrityError:
-            raise ValidationError({"event-user": ["Duplicate entry - this user already has an abstract."]})
+        except IntegrityError as exc:
+            raise ValidationError({"event-user": ["Duplicate entry - this user already has an abstract."]}) from exc
 
 
 class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
@@ -81,8 +82,8 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
             max_files = abstract.event.config["abstracts"]["uploader"]["max_files"]
             if abstract.files.count() >= max_files:
                 raise ValidationError({"files": [f"You have reached the limit on number of files ({max_files})."]})
-        except KeyError:
-            raise ValidationError({"files": ["Abstract module is not active."]})
+        except KeyError as exc:
+            raise ValidationError({"files": ["Abstract module is not active."]}) from exc
 
         file = File(content_object=self.get_object(), type=File.PRIVATE, file=request.data["file"])
         file.save()

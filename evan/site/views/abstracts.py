@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import generic
 
-from evan.models import Event, Abstract
+from evan.models import Abstract, Event
 
 
 class AbstractRedirectView(generic.DetailView):

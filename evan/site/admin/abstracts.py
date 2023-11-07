@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 
 from evan.models import Abstract
+
 from .files import FilesInline
 
 

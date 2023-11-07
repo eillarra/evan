@@ -2,6 +2,7 @@ from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from evan.models import Coupon, Registration
+
 from .events import EventListSerializer
 from .users import UserSerializer
 

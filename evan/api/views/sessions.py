@@ -1,11 +1,12 @@
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin
+from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import File, Session
-from .mixins import FileUploadMixin
+
 from ..permissions import SessionPermission
 from ..serializers import SessionSerializer
 from ..viewsets import EventRelatedCreateOnlyViewSet
+from .mixins import FileUploadMixin
 
 
 class SessionsViewSet(EventRelatedCreateOnlyViewSet):

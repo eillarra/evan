@@ -24,7 +24,6 @@ def migrate_review_ratings(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("evan", "0049_alter_registration_fee_type"),
     ]

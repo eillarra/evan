@@ -1,10 +1,11 @@
+from os import environ
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import generic
-from os import environ
 
 from evan.models import Event
 from evan.site.pdfs.badges import BadgesPdfMaker

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from evan.models import Abstract, AbstractReview
+
 from .events import EventListSerializer
 from .files import FileSerializer
 from .users import UserSerializer
