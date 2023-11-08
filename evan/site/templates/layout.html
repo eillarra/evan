@@ -4,18 +4,26 @@
 
 
 {% block header %}
-  <q-header class="bg-ugent text-white q-pl-sm">
-    <q-toolbar>
-      <q-space></q-space>
-      <evan-user-menu username="{{ user }}"></evan-user-menu>
+  <q-header class="row bg-white">
+    <q-toolbar class="col-3 col-md-2 bg-white q-pl-none">
+      EVAN
     </q-toolbar>
+    <q-toolbar class="col-9 col-md-10 q-pl-md q-pb-sm" :class="{'q-pl-lg': $q.screen.gt.sm}" style="align-items: flex-end">
+      <div class="absolute-top-right header-links text-white q-py-sm q-px-md q-gutter-x-lg" :class="{'q-py-md q-px-lg': $q.screen.gt.sm}">
+        {% if user.is_authenticated %}
+          {% if user.is_staff %}<a href="/admin/">Admin</a>{% endif %}
+          {{ user.name }}
+        {% else %}
+          <a href="{% url 'account_login' %}">Sign in<q-icon name="login" size="xxs"></q-icon></a>
+        {% endif %}
+      </div>
+    </q-toolbar>
+    {% block toolbar_menu %}{% endblock %}
   </q-header>
 {% endblock %}
 
 {% block page %}
-  <div class="q-pl-lg">
-    {% block content %}{% endblock %}
-  </div>
+  {% block content %}{% endblock %}
 {% endblock %}
 
 {% block scripts %}
@@ -28,7 +36,6 @@
         };
       }
     });
-    Evan.utils.registerComponents(app, [EvanCommonComponents]);
     app.use(Quasar);
     app.mount('#vue');
   </script>

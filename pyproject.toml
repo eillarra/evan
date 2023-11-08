@@ -1,27 +1,78 @@
+[tool.poetry]
+name = "evan"
+version = "2.0.0"
+description = ""
+authors = ["Eneko Illarramendi <eneko@illarra.com>"]
+license = "MIT"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "~3.12.0"
+django = {version = "*", extras = ["bcrypt"]}
+djangorestframework = "*"
+django-allauth = {version = "*", extras = ["socialaccount"]}
+django-compressor = "*"
+django-cors-headers = "*"
+django-countries = "*"
+django-ical = "*"
+django-libsass = "*"
+django-storages = {version = "*", extras = ["s3"]}
+django-vite = "*"
+gevent = "*"
+gunicorn = "*"
+hiredis = "*"
+huey = "*"
+inertia-django = "*"
+mysqlclient = "*"
+nh3 = "*"
+polars = "*"
+pydantic = "*"
+redis = "*"
+sentry-sdk = {version = "*", extras = ["django"]}
+tld = "*"
+weasyprint = "*"
+whitenoise = "*"
+xlsxwriter = "*"
+
+[tool.poetry.group.dev.dependencies]
+arrow = "*"
+django-debug-toolbar = "*"
+factory-boy = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-django = "*"
+ruff = "*"
+
 [tool.coverage.run]
-omit = ["*apps.py", "*migrations/*", "*settings/*", "*tests/*", "*migratedata.py", "*urls.py", "*wsgi.py", "manage.py"]
+omit = [
+  "*/migrations/**",
+  "*/settings/**",
+  "*/tests/**",
+  "*apps.py",
+  "*urls.py",
+  "*wsgi.py",
+  "manage.py",
+]
 
 [tool.coverage.report]
-exclude_lines = ["pragma: no cover", "raise NotImplementedError", "def __repr__"]
+exclude_lines = ["pragma: no cover", "raise NotImplementedError", "def __repr__", "def __str__", "if TYPE_CHECKING:"]
 show_missing = true
-
-[tool.mypy]
-plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
-
-[tool.django-stubs]
-django_settings_module = "evan.settings"
 
 [tool.pytest.ini_options]
 addopts = "--cov=evan --cov-report=html"
+markers = [
+  "api: mark a test as an `api` test",
+  "site: mark a test as an `site` test",
+]
 DJANGO_SETTINGS_MODULE = "evan.settings.test"
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 120
 
-[tool.ruff.isort]
-lines-after-imports = 2
-
 [tool.ruff.lint]
-select = ["E", "F", "UP", "B", "SIM", "I"]
-ignore = ["B026", "SIM105"]
+select = ["E", "F", "UP", "B", "SIM", "I", "DJ"]
+ignore = ["SIM105"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2

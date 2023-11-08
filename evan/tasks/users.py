@@ -2,21 +2,21 @@ from django.db import connection
 from huey.contrib.djhuey import db_task
 from tld import get_tld
 
-from evan.models import Profile
+from evan.models.users import User
 
 
 @db_task()
 def update_affiliation(user_id: int) -> tuple:
-    profile = Profile.objects.select_related("user").get(user_id=user_id)
-    domain = get_tld(profile.user.email.split("@")[-1], as_object=True, fix_protocol=True)
+    user = User.objects.get(id=user_id)
+    domain = get_tld(user.email.split("@")[-1], as_object=True, fix_protocol=True)
 
     with connection.cursor() as cursor:
         cursor.execute("SELECT * FROM tmp_fld WHERE fld = %s", [domain.fld])
         row = cursor.fetchone()
 
     if row:
-        profile.affiliation = profile.affiliation if profile.affiliation else row[1]
-        profile.country = profile.country if profile.country else row[2]
-        profile.save(update_fields=["affiliation", "country"])
+        user.affiliation = user.affiliation if user.affiliation else row[1]
+        user.country = user.country if user.country else row[2]
+        user.save(update_fields=["affiliation", "country"])
 
-    return domain.fld, bool(row), profile
+    return domain.fld, bool(row), user

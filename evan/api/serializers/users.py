@@ -1,55 +1,35 @@
-from django.contrib.auth import get_user_model
 from django_countries.serializer_fields import CountryField
-from drf_writable_nested import NestedUpdateMixin, UniqueFieldsMixin, WritableNestedModelSerializer
 from rest_framework import serializers
 
-from evan.models import Profile
+from evan.models import User
 
 
 class AttendeeSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField(read_only=True)
-    affiliation = serializers.SerializerMethodField(read_only=True)
-    country = serializers.SerializerMethodField(read_only=True)
+    name = serializers.CharField()
+    country = CountryField(country_dict=True, allow_null=True)
     connect = serializers.SerializerMethodField(read_only=True)
 
-    class Meta:
-        model = get_user_model()
-        fields = ("id", "name", "affiliation", "country", "connect")
-
-    def get_affiliation(self, obj) -> str:
-        return obj.profile.affiliation
+    class Meta:  # noqa: D106
+        model = User
+        fields = ["id", "name", "affiliation", "country", "connect"]
 
     def get_connect(self, obj) -> bool:
         return obj.profile.can_be_contacted()
 
-    def get_country(self, obj) -> str:
-        return {"code": obj.profile.country.code, "name": obj.profile.country.name} if obj.profile.country else None
 
-    def get_name(self, obj) -> str:
-        return " ".join([obj.first_name, obj.last_name])
+class UserTinySerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+
+    class Meta:  # noqa: D106
+        model = User
+        fields = ["username", "email", "name", "affiliation"]
 
 
-class ProfileSerializer(UniqueFieldsMixin, WritableNestedModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    self = serializers.HyperlinkedIdentityField(view_name="v1:user-detail")
     country = CountryField(country_dict=True, allow_null=True)
 
-    class Meta:
-        model = Profile
-        exclude = ("user",)
-
-
-class UserSerializer(NestedUpdateMixin, serializers.ModelSerializer):
-    self = serializers.HyperlinkedIdentityField(view_name="v1:user-detail")
-    profile = ProfileSerializer()
-
-    class Meta:
-        model = get_user_model()
-        fields = ("self", "id", "username", "email", "first_name", "last_name", "profile")
-        read_only_fields = ("username",)
-
-
-class UserBasicSerializer(serializers.ModelSerializer):
-    self = serializers.HyperlinkedIdentityField(view_name="v1:user-detail")
-
-    class Meta:
-        model = get_user_model()
-        fields = ("self", "id", "username", "email", "first_name", "last_name")
+    class Meta:  # noqa: D106
+        model = User
+        fields = ["self", "id", "username", "email", "first_name", "last_name", "affiliation", "country", "is_staff"]
+        read_only_fields = ["username", "is_staff"]

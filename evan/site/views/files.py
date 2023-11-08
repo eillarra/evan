@@ -1,51 +1,44 @@
-import os
-from mimetypes import guess_type
-
-from django.conf import settings
-from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from django.views.generic import View
+from requests.exceptions import HTTPError
 
-from evan.models import File
+from evan.models.rel.files import File
+from evan.services.s3 import get_s3_response
 
 
-class SendfileView(View):
+class MediaFileView(View):
     """
-    Serves `private` assets.
+    Serves private S3 files, checking user permissions beforehand if needed.
     """
 
-    def get_object(self):
+    def dispatch(self, request, *args, **kwargs):
+        if not self.get_object().is_accessible_by_user(request.user):
+            raise PermissionDenied("You don't have the necessary permissions to access this file.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self) -> File:
         if not hasattr(self, "object"):
-            self.object = get_object_or_404(File, file=self.request.path.replace("/media/", ""))
+            self.object = get_object_or_404(File, file=self.request.path.replace("/media/", "", 1))
         return self.object
 
+    @method_decorator(never_cache)
     def get(self, request, *args, **kwargs):
-        obj = self.get_object()
-        full_path = obj.file.name.replace("private", "", 1)
-        response = HttpResponse()
+        file = self.get_object()
 
-        url = f"{settings.SENDFILE_URL}{full_path}"
-        guessed_mimetype, guessed_encoding = guess_type(kwargs.get("filename"))
+        try:
+            res = get_s3_response(file.s3_object_key)
+        except HTTPError as exc:
+            raise Http404("File not found.") from exc
 
-        response["X-Accel-Redirect"] = url.encode("utf-8")
-        response["Content-Type"] = guessed_mimetype if guessed_mimetype else "application/octet-stream"
-        response["Content-length"] = os.path.getsize(f"{settings.SENDFILE_ROOT}{full_path}")
-        if guessed_encoding:
-            response["Content-Encoding"] = guessed_encoding
-
-        return response
-
-
-class PrivateFileView(SendfileView):
-    """
-    Serves `private` files, checking basic permissions beforehand.
-    """
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not self.get_object().content_object.files_viewable_by_user(self.request.user):
-            raise PermissionDenied
-        return super().dispatch(request, *args, **kwargs)
+        return HttpResponse(
+            res.raw,
+            headers={
+                "Content-Disposition": f'inline; filename="{file.file.name}"',
+                "Content-Length": res.headers["Content-Length"],
+                "Content-Type": res.headers["Content-Type"],
+            },
+        )

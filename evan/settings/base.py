@@ -13,17 +13,18 @@ SITE_ROOT = PACKAGE_ROOT / "site"
 
 # General configuration
 
+ENV = os.environ.get("DJANGO_ENV", "development")
 DEBUG = True
 
 ADMINS = (("eillarra", "eneko.illarramendi@ugent.be"),)
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "DJANGO_SECRET_KEY")
+ENCRYPTION_KEY = os.environ.get("DJANGO_ENCRYPTION_KEY", "DJANGO_ENCRYPTION_KEY")
 SITE_ID = int(os.environ.get("SITE_ID", 1))
 
 INSTALLED_APPS = [
     "whitenoise.runserver_nostatic",
     "django.contrib.auth",
     "django.contrib.contenttypes",
-    "django.contrib.flatpages",
     "django.contrib.messages",
     "django.contrib.redirects",
     "django.contrib.sessions",
@@ -31,7 +32,6 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.staticfiles",
     # helpers
-    "captcha",
     "compressor",
     "django_vite",
     "inertia",
@@ -42,14 +42,15 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.github",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.linkedin_oauth2",
-    # evan
+    "evan.ugent_provider",
+    # api
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
+    # evan
     "evan",
     "evan.api",
     "evan.site",
-    "evan.ugent_provider",
     # tasks
     "huey.contrib.djhuey",
     # admin
@@ -63,18 +64,18 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.middleware.cache.UpdateCacheMiddleware",
     "django.middleware.gzip.GZipMiddleware",
-    "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.http.ConditionalGetMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "dnt.middleware.DoNotTrackMiddleware",
     "django.middleware.cache.FetchFromCacheMiddleware",
     "django.contrib.redirects.middleware.RedirectFallbackMiddleware",
-    "django.contrib.flatpages.middleware.FlatpageFallbackMiddleware",
+    "inertia.middleware.InertiaMiddleware",
 ]
 
 
@@ -85,6 +86,8 @@ WSGI_APPLICATION = "evan.wsgi.application"
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 db = urlparse(os.environ.get("DATABASE_URL"))
+legacy_db = urlparse(os.environ.get("LEGACY_DATABASE_URL"))
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
@@ -93,8 +96,24 @@ DATABASES = {
         "PASSWORD": db.password,
         "HOST": db.hostname,
         "PORT": db.port,
-    }
+        "TIME_ZONE": "Europe/Brussels",
+        "OPTIONS": {
+            "ssl_mode": "REQUIRED",
+        },
+    },
+    "legacy": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": legacy_db.path[1:],
+        "USER": legacy_db.username,
+        "PASSWORD": legacy_db.password,
+        "HOST": legacy_db.hostname,
+        "PORT": legacy_db.port,
+        "OPTIONS": {
+            "ssl_mode": "REQUIRED",
+        },
+    },
 }
+
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 
@@ -108,8 +127,16 @@ TIME_ZONE = "Europe/Brussels"
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 
-USE_I18N = False
-LANGUAGE_CODE = "en"
+USE_I18N = True
+
+LANGUAGE_CODE = "nl"
+LANGUAGES = (
+    ("en", "English"),
+    ("nl", "Nederlands"),
+)
+LANGUAGE_COOKIE_NAME = "evan.language"
+MODELTRANSLATION_LANGUAGES = ("en", "nl")
+MODELTRANSLATION_TRANSLATION_FILES = ("evan.model_translations",)
 
 FIRST_DAY_OF_WEEK = 1
 
@@ -132,6 +159,8 @@ X_FRAME_OPTIONS = "DENY"
 CORS_ORIGIN_ALLOW_ALL = True
 
 # Account
+
+AUTH_USER_MODEL = "evan.User"
 
 LOGIN_URL = "account_login"
 LOGIN_REDIRECT_URL = "dashboard"
@@ -157,14 +186,16 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
+# https://docs.allauth.org/en/latest/account/configuration.html
+
 ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_AUTHENTICATION_METHOD = "username_email"
-ACCOUNT_FORMS = {
-    "signup": "evan.forms.EvanSignupForm",
-}
+ACCOUNT_PRESERVE_USERNAME_CASING = False
 
-# Social accounts
+# https://docs.allauth.org/en/latest/socialaccount/configuration.html
 
+SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_PROVIDERS = {
     "github": {"SCOPE": ["read:user", "user:email"]},
     "google": {"SCOPE": ["profile", "email"], "AUTH_PARAMS": {"access_type": "online"}},
@@ -179,20 +210,30 @@ SOCIALACCOUNT_PROVIDERS = {
 # http://www.django-rest-framework.org/api-guide/settings/
 
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ),
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly",),
-    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.openapi.AutoSchema",
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.NamespaceVersioning",
     "DEFAULT_VERSION": "v1",
-    "PAGE_SIZE": 100,
+    "PAGE_SIZE": 50,
+    "TEST_REQUEST_DEFAULT_FORMAT": "json",
+    "COERCE_DECIMAL_TO_STRING": False,
 }
 
 
 # https://docs.djangoproject.com/en/dev/topics/templates/
 
 INERTIA_LAYOUT = SITE_ROOT / "templates" / "vue" / "inertia.html"
-DJANGO_VITE_ASSETS_PATH = BASE_DIR / "vue" / "dist"
-DJANGO_VITE_STATIC_URL_PREFIX = "vite"
+DJANGO_VITE = {
+    "default": {
+        "dev_mode": False,
+        "static_url_prefix": "vite",
+    },
+}
 
 TEMPLATES = [
     {
@@ -248,7 +289,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = SITE_ROOT / "www" / "static"
 STATICFILES_DIRS = [
     SITE_ROOT / "static",
-    ("vite", DJANGO_VITE_ASSETS_PATH),
+    ("vite", BASE_DIR / "vue" / "dist"),
 ]
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
@@ -280,12 +321,3 @@ HUEY = {
     "name": "evan",
     "immediate": True,
 }
-
-
-# reCAPTCHA
-# https://github.com/praekelt/django-recaptcha#installation
-
-RECAPTCHA_PUBLIC_KEY = os.environ.get("RECAPTCHA_PUBLIC_KEY", "RECAPTCHA_PUBLIC_KEY")
-RECAPTCHA_PRIVATE_KEY = os.environ.get("RECAPTCHA_PRIVATE_KEY", "RECAPTCHA_PRIVATE_KEY")
-RECAPTCHA_USE_SSL = True
-NOCAPTCHA = True  # For using reCAPTCHA v2

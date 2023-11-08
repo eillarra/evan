@@ -1,47 +1,38 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
-from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
-from rest_framework.mixins import RetrieveModelMixin, UpdateModelMixin
-from rest_framework.parsers import FileUploadParser
+from rest_framework.mixins import DestroyModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Content, File
+from evan.models import Content
 
-from ..permissions import ContentPermission
+from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import ContentSerializer
-from ..viewsets import EventRelatedListOnlyViewSet
+from ..viewsets import EventRelatedViewSet
+from .files import FilesMixin
 
 
-class ContentsViewSet(EventRelatedListOnlyViewSet):
+class ContentsPermission(EventRelatedPermission):
+    allow_list_to_all = True
+    allow_create_to_manager = True
+
+
+class ContentPermission(EventRelatedObjectPermission):
+    allow_update_to_manager = True
+    allow_delete_to_manager = False
+
+
+class ContentsViewSet(EventRelatedViewSet):
+    permission_classes = [ContentsPermission]
     queryset = Content.objects.prefetch_related("files").all()
     pagination_class = None
     serializer_class = ContentSerializer
 
 
-class ContentViewSet(UpdateModelMixin, GenericViewSet):
-    permission_classes = (ContentPermission,)
+class ContentViewSet(FilesMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+    permission_classes = [ContentPermission]
     queryset = Content.objects.prefetch_related("files").all()
     serializer_class = ContentSerializer
+    use_file_uploader_config = True
 
-    @action(
-        detail=True,
-        methods=["post"],
-        pagination_class=None,
-        serializer_class=ContentSerializer,
-        parser_classes=[FileUploadParser],
-    )
-    @method_decorator(never_cache)
-    def files(self, request, *args, **kwargs):
-        content = self.get_object()
-
-        try:
-            max_files = content.config["uploader"]["max_files"]
-            if content.files.count() >= max_files:
-                raise ValidationError({"files": [f"You have reached the limit on number of files ({max_files})."]})
-        except KeyError as exc:
-            raise ValidationError({"files": ["Content is not accepting files."]}) from exc
-
-        File(content_object=content, type=File.PUBLIC, file=request.data["file"]).save()
-
-        return RetrieveModelMixin.retrieve(self, request, *args, **kwargs)
+    def perform_update(self, serializer):
+        """Remove key from validated data before updating."""
+        serializer.validated_data.pop("key", None)
+        serializer.save()

@@ -1,76 +1,56 @@
 from django.conf.urls import include
-from django.contrib.flatpages.views import flatpage
-from django.urls import path, re_path
+from django.urls import path
 from django.views.decorators.cache import never_cache
-from django.views.generic import TemplateView
 
 from evan.site import views
+from evan.site.views.events import EventView
 
-from .urls_custom import custom_patterns
 
-
-# fmt: off
-
-abstract_patterns = ([
-    path("<uuid:uuid>/", include([
-        path("", views.AbstractView.as_view(), name="app")
-    ])),
-    path("<slug:code>/", views.AbstractRedirectView.as_view(), name="redirect"),
-    path("<slug:code>/review/", views.AbstractReviewView.as_view(), name="review"),
-], "abstract_patterns")
-
-event_patterns = ([
-    path("<slug:code>/", include([
-        path("", views.EventView.as_view(), name="app"),
-        path("files/badges.pdf", views.EventBadgesPdf.as_view(), name="badges"),
-        path("files/abstracts.xlsx", views.EventAbstractsSheet.as_view(), name="abstracts_sheet"),
-        path("files/registrations.xlsx", views.EventRegistrationsSheet.as_view(), name="registrations_sheet"),
-    ])),
-], "event_patterns")
-
-registration_patterns = ([
-    path("<uuid:uuid>/", include([
-        path("", views.RegistrationView.as_view(), name="app"),
-        path("certificate.pdf", never_cache(views.RegistrationCertificatePdf.as_view()), name="certificate"),
-        path("payment/", never_cache(views.RegistrationPaymentView.as_view()), name="payment"),
-        path("payment/result/", never_cache(views.RegistrationPaymentResultView.as_view()), name="payment_result"),
-        path("receipt.pdf", never_cache(views.RegistrationReceiptPdf.as_view()), name="receipt"),
-        path("invoice-request/", never_cache(views.RegistrationInvoiceRequestView.as_view()), name="invoice_request"),
-    ])),
-    path("<uuid:uuid>/d/p/<slug:secret>/", include([
-        path("", never_cache(views.RegistrationPaymentDelegatedView.as_view()), name="payment_delegated"),
+event_patterns = (
+    [
         path(
-            "result/",
-            never_cache(views.RegistrationPaymentDelegatedResultView.as_view()),
-            name="payment_delegated_result"
+            "<slug:code>/",
+            include(
+                [
+                    path("", EventView.as_view(), name="app"),
+                    # path("files/badges.pdf", views.EventBadgesPdf.as_view(), name="badges"),
+                    # path("files/abstracts.xlsx", views.EventAbstractsSheet.as_view(), name="abstracts_sheet"),
+                    # path("files/registrations.xlsx", views.EventRegistrationsSheet.as_view(), name="registrations_sheet"),
+                ]
+            ),
         ),
-    ])),
-    path("<slug:code>/", views.RegistrationRedirectView.as_view(), name="redirect"),
-], "registration_patterns")
+    ],
+    "event_patterns",
+)
+
+registration_patterns = (
+    [
+        path(
+            "<uuid:uuid>/",
+            include(
+                [
+                    path("", views.EventView.as_view(), name="app"),
+                    path("certificate.pdf", never_cache(views.EventView.as_view()), name="certificate"),
+                    path("payment/", never_cache(views.EventView.as_view()), name="payment"),
+                    path("receipt.pdf", never_cache(views.EventView.as_view()), name="receipt"),
+                ]
+            ),
+        ),
+    ],
+    "registration_patterns",
+)
+
+session_patterns = (
+    [
+        path("<uuid:uuid>/<slug:secret>/", views.SessionSecretEditorView.as_view(), name="secret"),
+    ],
+    "session_patterns",
+)
 
 urlpatterns = [
-    path("a/", include(abstract_patterns, namespace="abstract")),
+    path("", views.HomeView.as_view(), name="homepage"),
+    path("u/dashboard/", views.DashboardView.as_view(), name="dashboard"),
     path("e/", include(event_patterns, namespace="event")),
     path("r/", include(registration_patterns, namespace="registration")),
-    path("u/", include("allauth.urls")),
-    path("u/dashboard/", views.DashboardView.as_view(), name="dashboard"),
-    path("disclaimer/", flatpage, {"url": "/disclaimer/"}, name="disclaimer"),
-    path("privacy/", flatpage, {"url": "/privacy/"}, name="privacy"),
-    path("terms/", flatpage, {"url": "/terms/"}, name="terms"),
-    path("done/", TemplateView.as_view(template_name="pages/done.html"), name="done"),
-    path("", TemplateView.as_view(template_name="pages/homepage.html"), name="homepage"),
-    # Custom endpoints
-    path("c/", include(custom_patterns, namespace="_custom")),
-    # Files
-    re_path(
-        r"media/private/(?P<content_type>\d+)/(?P<object_id>\d+)/(?P<filename>[\w.-]+)",
-        views.PrivateFileView.as_view()
-    ),
+    path("s/", include(session_patterns, namespace="session")),
 ]
-
-# Flatpages “catchall” pattern
-urlpatterns += [
-    re_path(r"^(?P<url>.*/)$", flatpage),
-]
-
-# fmt: on

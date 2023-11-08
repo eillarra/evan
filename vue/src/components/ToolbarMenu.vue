@@ -1,0 +1,87 @@
+<style lang="scss" scoped>
+.dus-toolbar-title {
+  font-size: 1.6rem;
+  font-weight: 300;
+  color: #333;
+}
+</style>
+
+<template>
+  <div class="z-top bg-grey-1" :class="{ 'bg-grey-3': dark }">
+    <q-toolbar class="container" :class="{ 'bg-grey-3': dark }">
+      <q-toolbar-title class="dus-toolbar-title q-py-md" :class="{ 'q-pl-none': $q.screen.gt.sm }">{{
+        title
+      }}</q-toolbar-title>
+      <q-tabs v-if="$q.screen.gt.sm && menu.length" stretch inline-label no-caps>
+        <q-route-tab
+          v-for="(item, i) in menu"
+          :key="i"
+          :exact="item.exact"
+          :href="item.href"
+          :to="item.to"
+          :target="item.target"
+          :class="{ 'q-px-xs': !item.label }"
+        >
+          <q-icon v-if="item.icon" :name="item.icon" size="20px" :class="{ 'q-mr-sm': item.label }" />
+          <div v-if="item.label" class="q-tab__label">{{ item.label }}</div>
+          <q-icon
+            v-if="!item.icon && item.href"
+            name="arrow_forward_ios"
+            size="13px"
+            :class="{ 'q-ml-sm': item.label }"
+          />
+        </q-route-tab>
+      </q-tabs>
+    </q-toolbar>
+    <q-toolbar v-if="$q.screen.lt.md && menu.length" class="bg-grey-2 text-dark">
+      <q-tabs stretch shrink inline-label no-caps>
+        <q-route-tab
+          v-for="(item, i) in menu"
+          :key="i"
+          :exact="item.exact"
+          :href="item.href"
+          :to="item.to"
+          :target="item.target"
+          :class="{ 'q-px-xs': !item.label }"
+        >
+          <q-icon v-if="item.icon" :name="item.icon" size="20px" :class="{ 'q-mr-sm': item.label }" />
+          <div v-if="item.label" class="q-tab__label">{{ item.label }}</div>
+          <q-icon
+            v-if="!item.icon && item.href"
+            name="arrow_forward_ios"
+            size="13px"
+            :class="{ 'q-ml-sm': item.label }"
+          />
+        </q-route-tab>
+      </q-tabs>
+    </q-toolbar>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { PropType } from 'vue';
+
+interface MenuItem {
+  readonly label: string;
+  readonly href?: string;
+  readonly to?: object;
+  readonly icon?: string;
+  readonly exact?: boolean;
+  readonly target?: string;
+}
+
+defineProps({
+  title: {
+    type: String,
+    required: true,
+  },
+  menu: {
+    type: Array as PropType<MenuItem[]>,
+    required: true,
+  },
+  dark: {
+    type: Boolean,
+    default: false,
+  },
+});
+</script>

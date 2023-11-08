@@ -2,12 +2,13 @@ import uuid
 from hashlib import sha256
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.urls import reverse
 
+from .base import NonEditableMixin
+from .rel.remarks import RemarksMixin
 from .sessions import Session
 
 
@@ -22,19 +23,12 @@ def calculate_accompanying_fees(accompanying_data: dict) -> int:
     return fees
 
 
-class RegistrationManager(models.Manager):
-    def with_profiles(self):
-        return super().get_queryset().select_related("user__profile").order_by("user__first_name", "user__last_name")
-
-
-class Registration(models.Model):
-    """
-    A event registration for a User.
-    """
+class Registration(RemarksMixin, models.Model):
+    """A registration for an event."""
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    event = models.ForeignKey("evan.Event", related_name="registrations", on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), related_name="registrations", on_delete=models.CASCADE)
+    event = models.ForeignKey("evan.Event", related_name="registrations", on_delete=models.PROTECT)
+    user = models.ForeignKey("evan.User", related_name="registrations", on_delete=models.PROTECT)
     sessions = models.ManyToManyField("evan.Session", related_name="registrations", blank=True)
 
     visa_requested = models.BooleanField(default=False)
@@ -44,7 +38,7 @@ class Registration(models.Model):
     base_fee = models.PositiveSmallIntegerField(default=0, editable=False)
     extra_fees = models.PositiveSmallIntegerField(default=0, editable=False)
     manual_extra_fees = models.PositiveSmallIntegerField(default=0)
-    coupon = models.OneToOneField("evan.Coupon", null=True, blank=True, on_delete=models.SET_NULL)
+    coupon = models.OneToOneField("evan.Coupon", null=True, blank=True, on_delete=models.PROTECT)
     invoice_requested = models.BooleanField(default=False)
     invoice_sent = models.BooleanField(default=False)
     paid = models.PositiveSmallIntegerField(default=0, editable=False)
@@ -52,19 +46,20 @@ class Registration(models.Model):
     saldo = models.IntegerField(default=0, editable=False)
 
     is_accepted = models.BooleanField(default=True, null=True)
-    custom_data = models.JSONField(default=dict)
+    extra_data = models.JSONField(default=dict)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    objects = RegistrationManager()
-
-    class Meta:
+    class Meta:  # noqa: D106
         indexes = [
             models.Index(fields=["uuid"]),
         ]
-        ordering = ("-id",)
-        unique_together = ("event", "user")
+        ordering = ["-id"]
+        unique_together = ["event", "user"]
+
+    def __str__(self) -> str:
+        return f"{self.uuid} ({self.user})"
 
     def save(self, *args, **kwargs):
         """
@@ -76,25 +71,24 @@ class Registration(models.Model):
 
         is_early = self.is_early if self.pk else self.event.is_early
         key = (self.fee_type, is_early)
-        self.base_fee = self.event.fees_dict[key] if key in self.event.fees_dict else 0
+        self.base_fee = self.event.fees_dict.get(key, 0)
+
         try:
-            self.extra_fees = calculate_accompanying_fees(self.custom_data["accompanying_persons"])
+            self.extra_fees = calculate_accompanying_fees(self.extra_data["accompanying_persons"])
         except KeyError:
             pass
+
         self.saldo = -self.remaining_fee
         super().save(*args, **kwargs)
 
-    def __str__(self) -> str:
-        return f"{self.uuid} ({self.user})"
-
-    def editable_by_user(self, user) -> bool:
-        return self.user_id == user.id
-
-    def viewable_by_user(self, user) -> bool:
-        return self.user_id == user.id
-
     def get_absolute_url(self) -> str:
         return reverse("registration:app", args=[self.uuid])
+
+    def editable_by_user(self, user) -> bool:
+        return self.user.id == user.id
+
+    def viewable_by_user(self, user) -> bool:
+        return self.user.id == user.id
 
     def get_certificate_url(self) -> str:
         return reverse("registration:certificate", args=[self.uuid])
@@ -129,7 +123,7 @@ class Registration(models.Model):
         return self.saldo >= 0 and self.paid > 0
 
     @property
-    def remaining_fee(self):
+    def remaining_fee(self) -> int:
         coupon_discount = self.coupon.value if self.coupon else 0
         return self.total_fee - self.paid - self.paid_via_invoice - coupon_discount
 
@@ -138,20 +132,21 @@ class Registration(models.Model):
         return sha256(f"{self.uuid}{settings.SECRET_KEY}".encode()).hexdigest()
 
     @property
-    def total_fee(self):
+    def total_fee(self) -> int:
         return self.base_fee + self.extra_fees + self.manual_extra_fees
 
 
 @receiver(post_save, sender=Registration)
 def registration_post_save(sender, instance, created, *args, **kwargs):
-    from evan.site.emails.registrations import RegistrationCreatedEmail
+    pass
+    # from evan.site.emails.registrations import RegistrationCreatedEmail
 
     if created:
         event = instance.event
         event.registrations_count = event.registrations.count()
         event.save()
 
-        RegistrationCreatedEmail(queryset=[instance]).send()
+        # RegistrationCreatedEmail(queryset=[instance]).send()
 
 
 @receiver(m2m_changed, sender=Registration.sessions.through)
@@ -167,18 +162,22 @@ def registration_sessions_changed(sender, instance, **kwargs) -> None:
             RegistrationLog.objects.bulk_create(new_logs)
 
 
-class RegistrationLog(models.Model):
+class RegistrationLog(NonEditableMixin, models.Model):
     """
     In some occasions, it can be interesting to know when somebody first registered for an activity.
     If later an activity is unselected, this log shows when the initial registration was made.
     """
 
-    registration = models.ForeignKey(Registration, related_name="logs", on_delete=models.CASCADE)
+    registration = models.ForeignKey("evan.Registration", related_name="logs", on_delete=models.CASCADE)
     session = models.ForeignKey("evan.Session", related_name="logs", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ("registration", "session")
+    class Meta:  # noqa: D106
+        db_table = "evan_log_registration"
+        unique_together = ["registration", "session"]
+
+    def __str__(self) -> str:
+        return f"{self.registration} - {self.session}"
 
 
 class InvitationLetter(models.Model):
@@ -198,9 +197,9 @@ class InvitationLetter(models.Model):
     passport_number = models.CharField(max_length=60)
     nationality = models.CharField(max_length=190)
     address = models.TextField()
-    submitted = models.CharField(max_length=16, null=True, blank=True, default=None, choices=SUBMITTED_CHOICES)
-    submitted_title = models.TextField(null=True, blank=True)
-    notes = models.TextField(null=True, blank=True)
+    submitted = models.CharField(max_length=16, default="", blank=True, choices=SUBMITTED_CHOICES)
+    submitted_title = models.TextField(default="", blank=True)
+    notes = models.TextField(default="", blank=True)
 
     def __str__(self) -> str:
-        return str(self.registration.uuid)
+        return f"{self.registration.uuid}"

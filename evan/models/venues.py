@@ -1,17 +1,17 @@
 from django.db import models
 
+from evan.models.rel.links import LinksMixin
 
-class Venue(models.Model):
+
+class Venue(LinksMixin, models.Model):
     event = models.ForeignKey("evan.Event", related_name="venues", on_delete=models.CASCADE)
     is_main = models.BooleanField(default=False)
     name = models.CharField(max_length=160)
-    city = models.CharField(max_length=160, null=True, blank=True)
-    presentation = models.TextField(null=True, blank=True)
-    gmaps = models.URLField(null=True, blank=True)
-    website = models.URLField(null=True, blank=True)
+    city = models.CharField(max_length=160, default="", blank=True)
+    presentation = models.TextField(default="", blank=True)
 
-    class Meta:
-        ordering = ("event", "-is_main", "name")
+    class Meta:  # noqa: D106
+        ordering = ["event", "-is_main", "name"]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.city}, {self.event.country})"
@@ -22,13 +22,14 @@ class Venue(models.Model):
 
 
 class Room(models.Model):
-    venue = models.ForeignKey(Venue, related_name="rooms", on_delete=models.CASCADE)
+    venue = models.ForeignKey("evan.Venue", related_name="rooms", on_delete=models.CASCADE)
     name = models.CharField(max_length=190)
     max_capacity = models.PositiveSmallIntegerField(default=0)
     position = models.PositiveSmallIntegerField(default=0)
 
-    class Meta:
-        ordering = ("position",)
+    class Meta:  # noqa: D106
+        db_table = "evan_venue_room"
+        ordering = ["position"]
 
     def __str__(self) -> str:
         return f"{self.venue} - Room: {self.name}"

@@ -2,7 +2,13 @@ from rest_framework import serializers
 
 from evan.models import Sponsor
 
-from .files import FileSerializer
+from .rel.files import FileSerializer
+
+
+class SponsorReadOnlySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sponsor
+        exclude = ["event"]
 
 
 class SponsorSerializer(serializers.ModelSerializer):
@@ -12,5 +18,5 @@ class SponsorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sponsor
-        exclude = ("event",)
-        read_only = ("id",)
+        exclude = ["event"]
+        read_only_fields = ["id", "event"]

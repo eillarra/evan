@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+
+{% block page %}
+  <div class="row q-my-lg" :class="{'q-mt-xl': $q.screen.gt.sm}">
+    <div class="col-3 col-md-2"></div>
+    <div class="col-9 col-md-10">
+      <div class="row q-col-gutter-x-xl">
+        <div class="col-12 col-md-5 q-pr-xl">
+          <h5 class="q-mt-none q-mb-md">Well, this is unexpected...</h5>
+          <p>Sorry, something went wrong and we can't complete your request right now. We've been notified of the problem and will work to fix it as soon as possible.</p>
+          <p class="text-grey">500 Internal Server Error{% if sentry_event_id %}<br>{{ sentry_event_id }}{% endif %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -3,18 +3,16 @@ from django_countries.fields import CountryField
 
 
 class Badge(models.Model):
-    """
-    Extra badges that can be manualkly added to the event.
-    """
+    """Extra badge for non-registered event attendee."""
 
     event = models.ForeignKey("evan.Event", on_delete=models.CASCADE, related_name="extra_badges")
-    name = models.CharField(max_length=190, null=True, blank=True)
-    affiliation = models.CharField(max_length=190, null=True, blank=True)
+    name = models.CharField(max_length=190, default="", blank=True)
+    affiliation = models.CharField(max_length=190, default="", blank=True)
     country = CountryField()
-    custom_color = models.CharField(max_length=7, null=True, blank=True)
+    custom_color = models.CharField(max_length=7, default="", blank=True)
 
-    class Meta:
-        ordering = ("event", "name")
+    class Meta:  # noqa: D106
+        ordering = ["event", "name"]
 
     def __str__(self) -> str:
         return self.name

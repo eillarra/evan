@@ -1,43 +1,38 @@
 {% spaceless %}
 {% load compress %}
+{% load i18n %}
 {% load static %}
 
 
 <!doctype html>
-<html lang="en" prefix="og: http://ogp.me/ns#" data-rev="{{ GIT_REV }}" data-csrf-token="{{ csrf_token }}" data-user="{{ user.id | default:"0" }}">
+<html lang="{{ LANGUAGE_CODE }}" prefix="og: http://ogp.me/ns#" data-rev="{{ GIT_REV }}" data-csrf-token="{{ csrf_token }}" data-user="{{ user.id | default:"0" }}">
   <head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" type="text/css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400&&amp;display=swap" rel="stylesheet">
-    {% block styles %}
-      {% compress css file base %}
-        <link href="{% static 'vendor/quasar@2.8.4/quasar.prod.css' %}" type="text/css" rel="stylesheet">
-        <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
-        <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
-      {% endcompress %}
-    {% endblock %}
-    {% block extra_styles %}{% endblock %}
-    <title>{% block head_title %}Evan - Ghent University{% endblock %}</title>
+    {% compress css file base %}
+      <link href="{% static 'vendor/quasar@2.15.4/quasar.prod.css' %}" type="text/css" rel="stylesheet">
+      <link href="{% static 'scss/base.scss' %}" type="text/x-scss" rel="stylesheet">
+      <link href="{% static 'css/flags.css' %}" type="text/css" rel="stylesheet">
+    {% endcompress %}
+    {% block styles %}{% endblock %}
+    <title>{% block head_title %}Evan - {% translate 'Ghent University' %}{% endblock %}</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta property="og:site_name" content="Evan">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
-    {% if request.DNT %}
-      <meta name="twitter:dnt" content="on">
-    {% endif %}
     {% block structured_data %}{% endblock %}
     {% block head_scripts %}{% endblock %}
   </head>
-  <body class="{% block body_class %}{% endblock %}">
+  <body>
     <noscript>
       <div class="p-5 bg-light-yellow text-center mb-5">
         <h2 class="mt-4">No love for JavaScript?</h2>
-        <p class="mt-3">Evan requires your browser to have <a href="http://enable-javascript.com/">JavaScript enabled</a>.</p>
+        <p class="mt-3">{{ site.name }} requires your browser to have <a href="http://enable-javascript.com/">JavaScript enabled</a>.</p>
       </div>
     </noscript>
-    <div id="vue" v-cloak>
-      <q-layout view="hHh LpR lff">
+    <div id="vue" v-cloak class="container">
+      <q-layout view="hhh lpR fff">
         {% if messages %}
           {% for message in messages %}
             <django-message message="{{ message }}" level="{{ message.level }}" tags="{{ message.tags }}"></django-message>
@@ -66,54 +61,36 @@
             </q-page>
           </q-page-container>
         {% endblock %}
-        <div class="ugent__footer q-py-lg q-mt-xl full-width q-px-md" :class="{'q-px-lg': $q.screen.gt.sm}">
-          <div class="row justify-between">
-            <div class="col-12 col-md-3">
-              <p>Version <version-hash></version-hash></p>
+        <q-footer class="ugent__footer text-white q-py-lg q-mt-xl full-width q-px-md {% if DJANGO_ENV == 'staging' %}bg-ge{% else %}bg-ugent{% endif %}" :class="{'q-px-lg': $q.screen.gt.sm}">
+          <div class="row justify-between text-body2">
+            <div class="col-12 col-md">
+              <p>{% translate 'Version' %} <version-hash></version-hash></p>
             </div>
             <div class="col-12 col-md-9">
               <ul :class="{'text-right q-gutter-x-md': $q.screen.gt.sm}">
-                <li :class="{'inline': $q.screen.gt.sm}"><a href="{% url 'privacy' %}">Privacy</a></li>
-                <li :class="{'inline': $q.screen.gt.sm}"><a href="{% url 'disclaimer' %}">Disclaimer</a></li>
-                <li :class="{'inline': $q.screen.gt.sm}"><a href="mailto:{{ CONTACT_EMAIL }}">Contact</a></li>
-                <li :class="{'inline': $q.screen.gt.sm}"><span>&copy; 2017-{% now 'Y' %} <a href="https://www.ugent.be/ea/elis/" target="_blank" rel="noopener">Department of Electronics and Information Systems (ELIS)</a>, <span class="text-no-wrap">Ghent University</span></span></li>
-              </div>
+                <li :class="{'inline': $q.screen.gt.sm}"><a href="mailto:{{ HELPDESK_EMAIL }}">Feedback</a></li>
+                <li :class="{'inline': $q.screen.gt.sm}"><span>&copy; {% now 'Y' %} <a href="https://www.ugent.be/ge/{{ LANGUAGE_CODE }}" target="_blank" rel="noopener">{% translate 'Faculty of Medicine and Health Sciences' %}</a>, <span class="text-no-wrap">{% translate 'Ghent University' %}</span></span></li>
+              </ul>
             </div>
           </div>
-        </div>
+        </q-footer>
       </q-layout>
     </div>
     {% block vue_templates %}{% endblock %}
-    {% if not debug %}
-      <script src="https://browser.sentry-cdn.com/6.19.3/bundle.tracing.min.js" integrity="sha384-u/dqcM1j6egSEhWjOpjx4ali0U4WHOJNVqX2hrtpYorMs8e0ILJUbP9HAdbV0UQU" crossorigin="anonymous"></script>
-      <script src="https://browser.sentry-cdn.com/6.19.3/vue.min.js" integrity="sha384-h2lUWWxYaLyQLqC92rF4txv+DhVMic+DnEeEbh8z5MsrmzfNmkbgExQs+FSGrrK0" crossorigin="anonymous"></script>
-      <script src="{% static 'js/sentry.js' %}"></script>
-    {% endif %}
     {% compress js file helpers %}
-      <script src="{% static 'vendor/axios@0.27.2/axios.min.js' %}"></script>
-      <script src="{% static 'vendor/commonmark@0.30.0/commonmark.min.js' %}"></script>
-      <script src="{% static 'vendor/moment@2.29.4/moment.min.js' %}"></script>
-      <script src="{% static 'vendor/moment-range@4.0.2/moment-range.min.js' %}"></script>
-      <script src="{% static 'vendor/slugify@1.6.5/slugify.js' %}"></script>
-      <script src="{% static 'vendor/tiny-emitter@2.1.0/tinyemitter.min.js' %}"></script>
-      <script src="{% static 'vendor/underscore@1.13.4/underscore.umd.min.js' %}"></script>
+      <script src="{% static 'vendor/underscore@1.13.7/underscore.umd.min.js' %}"></script>
     {% endcompress %}
     {% compress js file vue %}
       {% if debug %}
-        <script src="{% static 'vendor/vue@3.2.39/vue.global.js' %}"></script>
-        <script src="{% static 'vendor/vuex@4.0.2/vuex.global.js' %}"></script>
-        <script src="{% static 'vendor/vue-router@4.1.5/vue-router.global.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.8.4/quasar.umd.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.5.3/vue.global.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.15.4/quasar.umd.js' %}"></script>
       {% else %}
-        <script src="{% static 'vendor/vue@3.2.39/vue.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/vuex@4.0.2/vuex.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/vue-router@4.1.5/vue-router.global.prod.js' %}"></script>
-        <script src="{% static 'vendor/quasar@2.8.4/quasar.umd.prod.js' %}"></script>
+        <script src="{% static 'vendor/vue@3.5.3/vue.global.prod.js' %}"></script>
+        <script src="{% static 'vendor/quasar@2.15.4/quasar.umd.prod.js' %}"></script>
       {%endif %}
     {% endcompress %}
-    {% compress js file evan %}
+    {% compress js file Evan %}
       <script src="{% static 'js/base.js' %}"></script>
-      <script src="{% static 'js/metadata.js' %}"></script>
       <script src="{% static 'js/components/common.js' %}"></script>
     {% endcompress %}
     {% block extra_scripts %}{% endblock %}

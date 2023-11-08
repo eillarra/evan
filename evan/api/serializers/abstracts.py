@@ -1,16 +1,15 @@
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from evan.models import Abstract, AbstractReview
+from evan.models import Abstract, AbstractReview, User
 
 from .events import EventListSerializer
-from .files import FileSerializer
+from .rel.files import FileSerializer
 from .users import UserSerializer
 
 
 class AbstractReviewSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:review-detail", lookup_field="id")
-    user = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all(), required=True, allow_null=False)
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True, allow_null=False)
 
     class Meta:
         model = AbstractReview

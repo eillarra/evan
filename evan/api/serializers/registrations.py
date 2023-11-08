@@ -1,10 +1,9 @@
-from drf_writable_nested import WritableNestedModelSerializer
 from rest_framework import serializers
 
 from evan.models import Coupon, Registration
 
 from .events import EventListSerializer
-from .users import UserSerializer
+from .users import UserTinySerializer
 
 
 class CouponSerializer(serializers.ModelSerializer):
@@ -12,27 +11,28 @@ class CouponSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Coupon
-        exclude = ("event",)
-        read_only_fields = ("id", "code", "event", "created_at")
+        exclude = ["event"]
+        read_only_fields = ["id", "code", "event", "created_at"]
 
 
-class RegistrationSerializer(WritableNestedModelSerializer):
+class RegistrationSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:registration-detail", lookup_field="uuid")
-    user = UserSerializer(read_only=True)
+    user = UserTinySerializer(read_only=True)
+    is_paid = serializers.BooleanField(read_only=True)
     coupon = CouponSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     payment_url = serializers.URLField(source="get_payment_url", read_only=True)
 
     class Meta:
         model = Registration
-        exclude = ("id", "event", "saldo", "sessions")
-        read_only_fields = ("id", "uuid", "event", "created_at", "updated_at", "is_accepted")
+        exclude = ["id", "event", "saldo", "sessions"]
+        read_only_fields = ["id", "uuid", "event", "created_at", "updated_at", "is_accepted"]
 
 
 class RegistrationRetrieveSerializer(RegistrationSerializer):
     class Meta(RegistrationSerializer.Meta):
         model = Registration
-        exclude = ("id", "event", "saldo")
+        exclude = ["id", "event", "saldo"]
 
 
 class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
@@ -42,4 +42,4 @@ class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
 
     class Meta(RegistrationSerializer.Meta):
         model = Registration
-        exclude = ("id", "saldo")
+        exclude = ["id", "saldo"]

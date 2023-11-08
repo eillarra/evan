@@ -1,19 +1,16 @@
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import SAFE_METHODS, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated, IsAuthenticatedOrReadOnly
 
 from evan.models import Event
 
 
 class EventPermission(IsAuthenticatedOrReadOnly):
-    """
-    LIST and CREATE are not possible at API level.
-    """
+    """Permission class for Event model.
+
+    Anybody can RETRIEVE the public event information, and DELETE is not possible at API level.
+    Only event organizers (and Staff) can UPDATE an event."""
 
     def has_object_permission(self, request, view, obj):
-        """
-        Anybody can RETRIEVE the public event information, and DELETE is not possible at API level.
-        Only event organizers (and Staff) can UPDATE a event.
-        """
         if request.method in SAFE_METHODS:
             return True
         if request.method == "DELETE":
@@ -21,42 +18,89 @@ class EventPermission(IsAuthenticatedOrReadOnly):
         return obj.editable_by_user(request.user)
 
 
-class EventRelatedPermission(IsAuthenticated):
-    """TODO: see if both classes can be combined."""
+class EventRelatedPermission(BasePermission):
+    _event = None
+
+    allow_list_to_all = False
+    allow_retrieve_to_all = False
+    allow_create_to_manager = True
+    allow_update_to_manager = False
+    allow_delete_to_manager = False
+
+    def get_event(self, view) -> Event:
+        if not self._event:
+            try:
+                self._event = Event.objects.get(code=view.kwargs.get("code"))
+            except Event.DoesNotExist as exc:
+                raise NotFound("Event does not exist.") from exc
+        return self._event
 
     def has_permission(self, request, view):
-        try:
-            event = Event.objects.get(code=view.kwargs.get("code"))
-        except Event.DoesNotExist as exc:
-            raise NotFound("Event does not exist.") from exc
-        return event.editable_by_user(request.user)
+        if request.method in ["OPTIONS", "HEAD"]:
+            return True
 
-    def has_object_permission(self, request, view, obj):
+        event = self.get_event(view)
+
+        if request.method == "GET":
+            if "pk" in view.kwargs:
+                return self.allow_retrieve_to_all or event.editable_by_user(request.user)
+            return self.allow_list_to_all or event.editable_by_user(request.user)
+
+        if request.method == "POST":
+            return self.allow_create_to_manager and event.editable_by_user(request.user)
+
+        if request.method in ["PUT", "PATCH"]:
+            return self.allow_update_to_manager and event.editable_by_user(request.user)
+
+        if request.method == "DELETE":
+            return self.allow_delete_to_manager and event.editable_by_user(request.user)
+
         return False
 
 
-class EventRelatedViewOnlyPermission:
-    def has_permission(self, request, view):
-        return request.method in SAFE_METHODS
+class EventRelatedObjectPermission(BasePermission):
+    _event = None
 
+    allow_retrieve_to_all = False
+    allow_update_to_manager = True
+    allow_delete_to_manager = False
 
-class EventRelatedObjectPermission(IsAuthenticated):
-    allow_delete = True
-
-    def get_event_id(self, obj):
-        return obj.event_id
+    def get_event(self, obj) -> Event:
+        if not self._event:
+            try:
+                self._event = Event.objects.get(id=obj.event_id)
+            except Event.DoesNotExist as exc:
+                raise NotFound("Event does not exist.") from exc
+        return self._event
 
     def has_object_permission(self, request, view, obj):
-        if request.method == "DELETE" and not self.allow_delete:
-            return False
+        if request.method in ["OPTIONS", "HEAD"]:
+            return True
 
-        event = Event.objects.get(id=self.get_event_id(obj))
-        return event.editable_by_user(request.user)
+        event = self.get_event(obj)
+
+        if request.method == "GET":
+            return self.allow_retrieve_to_all or event.editable_by_user(request.user)
+
+        if request.method in ["PUT", "PATCH"]:
+            return self.allow_update_to_manager and event.editable_by_user(request.user)
+
+        if request.method == "DELETE":
+            return self.allow_delete_to_manager and event.editable_by_user(request.user)
+
+        return False
 
 
 class EventAttendeePermission(IsAuthenticated):
+    # Permission flags
+    allow_retrieve_to_all = False
+
     def has_object_permission(self, request, view, obj):
-        """
-        Users can only RETRIEVE attendees' list if they are also regfistered.
-        """
-        return obj.registrations.filter(user_id=request.user.id).exists()
+        if request.method in ["OPTIONS", "HEAD"]:
+            return True
+
+        if request.method == "GET":
+            if self.allow_retrieve_to_all:
+                return True
+            return obj.registrations.filter(user_id=request.user.id).exists()
+        return False

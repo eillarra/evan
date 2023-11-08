@@ -1,13 +1,11 @@
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.mixins import CreateModelMixin, ListModelMixin
-from rest_framework.schemas import AutoSchema
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Event
 
-from .permissions import EventRelatedPermission, EventRelatedViewOnlyPermission
-from .schema import event_code_field
+from .permissions import EventRelatedPermission
 
 
 class EventCreateModelMixin(CreateModelMixin):
@@ -24,16 +22,18 @@ class EventListModelMixin(ListModelMixin):
 
 
 class EventRelatedViewSet(EventListModelMixin, EventCreateModelMixin, GenericViewSet):
-    permission_classes = (EventRelatedPermission,)
+    permission_classes = [EventRelatedPermission]
     pagination_class = None
-    schema = AutoSchema(manual_fields=[event_code_field])
+
+    def get_event(self):
+        if not hasattr(self, "_event"):
+            self._event = Event.objects.get(code=self.kwargs.get("code"))
+        return self._event
 
 
 class EventRelatedCreateOnlyViewSet(EventCreateModelMixin, GenericViewSet):
-    permission_classes = (EventRelatedPermission,)
-    schema = AutoSchema(manual_fields=[event_code_field])
+    permission_classes = [EventRelatedPermission]
 
 
 class EventRelatedListOnlyViewSet(EventListModelMixin, GenericViewSet):
-    permission_classes = (EventRelatedViewOnlyPermission,)
-    schema = AutoSchema(manual_fields=[event_code_field])
+    permission_classes = [EventRelatedPermission]

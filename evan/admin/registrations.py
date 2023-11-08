@@ -110,7 +110,7 @@ class RegistrationAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("user__profile", "coupon").prefetch_related("event")
+        qs = super().get_queryset(request).select_related("user", "coupon").prefetch_related("event")
         if request.user.is_superuser or request.user.groups.filter(name="Management").exists():
             return qs
         if request.user.groups.filter(name="Administration").exists():
@@ -145,53 +145,11 @@ class RegistrationAdmin(admin.ModelAdmin):
         return maker.response
 
     def name(self, obj):
-        affiliation = obj.user.profile.affiliation if obj.user.profile.affiliation else "-"
-        url = reverse("admin:auth_user_changelist")
-        return format_html(
-            f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.profile.name}</a>, {affiliation}'
-        )
+        affiliation = obj.user.affiliation if obj.user.affiliation else "-"
+        url = reverse("admin:evan_user_changelist")
+        return format_html(f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.name}</a>, {affiliation}')
 
-    """
-    Custom fields
-    """
-
-    def accepted_col(self, obj) -> bool:
-        return obj.is_accepted
-
-    def fee(self, obj):
-        return format_html(f"{obj.base_fee}&nbsp;+&nbsp;{obj.extra_fees + obj.manual_extra_fees}")
-
-    def paid_col(self, obj) -> bool:
-        return obj.is_paid
-
-    def invoice(self, obj):
-        requested = "yes" if obj.invoice_requested else "no"
-        sent = "yes" if obj.invoice_sent else "no"
-        return format_html(
-            '<span class="text-nowrap">'
-            f'<img src="/static/admin/img/icon-{requested}.svg" title="Invoice requested: {requested}">'
-            " / "
-            f'<img src="/static/admin/img/icon-{sent}.svg" title="Invoice sent: {sent}">'
-            "<span>"
-        )
-
-    def visa(self, obj):
-        requested = "yes" if obj.visa_requested else "no"
-        sent = "yes" if obj.visa_sent else "no"
-        return format_html(
-            '<span class="text-nowrap">'
-            f'<img src="/static/admin/img/icon-{requested}.svg" title="Visa requested: {requested}">'
-            " / "
-            f'<img src="/static/admin/img/icon-{sent}.svg" title="Visa sent: {sent}">'
-            "</span>"
-        )
-
-    def with_coupon(self, obj):
-        return obj.coupon is not None
-
-    """
-    Actions
-    """
+    # custom actions
 
     @admin.action(description="[Bulk] Mark registrations as accepted")
     def mark_as_accepted(self, request, queryset):
@@ -224,9 +182,41 @@ class RegistrationAdmin(admin.ModelAdmin):
         VisaReminderEmail(queryset=queryset).send()
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
-    accepted_col.boolean = True
-    accepted_col.short_description = "Accepted"
-    paid_col.boolean = True
-    paid_col.short_description = "Paid"
-    with_coupon.boolean = True
-    with_coupon.short_description = "Coupon"
+    # custom fields
+
+    @admin.display(description="Accepted", boolean=True)
+    def accepted_col(self, obj) -> bool:
+        return obj.is_accepted
+
+    def fee(self, obj):
+        return format_html(f"{obj.base_fee}&nbsp;+&nbsp;{obj.extra_fees + obj.manual_extra_fees}")
+
+    @admin.display(description="Paid", boolean=True)
+    def paid_col(self, obj) -> bool:
+        return obj.is_paid
+
+    def invoice(self, obj):
+        requested = "yes" if obj.invoice_requested else "no"
+        sent = "yes" if obj.invoice_sent else "no"
+        return format_html(
+            '<span class="text-nowrap">'
+            f'<img src="/static/admin/img/icon-{requested}.svg" title="Invoice requested: {requested}">'
+            " / "
+            f'<img src="/static/admin/img/icon-{sent}.svg" title="Invoice sent: {sent}">'
+            "<span>"
+        )
+
+    def visa(self, obj):
+        requested = "yes" if obj.visa_requested else "no"
+        sent = "yes" if obj.visa_sent else "no"
+        return format_html(
+            '<span class="text-nowrap">'
+            f'<img src="/static/admin/img/icon-{requested}.svg" title="Visa requested: {requested}">'
+            " / "
+            f'<img src="/static/admin/img/icon-{sent}.svg" title="Visa sent: {sent}">'
+            "</span>"
+        )
+
+    @admin.display(description="Coupon", boolean=True)
+    def with_coupon(self, obj):
+        return obj.coupon is not None

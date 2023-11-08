@@ -1,40 +1,97 @@
 {% load compress %}
-{% load static %}
 
 
 <!doctype html>
 <html lang="en">
-    <head>
-        <link href="https://fonts.googleapis.com/css?family=Lato:300,400,400i,700" rel="stylesheet">
-        <style>
-            body {
-                font-family: "Lato", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-            }
-            div.page {
-                page-break-inside: avoid !important;
-            }
-            div.break {
-                display: block;
-                clear: both;
-                page-break-after: always;
-            }
-            .float-right {
-                float: right;
-            }
-            .nowrap {
-                white-space: nowrap;
-            }
-        </style>
-        {% block styles %}{% endblock %}
-        <title>{% block head_title %}{% endblock %}</title>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        {% block base_href %}{% endblock %}
-    </head>
-    <body>
-        <div>
-            {% block header %}{% endblock %}
-            {% block content %}{% endblock %}
-            {% block footer %}{% endblock %}
-        </div>
-    </body>
+  <head>
+    <style>
+      @page {
+        size: a4 portrait;
+        margin: 4.5cm 2cm 3cm;
+
+        @frame header_frame {
+          -pdf-frame-content: header_content;
+          left: 2cm;
+          width: 17cm;
+          top: 1cm;
+          height: 3cm;
+        }
+
+        @frame footer_frame {
+          -pdf-frame-content: footer_content;
+          left: 2cm;
+          width: 17cm;
+          top: 28cm;
+          height: 1cm;
+        }
+      }
+      #header_content {
+      }
+      #footer_content {
+        font-size: 9px;
+        color: #666;
+      }
+      body {
+        font-family: 'UGent Panno SemiLight';
+        font-size: 16px;
+        line-height: 1.4;
+      }
+      b, strong {
+        font-family: 'UGent Panno Medium';
+      }
+      .title {
+        font-size: 1.5em;
+        line-height: 1.2;
+        font-weight: bold;
+        padding-right: 3cm;
+      }
+      p {
+        -pdf-keep-with-next: false;
+      }
+      code {
+        font-family: monospace;
+        font-size: 0.6em;
+      }
+      a.inherit {
+        color: inherit;
+        text-decoration: inherit;
+      }
+      .logo {
+        height: 2cm;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .text-ugent {
+        color: #1e64c8;
+      }
+      .text-smaller {
+        font-size: smaller;
+      }
+      .evan__form-response h4 {
+        font-size: 0.9em;
+        font-family: 'UGent Panno Medium';
+      }
+      .evan__form-response ul {
+        padding-left: 0.5cm;
+      }
+    </style>
+    {% block styles %}{% endblock %}
+    <title>{% block head_title %}{% endblock %}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  </head>
+  <body>
+    <div>
+      <div id="header_content">
+        <div class="text-right">{% block header %}{% endblock %}</div>
+      </div>
+      <div id="footer_content">
+        evan.ugent.be - {% now "DATETIME_FORMAT" %} - <pdf:pagenumber>/<pdf:pagecount><br>
+        {% block footer %}{% endblock %}
+      </div>
+      <div id="main_content">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </body>
 </html>

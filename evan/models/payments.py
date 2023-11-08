@@ -2,11 +2,11 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from .base import NonEditableMixin
 
-class Payment(models.Model):
-    """
-    A payment for the event. Payments are linked to registrations.
-    """
+
+class Payment(NonEditableMixin, models.Model):
+    """A payment transaction for a registration."""
 
     STRIPE_CHARGE = "stripe_charge"
     STRIPE_REFUND = "stripe_refund"
@@ -28,10 +28,16 @@ class Payment(models.Model):
     amount = models.PositiveIntegerField(default=0)
     type = models.CharField(max_length=32, choices=TYPE_CHOICES, default=STRIPE_CHARGE)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=FAILED)
-    outcome = models.TextField(null=True, blank=True)
-    stripe_id = models.CharField(max_length=64, null=True, blank=True)
-    stripe_response = models.TextField(null=True, blank=True)
+    outcome = models.TextField(default="", blank=True)
+    stripe_id = models.CharField(max_length=64, default="", blank=True)
+    stripe_response = models.TextField(default="", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:  # noqa: D106
+        db_table = "evan_log_payment"
+
+    def __str__(self) -> str:
+        return f"{self.registration} ({self.amount}) - {self.type} - {self.status}"
 
 
 @receiver(post_save, sender=Payment)

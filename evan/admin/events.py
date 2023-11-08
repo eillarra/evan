@@ -5,8 +5,9 @@ from django.utils.html import format_html
 
 from evan.models import Event, Fee
 
-from .files import FilesInline
-from .permissions import PermissionsInline
+from .rel.files import FilesInline
+from .rel.links import LinksInline
+from .rel.permissions import PermissionsInline
 
 
 class FeesInline(admin.TabularInline):
@@ -34,6 +35,7 @@ class EventAdmin(admin.ModelAdmin):
     readonly_fields = ("registrations_count",)
     inlines = (
         FeesInline,
+        LinksInline,
         PermissionsInline,
         FilesInline,
     )
@@ -48,27 +50,24 @@ class EventAdmin(admin.ModelAdmin):
 
     # custom fields
 
+    @admin.display(description="Active", boolean=True)
     def is_active(self, obj) -> bool:
         return obj.is_active
 
+    @admin.display(description="Open", boolean=True)
     def is_open(self, obj) -> bool:
         return obj.is_open_for_registration
 
+    @admin.display(description="Registrations")
     def registrations_link(self, obj):
         if obj.registrations_count == 0:
             return "-"
         url = reverse("admin:evan_registration_changelist")
         return format_html(f'<a href="{url}?event__id__exact={obj.id}">{obj.registrations_count}</a>')
 
+    @admin.display(description="Sessions")
     def sessions_link(self, obj):
         if obj.sessions__count == 0:
             return "-"
         url = reverse("admin:evan_session_changelist")
         return format_html(f'<a href="{url}?event__id__exact={obj.id}">{obj.sessions__count}</a>')
-
-    is_active.boolean = True
-    is_active.short_description = "Active"
-    is_open.boolean = True
-    is_open.short_description = "Open"
-    registrations_link.short_description = "Registrations"
-    sessions_link.short_description = "Sessions"

@@ -10,8 +10,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 DIR = os.path.dirname(__file__)
 
 roboto = [
-    ["IBMPlexSans-Regular", "IBMPlexSans-SemiBold", "IBMPlexSans-Italic", "IBMPlexSans-SemiBoldItalic"],
-    ["IBMPlexSans-Light", "IBMPlexSans-Medium", "IBMPlexSans-LightItalic", "IBMPlexSans-MediumItalic"],
+    ["NotoSans-Regular", "NotoSans-Bold", "NotoSans-Italic", "NotoSans-Bold"],
+    ["NotoSans-Regular", "NotoSans-Bold", "NotoSans-Italic", "NotoSans-Bold"],
 ]
 
 for fonts in roboto:
@@ -27,8 +27,8 @@ for fonts in roboto:
     )
 
 
-UGENT_BLUE = "#1e64c8"
-UGENT_YELLOW = "#ffd200"
+UGENT_BLUE = "#005eb8"
+UGENT_YELLOW = "#d83933"
 ELIS_PURPLE = "#6f71b9"
 
 TEXT_COLOR = "#37474F"  # Blue Grey 800

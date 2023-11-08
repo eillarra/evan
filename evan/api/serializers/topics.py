@@ -1,6 +1,14 @@
 from rest_framework import serializers
 
-from evan.models import Topic
+from evan.models.topics import Topic
+
+
+class TopicReadOnlySerializer(serializers.ModelSerializer):
+    slug = serializers.SlugField(read_only=True)
+
+    class Meta:
+        model = Topic
+        exclude = ["event"]
 
 
 class TopicSerializer(serializers.ModelSerializer):
@@ -8,5 +16,5 @@ class TopicSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Topic
-        exclude = ("event",)
-        read_only_fields = ("id", "event")
+        exclude = ["event"]
+        read_only_fields = ["id", "event"]

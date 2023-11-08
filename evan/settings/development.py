@@ -34,14 +34,6 @@ CACHE_MIDDLEWARE_SECONDS = 20
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
-# http://www.django-rest-framework.org/api-guide/settings/
-
-REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (  # noqa
-    "rest_framework.renderers.JSONRenderer",
-    "evan.api.renderers.NoFormBrowsableAPIRenderer",
-)
-
-
 # https://github.com/MrBin99/django-vite
 
-DJANGO_VITE_DEV_MODE = True
+DJANGO_VITE["default"]["dev_mode"] = True  # noqa

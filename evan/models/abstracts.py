@@ -1,46 +1,48 @@
 import uuid
 from typing import TYPE_CHECKING, Optional
 
-from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 
+from .rel.files import FilesMixin
+
 
 if TYPE_CHECKING:
-    from evan.models import File
+    from .rel.files import File
 
 
-class Abstract(models.Model):
+class Abstract(FilesMixin, models.Model):
     """
     Paper abstract.
     """
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
     event = models.ForeignKey("evan.Event", related_name="abstracts", on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), related_name="abstracts", on_delete=models.CASCADE)
+    user = models.ForeignKey("evan.User", related_name="abstracts", on_delete=models.CASCADE)
     is_accepted = models.BooleanField(default=False)
 
     title = models.CharField(max_length=512)
     authors = models.CharField(max_length=512)
     abstract = models.TextField()
-    files = GenericRelation("evan.File")
 
-    custom_data = models.JSONField(default=dict)
+    extra_data = models.JSONField(default=dict)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        ordering = ("-id",)
+    class Meta:  # noqa: D106
+        ordering = ["-id"]
 
     def __str__(self) -> str:
-        return f"{self.uuid} ({self.user})"
+        return f"{self.uuid}"
+
+    def get_absolute_url(self) -> str:
+        return reverse("abstract:app", args=[self.uuid])
 
     def editable_by_user(self, user) -> bool:
-        return self.user_id == user.id
+        return self.user.id == user.id
 
     def reviewer(self, user) -> bool:
         return self.editable_by_user(user) or self.event.editable_by_user(user)
@@ -57,9 +59,6 @@ class Abstract(models.Model):
             self.is_accepted and self.event.registrations.filter(user_id=user.id).exists()
         )
 
-    def get_absolute_url(self) -> str:
-        return reverse("abstract:app", args=[self.uuid])
-
     @property
     def file(self) -> Optional["File"]:
         return self.files.first()
@@ -67,16 +66,15 @@ class Abstract(models.Model):
 
 @receiver(post_save, sender=Abstract)
 def registration_post_save(sender, instance, created, *args, **kwargs):
-    from evan.site.emails.abstracts import AbstractCreatedEmail
+    pass
+    """from evan.site.emails.abstracts import AbstractCreatedEmail
 
     if created:
-        AbstractCreatedEmail(queryset=[instance]).send()
+        AbstractCreatedEmail(queryset=[instance]).send()"""
 
 
 class AbstractReview(models.Model):
-    """
-    Abstract review.
-    """
+    """A review for an abstract."""
 
     ASSIGNED = "assigned"
     REVIEWED = "reviewed"
@@ -87,17 +85,20 @@ class AbstractReview(models.Model):
         (FINALIZED, "Finalized"),
     )
 
-    abstract = models.ForeignKey(Abstract, related_name="reviews", on_delete=models.CASCADE)
-    user = models.ForeignKey(get_user_model(), related_name="abstract_reviews", on_delete=models.SET_NULL, null=True)
+    abstract = models.ForeignKey("evan.Abstract", related_name="reviews", on_delete=models.CASCADE)
+    user = models.ForeignKey("evan.User", related_name="abstract_reviews", on_delete=models.SET_NULL, null=True)
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=ASSIGNED)
-    evaluation = models.TextField(null=True)
-    comments = models.TextField(null=True, help_text="These can be shared with the applicant.")
+    evaluation = models.TextField(default="", blank=True)
+    comments = models.TextField(default="", blank=True, help_text="These can be shared with the applicant.")
 
-    custom_data = models.JSONField(default=dict)
+    extra_data = models.JSONField(default=dict)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         db_table = "evan_abstract_review"
-        unique_together = ("abstract", "user")
+        unique_together = ["abstract", "user"]
+
+    def __str__(self) -> str:
+        return f"{self.user} - {self.abstract}"

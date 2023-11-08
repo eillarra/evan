@@ -3,9 +3,7 @@ from django.db import models
 
 
 class Sponsor(models.Model):
-    """
-    An sponsor for an event.
-    """
+    """A sponsor for an event."""
 
     event = models.ForeignKey("evan.Event", related_name="sponsors", on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
@@ -13,8 +11,8 @@ class Sponsor(models.Model):
     level = models.PositiveSmallIntegerField(default=0)
     files = GenericRelation("evan.File")
 
-    class Meta:
-        ordering = ("event", "level", "name")
+    class Meta:  # noqa: D106
+        ordering = ["event", "level", "name"]
 
     def __str__(self) -> str:
         return self.name

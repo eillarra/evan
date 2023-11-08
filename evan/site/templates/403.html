@@ -1,12 +1,17 @@
-{% extends 'ugent.html' %}
+{% extends 'layout.html' %}
 
 
-{% block content %}
+{% block page %}
   <div class="row q-my-lg" :class="{'q-mt-xl': $q.screen.gt.sm}">
-    <div class="col-12 col-md-2 q-pr-xl"></div>
-    <div class="col-12 col-md-6 col-lg-4 q-pb-xl">
-      <h2 class="text-display-2">403 Forbidden</h2>
-      <p class="text-caption q-mt-lg">Did we miss something? <a href="mailto:{{ CONTACT_EMAIL }}">Contact us</a> if you were hoping to have access to this page.</p>
+    <div class="col-3 col-md-2"></div>
+    <div class="col-9 col-md-10">
+      <div class="row q-col-gutter-x-xl">
+        <div class="col-12 col-md-5 q-pr-xl">
+          <h5 class="q-mt-none q-mb-md">Not this time</h5>
+          <p>You are not authorized to view the page you are trying to open. Please <a href="mailto:{{ CONTACT_EMAIL }}">contact us</a> if you believe you are seeing this page incorrectly and should have access to the resource you are looking for.</p>
+          <p class="text-grey">403 Forbidden</p>
+        </div>
+      </div>
     </div>
   </div>
 {% endblock %}

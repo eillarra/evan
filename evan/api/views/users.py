@@ -1,11 +1,10 @@
-from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Permission, Registration
+from evan.models import Event, Permission, Registration, User
 
 from ..permissions import UserPermission
 from ..serializers import AuthRegistrationRetrieveSerializer, EventListSerializer, UserSerializer
@@ -13,7 +12,7 @@ from ..serializers import AuthRegistrationRetrieveSerializer, EventListSerialize
 
 class UserViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = (UserPermission,)
-    queryset = get_user_model().objects.select_related("profile")
+    queryset = User.objects.select_related("profile")
     serializer_class = UserSerializer
 
     @method_decorator(never_cache)

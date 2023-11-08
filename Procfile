@@ -1,2 +1,2 @@
-web: gunicorn -b :5000 --workers=3 --worker-class=gevent evan.wsgi
+web: gunicorn -c gunicorn.config.py evan.wsgi
 worker: python manage.py run_huey

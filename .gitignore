@@ -1,10 +1,16 @@
 .DS_Store
 ._*
 
+# Python
+
+.python-version
+.venv
+
 __pycache__
 *.py[cod]
 *$py.class
 .mypy_cache
+.ruff_cache
 .vscode
 
 .coverage
@@ -13,3 +19,14 @@ __pycache__
 dev.db
 htmlcov
 test-reports
+
+# Vue / TypeScript
+
+.vite
+node_modules
+vue/dist
+
+# Other
+
+cloc.md
+TODO.md

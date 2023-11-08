@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.decorators import action
@@ -9,7 +8,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Abstract, Event, File
+from evan.models import Abstract, Event, File, User
 
 from ..permissions import EventAttendeePermission, EventPermission
 from ..serializers import AttendeeSerializer, EventSerializer, PublicAbstractSerializer
@@ -37,9 +36,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     )
     @method_decorator(never_cache)
     def attendees(self, request, *args, **kwargs):
-        self.queryset = (
-            get_user_model().objects.filter(registrations__event_id=self.get_object().id).select_related("profile")
-        )
+        self.queryset = User.objects.filter(registrations__event_id=self.get_object().id).select_related("profile")
         return ListModelMixin.list(self, request, *args, **kwargs)
 
     @action(
@@ -53,7 +50,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
         try:
             event = self.get_object()
-            user = get_user_model().objects.select_related("profile").get(id=self.request.data["user_id"])
+            user = User.objects.select_related("profile").get(id=self.request.data["user_id"])
             sender = self.request.user
 
             if not user.profile.can_be_contacted() or not event.registrations.filter(user_id=user.id).exists():

@@ -1,8 +1,4 @@
-$ugent-blue: #1e64c8;
-$ugent-yellow: #ffd200;
-$ea-color: #8bbee8;
-$light-blue-color: #e9f0fa;
-
+$panno-body-font-size: 17px;
 
 @font-face {
   font-family: 'UGent Panno';
@@ -26,27 +22,23 @@ body {
   font-weight: 400;
   color: #333;
   -moz-osx-font-smoothing: auto;
+  -webkit-font-smoothing: auto;
 
   @media (min-width: 900px) {
-    font-size: 17px;
+    font-size: $panno-body-font-size;
   }
 }
 
 
-/* Layout tweaks */
+/* Layout */
 
-.ugent-huisstijl {
-  .q-layout {
-    padding: 0 12px;
+.container {
+  padding: 0 12px;
 
-    @media (min-width: 1284px) {
-      margin: 0 auto;
-      max-width: 1284px;
-    }
-  }
-
-  .q-footer .text-body2 {
-    font-size: .875rem;
+  @media (min-width: 1258px) {
+    margin: 0 auto;
+    max-width: 1258px;
+    padding: 0;
   }
 }
 
@@ -56,13 +48,81 @@ body {
 .ugent__header {
   img.logo {
     height: 90px;
+    display: block;
+    margin-top: 20px;
     max-width: 100%;
+  }
+}
+
+.ugent__submenu {
+  font-size: 20px;
+  font-family: 'UGent Panno Medium', 'Arial', sans-serif;
+
+  .q-tab {
+    margin-right: 24px;
+    padding-left: 0;
+    padding-right: 0;
+    color: $ugent-blue;
+    transition: none;
+
+    &.q-tab--active {
+      text-decoration: underline;
+      text-underline-offset: 0.25em;
+    }
+
+    &.q-tab--inactive {
+      opacity: 1;
+    }
+  }
+
+  .q-ripple,
+  .q-focus-helper,
+  .q-tab__indicator {
+    display: none;
+  }
+}
+
+.ugent__submenu {
+  font-family: 'UGent Panno Medium', 'Arial', sans-serif;
+  font-size: 20px;
+  line-height: $panno-body-font-size;
+  color: $ugent-blue;
+
+  .q-field {
+    padding: 4px 0;
+    display: inline-block;
+
+    .q-field__append {
+      padding-left: 2px !important;
+    }
+  }
+
+  .menu-item,
+  .q-field .text-underline {
+    font-family: 'UGent Panno Medium', 'Arial', sans-serif;
+    font-size: 20px;
+    line-height: $panno-body-font-size;
+    color: $ugent-blue;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    letter-spacing: 0 !important;
+  }
+
+  .menu-item {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+
+  .q-select__dropdown-icon {
+    color: $ugent-blue;
   }
 }
 
 .ugent__footer {
   color: white;
-  font-size: 0.875rem;  // text-body2
 
   a {
     color: inherit;
@@ -89,17 +149,79 @@ body {
   }
 }
 
-.ugent__footer,
 .bg-ugent {
   background-color: $ugent-blue;
 }
 
-.bg-ea {
-  background-color: $ea-color;
+.bg-blue-1,
+.bg-tertiary {
+  background-color: $light-blue-color !important;
 }
 
-.bg-tertiary {
-  background-color: $light-blue-color;
+.bg-ge {
+  background-color: $ge-color !important;
+}
+
+.text-ge {
+  color: $ge-color !important;
+}
+
+
+/* Forms */
+
+.q-btn {
+  font-family: 'UGent Panno Medium', 'Arial', sans-serif;
+  text-transform: none;
+
+  &:not(.q-btn--round) .q-icon {
+    font-size: 1em;
+    margin-right: 0.25em;
+    width: 0.75em;
+  }
+
+  &:not(.q-date *, .q-table__control *, .q-editor__toolbar-group *, .q-banner *, .use-default-q-btn *) {
+    font-size: $panno-body-font-size;
+    line-height: 15px;
+    padding: 12px 15px;
+    border-radius: 0;
+  }
+
+  &.bg-blue {
+    background-color: $ugent-blue !important;
+  }
+
+  &.bg-yellow {
+    background-color: #fdd200 !important;
+  }
+}
+
+.ugent__create-btn .q-btn {
+  padding: 0 12px !important;
+  min-height: 40px !important;
+  white-space: nowrap;
+
+  .q-btn__content {
+    flex-wrap: nowrap !important;
+  }
+
+  &:hover {
+    background-color: #e6f0ff !important;
+    color: white;
+  }
+
+  &:not(.q-btn--round) .q-icon {
+    font-size: 1.5em;
+    margin-right: 0.1em;
+    width: 0.7em;
+    margin-bottom: 1px;
+  }
+}
+
+
+/* Tables */
+
+.q-table__bottom {
+  padding-top: 20px;
 }
 
 
@@ -144,4 +266,24 @@ h4, h5, h6 {
 
 .text-h6, .text-body1 {
   line-height: 1.25;
+}
+
+input, textarea,
+.q-field,
+.text-body1 {
+  font-size: $panno-body-font-size !important;
+}
+
+.text-ugent {
+  color: $ugent-blue !important;
+}
+
+.q-field__label {
+  font-size: 15px !important;
+}
+
+.q-tab__icon {
+  width: $panno-body-font-size;
+  height: $panno-body-font-size;
+  font-size: $panno-body-font-size;
 }

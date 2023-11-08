@@ -1,8 +1,5 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
-import pytz
-from django.contrib.auth import get_user_model
-from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -13,7 +10,11 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
-from .permissions import Permission
+from .documents.events import get_validated_event_configuration, get_validated_event_extra_data
+from .rel.files import FilesMixin
+from .rel.links import LinksMixin
+from .rel.permissions import Permission, PermissionsMixin
+from .users import User
 
 
 def validate_event_dates(event):
@@ -41,12 +42,8 @@ class EventManager(models.Manager):
         return self.filter(end_date__gte=timezone.now().date()).order_by("end_date")
 
 
-class Event(models.Model):
-    """
-    An event.
-    """
-
-    SUPPORTED_CURRENCIES = (("EUR", "Euro"),)  # https://stripe.com/docs/currencies
+class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
+    """An event."""
 
     is_virtual = models.BooleanField(default=False)
     code = models.CharField(max_length=32, unique=True)
@@ -54,29 +51,21 @@ class Event(models.Model):
     full_name = models.CharField(max_length=200)
     city = models.CharField(max_length=160)
     country = CountryField()
-    presentation = models.TextField(null=True, blank=True)
-    website = models.URLField(null=True, blank=True)
-    hashtag = models.CharField(max_length=32, null=True, blank=True)
+    presentation = models.TextField(default="", blank=True)
+    website = models.URLField(default="", blank=True)
+    hashtag = models.CharField(max_length=32, default="", blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     registration_start_date = models.DateField()
     registration_early_deadline = models.DateTimeField(null=True, blank=True)
     registration_deadline = models.DateTimeField()
 
-    wbs_element = models.CharField(max_length=32, null=True, blank=True)
-    ingenico_salt = models.CharField(max_length=200, null=True, blank=True)
-    allows_invoices = models.BooleanField(default=True)
-    payments_activation = models.DateTimeField(null=True, blank=True)
-    test_mode = models.BooleanField(default=True, editable=False)
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
-    signature = models.TextField(null=True, blank=True)
-    email = models.EmailField(null=True, blank=True)
-
-    acl = GenericRelation("evan.Permission")
-    files = GenericRelation("evan.File")
+    signature = models.TextField(default="", blank=True)
+    email = models.EmailField(default="", blank=True)
 
     config = models.JSONField(default=dict)
-    custom_data = models.JSONField(default=dict)
+    extra_data = models.JSONField(default=dict)
     custom_fields = models.JSONField(default=dict)
 
     registrations_count = models.PositiveIntegerField(default=0)
@@ -84,28 +73,54 @@ class Event(models.Model):
 
     objects = EventManager()
 
-    class Meta:
+    class Meta:  # noqa: D106
         indexes = [
             models.Index(fields=["code"]),
             models.Index(fields=["start_date", "end_date"]),
         ]
-        ordering = ("-start_date",)
+        ordering = ["-start_date"]
 
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args, **kwargs) -> None:
+        try:
+            self.config = get_validated_event_configuration(self.config or {})
+        except ValueError as exc:
+            raise ValidationError({"config": [str(exc)]}) from exc
+
+        try:
+            self.extra_data = get_validated_event_extra_data(self.extra_data or {})
+        except ValueError as exc:
+            raise ValidationError({"extra_data": [str(exc)]}) from exc
+
+        super().save(*args, **kwargs)
+
     def clean(self) -> None:
         validate_event_dates(self)
+
         if self.hashtag:
             self.hashtag = self.hashtag[1:] if self.hashtag.startswith("#") else self.hashtag
+
+    def get_absolute_url(self) -> str:  # noqa: DJ012
+        return reverse("event:app", args=[self.code])
+
+    def get_api_url(self) -> str:
+        return reverse("v1:event-detail", args=[self.code])
+
+    @property
+    def configuration(self) -> dict:
+        return get_validated_event_configuration(self.config or {})
+
+    ### vvvvvvvv Below needs to be checked/refactored vvvvvvvv ###
 
     @property
     def dates_display(self) -> str:
         two_months = self.start_date.month != self.end_date.month
         if two_months:
-            return f'{date_filter(self.start_date, "F j")} - {date_filter(self.end_date, "F j, Y")}'
+            return f"{date_filter(self.start_date, 'F j')} - {date_filter(self.end_date, 'F j, Y')}"
         else:
-            return f'{date_filter(self.start_date, "F j")}-{date_filter(self.end_date, "j, Y")}'
+            return f"{date_filter(self.start_date, 'F j')}-{date_filter(self.end_date, 'j, Y')}"
 
     def editable_by_user(self, user) -> bool:
         return self.can_be_managed_by(user)
@@ -115,9 +130,6 @@ class Event(models.Model):
 
     def files_viewable_by_user(self, user) -> bool:
         return self.editable_by_user(user) or self.registrations.filter(user_id=user.id).exists()
-
-    def get_absolute_url(self) -> str:
-        return reverse("event:app", args=[self.code])
 
     def get_abstract_url(self) -> str:
         return "".join(["//", get_current_site(None).domain, reverse("abstract:redirect", args=[self.code])])
@@ -162,20 +174,24 @@ class Event(models.Model):
             now = timezone.now()
             start_date = datetime.strptime(self.custom_data["abstracts"]["submission_start_date"], "%Y-%m-%d")
             deadline = datetime.strptime(self.custom_data["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
-            return start_date.replace(tzinfo=pytz.UTC).date() <= now.date() and now <= deadline.replace(tzinfo=pytz.UTC)
+            return start_date.replace(tzinfo=UTC).date() <= now.date() and now <= deadline.replace(tzinfo=UTC)
         except Exception:
             return False
 
     @cached_property
-    def abstract_reviewers(self) -> QuerySet:
+    def abstract_reviewers(self) -> QuerySet["User"]:
         try:
             reviewer_ids = [r["id"] for r in self.custom_data["abstracts"]["reviewers"]]
-            return get_user_model().objects.filter(id__in=reviewer_ids)
+            return User.objects.filter(id__in=reviewer_ids)
         except Exception:
-            return get_user_model().objects.none()
+            return User.objects.none()
 
     @cached_property
     def fees_dict(self):
         if not hasattr(self, "_fees"):
             self._fees = {(f[0], f[1]): f[2] for f in self.fees.values_list("type", "is_early", "value")}
         return self._fees
+
+    @classmethod
+    def objects_for_user(cls, user):
+        return cls.objects.filter(acl__user=user)

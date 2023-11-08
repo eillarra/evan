@@ -1,9 +1,7 @@
-Evan
-====
+# Evan
 
-[![github-actions-badge]][github-actions]
+[![github-tests-py-badge]][github-tests-py]
 [![codecov-badge]][codecov]
-[![codefactor-badge]][codefactor]
 [![license-badge]](LICENSE)
 
 
@@ -11,20 +9,12 @@ Evan
 
 The Evan api/website uses [Django][django] and the [Django REST Framework][drf].
 
-### Application dependencies
+### Install the dependencies
 
-The application uses [Pipenv][pipenv] to manage Python packages. While in development, you will need to install
-all dependencies (includes packages like `debug_toolbar`):
-
-```bash
-pipenv install --dev
-pipenv shell
-```
-
-Update dependencies (and manually update `requirements.txt`):
+The application uses [Poetry][poetry] to manage application dependencies.
 
 ```bash
-pipenv update --dev && pipenv lock && pipenv requirements
+poetry lock && poetry update && poetry sync
 ```
 
 ### Run the app in development mode
@@ -65,16 +55,14 @@ yarn dev
 ```
 
 
-[codecov]: https://codecov.io/gh/eillarra/evan
-[codecov-badge]: https://codecov.io/gh/eillarra/evan/branch/master/graph/badge.svg
-[codefactor]: https://www.codefactor.io/repository/github/eillarra/evan
-[codefactor-badge]: https://www.codefactor.io/repository/github/eillarra/evan/badge
-[github-actions]: https://github.com/eillarra/evan/actions?query=workflow%3A%22tests%22
-[github-actions-badge]: https://github.com/eillarra/evan/workflows/tests/badge.svg
+[codecov]: https://app.codecov.io/gh/eillarra/evan
+[codecov-badge]: https://codecov.io/gh/eillarra/evan/graph/badge.svg?token=wsvdcCF75L
+[github-tests-py]: https://github.com/eillarra/evan/actions/workflows/tests_py.yml
+[github-tests-py-badge]: https://github.com/eillarra/evan/actions/workflows/tests_py.yml/badge.svg?branch=main
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 
 [django]: https://www.djangoproject.com/
 [drf]: https://www.django-rest-framework.org/
 [inertia]: https://inertiajs.com/
-[pipenv]: https://docs.pipenv.org/#install-pipenv-today
+[poetry]: https://python-poetry.org/
 [vue]: https://vuejs.org/
