@@ -1,4 +1,5 @@
 import os
+import re
 
 from .base import *  # noqa
 
@@ -35,18 +36,6 @@ CACHE_MIDDLEWARE_SECONDS = 30
 USE_ETAGS = True
 
 
-# https://huey.readthedocs.io/en/latest/django.html
-
-HUEY = {
-    "name": "evan",
-    "huey_class": "huey.RedisHuey",
-    "immediate": DEBUG,
-    "connection": {
-        "url": f"{os.environ.get('REDIS_URL', 'redis://localhost:6379')}/10",
-    },
-}
-
-
 # https://docs.djangoproject.com/en/dev/topics/email/
 
 DEFAULT_FROM_EMAIL = "Evan <evan@ugent.be>"
@@ -69,3 +58,30 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
 }
+
+
+# https://huey.readthedocs.io/en/latest/django.html
+
+HUEY = {
+    "huey_class": "huey.RedisHuey",
+    "immediate": False,
+    "name": "evan",
+    "connection": {
+        "url": f"{os.environ.get('REDIS_URL', 'redis://localhost:6379')}/10",
+    },
+}
+
+
+# https://github.com/MrBin99/django-vite
+
+DJANGO_VITE_DEV_MODE = False
+
+
+def immutable_file_test(path, url):
+    # Vite generates files with 8 hash digits
+    # Match filename with 8 or 12 hex digits before the extension
+    # e.g. app.db8f2edc0c8a.js
+    return re.match(r"^.+\.[0-9a-f]{8,12}\..+$", url)
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = immutable_file_test

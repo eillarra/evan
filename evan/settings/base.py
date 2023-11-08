@@ -1,12 +1,14 @@
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
 
 
-PACKAGE_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-PROJECT_ROOT = os.path.abspath(os.path.join(PACKAGE_ROOT, os.pardir))
-SITE_ROOT = os.path.join(PACKAGE_ROOT, "site")
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+PACKAGE_ROOT = BASE_DIR / "evan"
+SITE_ROOT = PACKAGE_ROOT / "site"
 
 
 # General configuration
@@ -31,6 +33,8 @@ INSTALLED_APPS = [
     # helpers
     "captcha",
     "compressor",
+    "django_vite",
+    "inertia",
     # auth
     "allauth",
     "allauth.account",
@@ -104,8 +108,8 @@ TIME_ZONE = "Europe/Brussels"
 # Internationalization
 # https://docs.djangoproject.com/en/dev/topics/i18n/
 
-LANGUAGE_CODE = "en"
 USE_I18N = False
+LANGUAGE_CODE = "en"
 
 FIRST_DAY_OF_WEEK = 1
 
@@ -186,10 +190,17 @@ REST_FRAMEWORK = {
 
 # https://docs.djangoproject.com/en/dev/topics/templates/
 
+INERTIA_LAYOUT = SITE_ROOT / "templates" / "vue" / "inertia.html"
+DJANGO_VITE_ASSETS_PATH = BASE_DIR / "vue" / "dist"
+DJANGO_VITE_STATIC_URL_PREFIX = "vite"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(SITE_ROOT, "templates")],
+        "DIRS": [
+            SITE_ROOT / "templates",
+            PACKAGE_ROOT / "admin" / "templates",
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "debug": DEBUG,
@@ -234,8 +245,11 @@ STORAGES = {
 }
 
 STATIC_URL = "/static/"
-STATIC_ROOT = os.path.join(SITE_ROOT, "www", "static")
-STATICFILES_DIRS = (os.path.join(SITE_ROOT, "static"),)
+STATIC_ROOT = SITE_ROOT / "www" / "static"
+STATICFILES_DIRS = [
+    SITE_ROOT / "static",
+    ("vite", DJANGO_VITE_ASSETS_PATH),
+]
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -257,7 +271,7 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-root
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(SITE_ROOT, "www", "media")
+MEDIA_ROOT = SITE_ROOT / "www" / "media"
 
 
 # https://huey.readthedocs.io/en/latest/django.html

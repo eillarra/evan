@@ -22,8 +22,8 @@ except ModuleNotFoundError:
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    }
+        "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+    },
 }
 
 CACHE_MIDDLEWARE_SECONDS = 20
@@ -40,3 +40,8 @@ REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = (  # noqa
     "rest_framework.renderers.JSONRenderer",
     "evan.api.renderers.NoFormBrowsableAPIRenderer",
 )
+
+
+# https://github.com/MrBin99/django-vite
+
+DJANGO_VITE_DEV_MODE = True
