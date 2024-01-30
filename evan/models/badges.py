@@ -11,6 +11,7 @@ class Badge(models.Model):
     name = models.CharField(max_length=190, null=True, blank=True)
     affiliation = models.CharField(max_length=190, null=True, blank=True)
     country = CountryField()
+    custom_color = models.CharField(max_length=7, null=True, blank=True)
 
     class Meta:
         ordering = ("event", "name")

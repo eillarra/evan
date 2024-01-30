@@ -177,7 +177,7 @@ class BadgesPdfMaker:
                     event_hashtag=event.hashtag,
                     event_info=event_info,
                     attendee_name=extra.name,
-                    color=badge_color,
+                    color=HexColor(extra.custom_color) if extra.custom_color else badge_color,
                     institution=extra.affiliation,
                     country=extra.country.name,
                     show_social=False,
