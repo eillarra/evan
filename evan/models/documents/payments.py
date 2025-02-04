@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 class BasePaymentsConfig(BaseModel):
     """Payment configuration."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
     activation_date: date | None = None
     test_mode: bool = False

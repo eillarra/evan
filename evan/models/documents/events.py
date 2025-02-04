@@ -10,7 +10,7 @@ from .payments import PaymentsConfig
 class EventModules(BaseModel):
     """Active modules for an event."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
     abstracts: bool = Field(default=False, description="Whether the event has a simple abstract submission system")
     cms: bool = Field(default=False, description="Whether the event needs CMS options for custom website contents")
@@ -19,7 +19,7 @@ class EventModules(BaseModel):
 class EventConfig(BaseModel):
     """General configuration for an event."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
     # active_modules: EventModules
     payments: PaymentsConfig = None
@@ -29,7 +29,7 @@ class EventConfig(BaseModel):
 class EventExtraData(BaseModel):
     """Extra data for an event."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
     important_dates: list[ImportantDate] = Field(default_factory=list)
 

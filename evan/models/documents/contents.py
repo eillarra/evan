@@ -8,7 +8,7 @@ from .files import FileUploaderConfig
 class ContentConfig(BaseModel):
     """Content model configuration."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
     markdown: bool = Field(default=False, description="Whether the content is written in markdown.")
     file_uploader: FileUploaderConfig = Field(default=None, description="File uploader configuration.")

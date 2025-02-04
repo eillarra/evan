@@ -7,10 +7,18 @@ interface ImportantDate {
 }
 
 interface Person {
-  name: string;
+  id?: string;
+  first_name: string;
+  last_name: string;
   affiliation: string | null;
-  country_code: string | null;
   email: string | null;
+}
+
+interface Committee {
+  name: string;
+  members: Person[];
+  sorting: 'first_name' | 'last_name';
+  display: 'full' | 'list';
 }
 
 interface ApiObjectWithDates extends ApiObject {

@@ -80,6 +80,7 @@ export default {
     approve: 'Goedkeuren',
     select_all_pending: 'Selecteer alle niet goedgekeurde',
     new: 'Nieuw',
+    new_member: 'Nieuw persoon',
     back: 'Terug',
     continue: 'Verdergaan',
     skip: 'Overslaan',

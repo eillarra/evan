@@ -2,16 +2,15 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from .base import ImportantDate, Person
+from .base import Committee, ImportantDate
 
 
 class SessionExtraData(BaseModel):
     """Extra data for a session."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
-    chairs: list[Person] = Field(default_factory=list)
-    program_committee: list[Person] = Field(default_factory=list)
+    committees: list[Committee] = Field(default_factory=list)
     important_dates: list[ImportantDate] = Field(default_factory=list)
 
 

@@ -1,8 +1,10 @@
 import {
   symSharpAdd,
   symSharpAlternateEmail,
+  symSharpArrowDownward,
   symSharpArrowDropDown,
   symSharpArrowForwardIos,
+  symSharpArrowUpward,
   symSharpAttachFile,
   symSharpBackspace,
   symSharpChat,
@@ -49,6 +51,8 @@ export const iconAdd = symSharpAdd;
 export const iconAlternateEmail = symSharpAlternateEmail;
 export const iconArrowDropdown = symSharpArrowDropDown;
 export const iconArrowForward = symSharpArrowForwardIos;
+export const iconArrowUp = symSharpArrowUpward;
+export const iconArrowDown = symSharpArrowDownward;
 export const iconAttachment = symSharpAttachFile;
 export const iconCalendarRange = symSharpDateRange;
 export const iconClose = symSharpClose;

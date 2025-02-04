@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden, HttpResponseNotFound
+from django.core.exceptions import PermissionDenied, ViewDoesNotExist
 from django.utils.decorators import method_decorator
 
 from evan.api.serializers.contents import ContentSerializer
@@ -53,10 +53,10 @@ class SessionSecretEditorView(InertiaView):
         try:
             session = Session.objects.get(uuid=kwargs["uuid"])
         except Session.DoesNotExist as exc:
-            raise HttpResponseNotFound from exc
+            raise ViewDoesNotExist from exc
 
         if session.secret != kwargs["secret"]:
-            raise HttpResponseForbidden
+            raise PermissionDenied
 
         return {
             "event": EventListSerializer(session.event, context={"request": request}).data,

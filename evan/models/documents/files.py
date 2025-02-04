@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, conint
 class BaseFileUploaderConfig(BaseModel):
     """File uploader configuration."""
 
-    model_config = ConfigDict(extra="forbid", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=True)
 
     label: str = "Upload file"
     max_files: conint(gt=0, lt=100) = 1  # type: ignore

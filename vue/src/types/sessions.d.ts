@@ -16,8 +16,7 @@ interface Track extends ApiObject, TrackCreateData {
 }
 
 interface SessionExtraData {
-  chairs: Person[];
-  program_committee: Person[];
+  committees: Committee[];
   important_dates: ImportantDate[];
 }
 
