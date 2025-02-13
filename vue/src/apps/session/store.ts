@@ -35,6 +35,17 @@ export const useStore = defineStore('evanSession', () => {
       });
   }
 
+  async function patchSession(data: Partial<Session>): Promise<void> {
+    if (!session.value || !session.value.title) return;
+
+    return api
+      .patch(session.value.self, data, {
+        headers: {
+          'X-Evan-Secret': secret.value,
+        },
+      });
+  }
+
   // Options ------
 
   const topicOptions = computed<QuasarSelectOption[]>(() => {
@@ -57,6 +68,7 @@ export const useStore = defineStore('evanSession', () => {
   return {
     init,
     setData,
+    patchSession,
     updateSession,
     evanEvent,
     session,

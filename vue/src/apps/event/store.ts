@@ -36,6 +36,14 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  // Event ------
+
+  async function patchEvent(data: Partial<ManagedEvanEvent>): Promise<void> {
+    if (!evanEvent.value) return;
+
+    return api.patch(evanEvent.value.self, data);
+  }
+
   // Coupons ------
 
   async function createCoupon(data: CouponCreateData) {
@@ -255,6 +263,7 @@ export const useStore = defineStore('evanEvent', () => {
     fetchCoupons,
     fetchRegistrations,
     fetchSessions,
+    patchEvent,
     updateCoupon,
     updateSession,
     updateTopic,

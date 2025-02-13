@@ -79,7 +79,6 @@ import { computed, ref, defineProps } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { v4 as uuidv4 } from 'uuid'; // Import UUID library
 
-import { api } from '@/axios.ts';
 import { confirm } from '@/utils/dialog';
 import { notify } from '@/utils/notify';
 
@@ -93,6 +92,7 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps<{
   modelValue: Session;
+  updateCallback: (data: SessionExtraData) => Promise<void>;
   title?: string;
 }>();
 
@@ -193,7 +193,8 @@ function syncPersons() {
       return a.last_name.localeCompare(b.last_name);
     });
   });
-  return api.patch(mutable.value.self, { extra_data: mutable.value.extra_data }).then(() => {
+
+  return props.updateCallback(mutable.value.extra_data).then(() => {
     emit('update:modelValue', mutable.value);
   });
 }

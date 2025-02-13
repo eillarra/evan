@@ -4,7 +4,7 @@
       {{ $t('models.important_date', 9) }}
     </h3>
   </div>
-  <important-dates-table v-if="session" v-model="session" />
+  <important-dates-table v-if="session" v-model="session" :update-callback="updateCallback" />
 </template>
 
 <script setup lang="ts">
@@ -14,5 +14,11 @@ import { useStore } from '../store';
 
 import ImportantDatesTable from '@/components/extra_data/ImportantDatesTable.vue';
 
-const { session } = storeToRefs(useStore());
+const store = useStore();
+
+const { session } = storeToRefs(store);
+
+function updateCallback(data: EvanEventExtraData | SessionExtraData): Promise<void> {
+  return store.patchSession({'extra_data': data as SessionExtraData});
+};
 </script>

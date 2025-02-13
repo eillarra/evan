@@ -29,7 +29,7 @@
     hide-toolbar
   />
   <q-dialog v-model="dialog">
-    <important-date-form @create:obj="syncDates" />
+    <important-date-form @create:obj="createDate" />
   </q-dialog>
 </template>
 
@@ -37,7 +37,6 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { api } from '@/axios.ts';
 import { confirm } from '@/utils/dialog';
 import { notify } from '@/utils/notify';
 
@@ -49,7 +48,8 @@ import { iconAdd, iconNotifyInfo } from '@/icons';
 const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps<{
-  modelValue: object;
+  modelValue: ApiObjectWithDates;
+  updateCallback: (data: EvanEventExtraData | SessionExtraData) => Promise<void>;
 }>();
 
 const { t } = useI18n();
@@ -109,13 +109,22 @@ const rows = computed(() => {
   }));
 });
 
-function updateDates() {
+function syncDates() {
   mutable.value.extra_data.important_dates.sort((a: ImportantDate, b: ImportantDate) => {
     return a.start_date.localeCompare(b.start_date);
   });
-  return api.patch(mutable.value.self, { extra_data: mutable.value.extra_data }).then(() => {
+
+  return props.updateCallback(mutable.value.extra_data).then(() => {
     emit('update:modelValue', mutable.value);
   });
+}
+
+function createDate(obj: ImportantDate) {
+  mutable.value.extra_data.important_dates.push(obj);
+  syncDates().then(() => {
+    notify.success(t('messages.important_date_created'));
+  });
+  dialog.value = false;
 }
 
 function updateDate(oldDate: ImportantDate, date: ImportantDate) {
@@ -124,7 +133,7 @@ function updateDate(oldDate: ImportantDate, date: ImportantDate) {
   );
   if (index !== -1) {
     mutable.value.extra_data.important_dates[index] = date as ImportantDate;
-    updateDates().then(() => {
+    syncDates().then(() => {
       notify.success(t('messages.important_date_updated'));
     });
   }
@@ -135,15 +144,9 @@ function removeDate(row: { _self: ImportantDate }) {
     mutable.value.extra_data.important_dates = mutable.value.extra_data.important_dates.filter(
       (date: ImportantDate) => date !== row._self,
     );
-    updateDates().then(() => {
+    syncDates().then(() => {
       notify.success(t('messages.important_date_deleted'));
     });
   });
-}
-
-function syncDates(obj: ImportantDate) {
-  mutable.value.extra_data.important_dates.push(obj);
-  updateDates();
-  dialog.value = false;
 }
 </script>

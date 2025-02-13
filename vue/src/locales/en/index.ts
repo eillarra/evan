@@ -127,6 +127,7 @@ export default {
       'Are you sure you want to delete this USED coupon? This will remove the discount from the linked registration.',
     coupon_deleted: 'Coupon deleted',
     coupon_updated: 'Coupon updated',
+    important_date_created: 'Important date created',
     important_date_confirm_delete: 'Are you sure you want to delete this date?',
     important_date_deleted: 'Important date deleted',
     important_date_updated: 'Important date updated',
