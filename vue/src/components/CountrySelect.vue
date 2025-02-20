@@ -1,11 +1,10 @@
 <template>
   <q-select
-    :outlined="!noOutline"
     dense
     :label="label"
     v-model="mutable"
     :options="options"
-    :options-dense="$q.screen.gt.sm"
+    options-dense
     option-value="code"
     option-label="name"
     emit-value
@@ -33,7 +32,6 @@ const emit = defineEmits(['update:modelValue']);
 const props = defineProps<{
   label: string;
   modelValue: string;
-  noOutline?: boolean;
 }>();
 
 const mutable = ref<string>(props.modelValue);

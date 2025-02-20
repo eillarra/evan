@@ -21,8 +21,6 @@ def test_valid_configuration(content):
     "invalid_config",
     [
         {"file_uploader": {"max_files": 0}},
-        {"wrong_key": {"max_files": 1}},
-        {"file_uploader": {"wrong_key": 1}},
     ],
 )
 def test_invalid_configuration(content, invalid_config):

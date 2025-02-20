@@ -19,6 +19,6 @@ const store = useStore();
 const { session } = storeToRefs(store);
 
 function updateCallback(data: EvanEventExtraData | SessionExtraData): Promise<void> {
-  return store.patchSession({'extra_data': data as SessionExtraData});
-};
+  return store.patchSession({ extra_data: data as SessionExtraData });
+}
 </script>

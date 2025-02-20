@@ -9,7 +9,7 @@ from rest_framework.viewsets import GenericViewSet
 from evan.models import Event, Registration
 
 from ..permissions import RegistrationPermission
-from ..serializers import RegistrationRetrieveSerializer, RegistrationSerializer
+from ..serializers import AuthRegistrationRetrieveSerializer, RegistrationRetrieveSerializer, RegistrationSerializer
 from ..viewsets import EventRelatedViewSet
 
 
@@ -41,7 +41,7 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     lookup_field = "uuid"
     permission_classes = (RegistrationPermission,)
     queryset = Registration.objects.prefetch_related("sessions").select_related("user")
-    serializer_class = RegistrationRetrieveSerializer
+    serializer_class = AuthRegistrationRetrieveSerializer
 
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):

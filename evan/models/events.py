@@ -10,7 +10,11 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
-from .documents.events import get_validated_event_configuration, get_validated_event_extra_data
+from .documents.events import (
+    get_validated_event_configuration,
+    get_validated_event_extra_data,
+    get_validated_event_registration_configuration,
+)
 from .rel.files import FilesMixin
 from .rel.links import LinksMixin
 from .rel.permissions import Permission, PermissionsMixin
@@ -65,8 +69,9 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     email = models.EmailField(default="", blank=True)
 
     config = models.JSONField(default=dict)
+    registration_config = models.JSONField(default=dict)
     extra_data = models.JSONField(default=dict)
-    custom_fields = models.JSONField(default=dict)
+    custom_fields = models.JSONField(default=dict)  # TODO: remove this field
 
     registrations_count = models.PositiveIntegerField(default=0)
     accept_by_default = models.BooleanField(default=True)
@@ -86,6 +91,11 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def save(self, *args, **kwargs) -> None:
         try:
             self.config = get_validated_event_configuration(self.config or {})
+        except ValueError as exc:
+            raise ValidationError({"config": [str(exc)]}) from exc
+
+        try:
+            self.registration_config = get_validated_event_registration_configuration(self.registration_config or {})
         except ValueError as exc:
             raise ValidationError({"config": [str(exc)]}) from exc
 
@@ -111,6 +121,10 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @property
     def configuration(self) -> dict:
         return get_validated_event_configuration(self.config or {})
+
+    @property
+    def registration_configuration(self) -> dict:
+        return get_validated_event_registration_configuration(self.registration_config or {})
 
     ### vvvvvvvv Below needs to be checked/refactored vvvvvvvv ###
 

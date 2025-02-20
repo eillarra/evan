@@ -34,7 +34,7 @@ class Registration(RemarksMixin, models.Model):
     visa_requested = models.BooleanField(default=False)
     visa_sent = models.BooleanField(default=False)
 
-    fee_type = models.CharField(max_length=16)
+    fee_type = models.CharField(max_length=64)
     base_fee = models.PositiveSmallIntegerField(default=0, editable=False)
     extra_fees = models.PositiveSmallIntegerField(default=0, editable=False)
     manual_extra_fees = models.PositiveSmallIntegerField(default=0)

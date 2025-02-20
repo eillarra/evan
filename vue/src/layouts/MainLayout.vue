@@ -12,7 +12,7 @@
           :class="{ 'q-pl-lg': $q.screen.gt.sm, 'bg-ge': props.django_env == 'staging' }"
           style="align-items: flex-end"
         >
-          <h2 class="text-uppercase q-ma-none">Evan</h2>
+          <h2 class="text-uppercase q-ma-none">{{ title }}</h2>
           <div
             class="absolute-top-right header-links text-white q-py-sm q-px-md q-gutter-x-lg"
             :class="{ 'q-py-md q-px-lg': $q.screen.gt.sm }"
@@ -91,10 +91,15 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+
+import { useCommonStore } from '@/stores/common';
 
 import UserMenu from '@/components/UserMenu.vue';
 
 import { iconLogin, iconMenu } from '@/icons';
+
+const commonStore = useCommonStore();
 
 // get basic info from Django
 const props = defineProps<{
@@ -111,4 +116,8 @@ const helpdeskEmail = 'evan@ugent.be';
 const year = new Date().getFullYear();
 
 const leftDrawer = ref(false);
+
+const { title } = storeToRefs(commonStore);
+
+commonStore.init();
 </script>

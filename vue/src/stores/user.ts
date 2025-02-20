@@ -1,25 +1,28 @@
-import { ref } from 'vue';
+import { shallowRef } from 'vue';
 import { defineStore } from 'pinia';
-import { pick } from 'lodash-es';
 
 import { api } from '@/axios.ts';
 
 export const useUserStore = defineStore('user', () => {
-  const user = ref<AuthenticatedUser | null>(null);
+  const user = shallowRef<AuthenticatedUser | null>(null);
 
-  async function init(djangoUser: AuthenticatedUser) {
-    user.value = djangoUser;
+  async function setData(inertiaUser: AuthenticatedUser) {
+    user.value = inertiaUser;
+    await init();
   }
 
-  async function updateUser(fields: string[]) {
-    await api.patch('/user/account/', pick(user.value, fields)).then((res) => {
+  async function init() {}
+
+  async function updateUser(data: Partial<UserData>) {
+    if (!user.value) return;
+    await api.patch(user.value.self, data).then((res) => {
       user.value = res.data;
-      // notify.success('updated');
     });
   }
 
   return {
     init,
+    setData,
     updateUser,
     user,
   };

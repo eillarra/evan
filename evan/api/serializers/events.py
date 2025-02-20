@@ -64,6 +64,8 @@ class EventSerializer(EventListSerializer):
     sessions = SessionReadOnlySerializer(many=True, read_only=True)
     sponsors = SponsorReadOnlySerializer(many=True, read_only=True)
 
+    registration_configuration = serializers.JSONField(read_only=True)
+
     class Meta:
         model = Event
         exclude = ["id", "accept_by_default", "signature", "config", "custom_fields"]

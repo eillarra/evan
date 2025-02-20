@@ -25,11 +25,11 @@ event_patterns = (
 
 registration_patterns = (
     [
+        path("<slug:code>/", views.RegistrationView.as_view(), name="app"),
         path(
             "<uuid:uuid>/",
             include(
                 [
-                    path("", views.EventView.as_view(), name="app"),
                     path("certificate.pdf", never_cache(views.EventView.as_view()), name="certificate"),
                     path("payment/", never_cache(views.EventView.as_view()), name="payment"),
                     path("receipt.pdf", never_cache(views.EventView.as_view()), name="receipt"),

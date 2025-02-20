@@ -2,3 +2,4 @@
 
 from .events import *
 from .pages import *
+from .registrations import *

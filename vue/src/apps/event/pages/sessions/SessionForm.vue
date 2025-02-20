@@ -74,7 +74,7 @@ const store = useStore();
 const { topicOptions, trackOptions } = storeToRefs(store);
 
 const obj = ref<Session | undefined>(props.obj);
-const formData = ref<SessionCreateData>({
+const formData = ref<SessionData>({
   code: props.obj?.code || '',
   title: props.obj?.title || '',
   description: props.obj?.description || '',

@@ -12,7 +12,7 @@ from ..serializers import AuthRegistrationRetrieveSerializer, EventListSerialize
 
 class UserViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     permission_classes = (UserPermission,)
-    queryset = User.objects.select_related("profile")
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 
     @method_decorator(never_cache)

@@ -3,11 +3,14 @@ from typing import TYPE_CHECKING
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.signals import pre_social_login
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django_countries.fields import CountryField
 from tld import get_tld
+
+from .documents.users import get_validated_extra_data
 
 
 if TYPE_CHECKING:
@@ -36,6 +39,14 @@ class User(AbstractUser):
     extra_data = models.JSONField(default=dict)
 
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs) -> None:
+        try:
+            self.extra_data = get_validated_extra_data(self.extra_data or {})
+        except ValueError as exc:
+            raise ValidationError({"extra_data": [str(exc)]}) from exc
+
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return f"{self.name}, {self.affiliation if self.affiliation else '-'}"

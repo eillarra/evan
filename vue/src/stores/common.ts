@@ -11,6 +11,7 @@ interface CountryMap {
 export const useCommonStore = defineStore('common', () => {
   const countries = ref<CountryMap | null>(null);
   const now = ref<Date>(new Date());
+  const title = ref<string>('Evan');
 
   async function init() {
     await getCountries();
@@ -18,6 +19,7 @@ export const useCommonStore = defineStore('common', () => {
 
   async function getCountries() {
     const countriesFound = storage.get('countries');
+
     if (countriesFound) {
       countries.value = countriesFound;
       return;
@@ -29,6 +31,10 @@ export const useCommonStore = defineStore('common', () => {
     });
   }
 
+  function setTitle(newTitle: string) {
+    title.value = newTitle;
+  }
+
   onMounted(() => {
     const interval = setInterval(() => {
       now.value = new Date();
@@ -38,7 +44,9 @@ export const useCommonStore = defineStore('common', () => {
 
   return {
     init,
+    setTitle,
     countries,
     now,
+    title,
   };
 });

@@ -46,7 +46,7 @@ export const useStore = defineStore('evanEvent', () => {
 
   // Coupons ------
 
-  async function createCoupon(data: CouponCreateData) {
+  async function createCoupon(data: CouponData) {
     if (!evanEvent.value) return;
 
     return api.post(evanEvent.value.self + 'coupons/', data).then((res) => {
@@ -116,7 +116,7 @@ export const useStore = defineStore('evanEvent', () => {
 
   // Sessions ------
 
-  async function createSession(data: SessionCreateData) {
+  async function createSession(data: SessionData) {
     if (!evanEvent.value) return;
 
     return api.post(evanEvent.value.self + 'sessions/', data).then((res) => {
@@ -159,7 +159,7 @@ export const useStore = defineStore('evanEvent', () => {
     evanEvent.value.topics = evanEvent.value.topics.slice().sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  async function createTopic(data: TopicCreateData) {
+  async function createTopic(data: TopicData) {
     if (!evanEvent.value) return;
 
     return api.post(evanEvent.value.self + 'topics/', data).then((res) => {
@@ -208,7 +208,7 @@ export const useStore = defineStore('evanEvent', () => {
     evanEvent.value.tracks = evanEvent.value.tracks.slice().sort((a, b) => a.position - b.position);
   }
 
-  async function createTrack(data: TrackCreateData) {
+  async function createTrack(data: TrackData) {
     if (!evanEvent.value) return;
 
     return api.post(evanEvent.value.self + 'tracks/', data).then((res) => {

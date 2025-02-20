@@ -1,17 +1,17 @@
-interface TopicCreateData {
+interface TopicData {
   name: string;
 }
 
-interface Topic extends ApiObject, TopicCreateData {
+interface Topic extends ApiObject, TopicData {
   slug?: string;
 }
 
-interface TrackCreateData {
+interface TrackData {
   name: string;
   position?: number;
 }
 
-interface Track extends ApiObject, TrackCreateData {
+interface Track extends ApiObject, TrackData {
   slug?: string;
 }
 
@@ -20,7 +20,7 @@ interface SessionExtraData {
   important_dates: ImportantDate[];
 }
 
-interface SessionCreateData {
+interface SessionData {
   code: string;
   title: string;
   description: MarkdownText;
@@ -31,7 +31,7 @@ interface SessionCreateData {
   extra_data?: SessionExtraData;
 }
 
-interface Session extends ApiObject, SessionCreateData {
+interface Session extends ApiObject, SessionData {
   secret_url?: Url;
   slug: string;
   updated_at: string;

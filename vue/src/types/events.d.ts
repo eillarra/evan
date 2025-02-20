@@ -1,3 +1,11 @@
+interface Fee {
+  type: string;
+  value: number;
+  notes: string;
+  is_early: boolean;
+  social_events_included: boolean;
+}
+
 interface Topic extends ApiObject {
   name: string;
   position: number;
@@ -34,8 +42,11 @@ interface EvanEvent extends ApiObject {
   is_open_for_registration: boolean;
   is_open_for_abstract_submission: boolean;
 
+  fees: Fee[];
   topics: Topic[];
   tracks: Track[];
+
+  registration_configuration: EvanEventRegistrationConfig;
   extra_data?: EvanEventExtraData;
 }
 

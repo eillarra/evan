@@ -41,7 +41,7 @@ const props = defineProps<{
 
 const store = useStore();
 
-const formData = ref<CouponCreateData>({
+const formData = ref<CouponData>({
   value: props.obj?.value || 0,
   notes: props.obj?.notes || '',
 });

@@ -14,7 +14,7 @@ interface ApiObjectUpdated {
   readonly updated_by: UserTiny | null;
 }
 
-interface AuthenticatedUser {
+interface DjangoAuthenticatedUser {
   readonly id: number;
   readonly username: string;
   readonly email: string;

@@ -5,7 +5,7 @@ class Fee(models.Model):
     """Event fees."""
 
     event = models.ForeignKey("evan.Event", on_delete=models.CASCADE, related_name="fees")
-    type = models.CharField(max_length=16)
+    type = models.CharField(max_length=64)
     value = models.PositiveIntegerField(default=0)
     notes = models.CharField(max_length=190, default="", blank=True)
     is_early = models.BooleanField(default=False)

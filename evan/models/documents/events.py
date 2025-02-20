@@ -3,6 +3,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .base import ImportantDate
+from .fees import FeeSelectionConfig
 from .files import FileUploaderConfig
 from .payments import PaymentsConfig
 
@@ -26,6 +27,13 @@ class EventConfig(BaseModel):
     file_uploader: FileUploaderConfig = None
 
 
+class EventRegistrationConfig(BaseModel):
+    """Registration configuration for an event."""
+
+    model_config = ConfigDict(extra="ignore", validate_default=True)
+    fee_selection: FeeSelectionConfig = None
+
+
 class EventExtraData(BaseModel):
     """Extra data for an event."""
 
@@ -41,6 +49,17 @@ def get_validated_event_configuration(config) -> dict:
     :raises ValueError: If the configuration is invalid."""
     try:
         return json.loads(EventConfig(**config).model_dump_json())
+    except (TypeError, ValidationError) as exc:
+        raise ValueError(exc) from exc
+
+
+def get_validated_event_registration_configuration(registration_config) -> dict:
+    """Validate registration configuration for an event.
+
+    :returns: The validated dictionary with default values if not provided.
+    :raises ValueError: If the registration configuration is invalid."""
+    try:
+        return json.loads(EventRegistrationConfig(**registration_config).model_dump_json())
     except (TypeError, ValidationError) as exc:
         raise ValueError(exc) from exc
 
