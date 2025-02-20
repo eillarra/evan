@@ -190,7 +190,8 @@ AUTHENTICATION_BACKENDS = [
 
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = ["username", "email"]
+ACCOUNT_USERNAME_MIN_LENGTH = 3
 ACCOUNT_PRESERVE_USERNAME_CASING = False
 
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
