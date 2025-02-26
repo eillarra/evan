@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
 import { useStore } from './store';
@@ -38,14 +38,11 @@ const store = useStore();
 
 const evanEvents = computed<EvanEvent[]>(() => page.props.events as EvanEvent[]);
 const currentEvent = computed<ManagedEvanEvent>(() => page.props.event as ManagedEvanEvent);
-const selectedEventCode = computed<string>(() => currentEvent.value.code);
+const selectedEventCode = ref<string>(currentEvent.value.code);
 
 store.setData(currentEvent.value);
 
-watch(
-  () => selectedEventCode.value,
-  (code: string) => {
-    window.location.href = `../${code}/`;
-  },
-);
+watch(selectedEventCode, (code: string) => {
+  window.location.href = `../${code}/`;
+});
 </script>
