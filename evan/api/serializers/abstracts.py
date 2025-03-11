@@ -3,7 +3,7 @@ from rest_framework import serializers
 from evan.models import Abstract, AbstractReview, User
 
 from .events import EventListSerializer
-from .rel.files import FileSerializer
+from .rel.files import FileSerializer, FilesMixin
 from .users import UserSerializer
 
 
@@ -17,12 +17,10 @@ class AbstractReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "created_at", "updated_at")
 
 
-class AbstractSerializer(serializers.ModelSerializer):
+class AbstractSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:abstract-detail", lookup_field="uuid")
-    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:abstract-files", lookup_field="uuid")
     user = UserSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
-    files = FileSerializer(many=True, read_only=True)
 
     class Meta:
         model = Abstract

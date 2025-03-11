@@ -189,7 +189,7 @@ AUTHENTICATION_BACKENDS = [
 
 # https://docs.allauth.org/en/latest/account/configuration.html
 
-ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGIN_METHODS = ["username", "email"]
 ACCOUNT_USERNAME_MIN_LENGTH = 3

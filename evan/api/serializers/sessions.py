@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from evan.models import Event, Session, validate_datetime
 
-from .rel.files import FileSerializer
+from .rel.files import FileSerializer, FilesMixin
 
 
 class SessionReadOnlySerializer(serializers.ModelSerializer):
@@ -40,8 +40,7 @@ class SessionSerializer(serializers.ModelSerializer):
         return data
 
 
-class SessionWithSecretsSerializer(SessionSerializer):
-    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:session-files")
+class SessionWithSecretsSerializer(FilesMixin, SessionSerializer):
     secret_url = serializers.SerializerMethodField()
 
     class Meta:

@@ -4,7 +4,7 @@ from rest_framework.reverse import reverse
 
 from evan.models import Event, Fee, validate_event_dates
 
-from .rel.files import FileSerializer
+from .rel.files import FilesMixin
 from .sessions import SessionReadOnlySerializer, SessionSerializer
 from .sponsors import SponsorReadOnlySerializer, SponsorSerializer
 from .topics import TopicReadOnlySerializer, TopicSerializer
@@ -51,8 +51,7 @@ class EventListSerializer(serializers.ModelSerializer):
         ]
 
 
-class EventSerializer(EventListSerializer):
-    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:event-files", lookup_field="code")
+class EventSerializer(FilesMixin, EventListSerializer):
     # abstract_url = serializers.URLField(source="get_abstract_url", read_only=True)
     registration_url = serializers.SerializerMethodField()
     registration_early_deadline = serializers.DateTimeField(allow_null=True)
@@ -61,7 +60,6 @@ class EventSerializer(EventListSerializer):
     is_open_for_abstract_submission = serializers.BooleanField(read_only=True)
     fees = FeeSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
-    files = FileSerializer(many=True, read_only=True)
 
     sessions = SessionReadOnlySerializer(many=True, read_only=True)
     sponsors = SponsorReadOnlySerializer(many=True, read_only=True)

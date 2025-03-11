@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.urls import reverse
 
 from evan.services.file_guard import check_file_access
 from evan.services.s3 import delete_s3_object
@@ -35,6 +36,7 @@ class File(models.Model):
 
     type = models.CharField(max_length=8, choices=TYPE_CHOICES)
     file = models.FileField(upload_to=get_upload_path)
+    description = models.CharField(max_length=255, blank=True, default="")
     tags = models.JSONField(default=list, validators=[validate_list_of_strings])
 
     class Meta:  # noqa: D106
@@ -65,6 +67,11 @@ class File(models.Model):
     def s3_object_key(self):
         return self.file.name
 
+    @property
+    def url(self):
+        """The URL to the file."""
+        return reverse("media_file", args=[self.file.name])
+
 
 class FilesMixin(models.Model):
     """A mixin to add files to a model."""
@@ -73,3 +80,7 @@ class FilesMixin(models.Model):
 
     class Meta:  # noqa: D106
         abstract = True
+
+    def files_can_be_managed_by(self, user: "User") -> bool:
+        """Check if the user can manage related files."""
+        raise NotImplementedError("files_can_be_managed_by must be implemented in the model using this mixin.")

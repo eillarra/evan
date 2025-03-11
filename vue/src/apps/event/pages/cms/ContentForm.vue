@@ -1,21 +1,34 @@
 <template>
   <dialog-form :icon="iconContent" :title="$t('models.content')">
+    <template #tabs>
+      <q-tabs v-model="tab" no-caps>
+        <q-tab name="content" :label="$t('models.content')" />
+        <q-tab name="files" :label="$t('models.file', 9)" />
+      </q-tabs>
+    </template>
     <template #page>
-      <div class="q-py-md q-px-lg">
-        <div class="row q-col-gutter-y-sm">
-          <readonly-field :value="obj.key" :label="$t('fields.code')" class="col-12" />
-          <marked-textarea
-            v-if="obj.config.markdown"
-            v-model="formData.content"
-            :label="$t('models.content')"
-            class="col-12"
-          />
-          <q-input v-else v-model="formData.content" :label="$t('models.content')" autogrow class="col-12" />
-        </div>
-      </div>
+      <q-tab-panels v-model="tab">
+        <q-tab-panel name="content">
+          <div class="q-pa-sm">
+            <div class="row q-col-gutter-y-sm">
+              <readonly-field :value="obj.key" :label="$t('fields.code')" class="col-12" />
+              <marked-textarea
+                v-if="obj.config.markdown"
+                v-model="formData.content"
+                :label="$t('models.content')"
+                class="col-12"
+              />
+              <q-input v-else v-model="formData.content" :label="$t('models.content')" autogrow class="col-12" />
+            </div>
+          </div>
+        </q-tab-panel>
+        <q-tab-panel name="files">
+          <files-view :api-endpoint="obj.rel_files" />
+        </q-tab-panel>
+      </q-tab-panels>
     </template>
     <template #footer>
-      <div class="flex q-gutter-sm q-pa-lg">
+      <div v-if="tab == 'content'" class="flex q-gutter-sm q-pa-lg">
         <q-space />
         <q-btn
           v-close-popup
@@ -38,6 +51,7 @@ import { useStore } from '../../store';
 import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
+import FilesView from '@/components/rel/FilesView.vue';
 
 import { iconContent } from '@/icons';
 
@@ -50,6 +64,8 @@ const store = useStore();
 const formData = ref({
   content: props.obj.value,
 });
+
+const tab = ref('content');
 
 function update() {
   if (!formData.value.content) return;

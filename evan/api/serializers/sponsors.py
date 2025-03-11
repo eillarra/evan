@@ -2,8 +2,6 @@ from rest_framework import serializers
 
 from evan.models import Sponsor
 
-from .rel.files import FileSerializer
-
 
 class SponsorReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
@@ -13,8 +11,6 @@ class SponsorReadOnlySerializer(serializers.ModelSerializer):
 
 class SponsorSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:sponsor-detail")
-    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:sponsor-files")
-    files = FileSerializer(many=True, read_only=True)
 
     class Meta:
         model = Sponsor

@@ -17,10 +17,4 @@ def check_file_access(file: "models.rel.File", user: "models.User | AbstractBase
     if not user.is_authenticated:
         return False
 
-    if isinstance(file.content_object, models.Meeting):
-        return user.groups.filter(name="Steering Committee").exists()
-
-    if isinstance(file.content_object, models.MembershipRequest):
-        return user.groups.filter(name="Steering Committee").exists() or file.content_object.user == user
-
-    raise NotImplementedError("No access control implemented yet for this object type.")
+    return file.content_object.files_can_be_managed_by(user)  # type: ignore[union-attr]

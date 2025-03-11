@@ -6,7 +6,6 @@ from evan.models import File, Session
 from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import SessionSerializer, SessionWithSecretsSerializer
 from ..viewsets import EventRelatedViewSet
-from .files import FilesMixin
 
 
 def user_is_manager_of_event(user, event):
@@ -48,7 +47,7 @@ class SessionsViewSet(EventRelatedViewSet):
         return super().get_serializer_class()
 
 
-class SessionViewSet(FilesMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+class SessionViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     permission_classes = [SessionPermission]
     queryset = Session.objects.all()
     serializer_class = SessionSerializer

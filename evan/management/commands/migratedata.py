@@ -6,7 +6,7 @@ from allauth.socialaccount.models import SocialAccount, SocialApp
 from django.contrib.auth.models import Group as DjangoGroup
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
-from django.db import connections
+from django.db import connection, connections
 from django.db.utils import IntegrityError
 from django.utils.crypto import get_random_string
 
@@ -25,6 +25,21 @@ from evan.models.venues import Room, Venue
 
 
 BATCH_SIZE = 500
+
+
+def get_content_type_id(content_type_model: str) -> int:
+    """Get the content type for the legacy model."""
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id FROM django_content_type WHERE app_label = 'evan' AND model = %s", [content_type_model]
+        )
+        content_type = cursor.fetchone()
+
+        if not content_type:
+            raise Exception(f"Content type {content_type_model} not found.")
+
+        return content_type[0]
 
 
 def get_legacy_content_type_id(legacy_content_type_model: str) -> int:
@@ -88,6 +103,8 @@ class Command(BaseCommand):
         site.name = "Evan"
         site.save()
 
+        return
+
         migrate_flds()
         migrate_users()
         migrate_groups()
@@ -106,6 +123,12 @@ class Command(BaseCommand):
         migrate_sponsors()
 
         migrate_rel_permissions(Event, "event")
+
+        migrate_rel_files("abstract")
+        migrate_rel_files("event")
+        migrate_rel_files("session")
+        migrate_rel_files("content")
+        migrate_rel_files("sponsor")
 
         update_created_at("evan_registration", Registration)
         update_updated_at("evan_registration", Registration)
@@ -447,6 +470,25 @@ def migrate_venues():
             bulk.append(Room(**row))
 
         Room.objects.bulk_create(bulk)
+
+
+def migrate_rel_files(content_type_model):
+    """Migrate files from the legacy database to the new database."""
+
+    with connections["legacy"].cursor() as cursor:
+        content_type_id = get_legacy_content_type_id(content_type_model)
+        cursor.execute(f"SELECT * FROM evan_file WHERE content_type_id = {content_type_id}")
+        rows = dictfetchall(cursor)
+
+    with connection.cursor() as cursor:
+        current_content_type_id = get_content_type_id(content_type_model)
+
+        for row in rows:
+            type = row["file"].split("/")[0]
+            cursor.execute(
+                f"INSERT INTO evan_rel_file (content_type_id, object_id, type, file, description, tags) "
+                f"VALUES ({current_content_type_id}, {row['object_id']}, '{type}', '{row['file']}', '', '[]')"
+            )
 
 
 def migrate_rel_permissions(Model, legacy_content_type_model):

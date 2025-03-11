@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 
 from .documents.contents import get_validated_content_configuration
 from .rel.files import FilesMixin
+
+
+if TYPE_CHECKING:
+    from evan.models.users import User
 
 
 class Content(FilesMixin, models.Model):
@@ -32,6 +38,10 @@ class Content(FilesMixin, models.Model):
             raise ValidationError({"config": [str(exc)]}) from exc
 
         super().save(*args, **kwargs)
+
+    def files_can_be_managed_by(self, user: "User") -> bool:
+        """Check if the user can manage related files."""
+        return self.event.can_be_managed_by(user)
 
     def get_api_url(self) -> str:
         return reverse("v1:content-detail", args=[self.pk])

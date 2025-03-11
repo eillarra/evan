@@ -2,13 +2,11 @@ from rest_framework import serializers
 
 from evan.models import Content
 
-from .rel.files import FileSerializer
+from .rel.files import FilesMixin
 
 
-class ContentSerializer(serializers.ModelSerializer):
+class ContentSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:content-detail")
-    rel_files = serializers.HyperlinkedIdentityField(view_name="v1:content-files")
-    files = FileSerializer(many=True, read_only=True)
 
     class Meta:  # noqa: D106
         model = Content

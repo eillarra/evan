@@ -6,7 +6,6 @@ from evan.models import Content
 from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import ContentSerializer
 from ..viewsets import EventRelatedViewSet
-from .files import FilesMixin
 
 
 class ContentsPermission(EventRelatedPermission):
@@ -26,7 +25,7 @@ class ContentsViewSet(EventRelatedViewSet):
     serializer_class = ContentSerializer
 
 
-class ContentViewSet(FilesMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+class ContentViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     permission_classes = [ContentPermission]
     queryset = Content.objects.prefetch_related("files").all()
     serializer_class = ContentSerializer
