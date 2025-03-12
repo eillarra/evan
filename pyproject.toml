@@ -18,7 +18,6 @@ django-ical = "*"
 django-libsass = "*"
 django-storages = {version = "*", extras = ["s3"]}
 django-vite = "*"
-gevent = "*"
 gunicorn = "*"
 hiredis = "*"
 huey = "*"

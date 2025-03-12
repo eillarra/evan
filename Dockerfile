@@ -1,14 +1,14 @@
-FROM node:22-alpine as develop-stage
+FROM node:22-alpine AS develop-stage
 WORKDIR /app
 COPY package*.json ./
 RUN yarn global add vite
 COPY . .
 
-FROM develop-stage as build-stage
+FROM develop-stage AS build-stage
 RUN yarn
 RUN yarn build
 
-FROM python:3.12-slim-bullseye as production-stage
+FROM python:3.12-slim-bullseye AS production-stage
 
 EXPOSE 5000
 
