@@ -12,3 +12,4 @@ from .sponsors import *
 from .topics import *
 from .tracks import *
 from .users import *
+from .venues import *

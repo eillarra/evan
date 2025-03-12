@@ -8,6 +8,7 @@ from .sessions import SessionReadOnlySerializer, SessionSerializer
 from .sponsors import SponsorReadOnlySerializer, SponsorSerializer
 from .topics import TopicReadOnlySerializer, TopicSerializer
 from .tracks import TrackReadOnlySerializer, TrackSerializer
+from .venues import VenueSerializer, VenueReadOnlySerializer
 
 
 class FeeSerializer(serializers.ModelSerializer):
@@ -63,6 +64,7 @@ class EventSerializer(EventListSerializer):
 
     sessions = SessionReadOnlySerializer(many=True, read_only=True)
     sponsors = SponsorReadOnlySerializer(many=True, read_only=True)
+    venues = VenueReadOnlySerializer(many=True, read_only=True)
 
     registration_configuration = serializers.JSONField(read_only=True)
 
@@ -77,6 +79,7 @@ class ManagedEventSerializer(EventSerializer):
     sponsors = SponsorSerializer(many=True, read_only=True)
     tracks = TrackSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
+    venues = VenueSerializer(many=True, read_only=True)
 
     class Meta:
         model = Event
