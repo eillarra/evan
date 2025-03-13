@@ -9,7 +9,7 @@ class UserExtraData(BaseModel):
 
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
-    gender: Literal["none", "male", "female", "non-binary", "prefer-not-to-say"] = Field(
+    gender: Literal["none", "male", "female", "non_binary", "prefer_not_to_say"] = Field(
         default="none", description="Gender of the user"
     )
     dietary: str = Field(default="none", description="Dietary requirements of the user")
