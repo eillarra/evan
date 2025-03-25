@@ -12,7 +12,7 @@ class SessionReadOnlySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Session
-        exclude = ["event", "created_at", "uuid", "description", "extra_data"]
+        exclude = ["event", "created_at", "uuid", "description"]
 
 
 class SessionSerializer(serializers.ModelSerializer):
