@@ -106,6 +106,7 @@ export default {
     required: 'Verplicht',
   },
   messages: {
+    content_updated: 'Inhoud bijgewerkt',
     copied_to_clipboard: 'Gekopieerd naar het klembord',
   },
 };

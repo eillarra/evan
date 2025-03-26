@@ -1,10 +1,10 @@
 <template>
-  <div class="row">
+  <div class="row q-col-gutter-x-xl">
     <h3 class="text-ugent col-12">
       <span v-if="registration">My registration</span>
       <span v-else>New registration</span>
     </h3>
-    <div v-if="mutableRegistration" class="col-12 col-md-8">
+    <div v-if="mutableRegistration" class="col-12 col-md-7">
       <div v-if="user" class="row q-col-gutter-y-sm q-col-gutter-x-md items-start q-mb-sm">
         <readonly-field
           :value="`${user.first_name} ${user.last_name}`"
@@ -97,15 +97,7 @@
         </q-item-section>
       </q-item>
 
-      <template v-if="registration">
-        <evan-section-title class="q-mt-lg">Registration information</evan-section-title>
-        <div class="row q-col-gutter-y-sm q-col-gutter-x-md items-start">
-          <readonly-field :value="registration.uuid" :label="$t('fields.code')" class="col-12 col-md" with-copy />
-          <readonly-field :value="registration.updated_at" :label="$t('fields.updated_at')" class="col-12 col-md" />
-        </div>
-      </template>
-
-      <q-btn
+      <ugent-btn
         @click="saveRegistration"
         :label="registration ? $t('form.update') : $t('form.create')"
         color="primary"
@@ -113,6 +105,15 @@
         :disable="!formIsValid"
       />
       <q-space class="q-mb-xl" />
+    </div>
+    <div v-if="registration" class="col-12 col-md">
+      <div class="bg-grey-1 q-py-lg q-px-md">
+        <evan-section-title first>Registration information</evan-section-title>
+        <div class="row q-col-gutter-y-sm">
+          <readonly-field :value="registration.uuid" :label="$t('fields.code')" class="col-12" with-copy />
+          <readonly-field :value="registration.updated_at" :label="$t('fields.updated_at')" class="col-12" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -194,9 +195,13 @@ function saveRegistration() {
     };
 
     if (registration.value) {
-      store.updateRegistration(mutableRegistration.value);
+      store.updateRegistration(mutableRegistration.value).then(() => {
+        window.scrollTo({ top: 0 });
+      });
     } else {
-      store.createRegistration(mutableRegistration.value);
+      store.createRegistration(mutableRegistration.value).then(() => {
+        window.scrollTo({ top: 0 });
+      });
     }
   }
 

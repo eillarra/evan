@@ -59,13 +59,13 @@
           </q-item-section>
           <q-item-section>{{ $t('models.content', 9) }}</q-item-section>
         </q-item>
-        <!--<q-item-label header>Logs</q-item-label>
+        <q-item-label header>Logs</q-item-label>
         <q-item clickable :to="{ name: 'emails' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
-            <q-icon :name="iconEmails" size="xs" />
+            <q-icon :name="iconEmails" size="xs"></q-icon>
           </q-item-section>
           <q-item-section>{{ $t('fields.email', 9) }}</q-item-section>
-        </q-item>-->
+        </q-item>
       </q-list>
     </div>
   </q-scroll-area>
@@ -75,6 +75,7 @@
 import {
   iconContent,
   iconCoupon,
+  iconEmails,
   iconEvent,
   iconImportantDates,
   iconLabel,

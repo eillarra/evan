@@ -11,12 +11,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { usePage } from '@inertiajs/vue3';
 
 import { useStore } from './store';
 
-const { t } = useI18n();
 const page = usePage();
 const store = useStore();
 

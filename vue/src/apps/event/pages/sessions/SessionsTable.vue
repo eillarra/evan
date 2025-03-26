@@ -15,7 +15,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import DataTable from '@/components/tables/DataTable.vue';
 import SessionForm from './SessionForm.vue';

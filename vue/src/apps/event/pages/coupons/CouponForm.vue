@@ -1,5 +1,5 @@
 <template>
-  <dialog-form :icon="props.obj ? iconCoupon : iconAdd" :title="$t('models.coupon')" size="xs">
+  <dialog-form :icon="props.obj ? iconCoupon : iconAdd" :title="$t('models.coupon')" size="sm">
     <template #page>
       <div class="q-py-md q-px-lg">
         <div class="row q-col-gutter-y-sm q-col-gutter-x-md">
@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import DialogForm from '@/components/forms/DialogForm.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';

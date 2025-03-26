@@ -56,7 +56,7 @@
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import DateSelect from '@/components/forms/DateSelect.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';

@@ -33,7 +33,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import DialogForm from '@/components/forms/DialogForm.vue';
 

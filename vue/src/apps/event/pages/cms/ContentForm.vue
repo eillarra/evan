@@ -32,12 +32,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-import { api } from '@/axios';
-import { notify } from '@/utils/notify';
-
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
@@ -45,13 +41,10 @@ import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 
 import { iconContent } from '@/icons';
 
-const emit = defineEmits(['create:obj']);
-
 const props = defineProps<{
   obj: Content;
 }>();
 
-const { t } = useI18n();
 const store = useStore();
 
 const formData = ref({
@@ -61,15 +54,10 @@ const formData = ref({
 function update() {
   if (!formData.value.content) return;
 
-  const data = {
-    key: props.obj.key,
+  const data: Partial<Content> = {
     value: formData.value.content,
   };
 
-  api.put(props.obj.self, data).then((res) => {
-    //store.updateObj('content', res.data);
-    notify.success(t('form.contact.create.success'));
-    emit('create:obj');
-  });
+  store.updateContent(props.obj, data);
 }
 </script>

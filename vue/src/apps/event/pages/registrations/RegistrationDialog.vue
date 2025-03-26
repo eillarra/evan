@@ -57,7 +57,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/axios';
 import { notify } from '@/utils/notify';
 
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import FullDialog from '@/components/FullDialog.vue';
 

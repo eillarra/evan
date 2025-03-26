@@ -22,7 +22,7 @@
     no-caps
     :icon="icon"
     :label="label"
-    text-color="dark"
+    :text-color="color == 'primary' ? 'white' : 'dark'"
     class="ugent__btn"
     :class="`bg-${color}`"
   />

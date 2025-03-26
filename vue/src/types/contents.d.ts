@@ -9,3 +9,8 @@ interface Content extends ApiObject {
   value: string | MarkdownText;
   config: ContentConfig;
 }
+
+interface ContentData {
+  key: string;
+  value: string | MarkdownText;
+}

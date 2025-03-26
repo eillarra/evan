@@ -3,6 +3,7 @@
 from .abstracts import *
 from .contents import *
 from .coupons import *
+from .emails import *
 from .events import *
 from .files import *
 from .registrations import *

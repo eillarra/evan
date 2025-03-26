@@ -4,7 +4,6 @@
     :rows="rows"
     :query-columns="queryColumns"
     :hidden-columns="hiddenColumns"
-    :form-component="RegistrationDialog"
     sort-by="-date"
   />
 </template>
@@ -16,7 +15,7 @@ import { useI18n } from 'vue-i18n';
 import { formatDate } from '@/utils/dates';
 
 import DataTable from '@/components/tables/DataTable.vue';
-import RegistrationDialog from './RegistrationDialog.vue';
+// import RegistrationDialog from './RegistrationDialog.vue';
 
 const { t } = useI18n();
 

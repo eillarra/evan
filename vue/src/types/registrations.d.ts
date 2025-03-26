@@ -10,7 +10,7 @@ interface Coupon extends ApiObject, CouponData {
 
 interface AccompanyingPerson {
   name: string;
-  dietary: string;
+  dietary: DietaryOption;
   selected_social_events: number[];
 }
 
@@ -47,4 +47,9 @@ interface Registration extends RegistrationData {
 
   readonly paid: number;
   readonly paid_via_invoice: number;
+  readonly is_paid: boolean;
+
+  readonly tags: Tags;
+
+  _tags_dict?: TagsDict;
 }

@@ -32,7 +32,7 @@ const routes: RouteRecordRaw[] = [
         path: 'emails/',
         name: 'emails',
         strict: true,
-        component: () => import('./pages/EmailsPage.vue'),
+        component: () => import('./pages/emails/EmailsPage.vue'),
       },
       {
         path: 'event/',

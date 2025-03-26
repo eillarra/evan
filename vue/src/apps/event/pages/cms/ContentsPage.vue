@@ -11,7 +11,7 @@
 import { onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import { useStore } from '../../store.js';
+import { useStore } from '../../store';
 
 import ContentsTable from './ContentsTable.vue';
 

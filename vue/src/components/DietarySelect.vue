@@ -13,6 +13,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 
+interface DietarySelectOption {
+  value: DietaryOption;
+  label: string;
+}
+
 const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps<{
@@ -21,7 +26,7 @@ const props = defineProps<{
 
 const mutable = ref<string>(props.modelValue);
 
-const options = computed<QuasarSelectOption[]>(() => {
+const options = computed<DietarySelectOption[]>(() => {
   return [
     {
       value: 'none',

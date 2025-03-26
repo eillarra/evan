@@ -17,6 +17,7 @@ import { storage } from './utils/storage';
 import EvanSelect from './components/EvanSelect.vue';
 import EvanFilterSelect from './components/EvanFilterSelect.vue';
 import EvanSectionTitle from './components/EvanSectionTitle.vue';
+import UgentBtn from './components/UgentBtn.vue';
 
 const bootApp = (routes: RouteRecordRaw[]) => {
   createInertiaApp({
@@ -106,6 +107,7 @@ const bootApp = (routes: RouteRecordRaw[]) => {
       app.component('EvanSelect', EvanSelect);
       app.component('EvanFilterSelect', EvanFilterSelect);
       app.component('EvanSectionTitle', EvanSectionTitle);
+      app.component('UgentBtn', UgentBtn);
 
       // mount
       app.mount(el);

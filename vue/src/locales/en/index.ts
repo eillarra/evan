@@ -122,6 +122,7 @@ export default {
     committee_confirm_delete: 'Are you sure you want to delete this committee?',
     committee_deleted: 'Committee deleted',
     committee_updated: 'Committee updated',
+    content_updated: 'Content updated',
     copied_to_clipboard: 'Copied to the clipboard',
     coupon_created: 'Coupon created',
     coupon_confirm_delete: 'Are you sure you want to delete this coupon?',

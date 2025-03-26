@@ -1,12 +1,14 @@
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { defineStore } from 'pinia';
 
 import { api } from '@/axios.ts';
 import { confirm } from '@/utils/dialog';
 import { notify } from '@/utils/notify';
+import { tags_to_dict } from '@/utils/tags.ts';
 
 export const useStore = defineStore('evanEvent', () => {
+  const emails = shallowRef<Email[]>([]);
   const evanEvent = ref<ManagedEvanEvent | null>(null);
   const contents = ref<Content[]>([]);
   const coupons = ref<Coupon[]>([]);
@@ -22,7 +24,34 @@ export const useStore = defineStore('evanEvent', () => {
 
   async function init() {
     await fetchRegistrations();
+    await fetchEmails();
   }
+
+  async function fetchEmails() {
+    emails.value = [];
+
+    if (!evanEvent.value) {
+      return;
+    }
+
+    await api.get(evanEvent.value.self + 'emails/').then((res) => {
+      emails.value = res.data.map((obj: Email) => ({
+        ...obj,
+        // -----
+        _tags_dict: tags_to_dict(obj.tags),
+      }));
+    });
+  }
+
+  // Event ------
+
+  async function patchEvent(data: Partial<ManagedEvanEvent>): Promise<void> {
+    if (!evanEvent.value) return;
+
+    return api.patch(evanEvent.value.self, data);
+  }
+
+  // Contents ------
 
   async function fetchContents() {
     contents.value = [];
@@ -36,12 +65,12 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
-  // Event ------
-
-  async function patchEvent(data: Partial<ManagedEvanEvent>): Promise<void> {
-    if (!evanEvent.value) return;
-
-    return api.patch(evanEvent.value.self, data);
+  async function updateContent(content: Content, data: Partial<Content>) {
+    return api.patch(content.self, data).then((res) => {
+      const index = contents.value.findIndex((c) => c.id === content.id);
+      contents.value[index] = res.data;
+      notify.success(t('messages.content_updated'));
+    });
   }
 
   // Coupons ------
@@ -264,6 +293,7 @@ export const useStore = defineStore('evanEvent', () => {
     fetchRegistrations,
     fetchSessions,
     patchEvent,
+    updateContent,
     updateCoupon,
     updateSession,
     updateTopic,
@@ -276,6 +306,7 @@ export const useStore = defineStore('evanEvent', () => {
     contents,
     coupons,
     couponIdsUsed,
+    emails,
     registrations,
     sessions,
     topicOptions,
