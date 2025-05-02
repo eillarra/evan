@@ -35,13 +35,34 @@ def calculate_social_event_fees(registration: "Registration") -> int:
     included_social_events = registration.event.fees_dict[registration.fee_type].config.get(
         "included_social_events", []
     )
-    social_events = registration.event.sessions.filter(is_social_event=True)
 
-    for session in social_events:
-        if session.id not in included_social_events:
-            extra_fees += session.extra_attendees_fee
+    try:
+        social_events = registration.sessions.filter(is_social_event=True)
+
+        for session in social_events:
+            if session.id not in included_social_events:
+                extra_fees += session.extra_attendees_fee
+    except ValueError:
+        pass
 
     return extra_fees
+
+
+def calculate_registration_base_fee(registration: "Registration") -> int:
+    """
+    Given a registration, calculate the base fee.
+    The base fee is the sum of the early fee and the extra fees for accompanying persons.
+    """
+    fee = registration.event.fees_dict.get(registration.fee_type, None)
+
+    if not fee:
+        raise ValueError(f"Fee type {registration.fee_type} not found for event {registration.event}")
+
+    is_early = registration.is_early if registration.pk else registration.event.is_early
+    base_fee = (fee.early_value or fee.value) if is_early else fee.value
+    base_fee += calculate_social_event_fees(registration)
+
+    return base_fee
 
 
 class Registration(RemarksMixin, models.Model):
@@ -90,14 +111,7 @@ class Registration(RemarksMixin, models.Model):
         if not self.pk:
             self.is_accepted = True if self.event.accept_by_default else None
 
-        is_early = self.is_early if self.pk else self.event.is_early
-        fee = self.event.fees_dict.get(self.fee_type, None)
-
-        if not fee:
-            raise ValueError(f"Fee type {self.fee_type} not found for event {self.event}")
-
-        self.base_fee = (fee.early_value or fee.value) if is_early else fee.value
-        self.base_fee += calculate_social_event_fees(self)
+        self.base_fee = calculate_registration_base_fee(self)
 
         try:
             self.extra_fees = calculate_accompanying_fees(self)
@@ -189,6 +203,10 @@ def registration_sessions_changed(sender, instance, **kwargs) -> None:
 
         if new_logs:
             RegistrationLog.objects.bulk_create(new_logs)
+
+    instance.base_fee = calculate_registration_base_fee(instance)
+    instance.saldo = -instance.remaining_fee
+    instance.save()
 
 
 class RegistrationLog(NonEditableMixin, models.Model):
