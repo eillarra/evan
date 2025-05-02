@@ -9,18 +9,39 @@ from django.urls import reverse
 
 from .base import NonEditableMixin
 from .rel.remarks import RemarksMixin
-from .sessions import Session
 
 
-def calculate_accompanying_fees(accompanying_data: dict) -> int:
-    session_ids = accompanying_data.keys()
-    fees = 0
+def calculate_accompanying_fees(registration: "Registration") -> int:
+    """
+    Given a registration, calculate the fees for accompanying persons.
+    Accompanying persons always pay the `session.extra_attendees_fee`.
+    """
+    extra_fees = 0
+    social_events = registration.event.sessions.filter(is_social_event=True)
 
-    if session_ids:
-        for session in Session.objects.filter(pk__in=session_ids):
-            fees += session.extra_attendees_fee * len(accompanying_data[str(session.id)])
+    for person in registration.extra_data.get("accompanying_persons", []):
+        session_ids = person.get("selected_social_events", [])
+        extra_fees += sum(session.extra_attendees_fee for session in social_events if session.id in session_ids)
 
-    return fees
+    return extra_fees
+
+
+def calculate_social_event_fees(registration: "Registration") -> int:
+    """
+    Given a registration, check if selected fee includes social events.
+    If not, sum the `session.extra_attendees_fee` for each selected social event.
+    """
+    extra_fees = 0
+    included_social_events = registration.event.fees_dict[registration.fee_type].config.get(
+        "included_social_events", []
+    )
+    social_events = registration.event.sessions.filter(is_social_event=True)
+
+    for session in social_events:
+        if session.id not in included_social_events:
+            extra_fees += session.extra_attendees_fee
+
+    return extra_fees
 
 
 class Registration(RemarksMixin, models.Model):
@@ -70,11 +91,16 @@ class Registration(RemarksMixin, models.Model):
             self.is_accepted = True if self.event.accept_by_default else None
 
         is_early = self.is_early if self.pk else self.event.is_early
-        key = (self.fee_type, is_early)
-        self.base_fee = self.event.fees_dict.get(key, 0)
+        fee = self.event.fees_dict.get(self.fee_type, None)
+
+        if not fee:
+            raise ValueError(f"Fee type {self.fee_type} not found for event {self.event}")
+
+        self.base_fee = (fee.early_value or fee.value) if is_early else fee.value
+        self.base_fee += calculate_social_event_fees(self)
 
         try:
-            self.extra_fees = calculate_accompanying_fees(self.extra_data["accompanying_persons"])
+            self.extra_fees = calculate_accompanying_fees(self)
         except KeyError:
             pass
 
@@ -135,18 +161,21 @@ class Registration(RemarksMixin, models.Model):
     def total_fee(self) -> int:
         return self.base_fee + self.extra_fees + self.manual_extra_fees
 
+    @property
+    def url(self) -> str:
+        return self.get_absolute_url()
+
 
 @receiver(post_save, sender=Registration)
 def registration_post_save(sender, instance, created, *args, **kwargs):
-    pass
-    # from evan.site.emails.registrations import RegistrationCreatedEmail
-
     if created:
+        from evan.services.mailer.registrations import schedule_registration_email
+
+        schedule_registration_email(instance, code="registration.created")
+
         event = instance.event
         event.registrations_count = event.registrations.count()
         event.save()
-
-        # RegistrationCreatedEmail(queryset=[instance]).send()
 
 
 @receiver(m2m_changed, sender=Registration.sessions.through)

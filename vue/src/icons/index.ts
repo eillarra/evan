@@ -5,6 +5,7 @@ import {
   symSharpArrowDropDown,
   symSharpArrowForwardIos,
   symSharpArrowUpward,
+  symSharpAssignmentTurnedIn,
   symSharpAttachFile,
   symSharpBackspace,
   symSharpChat,
@@ -13,6 +14,7 @@ import {
   symSharpClose,
   symSharpContacts,
   symSharpContentCopy,
+  symSharpCreditCard,
   symSharpDateRange,
   symSharpDialogs,
   symSharpDownload,
@@ -76,7 +78,9 @@ export const iconEmail = symSharpMail;
 export const iconEmails = symSharpStackedEmail;
 export const iconEvent = symSharpWidgets;
 export const iconImportantDates = symSharpEventAvailable;
+export const iconPayment = symSharpCreditCard;
 export const iconPlanning = symSharpViewWeek;
+export const iconRegistration = symSharpAssignmentTurnedIn;
 export const iconRegistrations = symSharpFolderShared;
 export const iconSession = symSharpEvent;
 export const iconStats = symSharpTableChartView;

@@ -1,5 +1,3 @@
-import { first } from 'lodash-es';
-
 export default {
   ugent: 'University of Ghent',
   ea: 'Faculty of Engineering and Architecture',
@@ -8,8 +6,10 @@ export default {
   loading: 'Loading...',
   yes: 'Yes',
   no: 'No',
+  about: 'About',
   overview: 'Overview',
   configuration: 'Configuration',
+  payment: 'Payment',
   progress: 'Progress',
   settings: 'Settings',
   stats: 'Stats',
@@ -20,6 +20,7 @@ export default {
     history: 'History',
     login: 'Sign in',
     logout: 'Sign out',
+    profile: 'My profile',
   },
   home: {
     presentation:

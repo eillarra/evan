@@ -22,6 +22,7 @@ gunicorn = "*"
 hiredis = "*"
 huey = "*"
 inertia-django = "*"
+markdown = "*"
 mysqlclient = "*"
 nh3 = "*"
 polars = "*"
@@ -32,6 +33,10 @@ tld = "*"
 weasyprint = "*"
 whitenoise = "*"
 xlsxwriter = "*"
+
+commonmark = "*"
+reportlab = "*"
+svglib = "*"
 
 [tool.poetry.group.dev.dependencies]
 arrow = "*"

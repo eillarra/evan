@@ -1,12 +1,15 @@
 from django.db import models
 
-from .base import NonEditableMixin
+from .rel.tags import TagsMixin
 
 
 class EmailTemplate(models.Model):
     """Email template for sending emails."""
 
-    code = models.CharField(max_length=64, unique=True)
+    event = models.ForeignKey(
+        "evan.Event", related_name="email_templates", on_delete=models.PROTECT, null=True, blank=True
+    )
+    code = models.CharField(max_length=64)
     from_email = models.CharField(
         "from",
         help_text="It can be a `Full Name &lt;email@domain.com&gt;` string or just an email address.",
@@ -22,6 +25,7 @@ class EmailTemplate(models.Model):
 
     class Meta:  # noqa: D106
         db_table = "evan_email_template"
+        unique_together = ["event", "code"]
 
     def __str__(self) -> str:
         return self.code
@@ -37,9 +41,10 @@ class EmailTemplate(models.Model):
         return [self.reply_to_email] if self.reply_to_email else ["evan@ugent.be"]
 
 
-class EmailLog(NonEditableMixin, models.Model):
+class EmailLog(TagsMixin, models.Model):
     """Log of sent emails."""
 
+    event = models.ForeignKey("evan.Event", related_name="email_logs", on_delete=models.PROTECT, null=True, blank=True)
     from_email = models.CharField(max_length=255)
     to = models.JSONField(default=list)
     bcc = models.JSONField(default=list)

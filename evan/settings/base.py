@@ -99,6 +99,7 @@ DATABASES = {
         "TIME_ZONE": "Europe/Brussels",
         "OPTIONS": {
             "ssl_mode": "REQUIRED",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     },
     "legacy": {

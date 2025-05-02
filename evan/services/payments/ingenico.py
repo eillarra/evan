@@ -1,5 +1,4 @@
 import os
-import time
 from hashlib import sha512
 
 from django.conf import settings
@@ -52,10 +51,17 @@ class Ingenico:
 
         # Required parameters
         absolute_uri = get_absolute_uri()
+
+        # Generate a short hash from the registration ID and amount
+        # This ensures the same parameters always produce the same ORDERID
+        base_string = f"{parameters['ORDERID']}-{parameters['AMOUNT']}"
+        short_hash = sha512(base_string.encode()).hexdigest()[:8]
+        order_id = f"{parameters['ORDERID']}-{short_hash}"
+
         ingenico_parameters.update(
             {
                 "PSPID": self.pspid,
-                "ORDERID": str(parameters["ORDERID"]) + "/" + str(int(time.time())),
+                "ORDERID": order_id,
                 "AMOUNT": parameters["AMOUNT"] * 100,
                 "COM": "ID" + str(parameters["ORDERID"]),
                 "ACCEPTURL": absolute_uri + parameters["RESULTURL"],

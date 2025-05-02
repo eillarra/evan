@@ -1,6 +1,8 @@
 from datetime import UTC, timedelta
 
 import factory
+from factory.declarations import LazyAttribute, Sequence
+from factory.faker import Faker
 
 
 class EventFactory(factory.django.DjangoModelFactory):
@@ -9,9 +11,9 @@ class EventFactory(factory.django.DjangoModelFactory):
     class Meta:  # noqa: D106
         model = "evan.Event"
 
-    code = factory.Sequence(lambda n: f"event-{n}")
-    name = factory.Sequence(lambda n: f"Event {n}")
-    start_date = factory.Faker("date_time_this_month", tzinfo=UTC)
-    end_date = factory.LazyAttribute(lambda o: o.start_date + timedelta(days=3))
-    registration_start_date = factory.LazyAttribute(lambda o: o.start_date - timedelta(days=30))
-    registration_deadline = factory.LazyAttribute(lambda o: o.start_date - timedelta(days=1))
+    code = Sequence(lambda n: f"event-{n}")
+    name = Sequence(lambda n: f"Event {n}")
+    start_date = Faker("date_time_this_month", tzinfo=UTC)
+    end_date = LazyAttribute(lambda o: o.start_date + timedelta(days=3))
+    registration_start_date = LazyAttribute(lambda o: o.start_date - timedelta(days=30))
+    registration_deadline = LazyAttribute(lambda o: o.start_date - timedelta(days=1))

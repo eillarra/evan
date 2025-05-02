@@ -53,7 +53,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
             user = User.objects.select_related("profile").get(id=self.request.data["user_id"])
             sender = self.request.user
 
-            if not user.profile.can_be_contacted() or not event.registrations.filter(user_id=user.id).exists():
+            if not user.can_be_contacted() or not event.registrations.filter(user_id=user.id).exists():
                 return Response({"message": "User cannot be contacted."}, status=HTTPStatus.FORBIDDEN)
 
             email = (

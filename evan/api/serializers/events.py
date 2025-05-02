@@ -8,7 +8,7 @@ from .sessions import SessionReadOnlySerializer, SessionSerializer
 from .sponsors import SponsorReadOnlySerializer, SponsorSerializer
 from .topics import TopicReadOnlySerializer, TopicSerializer
 from .tracks import TrackReadOnlySerializer, TrackSerializer
-from .venues import VenueSerializer, VenueReadOnlySerializer
+from .venues import VenueReadOnlySerializer, VenueSerializer
 
 
 class FeeSerializer(serializers.ModelSerializer):

@@ -1,5 +1,7 @@
 import factory
 from django.utils import timezone
+from factory.declarations import LazyAttribute, LazyFunction
+from factory.faker import Faker
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -8,12 +10,12 @@ class UserFactory(factory.django.DjangoModelFactory):
     class Meta:  # noqa: D106
         model = "evan.User"
 
-    first_name = factory.Faker("first_name")
-    last_name = factory.Faker("last_name")
-    email = factory.Faker("email")
-    last_login = factory.LazyFunction(timezone.now)
+    first_name = Faker("first_name")
+    last_name = Faker("last_name")
+    email = Faker("email")
+    last_login = LazyFunction(timezone.now)
 
-    username = factory.LazyAttribute(lambda self: self.email.split("@")[0])
+    username = LazyAttribute(lambda self: self.email.split("@")[0])
     password = factory.django.Password("evan")
 
 

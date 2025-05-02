@@ -1,9 +1,13 @@
+interface FeeConfig {
+  included_social_events: number[];
+}
+
 interface Fee {
   type: string;
+  early_value: number | null;
   value: number;
   notes: string;
-  is_early: boolean;
-  social_events_included: boolean;
+  config: FeeConfig;
 }
 
 interface Topic extends ApiObject {
@@ -32,7 +36,7 @@ interface EvanEvent extends ApiObject {
   hashtag: string;
 
   registration_start_date: string;
-  registration_early_dealine: string | null;
+  registration_early_deadline: string | null;
   registration_deadline: string;
   registration_url: Url;
 
@@ -43,6 +47,7 @@ interface EvanEvent extends ApiObject {
   is_open_for_abstract_submission: boolean;
 
   fees: Fee[];
+  sessions: Session[];
   topics: Topic[];
   tracks: Track[];
 

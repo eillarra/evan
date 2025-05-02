@@ -4,13 +4,7 @@ from django.urls import path, reverse
 from django.utils.html import format_html
 
 from evan.models import InvitationLetter, Registration
-from evan.site.emails.registrations import (
-    DelegatedPaymentEmail,
-    PaymentReminderEmail,
-    RegistrationProfileReminderEmail,
-    RegistrationReminderEmail,
-    VisaReminderEmail,
-)
+from evan.services.mailer.registrations import schedule_registration_email
 
 
 class RegistrationIsPaidFilter(admin.SimpleListFilter):
@@ -67,7 +61,15 @@ class RegistrationAdmin(admin.ModelAdmin):
         ("event", admin.RelatedOnlyFieldListFilter),
         "is_accepted",
     )
-    search_fields = ("id", "uuid", "user__email", "user__username", "user__first_name", "user__last_name")
+    search_fields = (
+        "id",
+        "uuid",
+        "user__email",
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__affiliation",
+    )
     # form
     raw_id_fields = ("event", "user", "coupon")
     readonly_fields = ("event", "base_fee", "extra_fees", "paid", "saldo")
@@ -111,14 +113,14 @@ class RegistrationAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).select_related("user", "coupon").prefetch_related("event")
-        if request.user.is_superuser or request.user.groups.filter(name="Management").exists():
+        if request.user.is_superuser or request.user.groups.filter(name="Management").exists():  # type: ignore
             return qs
-        if request.user.groups.filter(name="Administration").exists():
+        if request.user.groups.filter(name="Administration").exists():  # type: ignore
             return qs.filter(event__acl__user_id__exact=request.user.id)
         return qs.none()
 
     def get_readonly_fields(self, request, obj=None):
-        if request.user.is_superuser:
+        if request.user.is_superuser:  # type: ignore
             return ("base_fee", "extra_fees", "paid", "saldo")
         return self.readonly_fields
 
@@ -141,6 +143,9 @@ class RegistrationAdmin(admin.ModelAdmin):
         from evan.site.views.file_makers.pdf import InvitationLetterPdfMaker
 
         obj = self.get_object(request, unquote(object_id))
+        if obj is None:
+            self.message_user(request, "The requested registration does not exist.", level="error")
+            return None
         maker = InvitationLetterPdfMaker(registration=obj, filename=f"letter--{obj.uuid}.pdf", as_attachment=False)
         return maker.response
 
@@ -158,28 +163,35 @@ class RegistrationAdmin(admin.ModelAdmin):
 
     @admin.action(description="[Mailer] Send delegated payment link to users")
     def send_delegated_payment(self, request, queryset):
-        DelegatedPaymentEmail(queryset=queryset).send()
+        queryset = queryset.filter(is_accepted=True, saldo__lt=0, invoice_requested=False)
+        for registration in queryset:
+            schedule_registration_email(registration, code="registration.payment_delegated")
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     @admin.action(description="[Mailer] Send payment reminder to users")
     def send_payment_reminder(self, request, queryset):
-        queryset = queryset.filter(is_accepted=True, saldo__lt=0, invoice_requested=False)  # TODO: CHECK
-        PaymentReminderEmail(queryset=queryset).send()
+        queryset = queryset.filter(is_accepted=True, saldo__lt=0)
+        for registration in queryset:
+            schedule_registration_email(registration, code="registration.payment_reminder")
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     @admin.action(description="[Mailer] Send profile reminder to users")
     def send_profile_reminder(self, request, queryset):
-        RegistrationProfileReminderEmail(queryset=queryset).send()
+        for registration in queryset:
+            schedule_registration_email(registration, code="registration.profile_reminder")
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
-    @admin.action(description="[Mailer] Send general reminder to users")
+    @admin.action(description="[Mailer] Send initial registration email to users")
     def send_reminder(self, request, queryset):
-        RegistrationReminderEmail(queryset=queryset).send()
+        for registration in queryset:
+            schedule_registration_email(registration, code="registration.created")
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     @admin.action(description="[Mailer] Send visa reminder to users")
     def send_visa_reminder(self, request, queryset):
-        VisaReminderEmail(queryset=queryset).send()
+        queryset = queryset.filter(is_accepted=True, visa_requested=True, visa_sent=False)
+        for registration in queryset:
+            schedule_registration_email(registration, code="registration.visa_reminder")
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
 
     # custom fields

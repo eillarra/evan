@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
@@ -15,10 +16,15 @@ from .documents.events import (
     get_validated_event_extra_data,
     get_validated_event_registration_configuration,
 )
+from .emails import EmailTemplate
 from .rel.files import FilesMixin
 from .rel.links import LinksMixin
 from .rel.permissions import Permission, PermissionsMixin
 from .users import User
+
+
+if TYPE_CHECKING:
+    from evan.models.fees import Fee
 
 
 def validate_event_dates(event):
@@ -118,9 +124,48 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def get_api_url(self) -> str:
         return reverse("v1:event-detail", args=[self.code])
 
+    def get_registration_url(self) -> str:  # noqa: DJ012
+        return reverse("registration:app", args=[self.code])
+
+    def get_email_template(self, *, code: str) -> "EmailTemplate":
+        """Get an email template for an event.
+
+        :param code: The code of the email template to get.
+        :returns: The email template for the event and code or the default one.
+        """
+        try:
+            return EmailTemplate.objects.get(code=code, event=self)
+        except EmailTemplate.DoesNotExist:
+            return EmailTemplate.objects.get(code=code, event=None)
+
+    @property
+    def allows_invoices(self) -> bool:
+        return self.ingenico.get("allow_invoices", False)
+
+    @property
+    def allows_payments(self) -> bool:
+        if "ingenico_salt" not in self.ingenico:
+            return False
+        if self.ingenico.get("activation_date", None):
+            activation_date = self.ingenico.get("activation_date")
+            if activation_date:
+                activation_date = datetime.strptime(activation_date, "%Y-%m-%d").date()
+            return activation_date is not None and activation_date <= timezone.now().date()
+        return True
+
     @property
     def configuration(self) -> dict:
         return get_validated_event_configuration(self.config or {})
+
+    @property
+    def contact_email(self) -> str:
+        return self.email or "evan@ugent.be"
+
+    @property
+    def ingenico(self) -> dict:
+        if self.configuration["payments"] and self.configuration["payments"]["type"] == "ugent":
+            return self.configuration["payments"]
+        return {}
 
     @property
     def registration_configuration(self) -> dict:
@@ -147,17 +192,6 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
 
     def get_abstract_url(self) -> str:
         return "".join(["//", get_current_site(None).domain, reverse("abstract:redirect", args=[self.code])])
-
-    def get_registration_url(self) -> str:
-        return "".join(["//", get_current_site(None).domain, reverse("registration:redirect", args=[self.code])])
-
-    @property
-    def allows_payments(self) -> bool:
-        if self.ingenico_salt is None:
-            return False
-        if self.payments_activation:
-            return self.payments_activation <= timezone.now()
-        return True
 
     @property
     def has_social_event_bundle(self) -> bool:
@@ -201,9 +235,9 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
             return User.objects.none()
 
     @cached_property
-    def fees_dict(self):
+    def fees_dict(self) -> dict[int, "Fee"]:
         if not hasattr(self, "_fees"):
-            self._fees = {(f[0], f[1]): f[2] for f in self.fees.values_list("type", "is_early", "value")}
+            self._fees = {f.type: f for f in self.fees.all()}  # type: ignore
         return self._fees
 
     @classmethod

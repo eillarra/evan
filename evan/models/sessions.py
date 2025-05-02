@@ -40,7 +40,7 @@ class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     room = models.ForeignKey("evan.Room", related_name="sessions", on_delete=models.SET_NULL, null=True, blank=True)
 
     uuid = models.UUIDField(default=uuid4, editable=False, unique=True)
-    extra_data = models.JSONField(default=dict)
+    extra_data = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -6,6 +6,8 @@ interface UserExtraData {
 }
 
 interface UserData {
+  first_name: string;
+  last_name: string;
   affiliation: string;
   country: string;
   extra_data: UserExtraData;

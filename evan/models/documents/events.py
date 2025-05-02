@@ -31,6 +31,7 @@ class EventRegistrationConfig(BaseModel):
     """Registration configuration for an event."""
 
     model_config = ConfigDict(extra="ignore", validate_default=True)
+
     fee_selection: FeeSelectionConfig = None
 
 

@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict
+import json
+
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from .forms import FieldOption
 
@@ -32,3 +34,22 @@ class BaseFeeSelectionConfig(BaseModel):
 
 
 FeeSelectionConfig = BaseFeeSelectionConfig | None
+
+
+class FeeConfig(BaseModel):
+    """Fee selection configuration."""
+
+    model_config = ConfigDict(extra="ignore", validate_default=True)
+
+    included_social_events: list[int] = []
+
+
+def get_validated_fee_configuration(config) -> dict:
+    """Validate configuration for a fee.
+
+    :returns: The validated dictionary with default values if not provided.
+    :raises ValueError: If the configuration is invalid."""
+    try:
+        return json.loads(FeeConfig(**config).model_dump_json())
+    except (TypeError, ValidationError) as exc:
+        raise ValueError(exc) from exc

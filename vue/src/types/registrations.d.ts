@@ -8,14 +8,21 @@ interface Coupon extends ApiObject, CouponData {
   readonly created_at: string;
 }
 
+interface AccompanyingPerson {
+  name: string;
+  dietary: string;
+  selected_social_events: number[];
+}
+
 interface RegistrationExtraData {
-  accompanying_persons?: string[];
+  accompanying_persons?: AccompanyingPerson[];
   [key: string]: unknown;
 }
 
 interface RegistrationData {
   fee_type: string;
   extra_data: RegistrationExtraData;
+  sessions: number[];
 
   visa_requested?: boolean;
   invoice_requested?: boolean;

@@ -28,6 +28,8 @@ interface SessionData {
   end_at?: string | null | undefined;
   track?: number | null;
   topics?: number[];
+  is_social_event: boolean;
+  extra_attendees_fee: number;
   extra_data?: SessionExtraData;
 }
 

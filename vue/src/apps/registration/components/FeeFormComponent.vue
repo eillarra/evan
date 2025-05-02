@@ -33,12 +33,12 @@ const emit = defineEmits(['update:fee', 'update:extraData']);
 
 const props = defineProps<{
   feeConfig: FeeSelectionConfig;
+  validFees: string[];
 }>();
 
 const fee = defineModel<string>('fee');
 const extraData = defineModel<{ [key: string]: unknown }>('extraData', { type: Object, default: () => ({}) });
 const formData = ref<(string | null)[]>([]);
-const selectedFee = ref<string>('');
 
 const visibleCriteria = computed(() => {
   if (!props.feeConfig || !props.feeConfig.criteria) {
@@ -80,15 +80,22 @@ const showExtraDataFields = (criteria: SelectionCriteria) => {
   });
 };
 
-const resetFormData = () => {
-  for (let i = 0; i < props.feeConfig.criteria.length; i++) {
-    const criteria = props.feeConfig.criteria[i];
+const checkFormData = () => {
+  for (let i = 0; i < visibleCriteria.value.length; i++) {
+    const criteria = visibleCriteria.value[i];
+
     if (criteria.depends_on) {
       const [dependencyField, validValues] = criteria.depends_on;
-      const idx = props.feeConfig.criteria.findIndex((c) => c.code === dependencyField);
+      const idx = visibleCriteria.value.findIndex((c) => c.code === dependencyField);
+      const optionValues = criteria.options.map((option) => option.value);
 
-      if (!validValues.includes(formData.value[idx] as string)) {
+      if (!validValues.includes(formData.value[idx] as string) || !optionValues.includes(formData.value[i] as string)) {
         formData.value[i] = null;
+        // if there is a default option, choose that one
+        const defaultOption = criteria.options.find((option) => option.is_default);
+        if (defaultOption) {
+          formData.value[i] = defaultOption.value;
+        }
       }
     }
   }
@@ -96,7 +103,7 @@ const resetFormData = () => {
 
 onMounted(() => {
   formData.value = (fee.value ?? '').split('__');
-  resetFormData();
+  checkFormData();
 
   if (extraData.value) {
     extraData.value = { ...extraData.value };
@@ -107,7 +114,7 @@ watch(
   () => formData.value,
   () => {
     emit('update:fee', formData.value.filter((value) => value !== null).join('__'));
-    resetFormData();
+    checkFormData();
 
     // Update extraData based on visible criteria
     const newExtraData: { [key: string]: unknown } = { ...extraData.value };
@@ -132,9 +139,8 @@ watch(
 watch(
   () => fee.value,
   (val) => {
-    selectedFee.value = val ?? '';
     formData.value = (val ?? '').split('__');
-    resetFormData();
+    checkFormData();
   },
 );
 </script>

@@ -38,7 +38,7 @@ class AbstractAdmin(admin.ModelAdmin):
     inlines = (FilesInline,)
 
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related("user__profile").prefetch_related("event")
+        qs = super().get_queryset(request).select_related("user").prefetch_related("event")
         if request.user.is_superuser or request.user.groups.filter(name="Management").exists():
             return qs
         if request.user.groups.filter(name="Abstract management").exists():
@@ -46,8 +46,6 @@ class AbstractAdmin(admin.ModelAdmin):
         return qs.none()
 
     def name(self, obj):
-        affiliation = obj.user.profile.affiliation if obj.user.profile.affiliation else "-"
+        affiliation = obj.user.affiliation if obj.user.affiliation else "-"
         url = reverse("admin:auth_user_changelist")
-        return format_html(
-            f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.profile.name}</a>, {affiliation}'
-        )
+        return format_html(f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.name}</a>, {affiliation}')

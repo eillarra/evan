@@ -23,6 +23,7 @@
         v-model:fee="mutableRegistration.fee_type"
         v-model:extraData="mutableRegistration.extra_data"
         :fee-config="evanEvent?.registration_configuration?.fee_selection"
+        :valid-fees="validFees"
       />
       <q-select
         v-else
@@ -36,9 +37,38 @@
         emit-value
       />
       <p v-if="selectedFee" class="bg-blue-1 text-black q-my-md q-pa-md">
-        <q-badge class="float-right text-body1 text-white text-weight-bold">€ {{ selectedFee.value }}</q-badge>
+        <q-badge class="float-right text-body1 text-white text-weight-bold"
+          >€ {{ isEarly ? selectedFee.early_value || selectedFee.value : selectedFee.value }}</q-badge
+        >
         <small>{{ selectedFee.notes }}</small>
       </p>
+
+      <template v-if="socialEvents.length > 0">
+        <evan-section-title>Social events</evan-section-title>
+        <p>Choose the social events you would like to attend:</p>
+        <q-list dense>
+          <q-item v-for="session in socialEvents" :key="session.id" tag="label">
+            <q-item-section avatar>
+              <q-checkbox v-model="selectedSocialEvents" :val="session.id" keep-color />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ session.title }}</q-item-label>
+              <q-item-label caption>{{ formatDate(session.start_at || '', 'dddd, MMMM D, YYYY') }}</q-item-label>
+            </q-item-section>
+            <q-item-section v-show="selectedFee" side>
+              <q-badge v-if="includedSocialEvents.includes(session.id)" outline color="primary" label="Included" />
+              <q-badge v-else color="primary" :label="`+ € ${session.extra_attendees_fee}`" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+        <p v-if="socialEventFee" class="bg-blue-1 text-black q-my-md q-pa-md">
+          <q-badge class="float-right text-body1 text-white text-weight-bold">€ {{ socialEventFee }}</q-badge>
+          <small>Additional fee for selected social events</small>
+        </p>
+
+        <evan-section-title>Accompanying persons</evan-section-title>
+        <accompanying-persons v-model="accompaningPersons" :social-events="socialEvents" />
+      </template>
 
       <template v-if="user">
         <evan-section-title>Special needs</evan-section-title>
@@ -92,12 +122,14 @@ import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import { useUserStore } from '@/stores/user';
+import { formatDate } from '@/utils/dates';
 import { useStore } from '../store';
 
 import CountrySelect from '@/components/CountrySelect.vue';
 import DietarySelect from '@/components/DietarySelect.vue';
 import GenderSelect from '@/components/GenderSelect.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
+import AccompanyingPersons from '../components/AccompanyingPersons.vue';
 import FeeFormComponent from '../components/FeeFormComponent.vue';
 
 const userStore = useUserStore();
@@ -106,9 +138,30 @@ const store = useStore();
 const { user } = storeToRefs(userStore);
 const { evanEvent, registration } = storeToRefs(store);
 
+const isEarly = computed<boolean>(() => {
+  const deadline = registration.value ? new Date(registration.value.created_at) : new Date();
+  return new Date(evanEvent.value?.registration_early_deadline || '') > deadline;
+});
+const socialEvents = computed<Session[]>(
+  () => evanEvent.value?.sessions.filter((s: Session) => s.is_social_event) || [],
+);
+const includedSocialEvents = computed<number[]>(() => selectedFee.value?.config.included_social_events || []);
+
 const mutableRegistration = ref<RegistrationData | undefined>(undefined);
 const selectedFee = computed<Fee | undefined>(() => {
-  return evanEvent.value?.fees.find((f: Fee) => f.type === mutableRegistration.value?.fee_type) || undefined;
+  return evanEvent.value?.fees.find((f: Fee) => f.type == mutableRegistration.value?.fee_type) || undefined;
+});
+const selectedSocialEvents = ref<number[]>([]);
+const accompaningPersons = ref<AccompanyingPerson[]>([]);
+
+const socialEventFee = computed<number>(() => {
+  return selectedSocialEvents.value.reduce((acc, id) => {
+    const session = socialEvents.value.find((s) => s.id === id);
+    if (session && !includedSocialEvents.value.includes(session.id)) {
+      return acc + session.extra_attendees_fee;
+    }
+    return acc;
+  }, 0);
 });
 
 const feeOptions = computed<QuasarSelectOption[]>(() => {
@@ -122,8 +175,24 @@ const feeOptions = computed<QuasarSelectOption[]>(() => {
   }));
 });
 
+const validFees = computed<string[]>(() => {
+  return evanEvent.value?.fees.map((f: Fee) => f.type) || [];
+});
+
 function saveRegistration() {
   if (mutableRegistration.value) {
+    // TODO: consolidate sessions
+    mutableRegistration.value.sessions = selectedSocialEvents.value;
+
+    // Add accompanying persons data to registration
+    // only if name is provided
+    accompaningPersons.value = accompaningPersons.value.filter((p) => p.name);
+
+    mutableRegistration.value.extra_data = {
+      ...mutableRegistration.value.extra_data,
+      accompanying_persons: accompaningPersons.value,
+    };
+
     if (registration.value) {
       store.updateRegistration(mutableRegistration.value);
     } else {
@@ -183,12 +252,17 @@ watch(
   (val) => {
     if (val) {
       mutableRegistration.value = val;
+      selectedSocialEvents.value = val.sessions;
+      accompaningPersons.value = val.extra_data.accompanying_persons || [];
     } else {
       mutableRegistration.value = {
         fee_type: '',
+        sessions: [],
         extra_data: {},
         visa_requested: false,
       };
+      selectedSocialEvents.value = [];
+      accompaningPersons.value = [];
     }
   },
   { immediate: true },

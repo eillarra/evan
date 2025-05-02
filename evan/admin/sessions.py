@@ -9,7 +9,8 @@ class SessionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "event",
+        "start_at",
         "title",
     )
-    list_filter = (("event", admin.RelatedOnlyFieldListFilter),)
+    list_filter = (("event", admin.RelatedOnlyFieldListFilter), "is_social_event")
     search_fields = ("title",)
