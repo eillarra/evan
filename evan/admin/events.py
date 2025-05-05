@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 
@@ -18,6 +19,9 @@ class FeesInline(admin.TabularInline):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
+    """Admin view for events."""
+
+    actions = ["registrations_excel"]
     date_hierarchy = "start_date"
     list_display = (
         "code",
@@ -30,9 +34,9 @@ class EventAdmin(admin.ModelAdmin):
         "is_open",
     )
     list_per_page = 30
-    search_fields = ("city", "country", "start_date__year")
+    search_fields = ["city", "country", "start_date__year"]
     # form
-    readonly_fields = ("registrations_count",)
+    readonly_fields = ["registrations_count"]
     inlines = (
         FeesInline,
         LinksInline,
@@ -42,11 +46,26 @@ class EventAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).annotate(Count("sessions", distinct=True))
-        if request.user.is_superuser or request.user.groups.filter(name="Management").exists():
+        if request.user.is_superuser or request.user.groups.filter(name="Management").exists():  # type: ignore
             return qs
-        if request.user.groups.filter(name="Administration").exists():
-            return qs.filter(acl__user_id__exact=request.user.id)
+        if request.user.groups.filter(name="Administration").exists():  # type: ignore
+            return qs.filter(acl__user_id__exact=request.user.id)  # type: ignore
         return qs.none()
+
+    # custom actions
+
+    @admin.action(description="🔡 Registrations overview")
+    def registrations_excel(self, request, queryset):
+        """Export registrations to Excel."""
+        if queryset.count() != 1:
+            self.message_user(request, "Please select only one event.", level="error")
+            return None
+
+        event = queryset.first()
+
+        return HttpResponseRedirect(
+            reverse("event:event_excel", kwargs={"code": event.code, "file_code": "registrations"})
+        )
 
     # custom fields
 

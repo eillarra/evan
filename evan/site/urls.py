@@ -16,7 +16,7 @@ event_patterns = (
                     path("", EventView.as_view(), name="app"),
                     # path("files/badges.pdf", views.EventBadgesPdf.as_view(), name="badges"),
                     # path("files/abstracts.xlsx", views.EventAbstractsSheet.as_view(), name="abstracts_sheet"),
-                    # path("files/registrations.xlsx", views.EventRegistrationsSheet.as_view(), name="registrations_sheet"),
+                    path("files/<slug:file_code>.xlsx", views.EventExcelView.as_view(), name="event_excel"),
                 ]
             ),
         ),
