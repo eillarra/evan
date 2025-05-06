@@ -1,5 +1,6 @@
 from django_countries.serializer_fields import CountryField
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from evan.models import Event, Fee, validate_event_dates
 
@@ -53,7 +54,7 @@ class EventListSerializer(serializers.ModelSerializer):
 class EventSerializer(EventListSerializer):
     rel_files = serializers.HyperlinkedIdentityField(view_name="v1:event-files", lookup_field="code")
     # abstract_url = serializers.URLField(source="get_abstract_url", read_only=True)
-    # registration_url = serializers.URLField(source="get_registration_url", read_only=True)
+    registration_url = serializers.SerializerMethodField()
     registration_early_deadline = serializers.DateTimeField(allow_null=True)
     allows_invoices = serializers.BooleanField(read_only=True)
     allows_payments = serializers.BooleanField(read_only=True)
@@ -72,6 +73,15 @@ class EventSerializer(EventListSerializer):
         model = Event
         exclude = ["id", "accept_by_default", "signature", "config", "custom_fields"]
         read_only_fields = ["__all__"]
+
+    def get_registration_url(self, obj) -> str | None:
+        if obj.is_open_for_registration:
+            return reverse(
+                "registration:app",
+                request=self.context.get("request"),
+                kwargs={"code": obj.code},
+            )
+        return None
 
 
 class ManagedEventSerializer(EventSerializer):

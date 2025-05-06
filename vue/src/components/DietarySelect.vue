@@ -41,14 +41,6 @@ const options = computed<DietarySelectOption[]>(() => {
       label: 'Vegan',
     },
     {
-      value: 'kosher',
-      label: 'Kosher',
-    },
-    {
-      value: 'halal',
-      label: 'Halal',
-    },
-    {
       value: 'gluten_free',
       label: 'Gluten free',
     },

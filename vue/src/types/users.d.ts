@@ -1,13 +1,4 @@
-type DietaryOption =
-  | 'none'
-  | 'vegetarian'
-  | 'vegan'
-  | 'kosher'
-  | 'halal'
-  | 'gluten_free'
-  | 'dairy_free'
-  | 'nut_free'
-  | 'other';
+type DietaryOption = 'none' | 'vegetarian' | 'vegan' | 'gluten_free' | 'dairy_free' | 'nut_free' | 'other';
 
 interface UserExtraData {
   gender: string;

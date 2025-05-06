@@ -65,9 +65,6 @@
           <q-badge class="float-right text-body1 text-white text-weight-bold">€ {{ socialEventFee }}</q-badge>
           <small>Additional fee for selected social events</small>
         </p>
-
-        <evan-section-title>Accompanying persons</evan-section-title>
-        <accompanying-persons v-model="accompaningPersons" :social-events="socialEvents" />
       </template>
 
       <template v-if="user">
@@ -96,6 +93,11 @@
           <q-item-label>I require an Invitation Letter for my visa application</q-item-label>
         </q-item-section>
       </q-item>
+
+      <template v-if="socialEvents.length > 0">
+        <evan-section-title>Accompanying persons</evan-section-title>
+        <accompanying-persons v-model="accompaningPersons" :social-events="socialEvents" />
+      </template>
 
       <ugent-btn
         @click="saveRegistration"

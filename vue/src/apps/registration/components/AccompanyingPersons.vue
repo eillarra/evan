@@ -64,7 +64,7 @@ const emit = defineEmits<{
 }>();
 
 function addPerson() {
-  const newPersons = [...props.modelValue, { name: '', selected_social_events: [], dietary: 'none' }];
+  const newPersons = [...props.modelValue, { name: '', selected_social_events: [], dietary: 'none' as DietaryOption }];
   emit('update:modelValue', newPersons);
 }
 
