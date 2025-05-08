@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('evan', '0004_email_tweaks'),
+        ("evan", "0004_email_tweaks"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='session',
-            name='extra_data',
+            model_name="session",
+            name="extra_data",
             field=models.JSONField(blank=True, default=dict),
         ),
     ]

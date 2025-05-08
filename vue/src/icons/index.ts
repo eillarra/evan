@@ -8,7 +8,8 @@ import {
   symSharpAssignmentTurnedIn,
   symSharpAttachFile,
   symSharpBackspace,
-  symSharpChat,
+  symSharpChatBubble,
+  symSharpMarkChatUnread,
   symSharpCheck,
   symSharpCheckBox,
   symSharpClose,
@@ -71,7 +72,8 @@ export const iconMenu = symSharpMenu;
 export const iconOpenDialog = symSharpOpenInBrowser;
 export const iconSearch = symSharpSearch;
 
-export const iconChat = symSharpChat;
+export const iconChat = symSharpChatBubble;
+export const iconChatBadge = symSharpMarkChatUnread;
 export const iconContact = symSharpContacts;
 export const iconCoupon = symSharpLocalActivity;
 export const iconContent = symSharpWysiwyg;

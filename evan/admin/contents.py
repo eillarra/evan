@@ -14,6 +14,6 @@ class ContentAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         # Use getattr for safe access, defaulting to False if is_superuser doesn't exist
-        if not getattr(request.user, 'is_superuser', False):
+        if not getattr(request.user, "is_superuser", False):
             return ("event", "key", "config")
         return ()

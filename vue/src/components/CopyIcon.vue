@@ -13,12 +13,12 @@ import { iconCopy } from '@/icons';
 const { t } = useI18n();
 
 defineProps<{
-  text: string;
+  text: string | number;
   iconSize?: string;
 }>();
 
-function copyText(text: string) {
-  copyToClipboard(text).then(() => {
+function copyText(text: string | number) {
+  copyToClipboard(String(text)).then(() => {
     notify.info(t('messages.copied_to_clipboard'));
   });
 }

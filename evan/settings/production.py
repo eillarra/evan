@@ -8,6 +8,7 @@ from sentry_sdk.integrations.redis import RedisIntegration
 
 from .base import *  # noqa
 
+
 DEBUG = False
 
 ALLOWED_HOSTS = (os.environ.get("DJANGO_ALLOWED_HOST", "evan.ugent.be"),)

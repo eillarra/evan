@@ -5,12 +5,7 @@
     </h3>
   </div>
   <q-list>
-    <q-item
-      v-for="registration in registrations"
-      :key="registration.uuid"
-      clickable
-      :href="registration.url"
-    >
+    <q-item v-for="registration in registrations" :key="registration.uuid" clickable :href="registration.url">
       <q-item-section>
         <q-item-label>{{ registration.event.name }}</q-item-label>
         <q-item-label caption>{{ registration.event.full_name }}</q-item-label>

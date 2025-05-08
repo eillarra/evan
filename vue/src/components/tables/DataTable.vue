@@ -159,13 +159,13 @@ $in-table-dense-field-height: 28px;
             <q-badge v-if="props.value" outline :label="props.value" color="dark" />
           </span>
           <span v-else-if="props.col.name == 'remarks'">
-            <!--<remarks-dialog
+            <remarks-dialog
               :api-endpoint="props.row._remarks_endpoint"
               :title="props.row._remarks_title || undefined"
               :visibilityOptions="props.row._remarks_visibility_options || undefined"
               :icon="props.value > 0 ? iconChatBadge : iconChat"
               :icon-color="props.value > 0 ? 'dark' : 'grey-4'"
-            />-->
+            />
           </span>
           <span v-else-if="props.col.name.startsWith('steps_')" class="q-gutter-x-xs">
             <q-icon v-for="(step, k) in props.value" :key="k" :name="step.icon" :color="step.color" :size="iconSize" />
@@ -199,9 +199,7 @@ $in-table-dense-field-height: 28px;
       <template #body-cell-email="props">
         <!-- Custom email field -->
         <q-td :props="props" auto-width :class="props.row._class || ''">
-          <a :href="`mailto:${props.row.email}`" target="_blank" rel="noopener" class="inherit">{{
-            props.row.email
-          }}</a>
+          {{ props.row.email }}
           <q-icon
             @click.stop="copyText(props.row.email)"
             :name="iconCopy"
@@ -273,12 +271,12 @@ import { notify } from '@/utils/notify';
 import { storage } from '@/utils/storage';
 
 import NoResults from '@/components/NoResults.vue';
-// import RemarksDialog from '@/components/rel/RemarksDialog.vue';
+import RemarksDialog from '@/components/rel/RemarksDialog.vue';
 
 import {
   iconAdd,
-  // iconChat,
-  // iconChatBadge,
+  iconChat,
+  iconChatBadge,
   iconColumns,
   iconCopy,
   iconDelete,
@@ -380,14 +378,22 @@ const queriedRows = computed(() => {
   // we split the query search and count the matches
   // if the number of matches is equal to the number of query terms, we have a match
 
-  const queryTerms = query.value.toLowerCase().split(' ');
+  const normalizeText = (text: string) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, ''); // Remove diacritics
+  };
+
+  const queryTerms = query.value.split(' ').map((term) => normalizeText(term));
 
   return props.rows.filter((row) => {
     let matches = 0;
 
     for (const queryTerm of queryTerms) {
       for (const column of props.queryColumns as string[]) {
-        if (row[column]?.toLowerCase().includes(queryTerm)) {
+        const cellValue = row[column]?.toString() || '';
+        if (normalizeText(cellValue).includes(queryTerm)) {
           matches++;
           break;
         }
@@ -471,8 +477,4 @@ watch(
     }
   },
 );
-
-function test(obj) {
-  console.log('test', obj);
-}
 </script>

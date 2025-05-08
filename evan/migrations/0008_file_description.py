@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('evan', '0007_alter_emailtemplate_code_and_more'),
+        ("evan", "0007_alter_emailtemplate_code_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='file',
-            name='description',
-            field=models.CharField(blank=True, default='', max_length=255),
+            model_name="file",
+            name="description",
+            field=models.CharField(blank=True, default="", max_length=255),
         ),
     ]

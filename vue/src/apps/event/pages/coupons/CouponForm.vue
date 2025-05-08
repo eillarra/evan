@@ -6,6 +6,16 @@
           <readonly-field v-if="obj" :value="obj.code" :label="$t('fields.code')" class="col-12" with-copy />
           <q-input v-model="formData.value" :label="`${$t('fields.value')} *`" type="number" dense class="col-12" />
           <q-input v-model.trim="formData.notes" :label="`${$t('fields.note', 9)} *`" dense class="col-12" />
+          <template v-if="linkedRegistration">
+            <readonly-field :value="linkedRegistration.user.name" :label="$t('fields.used_by')" class="col-12" />
+            <readonly-field
+              :value="linkedRegistration.uuid"
+              :label="$t('models.registration')"
+              class="col-12 col-sm-9"
+              with-copy
+            />
+            <readonly-field :value="linkedRegistration.total_fee" :label="$t('fields.fee')" class="col-12 col-sm-3" />
+          </template>
         </div>
       </div>
     </template>
@@ -26,7 +36,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 
 import { useStore } from '../../store';
 
@@ -41,9 +52,15 @@ const props = defineProps<{
 
 const store = useStore();
 
+const { registrations } = storeToRefs(store);
+
 const formData = ref<CouponData>({
   value: props.obj?.value || 0,
   notes: props.obj?.notes || '',
+});
+
+const linkedRegistration = computed<Registration | null>(() => {
+  return registrations.value.find((r) => r.coupon?.id === props.obj?.id) || null;
 });
 
 function createUpdate() {

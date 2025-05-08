@@ -16,6 +16,7 @@ interface UserData {
 }
 
 interface UserTiny {
+  readonly id: number;
   readonly username: string;
   readonly email: string;
   readonly name: string;

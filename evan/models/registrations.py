@@ -7,8 +7,8 @@ from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.urls import reverse
 
-from .base import NonEditableMixin
-from .rel.remarks import RemarksMixin
+from .base import NonEditableMixin, TagsMixin
+from .rel.remarks import RemarksMixin, append_remarks_tags
 
 
 def calculate_accompanying_fees(registration: "Registration") -> int:
@@ -65,7 +65,23 @@ def calculate_registration_base_fee(registration: "Registration") -> int:
     return base_fee
 
 
-class Registration(RemarksMixin, models.Model):
+def get_registration_tags(obj: "Registration", *, type: str = "all") -> list[str]:
+    """For a registration, process the tags.
+
+    :param obj: An instance of the Place class.
+    :param type: The type of tags to process.
+    :returns: A list of tags.
+    """
+    tags = obj.tags
+
+    # remarks
+    if type in {"all", "remarks"}:
+        tags = append_remarks_tags(obj, tags=tags)
+
+    return list(set(tags))
+
+
+class Registration(RemarksMixin, TagsMixin, models.Model):
     """A registration for an event."""
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -173,6 +189,10 @@ class Registration(RemarksMixin, models.Model):
         return self.saldo >= 0 and self.paid > 0
 
     @property
+    def paid_via_coupon(self) -> int:
+        return self.coupon.value if self.coupon else 0
+
+    @property
     def remaining_fee(self) -> int:
         coupon_discount = self.coupon.value if self.coupon else 0
         return self.total_fee - self.paid - self.paid_via_invoice - coupon_discount
@@ -188,6 +208,12 @@ class Registration(RemarksMixin, models.Model):
     @property
     def url(self) -> str:
         return self.get_absolute_url()
+
+    @classmethod
+    def update_tags(cls, obj: "Registration", *, type: str = "all") -> None:
+        """Update tags for a student, without calling clean() on the model."""
+        tags = get_registration_tags(obj, type=type)
+        cls.objects.filter(pk=obj.pk).update(tags=tags)
 
 
 @receiver(post_save, sender=Registration)

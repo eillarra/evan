@@ -4,7 +4,7 @@
       <div class="self-center full-width no-outline ellipsis" tabindex="0">{{ value }}</div>
     </template>
     <template #append>
-      <copy-icon v-if="withCopy" :text="value" />
+      <copy-icon v-if="withCopy" :text="value" class="q-mt-md" />
     </template>
   </q-field>
 </template>
@@ -14,7 +14,7 @@ import CopyIcon from '@/components/CopyIcon.vue';
 
 defineProps<{
   label: string;
-  value: string;
+  value: string | number;
   withCopy?: boolean;
 }>();
 </script>

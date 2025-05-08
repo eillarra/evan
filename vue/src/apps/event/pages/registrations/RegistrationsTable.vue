@@ -23,8 +23,8 @@ const props = defineProps<{
   registrations: Registration[];
 }>();
 
-const queryColumns = ['name', 'affiliation', 'code'];
-const hiddenColumns = ['uuid'];
+const queryColumns = ['name', 'affiliation', 'uuid', 'email'];
+const hiddenColumns = ['uuid', 'has_coupon'];
 
 const columns = [
   {
@@ -81,9 +81,28 @@ const columns = [
     sortable: true,
   },
   {
+    name: 'fee_type',
+    field: 'fee_type',
+    label: t('models.fee_type'),
+    align: 'left',
+  },
+  {
+    name: 'total_fee',
+    field: 'total_fee',
+    label: t('fields.fee'),
+    align: 'right',
+    classes: 'panno-mono-number',
+  },
+  {
     name: 'is_paid',
     field: 'is_paid',
     label: t('fields.paid'),
+    align: 'center',
+  },
+  {
+    name: 'has_coupon',
+    field: 'has_coupon',
+    label: t('models.coupon'),
     align: 'center',
   },
 ];
@@ -91,13 +110,18 @@ const columns = [
 const rows = computed(() => {
   return props.registrations.map((obj: Registration) => ({
     _self: obj,
-    remarks: Number(obj.tag_objects?.['remarks.count']) || 0,
+    _remarks_endpoint: obj.rel_remarks,
+    _remarks_title: obj.user.name,
+    remarks: Number(obj._tags_dict?.['remarks.count']) || 0,
     name: obj.user.name,
     affiliation: obj.user.affiliation || '-',
     email: obj.user.email,
     uuid: obj.uuid,
     date: formatDate(obj.created_at),
+    fee_type: obj.fee_type || '-',
+    total_fee: obj.total_fee,
     is_paid: obj.is_paid,
+    has_coupon: !!obj.coupon,
   }));
 });
 </script>

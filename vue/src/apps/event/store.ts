@@ -178,7 +178,11 @@ export const useStore = defineStore('evanEvent', () => {
     }
 
     await api.get(evanEvent.value.self + 'registrations/').then((res) => {
-      registrations.value = res.data;
+      registrations.value = res.data.map((obj: Registration) => ({
+        ...obj,
+        // -----
+        _tags_dict: tags_to_dict(obj.tags),
+      }));
     });
   }
 

@@ -71,7 +71,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
     """Get the sheets with an overview of the event registrations."""
     rows = []
 
-    for registration in event.registrations.filter(is_accepted=True).select_related("user"):  # type: ignore
+    for registration in event.registrations.filter(is_accepted=True).select_related("user", "coupon"):  # type: ignore
         rows.append(
             {
                 "uuid": str(registration.uuid),
@@ -83,6 +83,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
                 "extra_fees": registration.extra_fees + registration.manual_extra_fees,
                 "total_fee": registration.total_fee,
                 "is_paid": registration.is_paid,
+                "paid_via_coupon": registration.paid_via_coupon,
                 "visa_requested": registration.visa_requested,
                 "gender": registration.user.extra_data.get("gender"),
                 "dietary": registration.user.extra_data.get("dietary"),

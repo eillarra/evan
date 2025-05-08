@@ -13,7 +13,7 @@
         <q-chat-message
           v-for="remark in sortedRemarks"
           :key="remark.id"
-          :name="remark.updated_by.name"
+          :name="remark.created_by.name"
           :stamp="remark.stamp"
           :bg-color="remark.is_mine ? 'blue-1' : 'grey-2'"
         >
@@ -34,7 +34,7 @@
     <div class="bg-white q-pa-lg">
       <q-page-sticky expand position="bottom" class="bg-white z-top">
         <div class="full-width full-height text-right q-px-lg q-pb-lg">
-          <q-input v-model="remarkText" :label="$t('form.remark.create.new')" autogrow clearable class="q-mb-md" />
+          <q-input v-model="remarkText" :label="$t('models.remark')" autogrow clearable class="q-mb-md" />
           <visibility-options v-if="visibilityOptions" v-model="remarkTags" :options="visibilityOptions" hide-label />
           <q-btn @click="addRemark" unelevated color="ugent" :label="$t('form.save')" :disable="remarkText == ''" />
         </div>
@@ -75,11 +75,11 @@ const remarkTags = ref<Tags>([]);
 const sortedRemarks = computed<Remark[]>(() => {
   let mutable = [...remarks.value];
   return mutable
-    .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .map((obj) => ({
       ...obj,
-      is_mine: obj.updated_by?.id == djangoUser.value.id,
-      stamp: formatDate(obj.updated_at),
+      is_mine: obj.created_by?.id == djangoUser.value.id,
+      stamp: formatDate(obj.created_at),
     }));
 });
 
@@ -107,15 +107,15 @@ async function addRemark() {
       remarks.value.push({ ...data });
       remarkText.value = '';
       remarkTags.value = [];
-      notify.success(t('form.remark.create.success'));
+      notify.success(t('messages.remark_created'));
     });
 }
 
 async function deleteRemark(remark: Remark) {
-  confirm(t('form.remark.confirm_delete'), () => {
+  confirm(t('messages.remark_confirm_delete'), () => {
     api.delete(remark.self).then(() => {
       remarks.value = remarks.value.filter((obj) => obj.id !== remark.id);
-      notify.success(t('form.remark.deleted'));
+      notify.success(t('messages.remark_deleted'));
     });
   });
 }

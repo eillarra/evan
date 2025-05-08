@@ -1,5 +1,5 @@
 interface QuasarSelectOption {
-  value: string | number | null;
+  value: boolean | string | number | null;
   label: string;
 }
 

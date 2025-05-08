@@ -22,7 +22,7 @@ class UserTinySerializer(serializers.ModelSerializer):
 
     class Meta:  # noqa: D106
         model = User
-        fields = ["username", "email", "name", "affiliation"]
+        fields = ["id", "username", "email", "name", "affiliation"]
 
 
 class UserSerializer(serializers.ModelSerializer):

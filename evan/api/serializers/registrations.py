@@ -3,6 +3,7 @@ from rest_framework import serializers
 from evan.models import Coupon, Registration
 
 from .events import EventListSerializer
+from .rel.remarks import RemarksMixin
 from .users import UserTinySerializer
 
 
@@ -15,13 +16,14 @@ class CouponSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "code", "event", "created_at"]
 
 
-class RegistrationSerializer(serializers.ModelSerializer):
+class RegistrationSerializer(RemarksMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:registration-detail", lookup_field="uuid")
     user = UserTinySerializer(read_only=True)
     is_paid = serializers.BooleanField(read_only=True)
     coupon = CouponSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     payment_url = serializers.URLField(source="get_payment_url", read_only=True)
+    total_fee = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Registration

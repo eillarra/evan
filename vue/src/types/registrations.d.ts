@@ -30,6 +30,8 @@ interface RegistrationData {
 
 interface Registration extends RegistrationData {
   readonly self: ApiEndpoint;
+  readonly rel_remarks: ApiEndpoint;
+
   readonly url: Url;
   readonly payment_url: Url;
   readonly uuid: string;
@@ -40,6 +42,7 @@ interface Registration extends RegistrationData {
   readonly coupon: Coupon | null;
 
   readonly visa_sent: boolean;
+  readonly total_fee: number;
   readonly base_fee: number;
   readonly extra_fees: number;
   readonly manual_extra_fees: number;

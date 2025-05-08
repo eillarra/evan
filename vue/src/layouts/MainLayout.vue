@@ -58,7 +58,7 @@
             <p>
               Version&nbsp;<a
                 v-if="git_commit_hash && django_user && django_user.is_staff"
-                :href="`https://github.ugent.be/eillarra/evan/tree/${git_commit_hash}`"
+                :href="`https://github.com/eillarra/evan/tree/${git_commit_hash}`"
                 >{{ version }}</a
               ><span v-else>{{ version }}</span>
             </p>
