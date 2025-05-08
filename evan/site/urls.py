@@ -24,6 +24,13 @@ event_patterns = (
     "event_patterns",
 )
 
+paper_patterns = (
+    [
+        path("<uuid:uuid>/<slug:secret>/", views.PaperSecretEditorView.as_view(), name="secret"),
+    ],
+    "paper_patterns",
+)
+
 registration_patterns = (
     [
         path(
@@ -79,6 +86,7 @@ urlpatterns = [
     path("done/", TemplateView.as_view(template_name="pages/done.html"), name="done"),
     path("u/dashboard/", views.DashboardView.as_view(), name="dashboard"),
     path("e/", include(event_patterns, namespace="event")),
+    path("p/", include(paper_patterns, namespace="paper")),
     path("r/", include(registration_patterns, namespace="registration")),
     path("s/", include(session_patterns, namespace="session")),
 ]

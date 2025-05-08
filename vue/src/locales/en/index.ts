@@ -37,6 +37,7 @@ export default {
     event: 'Event | Events',
     file: 'File | Files',
     important_date: 'Important date | Important dates',
+    paper: 'Paper | Papers',
     person: 'Person | People',
     registration: 'Registration | Registrations',
     room: 'Room | Rooms',
@@ -48,7 +49,9 @@ export default {
     venues_rooms: 'Venues & rooms',
   },
   fields: {
+    abstract: 'Abstract',
     affiliation: 'Affiliation | Affiliations',
+    author: 'Author | Authors',
     aoe: 'Anywhere on Earth (AoE)',
     approved: 'Approved',
     code: 'Code | Codes',

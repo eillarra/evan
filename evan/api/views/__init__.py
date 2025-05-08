@@ -7,6 +7,7 @@ from .contents import *
 from .coupons import *
 from .emails import *
 from .events import *
+from .papers import *
 from .registrations import *
 from .search import *
 from .sessions import *

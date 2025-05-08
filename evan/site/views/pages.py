@@ -4,9 +4,10 @@ from django.utils.decorators import method_decorator
 
 from evan.api.serializers.contents import ContentSerializer
 from evan.api.serializers.events import EventListSerializer
+from evan.api.serializers.papers import PaperSerializer
 from evan.api.serializers.registrations import AuthRegistrationRetrieveSerializer
 from evan.api.serializers.sessions import SessionSerializer
-from evan.models import Content, Event, Permission, Session
+from evan.models import Content, Event, Paper, Permission, Session
 
 from .inertia import CachedInertiaView, InertiaView
 
@@ -41,6 +42,27 @@ class DashboardView(InertiaView):
             "registrations": AuthRegistrationRetrieveSerializer(
                 request.user.registrations, many=True, context={"request": request}
             ).data,
+        }
+
+
+class PaperSecretEditorView(InertiaView):
+    """Paper edit view that can only be accessed via a complex URL."""
+
+    vue_entry_point = "apps/paper/main.ts"
+
+    def get_props(self, request, *args, **kwargs):
+        try:
+            paper = Paper.objects.get(uuid=kwargs["uuid"])
+        except Paper.DoesNotExist as exc:
+            raise ViewDoesNotExist from exc
+
+        if paper.secret != kwargs["secret"]:
+            raise PermissionDenied
+
+        return {
+            "event": EventListSerializer(paper.event, context={"request": request}).data,
+            "secret": kwargs["secret"],
+            "paper": PaperSerializer(paper, context={"request": request}).data,
         }
 
 

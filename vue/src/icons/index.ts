@@ -14,6 +14,7 @@ import {
   symSharpClose,
   symSharpContacts,
   symSharpContentCopy,
+  symSharpContract,
   symSharpCreditCard,
   symSharpDateRange,
   symSharpDialogs,
@@ -78,6 +79,7 @@ export const iconEmail = symSharpMail;
 export const iconEmails = symSharpStackedEmail;
 export const iconEvent = symSharpWidgets;
 export const iconImportantDates = symSharpEventAvailable;
+export const iconPaper = symSharpContract;
 export const iconPayment = symSharpCreditCard;
 export const iconPlanning = symSharpViewWeek;
 export const iconRegistration = symSharpAssignmentTurnedIn;

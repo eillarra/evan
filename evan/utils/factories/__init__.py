@@ -3,6 +3,7 @@
 from .contents import *
 from .coupons import *
 from .events import *
+from .papers import *
 from .registrations import *
 from .sessions import *
 from .tracks import *

@@ -36,6 +36,7 @@ export default {
     date: 'Belangrijke datum | Belangrijke data',
     event: 'Evenement | Evenementen',
     file: 'Bestand | Bestanden',
+    paper: 'Paper | Papers',
     registration: 'Inschrijving | Inschrijvingen',
     room: 'Ruimte | Ruimtes',
     session: 'Sessie | Sessies',
@@ -46,7 +47,9 @@ export default {
     venues_rooms: 'Locaties & ruimtes',
   },
   fields: {
+    abstract: 'Samenvatting',
     affiliation: 'Affiliatie | Affiliaties',
+    author: 'Auteur | Auteurs',
     approved: 'Goedgekeurd',
     code: 'Interne code | Interne codes',
     created_at: 'Aangemaakt op',

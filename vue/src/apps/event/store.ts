@@ -12,6 +12,7 @@ export const useStore = defineStore('evanEvent', () => {
   const evanEvent = ref<ManagedEvanEvent | null>(null);
   const contents = ref<Content[]>([]);
   const coupons = ref<Coupon[]>([]);
+  const papers = ref<Paper[]>([]);
   const registrations = ref<Registration[]>([]);
   const sessions = ref<Session[]>([]);
 
@@ -128,6 +129,44 @@ export const useStore = defineStore('evanEvent', () => {
 
     return couponIds;
   });
+
+  // Papers ------
+
+  async function createPaper(data: PaperData) {
+    if (!evanEvent.value) return;
+
+    return api.post(evanEvent.value.self + 'papers/', data).then((res) => {
+      papers.value.push(res.data);
+      notify.success(t('messages.paper_created'));
+      return res;
+    });
+  }
+
+  async function fetchPapers() {
+    if (!evanEvent.value) return;
+
+    return await api.get(evanEvent.value.self + 'papers/').then((res) => {
+      papers.value = res.data;
+    });
+  }
+
+  async function updatePaper(paper: Paper) {
+    return await api.put(paper.self, paper).then((res) => {
+      const index = papers.value.findIndex((s) => s.id === paper.id);
+      papers.value[index] = res.data;
+      notify.success(t('messages.paper_updated'));
+      return res;
+    });
+  }
+
+  function removePaper(session: Paper) {
+    confirm(t('messages.paper_confirm_delete'), () => {
+      api.delete(session.self).then(() => {
+        papers.value = papers.value.filter((s) => s.id !== session.id);
+        notify.success(t('messages.paper_deleted'));
+      });
+    });
+  }
 
   // Registrations ------
 
@@ -285,20 +324,24 @@ export const useStore = defineStore('evanEvent', () => {
     init,
     setData,
     createCoupon,
+    createPaper,
     createSession,
     createTopic,
     createTrack,
     fetchContents,
     fetchCoupons,
+    fetchPapers,
     fetchRegistrations,
     fetchSessions,
     patchEvent,
     updateContent,
     updateCoupon,
+    updatePaper,
     updateSession,
     updateTopic,
     updateTrack,
     removeCoupon,
+    removePaper,
     removeSession,
     removeTopic,
     removeTrack,
@@ -307,6 +350,7 @@ export const useStore = defineStore('evanEvent', () => {
     coupons,
     couponIdsUsed,
     emails,
+    papers,
     registrations,
     sessions,
     topicOptions,

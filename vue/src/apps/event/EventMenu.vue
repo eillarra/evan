@@ -15,6 +15,12 @@
           </q-item-section>
           <q-item-section>{{ $t('models.registration', 9) }}</q-item-section>
         </q-item>
+        <q-item clickable :to="{ name: 'coupons' }" active-class="bg-ugent text-white">
+          <q-item-section avatar>
+            <q-icon :name="iconCoupon" size="xs" />
+          </q-item-section>
+          <q-item-section>{{ $t('models.coupon', 9) }}</q-item-section>
+        </q-item>
         <q-item-label header>{{ $t('event_management') }}</q-item-label>
         <q-item clickable :to="{ name: 'event' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
@@ -46,11 +52,11 @@
           </q-item-section>
           <q-item-section>{{ $t('models.session', 9) }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'coupons' }" active-class="bg-ugent text-white">
+        <q-item clickable :to="{ name: 'papers' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
-            <q-icon :name="iconCoupon" size="xs" />
+            <q-icon :name="iconPaper" size="xs" />
           </q-item-section>
-          <q-item-section>{{ $t('models.coupon', 9) }}</q-item-section>
+          <q-item-section>{{ $t('models.paper', 9) }}</q-item-section>
         </q-item>
         <q-item-label header>Website</q-item-label>
         <q-item clickable :to="{ name: 'contents' }" active-class="bg-ugent text-white">
@@ -79,6 +85,7 @@ import {
   iconEvent,
   iconImportantDates,
   iconLabel,
+  iconPaper,
   iconPlanning,
   iconRegistrations,
   iconStats,

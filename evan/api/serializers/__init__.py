@@ -4,6 +4,7 @@ from .abstracts import *
 from .contents import *
 from .events import *
 from .rel import *
+from .papers import *
 from .payments import *
 from .registrations import *
 from .sessions import *
