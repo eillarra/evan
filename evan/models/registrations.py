@@ -89,6 +89,7 @@ class Registration(RemarksMixin, models.Model):
 
     is_accepted = models.BooleanField(default=True, null=True)
     extra_data = models.JSONField(default=dict)
+    unique_hash = models.CharField(max_length=8, default="", blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -110,6 +111,7 @@ class Registration(RemarksMixin, models.Model):
         """
         if not self.pk:
             self.is_accepted = True if self.event.accept_by_default else None
+            self.unique_hash = self.generate_unique_hash()
 
         self.base_fee = calculate_registration_base_fee(self)
 
@@ -147,6 +149,14 @@ class Registration(RemarksMixin, models.Model):
 
     def get_receipt_url(self) -> str:
         return reverse("registration:receipt", args=[self.uuid])
+
+    def generate_unique_hash(self) -> str:
+        """
+        Generate a unique hash for the registration.
+        This is used to later generate secret links for the registration.
+        It can be regenerated if needed, for example to reset payment links.
+        """
+        return uuid.uuid4().hex[:8]
 
     @property
     def is_early(self) -> bool:

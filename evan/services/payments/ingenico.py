@@ -1,9 +1,14 @@
 import os
 from hashlib import sha512
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.http import QueryDict
+
+
+if TYPE_CHECKING:
+    from evan.models.users import User
 
 
 def get_absolute_uri():
@@ -37,7 +42,7 @@ class Ingenico:
 
         return sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
 
-    def process_parameters(self, parameters: dict, user) -> dict:
+    def process_parameters(self, parameters: dict, user: "User", extra_hash: str | None = None) -> dict:
         """Process and check if a minimum of parameters have been received."""
         ingenico_parameters = {
             "CURRENCY": "EUR",
@@ -55,6 +60,8 @@ class Ingenico:
         # Generate a short hash from the registration ID and amount
         # This ensures the same parameters always produce the same ORDERID
         base_string = f"{parameters['ORDERID']}-{parameters['AMOUNT']}"
+        if extra_hash:
+            base_string += f"-{extra_hash}"
         short_hash = sha512(base_string.encode()).hexdigest()[:8]
         order_id = f"{parameters['ORDERID']}-{short_hash}"
 

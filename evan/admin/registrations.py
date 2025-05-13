@@ -104,6 +104,7 @@ class RegistrationAdmin(admin.ModelAdmin):
     inlines = (InvitationLetterInline,)
     actions = (
         "mark_as_accepted",
+        "regenerate_payment_hash",
         "send_reminder",
         "send_visa_reminder",
         "send_payment_reminder",
@@ -160,6 +161,14 @@ class RegistrationAdmin(admin.ModelAdmin):
     def mark_as_accepted(self, request, queryset):
         queryset.update(is_accepted=True)
         admin.ModelAdmin.message_user(self, request, "Registrations are marked as accepted.")
+
+    @admin.action(description="[Bulk] Regenerate payment hash")
+    def regenerate_payment_hash(self, request, queryset):
+        queryset.update(unique_hash="")
+        for registration in queryset:
+            registration.unique_hash = registration.generate_unique_hash()
+            registration.save()
+        admin.ModelAdmin.message_user(self, request, "Payment hashes are regenerated.")
 
     @admin.action(description="[Mailer] Send delegated payment link to users")
     def send_delegated_payment(self, request, queryset):

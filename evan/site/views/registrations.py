@@ -89,7 +89,9 @@ class RegistrationPaymentBaseView(TemplateView):
         context["registration"] = registration
         context["event"] = registration.event
         context["ingenico_url"] = ingenico.get_url()
-        context["ingenico_parameters"] = ingenico.process_parameters(ingenico_parameters, registration.user)
+        context["ingenico_parameters"] = ingenico.process_parameters(
+            ingenico_parameters, registration.user, registration.unique_hash
+        )
         return context
 
 
