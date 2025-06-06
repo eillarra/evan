@@ -8,7 +8,7 @@ from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django_countries.fields import CountryField
-from tld import get_tld
+from tld import Result, get_tld
 
 from .documents.users import get_validated_extra_data
 
@@ -70,15 +70,16 @@ class User(AbstractUser):
 
 @receiver(pre_save, sender=User)
 def pre_save_user(sender, instance, **kwargs):
-    if instance.email and not instance.affiliation:
-        domain = get_tld(instance.email.split("@")[-1], as_object=True, fix_protocol=True)
+    if instance.email:
+        res = get_tld(instance.email.split("@")[-1], as_object=True, fix_protocol=True)
 
-        try:
-            domain = AffiliationDomain.objects.get(fld=domain)
-            instance.affiliation = instance.affiliation if instance.affiliation else domain.affiliation
-            instance.country = instance.country if instance.country else domain.country
-        except AffiliationDomain.DoesNotExist:
-            pass
+        if isinstance(res, Result):
+            try:
+                domain = AffiliationDomain.objects.get(fld=res.fld)
+                instance.affiliation = instance.affiliation if instance.affiliation else domain.affiliation
+                instance.country = instance.country if instance.country else domain.country
+            except AffiliationDomain.DoesNotExist:
+                pass
 
 
 def find_user_by_email(email: str, verified: bool = True) -> User | None:
