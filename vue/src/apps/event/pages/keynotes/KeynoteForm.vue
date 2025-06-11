@@ -58,6 +58,16 @@
           </q-tab-panel>
           <q-tab-panel name="extra_data">
             <div class="row q-col-gutter-y-sm q-col-gutter-x-md">
+              <file-field
+                v-if="obj"
+                public
+                dense
+                :api-endpoint="obj.rel_files"
+                :tags="['_internal:avatar']"
+                :label="$t('fields.speaker_photo')"
+                accept="image/*"
+                class="col-12 col-md-6"
+              />
               <q-input
                 dense
                 v-model="extraData.speaker_affiliation"
@@ -109,6 +119,7 @@ import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 import WarningBanner from '@/components/ui/WarningBanner.vue';
+import FileField from '@/components/rel/FileField.vue';
 
 import { iconKeynote } from '@/icons';
 

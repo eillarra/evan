@@ -1,6 +1,7 @@
 interface RelatedFile extends ApiObject {
-  readonly url: Url;
+  readonly file: Url;
 
   type: 'public' | 'private';
+  description: string;
   tags: string[];
 }

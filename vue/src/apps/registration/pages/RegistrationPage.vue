@@ -149,9 +149,7 @@ const isEarly = computed<boolean>(() => {
   const deadline = registration.value ? new Date(registration.value.created_at) : new Date();
   return new Date(evanEvent.value?.registration_early_deadline || '') > deadline;
 });
-const socialEvents = computed<Session[]>(
-  () => sessions.value?.filter((s: Session) => s.is_social_event) || [],
-);
+const socialEvents = computed<Session[]>(() => sessions.value?.filter((s: Session) => s.is_social_event) || []);
 const includedSocialEvents = computed<number[]>(() => selectedFee.value?.config.included_social_events || []);
 
 const mutableRegistration = ref<RegistrationData | undefined>(undefined);

@@ -23,16 +23,6 @@ def content_max_files_key_missing_defaults_to_1(db, t_event):
     return ContentFactory(event=t_event, config={"file_uploader": {}})
 
 
-@pytest.fixture
-def content_no_file_uploader_config_disables_uploads(db, t_event):
-    return ContentFactory(event=t_event, config={})
-
-
-@pytest.fixture
-def content_no_config_at_all_disables_uploads(db, t_event):
-    return ContentFactory(event=t_event, config=None)
-
-
 @pytest.mark.api
 class TestForAnonymous:
     expected_status_codes: dict[str, status] = {
@@ -107,13 +97,3 @@ class TestForEventManager(TestForAuthenticated):
 
         response2 = self._upload_file(api_client, content_max_files_key_missing_defaults_to_1, "file2.txt")
         assert response2.status_code == status.BAD_REQUEST, response2.data
-
-    def test_upload_with_no_file_uploader_config_disables_uploads(
-        self, api_client, content_no_file_uploader_config_disables_uploads
-    ):
-        response = self._upload_file(api_client, content_no_file_uploader_config_disables_uploads, "file1.txt")
-        assert response.status_code == status.BAD_REQUEST, response.data
-
-    def test_upload_with_no_config_at_all_disables_uploads(self, api_client, content_no_config_at_all_disables_uploads):
-        response = self._upload_file(api_client, content_no_config_at_all_disables_uploads, "file1.txt")
-        assert response.status_code == status.BAD_REQUEST, response.data

@@ -17,6 +17,7 @@ interface KeynoteData {
 }
 
 interface Keynote extends ApiObject, KeynoteData {
+  readonly rel_files: ApiEndpoint;
   secret_url?: Url;
   updated_at: string;
   extra_data: KeynoteExtraData;

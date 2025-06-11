@@ -10,7 +10,7 @@
           <tr v-for="file in filteredFiles" :key="file.id">
             <td>{{ file.type }}</td>
             <td>
-              <a :href="file.file" target="_blank">{{ file.url }}</a>
+              <a :href="file.file" target="_blank">{{ getDisplayName(file.file) }}</a>
             </td>
             <td>{{ file.description || '-' }}</td>
             <td>{{ file.tags.join(', ') }}</td>
@@ -137,6 +137,13 @@ const filteredFiles = computed<RelatedFile[]>(() => {
   if (!props.filterTypes) return files.value;
   return files.value.filter((file) => props.filterTypes?.some((type) => file.tags.includes(`type:${type}`)));
 });
+
+const selectedAccept = computed(() => props.accept || '*');
+
+function getDisplayName(fileUrl: string): string {
+  if (!fileUrl) return '';
+  return fileUrl.split('/').pop() || fileUrl;
+}
 
 async function fetchRelatedFiles() {
   if (!props.apiEndpoint) return;

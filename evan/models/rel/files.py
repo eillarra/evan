@@ -1,9 +1,12 @@
+import base64
+import os
+import secrets
 from typing import TYPE_CHECKING
 
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.urls import reverse
+from django.utils.text import slugify
 
 from evan.services.file_guard import check_file_access
 from evan.services.s3 import delete_s3_object
@@ -16,8 +19,23 @@ if TYPE_CHECKING:
 
 
 def get_upload_path(instance, filename) -> str:
-    """Get the upload path for a file."""
-    return f"{instance.type}/{instance.content_type_id}/{instance.object_id}/{filename}".lower()
+    """Get the upload path for a file.
+
+    Generates a unique, collision-free path using the instance's type, content type,
+    object ID, and a slugified filename with URL-safe unique identifier.
+
+    :param instance: The File model instance being saved.
+    :param filename: The original filename uploaded by the user.
+    :returns: A safe, unique file path for storage.
+    """
+    unique_id = base64.urlsafe_b64encode(secrets.token_bytes(6)).decode("utf-8").rstrip("=")
+    name, ext = os.path.splitext(filename)
+    clean_name = slugify(name)[:50]
+    if not clean_name:  # Fallback for empty or non-ASCII filenames
+        clean_name = "file"
+    clean_ext = ext.lower() if ext else ""
+    new_filename = f"{clean_name}_{unique_id}{clean_ext}"
+    return f"{instance.type}/{instance.content_type_id}/{instance.object_id}/{new_filename}"
 
 
 class File(models.Model):
@@ -67,11 +85,6 @@ class File(models.Model):
     def s3_object_key(self):
         return self.file.name
 
-    @property
-    def url(self):
-        """The URL to the file."""
-        return reverse("media_file", args=[self.file.name])
-
 
 class FilesMixin(models.Model):
     """A mixin to add files to a model."""
@@ -83,4 +96,8 @@ class FilesMixin(models.Model):
 
     def files_can_be_managed_by(self, user: "User") -> bool:
         """Check if the user can manage related files."""
+        if hasattr(self, "event") and self.event:  # type: ignore
+            return self.event.can_be_managed_by(user)  # type: ignore
+        elif hasattr(self, "can_be_managed_by"):
+            return self.can_be_managed_by(user)  # type: ignore
         raise NotImplementedError("files_can_be_managed_by must be implemented in the model using this mixin.")

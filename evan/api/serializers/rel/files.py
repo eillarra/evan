@@ -11,7 +11,6 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
     """File serializer."""
 
     self = NestedRelHyperlinkField(view_name="v1:file-detail")
-    url = serializers.URLField(read_only=True)
 
     class Meta:  # noqa: D106
         model = File
@@ -21,17 +20,17 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
     def _get_max_files_allowed(self, content_object):
         """Determines the maximum number of files allowed based on the content_object's configuration."""
         if not hasattr(content_object, "config") or not isinstance(content_object.config, dict):
-            return 0
+            return None
 
         file_uploader_config_dict = content_object.config.get("file_uploader")
         if not isinstance(file_uploader_config_dict, dict):
-            return 0
+            return None
 
         try:
             parsed_config = BaseFileUploaderConfig(**file_uploader_config_dict)
             return parsed_config.max_files
         except Exception:
-            return 0
+            return None
 
     def validate(self, data):
         """Validate the incoming data for file uploads."""
@@ -45,9 +44,12 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
 
         max_files_allowed = self._get_max_files_allowed(content_object)
 
-        current_file_count = content_object.files.count()
-        if current_file_count >= max_files_allowed:
-            raise serializers.ValidationError(f"Maximum number of files ({max_files_allowed}) already uploaded.")
+        # Only enforce limit if explicitly configured
+        if max_files_allowed is not None:
+            current_file_count = content_object.files.count()
+            if current_file_count >= max_files_allowed:
+                raise serializers.ValidationError(f"Maximum number of files ({max_files_allowed}) already uploaded.")
+
         return data
 
 

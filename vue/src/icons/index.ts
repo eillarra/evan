@@ -48,6 +48,7 @@ import {
   symSharpStackedEmail,
   symSharpTableChartView,
   symSharpViewWeek,
+  symSharpVisibility,
   symSharpWarning,
   symSharpWidgets,
   symSharpWysiwyg,
@@ -68,6 +69,7 @@ export const iconCopy = symSharpContentCopy;
 export const iconDelete = symSharpBackspace;
 export const iconDownload = symSharpDownload;
 export const iconEdit = symSharpEdit;
+export const iconEye = symSharpVisibility;
 export const iconInfo = symSharpCampaign;
 export const iconLabel = symSharpLabel;
 export const iconLock = symSharpLock;

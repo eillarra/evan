@@ -1,5 +1,3 @@
-import { sub } from 'date-fns';
-
 export default {
   ugent: 'Universiteit Gent',
   ea: 'Faculteit Ingenieurswetenschappen en Architectuur',
@@ -92,6 +90,7 @@ export default {
     sent_to: 'Verstuurd naar',
     speaker: 'Spreker | Sprekers',
     speaker_affiliation: 'Spreker affiliatie | Spreker affiliaties',
+    speaker_photo: 'Spreker foto | Spreker foto’s',
     speaker_website: 'Spreker website | Spreker websites',
     start: 'Start',
     start_date: 'Startdatum',

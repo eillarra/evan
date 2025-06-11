@@ -114,6 +114,7 @@ export default {
     sort_by: 'Sort by',
     speaker: 'Speaker | Speakers',
     speaker_affiliation: 'Speaker affiliation | Speaker affiliations',
+    speaker_photo: 'Speaker photo | Speaker photos',
     speaker_website: 'Speaker website | Speaker websites',
     start: 'Start',
     start_date: 'Start date',
