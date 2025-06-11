@@ -56,11 +56,9 @@
         <div class="row justify-between text-body2">
           <div class="col-12 col-md">
             <p>
-              Version&nbsp;<a
-                v-if="git_commit_hash && django_user && django_user.is_staff"
-                :href="`https://github.com/eillarra/evan/tree/${git_commit_hash}`"
-                >{{ version }}</a
-              ><span v-else>{{ version }}</span>
+              Version
+              <span v-if="!git_commit_hash">{{ version }}</span>
+              <a v-else :href="`https://github.com/eillarra/evan/tree/${git_commit_hash}`">{{ version }}</a>
             </p>
           </div>
           <div class="col-12 col-md-9 q-pr-sm">

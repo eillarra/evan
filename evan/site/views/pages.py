@@ -9,7 +9,7 @@ from evan.api.serializers.registrations import AuthRegistrationRetrieveSerialize
 from evan.api.serializers.sessions import SessionSerializer
 from evan.models import Content, Event, Paper, Permission, Session
 
-from .inertia import CachedInertiaView, InertiaView
+from .inertia import InertiaView
 
 
 def get_contents(key_prefix: str):
@@ -19,7 +19,7 @@ def get_contents(key_prefix: str):
     }
 
 
-class HomeView(CachedInertiaView):
+class HomeView(InertiaView):
     """Home page."""
 
     vue_entry_point = "apps/home/main.ts"

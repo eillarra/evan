@@ -52,7 +52,13 @@ def render_inertia(request, vue_entry_point: str, *, props: dict | None = None, 
     )
 
 
-class CachedInertiaView(View):
+class InertiaView(View):
+    """Base class for Inertia.js views.
+
+    Note: Inertia responses must never be cached due to dynamic CSRF tokens,
+    partial reload handling, and version-based cache busting.
+    """
+
     page_title: str | None = None
     vue_entry_point: str
 
@@ -62,6 +68,7 @@ class CachedInertiaView(View):
     def get_props(self, request, *args, **kwargs) -> dict:
         return {}
 
+    @method_decorator(never_cache)
     def get(self, request, *args, **kwargs):
         if self.vue_entry_point is None:
             raise NotImplementedError("`vue_entry_point` must be set")
@@ -72,9 +79,3 @@ class CachedInertiaView(View):
             props=self.get_props(request, *args, **kwargs),
             page_title=self.get_page_title(self, request, *args, **kwargs),
         )
-
-
-class InertiaView(CachedInertiaView):
-    @method_decorator(never_cache)
-    def get(self, request, *args, **kwargs):
-        return super().get(request, *args, **kwargs)
