@@ -118,6 +118,7 @@ export default {
     required: 'Verplicht',
   },
   messages: {
+    data_refreshed: 'Gegevens vernieuwd',
     content_updated: 'Inhoud bijgewerkt',
     copied_to_clipboard: 'Gekopieerd naar het klembord',
     file_created: 'Bestand aangemaakt',

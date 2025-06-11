@@ -1,4 +1,4 @@
-import { computed, ref, shallowRef } from 'vue';
+import { computed, onScopeDispose, ref, shallowRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { defineStore } from 'pinia';
 
@@ -18,19 +18,39 @@ export const useStore = defineStore('evanEvent', () => {
 
   const { t } = useI18n();
 
+  let refetchTimeoutId: NodeJS.Timeout | null = null;
+
+  onScopeDispose(() => {
+    if (refetchTimeoutId) {
+      clearTimeout(refetchTimeoutId);
+      refetchTimeoutId = null;
+    }
+  });
+
   async function setData(inertiaEvanEvent: ManagedEvanEvent) {
     evanEvent.value = inertiaEvanEvent;
     await init();
   }
 
   async function init() {
+    await refetch(true);
+  }
+
+  async function refetch(first?: boolean) {
     await fetchRegistrations();
     await fetchEmails();
+
+    if (!first) {
+      notify.info(t('messages.data_refreshed'));
+    }
+
+    if (refetchTimeoutId) {
+      clearTimeout(refetchTimeoutId);
+    }
+    refetchTimeoutId = setTimeout(() => refetch(), 2 * 60 * 1000); // Refetch every 2 minutes
   }
 
   async function fetchEmails() {
-    emails.value = [];
-
     if (!evanEvent.value) {
       return;
     }
@@ -55,8 +75,6 @@ export const useStore = defineStore('evanEvent', () => {
   // Contents ------
 
   async function fetchContents() {
-    contents.value = [];
-
     if (!evanEvent.value) {
       return;
     }
@@ -171,8 +189,6 @@ export const useStore = defineStore('evanEvent', () => {
   // Registrations ------
 
   async function fetchRegistrations() {
-    registrations.value = [];
-
     if (!evanEvent.value) {
       return;
     }

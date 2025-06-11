@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { GENDER_OPTIONS } from '@/utils/gender';
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -14,24 +15,10 @@ const props = defineProps<{
 const mutable = ref<string>(props.modelValue);
 
 const options = computed<QuasarSelectOption[]>(() => {
-  return [
-    {
-      value: 'male',
-      label: 'Male',
-    },
-    {
-      value: 'female',
-      label: 'Female',
-    },
-    {
-      value: 'non_binary',
-      label: 'Non-binary',
-    },
-    {
-      value: 'prefer_not_to_say',
-      label: 'Prefer not to say',
-    },
-  ];
+  return GENDER_OPTIONS.map((option) => ({
+    value: option.value,
+    label: option.label,
+  }));
 });
 
 watch(mutable, (val) => {

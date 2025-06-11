@@ -6,7 +6,7 @@ from evan.models.venues import Room, Venue
 class RoomSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:room-detail")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Room
         exclude = []
         read_only_fields = ["id"]
@@ -16,7 +16,7 @@ class RoomSerializer(serializers.ModelSerializer):
 class VenueReadOnlySerializer(serializers.ModelSerializer):
     rooms = RoomSerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Venue
         exclude = ["event"]
         read_only_fields = ["id", "event"]
@@ -26,7 +26,7 @@ class VenueSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:venue-detail")
     rooms = RoomSerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Venue
         exclude = ["event"]
         read_only_fields = ["id", "event"]

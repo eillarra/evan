@@ -9,7 +9,7 @@ class PaperReadOnlySerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:paper-detail")
     files = FileSerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Paper
         exclude = ["event", "created_at", "uuid", "abstract"]
 
@@ -17,7 +17,7 @@ class PaperReadOnlySerializer(serializers.ModelSerializer):
 class PaperSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:paper-detail")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Paper
         exclude = ["event", "created_at", "uuid"]
         read_only_fields = ["id", "event", "updated_at"]
@@ -26,7 +26,7 @@ class PaperSerializer(FilesMixin, serializers.ModelSerializer):
 class PaperWithSecretsSerializer(PaperSerializer):
     secret_url = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Paper
         exclude = ["event"]
         read_only_fields = ["id", "event", "created_at", "updated_at", "uuid", "secret"]

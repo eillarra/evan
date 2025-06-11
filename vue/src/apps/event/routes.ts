@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
         path: '/',
         name: 'stats',
         strict: true,
-        component: () => import('./pages/StatsPage.vue'),
+        component: () => import('./pages/stats/StatsPage.vue'),
       },
       {
         path: 'coupons/',

@@ -10,7 +10,7 @@ class SessionReadOnlySerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True)
     slug = serializers.SlugField(read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Session
         exclude = ["event", "created_at", "uuid", "description"]
 
@@ -19,7 +19,7 @@ class SessionSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:session-detail")
     slug = serializers.SlugField(read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Session
         exclude = ["event", "created_at", "uuid"]
         read_only_fields = ["id", "event", "updated_at"]
@@ -42,7 +42,7 @@ class SessionSerializer(FilesMixin, serializers.ModelSerializer):
 class SessionWithSecretsSerializer(SessionSerializer):
     secret_url = serializers.SerializerMethodField()
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Session
         exclude = ["event"]
         read_only_fields = ["id", "event", "created_at", "updated_at", "uuid", "secret"]

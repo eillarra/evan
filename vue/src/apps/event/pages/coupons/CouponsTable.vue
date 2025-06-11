@@ -15,6 +15,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import { formatCurrency } from '@/utils/numbers';
 import { useStore } from '../../store';
 
 import DataTable from '@/components/tables/DataTable.vue';
@@ -71,7 +72,7 @@ const rows = computed(() => {
   return props.coupons.map((obj: Coupon) => ({
     _self: obj,
     code: obj.code,
-    value: obj.value,
+    value: formatCurrency(obj.value),
     notes: obj.notes,
     is_used: props.couponIdsUsed.has(obj.id),
   }));

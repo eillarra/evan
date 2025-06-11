@@ -1,7 +1,7 @@
 type DietaryOption = 'none' | 'vegetarian' | 'vegan' | 'gluten_free' | 'dairy_free' | 'nut_free' | 'other';
 
 interface UserExtraData {
-  gender: string;
+  gender: import('../utils/gender').GenderOption;
   dietary: DietaryOption;
   special_needs: string | null;
   connect: boolean;

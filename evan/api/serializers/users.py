@@ -22,11 +22,12 @@ class UserTinySerializer(serializers.ModelSerializer):
 
     class Meta:  # noqa: D106
         model = User
-        fields = ["id", "username", "email", "name", "affiliation"]
+        fields = ["id", "username", "email", "name", "affiliation", "country"]
 
 
 class UserSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:user-detail")
+    name = serializers.CharField()
     country = CountryField(allow_null=True)
     extra_data = serializers.JSONField()
 
@@ -37,6 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
             "id",
             "username",
             "email",
+            "name",
             "first_name",
             "last_name",
             "affiliation",

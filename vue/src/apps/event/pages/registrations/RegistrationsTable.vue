@@ -12,6 +12,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+import { formatCurrency } from '@/utils/numbers';
 import { formatDate } from '@/utils/dates';
 
 import DataTable from '@/components/tables/DataTable.vue';
@@ -119,7 +120,7 @@ const rows = computed(() => {
     uuid: obj.uuid,
     date: formatDate(obj.created_at),
     fee_type: obj.fee_type || '-',
-    total_fee: obj.total_fee,
+    total_fee: formatCurrency(obj.total_fee),
     is_paid: obj.is_paid,
     has_coupon: !!obj.coupon,
   }));

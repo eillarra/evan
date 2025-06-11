@@ -6,7 +6,7 @@ from evan.models.tracks import Track
 class TrackReadOnlySerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Track
         exclude = ["event"]
 
@@ -14,7 +14,7 @@ class TrackReadOnlySerializer(serializers.ModelSerializer):
 class TrackSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:track-detail")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Track
         exclude = ["event"]
         read_only_fields = ["id", "event"]

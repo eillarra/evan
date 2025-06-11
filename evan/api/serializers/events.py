@@ -14,12 +14,16 @@ from .venues import VenueReadOnlySerializer, VenueSerializer
 
 
 class FeeSerializer(serializers.ModelSerializer):
-    class Meta:
+    """Serializer for event fees."""
+
+    class Meta:  # noqa: D106
         model = Fee
         exclude = ["event"]
 
 
 class EventListSerializer(serializers.ModelSerializer):
+    """Serializer for listing events."""
+
     self = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     country = CountryField(country_dict=True, read_only=True)
@@ -30,7 +34,7 @@ class EventListSerializer(serializers.ModelSerializer):
     tracks = TrackReadOnlySerializer(many=True, read_only=True)
     topics = TopicReadOnlySerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Event
         fields = [
             "self",
@@ -53,6 +57,8 @@ class EventListSerializer(serializers.ModelSerializer):
 
 
 class EventSerializer(FilesMixin, EventListSerializer):
+    """Serializer for event details."""
+
     # abstract_url = serializers.URLField(source="get_abstract_url", read_only=True)
     registration_url = serializers.SerializerMethodField()
     registration_early_deadline = serializers.DateTimeField(allow_null=True)
@@ -69,7 +75,7 @@ class EventSerializer(FilesMixin, EventListSerializer):
 
     registration_configuration = serializers.JSONField(read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Event
         exclude = ["id", "accept_by_default", "signature", "config", "custom_fields"]
         read_only_fields = ["__all__"]
@@ -85,6 +91,8 @@ class EventSerializer(FilesMixin, EventListSerializer):
 
 
 class ManagedEventSerializer(EventSerializer):
+    """Serializer for managed events."""
+
     papers = PaperSerializer(many=True, read_only=True)
     sessions = SessionSerializer(many=True, read_only=True)
     sponsors = SponsorSerializer(many=True, read_only=True)
@@ -92,7 +100,7 @@ class ManagedEventSerializer(EventSerializer):
     topics = TopicSerializer(many=True, read_only=True)
     venues = VenueSerializer(many=True, read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Event
         exclude = []
         read_only_fields = ["id", "code"]

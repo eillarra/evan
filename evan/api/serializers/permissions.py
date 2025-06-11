@@ -8,6 +8,6 @@ from .users import BasicUserSerializer
 class PermissionSerializer(serializers.ModelSerializer):
     user = BasicUserSerializer()
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Permission
         fields = ("user", "level")

@@ -4,6 +4,6 @@ from evan.models import Payment
 
 
 class PaymentSerializer(serializers.ModelSerializer):
-    class Meta:
+    class Meta:  # noqa: D106
         model = Payment
         fields = ("amount", "status", "outcome")

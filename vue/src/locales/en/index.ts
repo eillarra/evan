@@ -127,6 +127,7 @@ export default {
     required: 'Required',
   },
   messages: {
+    data_refreshed: 'Data refreshed',
     committee_created: 'Committee created',
     committee_confirm_delete: 'Are you sure you want to delete this committee?',
     committee_deleted: 'Committee deleted',

@@ -32,6 +32,7 @@ interface Registration extends RegistrationData {
   readonly self: ApiEndpoint;
   readonly rel_remarks: ApiEndpoint;
 
+  readonly is_early: boolean;
   readonly url: Url;
   readonly payment_url: Url;
   readonly uuid: string;
@@ -50,6 +51,7 @@ interface Registration extends RegistrationData {
 
   readonly paid: number;
   readonly paid_via_invoice: number;
+  readonly saldo: number;
   readonly is_paid: boolean;
 
   readonly tags: Tags;

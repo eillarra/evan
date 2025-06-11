@@ -11,9 +11,7 @@
     map-options
   >
     <template v-slot:append>
-      <q-avatar>
-        <country-flag :code="mutable" />
-      </q-avatar>
+      <country-flag :code="mutable" />
     </template>
   </q-select>
 </template>

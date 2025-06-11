@@ -6,7 +6,7 @@ from evan.models.topics import Topic
 class TopicReadOnlySerializer(serializers.ModelSerializer):
     slug = serializers.SlugField(read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Topic
         exclude = ["event"]
 
@@ -14,7 +14,7 @@ class TopicReadOnlySerializer(serializers.ModelSerializer):
 class TopicSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:topic-detail")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Topic
         exclude = ["event"]
         read_only_fields = ["id", "event"]

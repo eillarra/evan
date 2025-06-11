@@ -11,7 +11,7 @@ class AbstractReviewSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:review-detail", lookup_field="id")
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True, allow_null=False)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = AbstractReview
         exclude = ()
         read_only_fields = ("id", "created_at", "updated_at")
@@ -22,7 +22,7 @@ class AbstractSerializer(FilesMixin, serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Abstract
         exclude = ("event",)
         read_only_fields = ("id", "uuid", "event", "is_accepted", "created_at", "updated_at")
@@ -46,6 +46,6 @@ class FullAbstractReviewSerializer(AbstractReviewSerializer):
 class PublicAbstractSerializer(AbstractSerializer):
     file = FileSerializer(read_only=True)
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Abstract
         fields = ("id", "title", "authors", "custom_data", "abstract", "file")

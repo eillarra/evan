@@ -4,7 +4,7 @@ from evan.models import Sponsor
 
 
 class SponsorReadOnlySerializer(serializers.ModelSerializer):
-    class Meta:
+    class Meta:  # noqa: D106
         model = Sponsor
         exclude = ["event"]
 
@@ -12,7 +12,7 @@ class SponsorReadOnlySerializer(serializers.ModelSerializer):
 class SponsorSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:sponsor-detail")
 
-    class Meta:
+    class Meta:  # noqa: D106
         model = Sponsor
         exclude = ["event"]
         read_only_fields = ["id", "event"]
