@@ -53,6 +53,13 @@ const columns = [
     classes: 'panno-mono-number',
   },
   {
+    name: 'coverage',
+    field: 'coverage',
+    label: t('fields.coverage'),
+    align: 'left',
+    autoWidth: true,
+  },
+  {
     name: 'notes',
     field: 'notes',
     label: t('fields.note', 9),
@@ -73,6 +80,7 @@ const rows = computed(() => {
     _self: obj,
     code: obj.code,
     value: formatCurrency(obj.value),
+    coverage: obj.coverage,
     notes: obj.notes,
     is_used: props.couponIdsUsed.has(obj.id),
   }));

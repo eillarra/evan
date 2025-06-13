@@ -1,6 +1,7 @@
 interface CouponData {
   value: number;
   notes: string;
+  coverage: 'base_fee' | 'all_fees';
 }
 
 interface Coupon extends ApiObject, CouponData {

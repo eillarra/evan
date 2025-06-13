@@ -55,6 +55,7 @@ export default {
     author: 'Auteur | Auteurs',
     approved: 'Goedgekeurd',
     code: 'Interne code | Interne codes',
+    coverage: 'Dekking',
     created_at: 'Aangemaakt op',
     created_by: 'Aangemaakt door',
     date: 'Datum | Data',

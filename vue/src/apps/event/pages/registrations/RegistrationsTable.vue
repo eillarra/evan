@@ -121,7 +121,7 @@ const rows = computed(() => {
     date: formatDate(obj.created_at),
     fee_type: obj.fee_type || '-',
     total_fee: formatCurrency(obj.total_fee),
-    is_paid: obj.is_paid,
+    is_paid: obj.is_paid ? true : obj.paid > 0 || obj.paid_via_invoice > 0 || obj.coupon ? null : false,
     has_coupon: !!obj.coupon,
   }));
 });

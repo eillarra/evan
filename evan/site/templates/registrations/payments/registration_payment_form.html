@@ -75,7 +75,8 @@
           {% endif %}
           {% if registration.coupon %}
             <p>You've used a coupon:<br>
-              <strong class="text-sm">{{ registration.coupon.code }}</strong> &nbsp;<span class="radius badge badge-primary">{{ registration.coupon.value }} EUR</span>
+              <strong class="text-sm">{{ registration.coupon.code }}</strong> &nbsp;<span class="radius badge badge-primary">{{ registration.coupon.value }} EUR
+              <br>(coupon covers: {{ registration.coupon.coverage }})</span>
             </p>
           {% else %}
             <p>If you received a coupon, please apply the coupon code to update your balance before proceeding to pay.</p>

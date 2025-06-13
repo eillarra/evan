@@ -97,6 +97,7 @@
         >
           <span v-if="props.col.name.startsWith('is_') || props.col.name.startsWith('has_')">
             <q-icon v-if="props.value" :name="iconTableBoolTrue" color="green" :size="iconSize" />
+            <q-icon v-else-if="props.value === null" :name="iconTableCheckPending" color="orange-8" :size="iconSize" />
             <q-icon v-else :name="iconTableBoolFalse" color="grey" :size="iconSize" />
           </span>
           <span v-else-if="props.col.name.endsWith('_badge')" class="q-gutter-x-xs">

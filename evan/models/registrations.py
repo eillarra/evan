@@ -190,12 +190,16 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
 
     @property
     def paid_via_coupon(self) -> int:
-        return self.coupon.value if self.coupon else 0
+        if not self.coupon:
+            return 0
+        elif self.coupon.coverage == self.coupon.BASE_FEE:
+            return min(self.coupon.value, self.base_fee)
+        else:
+            return min(self.coupon.value, self.total_fee)
 
     @property
     def remaining_fee(self) -> int:
-        coupon_discount = self.coupon.value if self.coupon else 0
-        return self.total_fee - self.paid - self.paid_via_invoice - coupon_discount
+        return self.total_fee - self.paid - self.paid_via_invoice - self.paid_via_coupon
 
     @property
     def secret(self) -> str:

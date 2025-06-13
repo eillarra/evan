@@ -213,6 +213,17 @@ import StatsCard from '../../components/StatsCard.vue';
 
 const { evanEvent, registrations } = storeToRefs(useStore());
 
+const calculateCouponDiscount = (registration: Registration) => {
+  if (!registration.coupon) return 0;
+
+  const { coupon } = registration;
+  if (coupon.coverage === 'base_fee') {
+    return Math.min(coupon.value, registration.base_fee || 0);
+  } else {
+    return Math.min(coupon.value, registration.total_fee || 0);
+  }
+};
+
 const totalRegistrations = computed(() => registrations.value.length);
 
 // Payment status statistics
@@ -260,10 +271,9 @@ const revenueStats = computed(() => {
     const totalFee = reg.total_fee || 0;
     const paidAmount = reg.paid || 0;
     const invoicePaid = reg.paid_via_invoice || 0;
-    const couponValue = reg.coupon?.value || 0;
     const saldo = reg.saldo || 0;
 
-    const actualCouponDiscount = couponValue > 0 ? Math.min(couponValue, totalFee) : 0;
+    const actualCouponDiscount = calculateCouponDiscount(reg);
 
     totalExpected += totalFee;
     totalReceived += paidAmount + invoicePaid;
@@ -438,8 +448,7 @@ const feeTypeStats = computed(() => {
       feeTypeKey = baseFeeType;
     }
 
-    const couponValue = reg.coupon?.value || 0;
-    const actualCouponDiscount = couponValue > 0 ? Math.min(couponValue, reg.total_fee || 0) : 0;
+    const actualCouponDiscount = calculateCouponDiscount(reg);
 
     if (!feeTypeMap.has(feeTypeKey)) {
       feeTypeMap.set(feeTypeKey, {

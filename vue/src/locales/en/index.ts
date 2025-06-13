@@ -59,6 +59,7 @@ export default {
     approved: 'Approved',
     code: 'Code | Codes',
     country: 'Country | Countries',
+    coverage: 'Coverage',
     created_at: 'Created at',
     created_by: 'Created by',
     date: 'Date | Dates',
