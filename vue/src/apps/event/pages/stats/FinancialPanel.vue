@@ -531,12 +531,14 @@ const feeTypeColumns = [
     field: 'total',
     align: 'center' as const,
     sortable: true,
+    classes: 'panno-mono-number',
   },
   {
     name: 'paid',
     label: 'Paid',
     field: 'paid',
     align: 'center' as const,
+    classes: 'panno-mono-number',
   },
   {
     name: 'paymentRate',
@@ -549,6 +551,7 @@ const feeTypeColumns = [
     label: 'Coupons',
     field: 'couponsUsed',
     align: 'center' as const,
+    classes: 'panno-mono-number',
   },
   {
     name: 'couponUsageRate',
@@ -561,18 +564,21 @@ const feeTypeColumns = [
     label: 'Revenue',
     field: (row: { revenue: number }) => formatCurrency(row.revenue),
     align: 'right' as const,
+    classes: 'panno-mono-number',
   },
   {
     name: 'expectedRevenue',
     label: 'Expected',
     field: (row: { expectedRevenue: number }) => formatCurrency(row.expectedRevenue),
     align: 'right' as const,
+    classes: 'panno-mono-number',
   },
   {
     name: 'couponDiscounts',
     label: 'Discounts',
     field: (row: { couponDiscounts: number }) => formatCurrency(row.couponDiscounts),
     align: 'right' as const,
+    classes: 'panno-mono-number',
   },
 ];
 </script>
