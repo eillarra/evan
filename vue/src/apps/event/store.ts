@@ -240,6 +240,103 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  // Subsessions ------
+
+  async function createSubsession(sessionId: number, data: SubsessionData) {
+    const sessionIndex = sessions.value.findIndex((s) => s.id === sessionId);
+    if (sessionIndex === -1) return;
+
+    const session = sessions.value[sessionIndex];
+    return api.post(session.self + 'subsessions/', data).then((res) => {
+      const currentSubsessions = session.subsessions || [];
+      // Ensure the subsession has the session ID
+      const subsessionWithSessionId = { ...res.data, session: sessionId };
+      const newSubsessions = [...currentSubsessions, subsessionWithSessionId].sort((a, b) => a.order - b.order);
+
+      // Replace the session object to trigger reactivity
+      sessions.value[sessionIndex] = {
+        ...session,
+        subsessions: newSubsessions,
+      };
+
+      notify.success(t('messages.subsession_created'));
+      return res;
+    });
+  }
+
+  async function updateSubsession(subsession: Subsession) {
+    return await api.put(subsession.self, subsession).then((res) => {
+      // If subsession.session is not set, we need to find it by searching all sessions
+      let sessionIndex = -1;
+      if (subsession.session) {
+        sessionIndex = sessions.value.findIndex((s) => s.id === subsession.session);
+      } else {
+        // Find the session that contains this subsession
+        for (let i = 0; i < sessions.value.length; i++) {
+          if (sessions.value[i].subsessions?.some((sub) => sub.id === subsession.id)) {
+            sessionIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (sessionIndex !== -1 && sessions.value[sessionIndex].subsessions) {
+        const session = sessions.value[sessionIndex];
+        const subsessionIndex = session.subsessions!.findIndex((sub) => sub.id === subsession.id);
+
+        if (subsessionIndex !== -1) {
+          const newSubsessions = [...session.subsessions!];
+          // Ensure the updated subsession has the session ID
+          newSubsessions[subsessionIndex] = { ...res.data, session: session.id };
+          newSubsessions.sort((a, b) => a.order - b.order);
+
+          // Replace the session object to trigger reactivity
+          sessions.value[sessionIndex] = {
+            ...session,
+            subsessions: newSubsessions,
+          };
+        }
+      }
+      notify.success(t('messages.subsession_updated'));
+      return res;
+    });
+  }
+
+  function removeSubsession(subsession: Subsession) {
+    confirm(t('messages.subsession_confirm_delete'), () => {
+      api.delete(subsession.self).then(() => {
+        console.log('test', subsession.session);
+        // If subsession.session is not set, we need to find it by searching all sessions
+        let sessionIndex = -1;
+        if (subsession.session) {
+          sessionIndex = sessions.value.findIndex((s) => s.id === subsession.session);
+        } else {
+          // Find the session that contains this subsession
+          for (let i = 0; i < sessions.value.length; i++) {
+            if (sessions.value[i].subsessions?.some((sub) => sub.id === subsession.id)) {
+              sessionIndex = i;
+              break;
+            }
+          }
+        }
+
+        if (sessionIndex !== -1 && sessions.value[sessionIndex].subsessions) {
+          const session = sessions.value[sessionIndex];
+
+          // Create a new session object with updated subsessions
+          const updatedSession = {
+            ...session,
+            subsessions: session.subsessions!.filter((sub) => sub.id !== subsession.id),
+          };
+
+          // Replace the session in the array to trigger reactivity
+          sessions.value[sessionIndex] = updatedSession;
+        }
+        notify.success(t('messages.subsession_deleted'));
+      });
+    });
+  }
+
   // Topics ------
 
   function sortTopics() {
@@ -338,6 +435,19 @@ export const useStore = defineStore('evanEvent', () => {
     }));
   });
 
+  // Sessions Options ------
+
+  const sessionOptions = computed<QuasarSelectOption[]>(() => {
+    if (!sessions.value) return [];
+
+    return sessions.value
+      .sort((a, b) => (a.code || '').localeCompare(b.code || ''))
+      .map((session) => ({
+        value: session.id,
+        label: session.code || session.title,
+      }));
+  });
+
   // ------
 
   return {
@@ -346,6 +456,7 @@ export const useStore = defineStore('evanEvent', () => {
     createCoupon,
     createPaper,
     createSession,
+    createSubsession,
     createTopic,
     createTrack,
     fetchContents,
@@ -358,11 +469,13 @@ export const useStore = defineStore('evanEvent', () => {
     updateCoupon,
     updatePaper,
     updateSession,
+    updateSubsession,
     updateTopic,
     updateTrack,
     removeCoupon,
     removePaper,
     removeSession,
+    removeSubsession,
     removeTopic,
     removeTrack,
     evanEvent,
@@ -375,5 +488,6 @@ export const useStore = defineStore('evanEvent', () => {
     sessions,
     topicOptions,
     trackOptions,
+    sessionOptions,
   };
 });

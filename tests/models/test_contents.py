@@ -5,8 +5,8 @@ from evan.utils.factories import ContentFactory
 
 
 @pytest.fixture
-def content(db, test_event):
-    return ContentFactory(event=test_event)
+def content(db, t_event):
+    return ContentFactory(event=t_event)
 
 
 @pytest.mark.django_db

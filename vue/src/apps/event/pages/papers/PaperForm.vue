@@ -12,9 +12,9 @@
           />
           <q-input dense v-model="formData.title" :label="`${$t('fields.title')} *`" class="col-12" />
           <evan-select
-            v-model="formData.track"
-            :label="$t('models.track')"
-            :options="trackOptions"
+            v-model="formData.session"
+            :label="$t('models.session')"
+            :options="sessionOptions"
             class="col-12 col-md-3"
           />
           <evan-select
@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import { useStore } from '../../store';
@@ -62,14 +62,21 @@ const props = defineProps<{
 
 const store = useStore();
 
-const { topicOptions, trackOptions } = storeToRefs(store);
+const { topicOptions, sessionOptions } = storeToRefs(store);
 
 const obj = ref<Paper | undefined>(props.obj);
 const formData = ref<PaperData>({
   title: props.obj?.title || '',
   abstract: props.obj?.abstract || '',
-  track: props.obj?.track || null,
+  session: props.obj?.session || null,
   topics: props.obj?.topics || [],
+});
+
+onMounted(() => {
+  // Ensure sessions are loaded for the dropdown
+  if (sessionOptions.value.length === 0) {
+    store.fetchSessions();
+  }
 });
 
 function createUpdate() {

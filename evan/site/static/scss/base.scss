@@ -239,14 +239,5 @@ code, kbd, pre, samp,
 }
 
 
-/* Forms */
-
-.ugent__form {
-  .q-field--dense .q-field__control {
-    height: 44px;
-  }
-}
-
-
 @import '_marked.scss';
 @import '_ugent.scss';

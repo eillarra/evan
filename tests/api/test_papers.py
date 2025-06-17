@@ -6,8 +6,8 @@ from evan.utils.factories import EventFactory, PaperFactory, UserFactory
 
 
 @pytest.fixture
-def paper(db, test_event):
-    return PaperFactory(event=test_event)
+def paper(db, t_event):
+    return PaperFactory(event=t_event)
 
 
 @pytest.fixture
@@ -34,8 +34,8 @@ class TestForAnonymous:
     def _get_update_data(self):
         return {}
 
-    def test_list(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_list(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         response = api_client.get(url)
         assert response.status_code == self.expected_status_codes["list"]
 
@@ -45,8 +45,8 @@ class TestForAnonymous:
         assert ("uuid" in response.data) is self.sees_secrets
         assert ("secret_url" in response.data) is self.sees_secrets
 
-    def test_create(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_create(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         data = self._get_create_data()
         response = api_client.post(url, data)
         assert response.status_code == self.expected_status_codes["create"]
@@ -77,8 +77,8 @@ class TestForEventManager(TestForAuthenticated):
     }
 
     @pytest.fixture(autouse=True)
-    def setup(self, api_client, test_event_manager):
-        api_client.force_authenticate(user=test_event_manager)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
 
     def _get_create_data(self):
         return {

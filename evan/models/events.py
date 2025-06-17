@@ -127,16 +127,19 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def get_registration_url(self) -> str:  # noqa: DJ012
         return reverse("registration:app", args=[self.code])
 
-    def get_email_template(self, *, code: str) -> "EmailTemplate":
+    def get_email_template(self, *, code: str) -> "EmailTemplate | None":
         """Get an email template for an event.
 
         :param code: The code of the email template to get.
-        :returns: The email template for the event and code or the default one.
+        :returns: The email template for the event and code or the default one, or None if not found.
         """
         try:
             return EmailTemplate.objects.get(code=code, event=self)
         except EmailTemplate.DoesNotExist:
-            return EmailTemplate.objects.get(code=code, event=None)
+            try:
+                return EmailTemplate.objects.get(code=code, event=None)
+            except EmailTemplate.DoesNotExist:
+                return None
 
     @property
     def allows_invoices(self) -> bool:

@@ -45,6 +45,7 @@ export default {
     remark: 'Remark | Remarks',
     room: 'Room | Rooms',
     session: 'Session | Sessions',
+    subsession: 'Subsession | Subsessions',
     topic: 'Topic | Topics',
     track: 'Track | Tracks',
     tracks_topics: 'Tracks & topics',
@@ -79,6 +80,7 @@ export default {
     note: 'Note | Notes',
     number: 'Number | Numbers',
     open: 'Open',
+    order: 'Order',
     paid: 'Paid',
     phone_number: 'Phone number | Phone numbers',
     position: 'Position',
@@ -94,6 +96,7 @@ export default {
     status: 'Status | Statuses',
     subject: 'Subject | Subjects',
     title: 'Title | Titles',
+    program: 'Program',
     type: 'Type | Types',
     updated_at: 'Last updated',
     updated_by: 'Last updated by',
@@ -104,6 +107,8 @@ export default {
   form: {
     add: 'Add',
     approve: 'Approve',
+    cancel: 'Cancel',
+    close: 'Close',
     select_all_pending: 'Select all pending',
     new: 'New',
     new_member: 'New member',
@@ -173,5 +178,31 @@ export default {
     track_confirm_delete: 'Are you sure you want to delete this track?',
     track_deleted: 'Track deleted',
     track_updated: 'Track updated',
+  },
+  program: {
+    insert_paper: 'Insert Paper',
+    preview: 'Preview',
+    preview_empty: 'Preview will appear here as you type...',
+    select_paper: 'Select Paper to Insert',
+    search_papers: 'Search papers...',
+    template_placeholder: 'Enter program description. Use [paper:ID] to reference papers.',
+  },
+  session: {
+    tabs: {
+      general: 'General Info',
+      description: 'Description',
+      program: 'Program',
+    },
+    program_with_subsessions_note:
+      'This session has subsessions. Individual subsession programs will override this general program.',
+    view_subsessions: 'View Subsessions',
+  },
+  subsession: {
+    title: 'Subsession title',
+    validation: {
+      time_outside_session: 'Time must be within the session timeframe',
+      start_time_range: 'Start time must be between {start} and {end}',
+      end_time_range: 'End time must be between {start} and {end}',
+    },
   },
 };

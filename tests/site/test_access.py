@@ -24,8 +24,8 @@ class TestForAnonymous:
         response = client.get(reverse("homepage"))
         assert response.status_code == self.expected_status_codes["homepage"]
 
-    def test_event_app_access(self, client, test_event):
-        response = client.get(reverse("event:app", args=[test_event.code]))
+    def test_event_app_access(self, client, t_event):
+        response = client.get(reverse("event:app", args=[t_event.code]))
         assert response.status_code == self.expected_status_codes["event:app"]
 
 
@@ -47,8 +47,8 @@ class TestForEventManager(TestForAuthenticated):
     }
 
     @pytest.fixture(autouse=True)
-    def setup(self, client, test_event_manager):
-        client.force_login(user=test_event_manager)
+    def setup(self, client, t_event_manager):
+        client.force_login(user=t_event_manager)
 
 
 """

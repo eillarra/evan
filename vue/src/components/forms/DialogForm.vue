@@ -46,7 +46,7 @@
         <q-space />
         <q-btn flat round v-close-popup :icon="iconClose" />
       </q-toolbar>
-      <q-toolbar class="text-dark text-body1 q-px-lg" style="min-height: auto">
+      <q-toolbar class="text-dark" style="min-height: auto">
         <slot name="tabs"></slot>
       </q-toolbar>
     </q-header>

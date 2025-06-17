@@ -4,7 +4,6 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from ...serializers.rel.files import FileSerializer
-from ..contents import ContentPermission
 from .base import RelModelViewSet
 
 
@@ -18,10 +17,12 @@ class FilePermission(BasePermission):
 
         rel_object = view.get_content_object()
 
-        if type(rel_object).__name__ == "Content":
-            return ContentPermission().has_permission(request, view)
+        if hasattr(rel_object, "event") and rel_object.event:
+            return rel_object.event.can_be_managed_by(request.user)
+        elif hasattr(rel_object, "can_be_managed_by"):
+            return rel_object.can_be_managed_by(request.user)
 
-        return rel_object.can_be_managed_by(request.user)
+        return False
 
     def has_object_permission(self, request, view, obj):
         """Check if the user has permission to manipulate the Timesheet object."""
@@ -44,7 +45,7 @@ class FileViewSet(RelModelViewSet):
         return self.get_content_object().files  # type: ignore
 
     def create(self, request, *args, **kwargs):
-        """Convert tags to a valid JSON object. This is necessary because we get the multipart data mengled..."""
+        """Convert tags to a valid JSON object. This is necessary because we get the multipart data mengled."""
         json_data = json.loads(request.data.get("json", "{}"))
         request.data["type"] = json_data.get("type", "private")
         request.data["description"] = json_data.get("description", "")

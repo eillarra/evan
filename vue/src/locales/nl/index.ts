@@ -85,6 +85,7 @@ export default {
     status: 'Status | Statussen',
     subject: 'Onderwerp | Onderwerpen',
     title: 'Titel | Titels',
+    program: 'Programma',
     type: 'Type | Types',
     updated_at: 'Laatst bijgewerkt',
     updated_by: 'Laatst bijgewerkt door',
@@ -95,6 +96,8 @@ export default {
   form: {
     add: 'Toevoegen',
     approve: 'Goedkeuren',
+    cancel: 'Annuleren',
+    close: 'Sluiten',
     select_all_pending: 'Selecteer alle niet goedgekeurde',
     new: 'Nieuw',
     new_member: 'Nieuw persoon',
@@ -130,5 +133,31 @@ export default {
     remark_confirm_delete: 'Weet je zeker dat je deze opmerking wilt verwijderen?',
     remark_deleted: 'Opmerking verwijderd',
     remark_updated: 'Opmerking bijgewerkt',
+  },
+  program: {
+    insert_paper: 'Paper Invoegen',
+    preview: 'Voorbeeld',
+    preview_empty: 'Voorbeeld verschijnt hier terwijl je typt...',
+    select_paper: 'Selecteer Paper om In te Voegen',
+    search_papers: 'Zoek papers...',
+    template_placeholder: 'Voer programma beschrijving in. Gebruik [paper:ID] om naar papers te verwijzen.',
+  },
+  session: {
+    tabs: {
+      general: 'Algemene Info',
+      description: 'Beschrijving',
+      program: 'Programma',
+    },
+    program_with_subsessions_note:
+      "Deze sessie heeft subsessies. Individuele subsessie programma's zullen dit algemene programma overschrijven.",
+    view_subsessions: 'Bekijk Subsessies',
+  },
+  subsession: {
+    title: 'Subsessie titel',
+    validation: {
+      time_outside_session: 'Tijd moet binnen het sessie tijdsbestek vallen',
+      start_time_range: 'Starttijd moet tussen {start} en {end} liggen',
+      end_time_range: 'Eindtijd moet tussen {start} en {end} liggen',
+    },
   },
 };

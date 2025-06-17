@@ -8,6 +8,7 @@ import {
   symSharpAssignmentTurnedIn,
   symSharpAttachFile,
   symSharpBackspace,
+  symSharpCampaign,
   symSharpChatBubble,
   symSharpMarkChatUnread,
   symSharpCheck,
@@ -64,6 +65,7 @@ export const iconCopy = symSharpContentCopy;
 export const iconDelete = symSharpBackspace;
 export const iconDownload = symSharpDownload;
 export const iconEdit = symSharpEdit;
+export const iconInfo = symSharpCampaign;
 export const iconLabel = symSharpLabel;
 export const iconLock = symSharpLock;
 export const iconLogin = symSharpLogin;

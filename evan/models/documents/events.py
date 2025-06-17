@@ -15,6 +15,7 @@ class EventModules(BaseModel):
 
     abstracts: bool = Field(default=False, description="Whether the event has a simple abstract submission system")
     cms: bool = Field(default=False, description="Whether the event needs CMS options for custom website contents")
+    subsessions: bool = Field(default=False, description="Whether the event supports subsessions within sessions")
 
 
 class EventConfig(BaseModel):
@@ -22,7 +23,7 @@ class EventConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
-    # active_modules: EventModules
+    active_modules: EventModules = Field(default_factory=EventModules)
     payments: PaymentsConfig = None
     file_uploader: FileUploaderConfig = None
 

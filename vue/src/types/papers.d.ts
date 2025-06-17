@@ -6,12 +6,15 @@ interface PaperAuthor {
 interface PaperExtraData {
   authors_str: string;
   authors: PaperAuthor[];
+  internal_id?: number | string;
 }
 
 interface PaperData {
   title: string;
   abstract: MarkdownText;
-  track?: number | null;
+  doi?: string;
+  session?: number | null;
+  subsession?: number | null;
   topics?: number[];
   extra_data?: PaperExtraData;
 }

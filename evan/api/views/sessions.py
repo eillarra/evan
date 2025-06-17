@@ -5,11 +5,8 @@ from evan.models import File, Session
 
 from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import SessionSerializer, SessionWithSecretsSerializer
+from ..utils import user_is_manager_of_event
 from ..viewsets import EventRelatedViewSet
-
-
-def user_is_manager_of_event(user, event):
-    return bool(user and user.is_authenticated) and event.can_be_managed_by(user)
 
 
 class SessionsPermission(EventRelatedPermission):

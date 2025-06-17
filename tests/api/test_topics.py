@@ -6,8 +6,8 @@ from evan.utils.factories import EventFactory, TopicFactory, UserFactory
 
 
 @pytest.fixture
-def topic(db, test_event):
-    return TopicFactory(event=test_event)
+def topic(db, t_event):
+    return TopicFactory(event=t_event)
 
 
 @pytest.fixture
@@ -33,13 +33,13 @@ class TestForAnonymous:
     def _get_update_data(self):
         return {}
 
-    def test_list(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_list(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         response = api_client.get(url)
         assert response.status_code == self.expected_status_codes["list"]
 
-    def test_create(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_create(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         data = self._get_create_data()
         response = api_client.post(url, data)
         assert response.status_code == self.expected_status_codes["create"]
@@ -73,8 +73,8 @@ class TestForEventManager(TestForAuthenticated):
     }
 
     @pytest.fixture(autouse=True)
-    def setup(self, api_client, test_event_manager):
-        api_client.force_authenticate(user=test_event_manager)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
 
     def _get_create_data(self):
         return {

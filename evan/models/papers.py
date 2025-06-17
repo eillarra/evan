@@ -20,8 +20,11 @@ class Paper(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     abstract = models.TextField(default="", blank=True)
     doi = models.CharField(max_length=190, default="", blank=True)
 
+    session = models.ForeignKey("evan.Session", related_name="papers", on_delete=models.SET_NULL, null=True, blank=True)
+    subsession = models.ForeignKey(
+        "evan.Subsession", related_name="papers", on_delete=models.SET_NULL, null=True, blank=True
+    )
     topics = models.ManyToManyField("evan.Topic", related_name="papers", blank=True)
-    track = models.ForeignKey("evan.Track", related_name="papers", on_delete=models.SET_NULL, null=True, blank=True)
 
     uuid = models.UUIDField(default=uuid4, editable=False, unique=True)
     extra_data = models.JSONField(default=dict, blank=True)
@@ -42,6 +45,14 @@ class Paper(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
             raise ValidationError({"extra_data": [str(exc)]}) from exc
 
         super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        if self.subsession:
+            if self.session and self.subsession.session != self.session:
+                raise ValidationError("Paper subsession must belong to the same session as the paper.")
+
+            if not self.session:
+                self.session = self.subsession.session
 
     def get_api_url(self) -> str:
         return reverse("v1:paper-detail", args=[self.pk])

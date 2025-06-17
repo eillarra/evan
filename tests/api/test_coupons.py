@@ -6,8 +6,8 @@ from evan.utils.factories import CouponFactory, EventFactory, RegistrationFactor
 
 
 @pytest.fixture
-def coupon(db, test_event):
-    return CouponFactory(event=test_event)
+def coupon(db, t_event):
+    return CouponFactory(event=t_event)
 
 
 @pytest.fixture
@@ -32,13 +32,13 @@ class TestForAnonymous:
     def _get_update_data(self):
         return {}
 
-    def test_list(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_list(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         response = api_client.get(url)
         assert response.status_code == self.expected_status_codes["list"]
 
-    def test_create(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_create(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         data = self._get_create_data()
         response = api_client.post(url, data)
         assert response.status_code == self.expected_status_codes["create"]
@@ -68,8 +68,8 @@ class TestForEventManager(TestForAuthenticated):
     }
 
     @pytest.fixture(autouse=True)
-    def setup(self, api_client, test_event_manager):
-        api_client.force_authenticate(user=test_event_manager)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
 
     def _get_create_data(self):
         return {
@@ -105,6 +105,6 @@ class TestForEventManager(TestForAuthenticated):
         assert response.status_code == self.expected_status_codes["delete"]
 
     def test_delete_used_coupon(self, api_client, coupon) -> None:
-        RegistrationFactory(event=coupon.event, coupon=coupon, user=UserFactory())
+        RegistrationFactory(event=coupon.event, coupon=coupon, user=UserFactory(), fee_type="regular")
         response = api_client.delete(coupon.get_api_url())
         assert response.status_code == status.FORBIDDEN

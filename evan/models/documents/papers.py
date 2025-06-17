@@ -19,6 +19,7 @@ class PaperExtraData(BaseModel):
 
     authors_str: str | None = None
     authors: list[PaperAuthor] = Field(default_factory=list)
+    internal_id: int | str | None = None
 
 
 def get_validated_paper_extra_data(extra_data) -> dict:

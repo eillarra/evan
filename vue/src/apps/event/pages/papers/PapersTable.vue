@@ -27,7 +27,7 @@ const props = defineProps<{
 const store = useStore();
 const { t } = useI18n();
 
-const queryColumns = ['code', 'title'];
+const queryColumns = ['code', 'title', 'session_code'];
 
 const columns = [
   {
@@ -40,6 +40,14 @@ const columns = [
     sort: (a: string, b: string) => a.localeCompare(b),
   },
   {
+    name: 'session',
+    field: 'session_code',
+    label: t('models.session'),
+    align: 'left',
+    autoWidth: true,
+    sortable: true,
+  },
+  {
     name: 'authors',
     field: 'authors',
     label: t('fields.author', 9),
@@ -49,11 +57,17 @@ const columns = [
 ];
 
 const rows = computed(() => {
-  return props.papers.map((obj: Paper) => ({
-    _self: obj,
-    title: obj.title,
-    authors: 'TODO',
-  }));
+  return props.papers.map((obj: Paper) => {
+    // Find the session for this paper
+    const session = obj.session ? store.sessions.find((s) => s.id === obj.session) : null;
+
+    return {
+      _self: obj,
+      title: obj.title,
+      session_code: session?.code || '-',
+      authors: 'TODO',
+    };
+  });
 });
 
 function removePaper(row: { _self: Paper }) {

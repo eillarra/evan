@@ -1,13 +1,14 @@
 from http import HTTPStatus as status
 
 import pytest
+from django.core.exceptions import ValidationError
 
-from evan.utils.factories import EventFactory, SessionFactory, UserFactory
+from evan.utils.factories import EventFactory, PaperFactory, SessionFactory, UserFactory
 
 
 @pytest.fixture
-def session(db, test_event):
-    return SessionFactory(event=test_event)
+def session(db, t_event):
+    return SessionFactory(event=t_event)
 
 
 @pytest.fixture
@@ -34,8 +35,8 @@ class TestForAnonymous:
     def _get_update_data(self):
         return {}
 
-    def test_list(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_list(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         response = api_client.get(url)
         assert response.status_code == self.expected_status_codes["list"]
 
@@ -45,8 +46,8 @@ class TestForAnonymous:
         assert ("uuid" in response.data) is self.sees_secrets
         assert ("secret_url" in response.data) is self.sees_secrets
 
-    def test_create(self, api_client, test_event) -> None:
-        url = self._get_endpoint(test_event)
+    def test_create(self, api_client, t_event) -> None:
+        url = self._get_endpoint(t_event)
         data = self._get_create_data()
         response = api_client.post(url, data)
         assert response.status_code == self.expected_status_codes["create"]
@@ -98,8 +99,8 @@ class TestForEventManager(TestForAuthenticated):
     }
 
     @pytest.fixture(autouse=True)
-    def setup(self, api_client, test_event_manager):
-        api_client.force_authenticate(user=test_event_manager)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
 
     def _get_create_data(self):
         return {
@@ -128,3 +129,96 @@ class TestForEventManager(TestForAuthenticated):
     def test_delete(self, api_client, session) -> None:
         response = api_client.delete(session.get_api_url())
         assert response.status_code == self.expected_status_codes["delete"]
+
+    def test_rendered_program_field(self, api_client, t_event, session) -> None:
+        """Test that rendered_program field works with paper templates."""
+        # Create a paper for the session
+        paper = PaperFactory(
+            event=t_event, session=session, title="Test Paper", abstract="Test abstract", doi="10.1000/test"
+        )
+        paper.extra_data = {"authors": [{"name": "John Doe"}, {"name": "Jane Smith"}]}
+        paper.save()
+
+        session.program = f"Session program includes [paper:{paper.id}] as main presentation."
+        session.save()
+
+        response = api_client.get(session.get_api_url())
+        assert response.status_code == status.OK
+        assert "rendered_program" in response.data
+
+        expected_text = (
+            "Session program includes Test Paper, John Doe, Jane Smith (DOI: 10.1000/test) as main presentation."
+        )
+        assert response.data["rendered_program"] == expected_text
+
+    def test_program_validation_with_secrets(self, api_client, t_event, session) -> None:
+        """Test that SessionWithSecretsSerializer includes program validation."""
+        # Update session with invalid paper reference
+        session.program = "Invalid reference: [paper:99999]"
+        session.save()
+
+        # Since this test class has event manager auth, it should use SessionWithSecretsSerializer
+        response = api_client.get(session.get_api_url())
+        assert response.status_code == status.OK
+        assert "program_validation" in response.data
+        assert "program_paper_references" in response.data
+
+        validation = response.data["program_validation"]
+        assert validation["is_valid"] is False
+        assert "Paper 99999 not found" in validation["errors"]
+        assert validation["paper_references"] == [99999]
+
+
+@pytest.mark.api
+class TestSessionPaperValidation:
+    """Test session validation with paper references in program templates."""
+
+    def test_session_validates_paper_references_on_save(self, db, t_event):
+        """Test that sessions validate paper references when saved."""
+        session = SessionFactory(event=t_event, program="", start_at=None, end_at=None)
+        paper = PaperFactory(event=t_event, session=session, extra_data={"internal_id": "TEST123"})
+
+        session.program = f"[paper:{paper.pk}] and [paperi:TEST123]"
+        session.full_clean()
+        session.save()
+
+        assert paper.session == session
+
+    def test_session_auto_assigns_papers_with_internal_id_references(self, db, t_event):
+        """Test that papers are auto-assigned when referenced by internal ID."""
+        session = SessionFactory(event=t_event, program="", start_at=None, end_at=None)
+        paper = PaperFactory(event=t_event, session=session, extra_data={"internal_id": "AUTO123"})
+
+        session.program = "[paperi:AUTO123]"
+        session.full_clean()
+        session.save()
+
+        paper.refresh_from_db()
+        assert paper.session == session
+
+    def test_session_prevents_cross_session_paper_references(self, db, t_event):
+        """Test that sessions cannot reference papers from other sessions."""
+        from django.core.exceptions import ValidationError
+
+        session1 = SessionFactory(event=t_event, start_at=None, end_at=None)
+        session2 = SessionFactory(event=t_event, start_at=None, end_at=None)
+        paper = PaperFactory(event=t_event, session=session1, extra_data={"internal_id": "CROSS123"})
+
+        session2.program = f"[paper:{paper.pk}]"
+
+        with pytest.raises(ValidationError) as exc_info:
+            session2.full_clean()
+
+        assert "already assigned to session" in str(exc_info.value)
+
+    def test_session_handles_nonexistent_paper_references_gracefully(self, db, t_event):
+        """Test that sessions handle references to nonexistent papers."""
+        session = SessionFactory(event=t_event, start_at=None, end_at=None)
+
+        session.program = "[paper:99999] and [paperi:NONEXISTENT]"
+
+        # Should raise validation error for nonexistent paper
+        with pytest.raises(ValidationError) as exc_info:
+            session.full_clean()
+
+        assert "99999" in str(exc_info.value)

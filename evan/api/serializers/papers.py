@@ -22,6 +22,17 @@ class PaperSerializer(FilesMixin, serializers.ModelSerializer):
         exclude = ["event", "created_at", "uuid"]
         read_only_fields = ["id", "event", "updated_at"]
 
+    def validate(self, data):
+        # Let the model's clean() method handle subsession-session validation
+        # Just validate that subsession belongs to the correct event if creating
+        if not self.instance and "subsession" in data and data["subsession"]:
+            # For new papers, ensure subsession belongs to the same event
+            event_code = self.context["view"].kwargs.get("code")
+            if event_code and data["subsession"].session.event.code != event_code:
+                raise serializers.ValidationError("Subsession must belong to the event.")
+
+        return data
+
 
 class PaperWithSecretsSerializer(PaperSerializer):
     secret_url = serializers.SerializerMethodField()

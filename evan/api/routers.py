@@ -23,14 +23,14 @@ class Router(NestedRouterMixin, DefaultRouter):
 
         self.register(r"user", views.UserViewSet, basename="user")
 
-        # /rel/{parent_lookup_content_type_id}/{parent_lookup_object_id}/remarks/
+        # /rel/{parent_lookup_content_type_id}/{parent_lookup_object_id}/**/
 
         rel_routes_pql = ["content_type_id", "object_id"]
         rel_routes = self.register(r"rel/(?P<parent_lookup_content_type_id>\d+)", DummyViewSet, basename="rel")
         rel_routes.register("files", views.FileViewSet, basename="file", parents_query_lookups=rel_routes_pql)
         rel_routes.register("remarks", views.RemarkViewSet, basename="remark", parents_query_lookups=rel_routes_pql)
 
-        # /events/
+        # /events/**/
 
         self.register(r"events", views.EventViewSet, basename="event")
         self.register(r"events/(?P<code>[\w-]+)/abstracts", views.AbstractsViewSet, basename="abstracts")
@@ -53,18 +53,27 @@ class Router(NestedRouterMixin, DefaultRouter):
 
         # view routes
 
-        self.register(r"abstracts", views.AbstractViewSet, basename="abstract")
-        self.register(r"contents", views.ContentViewSet, basename="content")
-        self.register(r"coupons", views.CouponViewSet, basename="coupon")
-        self.register(r"emails", views.EmailViewSet, basename="email")
-        self.register(r"papers", views.PaperViewSet, basename="paper")
-        self.register(r"registrations", views.RegistrationViewSet, basename="registration")
-        self.register(r"reviews", views.AbstractReviewViewSet, basename="review")
-        self.register(r"rooms", views.RoomViewSet, basename="room")
-        self.register(r"sessions", views.SessionViewSet, basename="session")
-        self.register(r"sponsors", views.SponsorViewSet, basename="sponsor")
-        self.register(r"topics", views.TopicViewSet, basename="topic")
-        self.register(r"tracks", views.TrackViewSet, basename="track")
-        self.register(r"venues", views.VenueViewSet, basename="venue")
+        self.register("abstracts", views.AbstractViewSet, basename="abstract")
+        self.register("contents", views.ContentViewSet, basename="content")
+        self.register("coupons", views.CouponViewSet, basename="coupon")
+        self.register("emails", views.EmailViewSet, basename="email")
+        self.register("papers", views.PaperViewSet, basename="paper")
+        self.register("registrations", views.RegistrationViewSet, basename="registration")
+        self.register("reviews", views.AbstractReviewViewSet, basename="review")
+        self.register("rooms", views.RoomViewSet, basename="room")
 
-        self.register(r"search/users", views.UserSearchViewSet, basename="search_users")
+        sessions_routes = self.register(r"sessions", views.SessionViewSet, basename="session")
+        sessions_routes.register(
+            "subsessions",
+            views.SubsessionsViewSet,
+            basename="session-subsessions",
+            parents_query_lookups=["session_id"],
+        )
+
+        self.register("sponsors", views.SponsorViewSet, basename="sponsor")
+        self.register("subsessions", views.SubsessionViewSet, basename="subsession")
+        self.register("topics", views.TopicViewSet, basename="topic")
+        self.register("tracks", views.TrackViewSet, basename="track")
+        self.register("venues", views.VenueViewSet, basename="venue")
+
+        self.register("search/users", views.UserSearchViewSet, basename="search_users")

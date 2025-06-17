@@ -30,7 +30,7 @@ import PapersTable from './PapersTable.vue';
 
 const store = useStore();
 
-const { papers, topicOptions, trackOptions } = storeToRefs(store);
+const { papers, topicOptions, trackOptions, sessions } = storeToRefs(store);
 
 const topicFilter = ref<number | null>(null);
 const trackFilter = ref<number | null>(null);
@@ -41,8 +41,14 @@ const filteredPapers = computed<Paper[]>(() => {
   }
 
   return papers.value.filter((paper) => {
-    if (trackFilter.value !== null && paper.track !== trackFilter.value) {
-      return false;
+    // Filter by track through session.track relationship
+    if (trackFilter.value !== null) {
+      if (!paper.session) return false;
+
+      const session = sessions.value.find((s) => s.id === paper.session);
+      if (!session || session.track !== trackFilter.value) {
+        return false;
+      }
     }
 
     if (topicFilter.value !== null && (!paper.topics || !paper.topics.includes(topicFilter.value))) {
@@ -53,5 +59,8 @@ const filteredPapers = computed<Paper[]>(() => {
   });
 });
 
-onMounted(() => store.fetchPapers());
+onMounted(() => {
+  store.fetchPapers();
+  store.fetchSessions();
+});
 </script>

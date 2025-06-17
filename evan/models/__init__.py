@@ -13,6 +13,7 @@ from .papers import *
 from .payments import *
 from .registrations import *
 from .sessions import *
+from .subsessions import *
 from .sponsors import *
 from .topics import *
 from .tracks import *

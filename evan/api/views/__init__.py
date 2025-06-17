@@ -11,6 +11,7 @@ from .papers import *
 from .registrations import *
 from .search import *
 from .sessions import *
+from .subsessions import *
 from .sponsors import *
 from .topics import *
 from .tracks import *

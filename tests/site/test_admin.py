@@ -59,7 +59,7 @@ class TestForAdmin(TestForAuthenticated):
             "admin:evan_registration",
         ],
     )
-    def test_admin_pages(self, client, route, test_event):
+    def test_admin_pages(self, client, route, t_event):
         response = client.get(reverse(f"{route}_changelist"))
         assert response.status_code == self.expected_status_codes["admin_pages"]
         response = client.get(reverse(f"{route}_add"))

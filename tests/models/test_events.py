@@ -23,12 +23,12 @@ def convtime(date, format="%Y-%m-%d %H:%M"):
         ("2024-02-01", "2024-02-03", "2024-01-05", "2024-01-01 23:59", "2024-01-15 23:59"),
     ],
 )
-def test_invalid_dates(test_event, start_date, end_date, reg_start_date, reg_early_deadline, reg_deadline):
-    test_event.start_date = convdate(start_date)
-    test_event.end_date = convdate(end_date)
-    test_event.registration_start_date = convdate(reg_start_date)
-    test_event.registration_early_deadline = convtime(reg_early_deadline) if reg_early_deadline else None
-    test_event.registration_deadline = convtime(reg_deadline)
+def test_invalid_dates(t_event, start_date, end_date, reg_start_date, reg_early_deadline, reg_deadline):
+    t_event.start_date = convdate(start_date)
+    t_event.end_date = convdate(end_date)
+    t_event.registration_start_date = convdate(reg_start_date)
+    t_event.registration_early_deadline = convtime(reg_early_deadline) if reg_early_deadline else None
+    t_event.registration_deadline = convtime(reg_deadline)
 
     with pytest.raises(ValidationError):
-        test_event.clean()
+        t_event.clean()

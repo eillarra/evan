@@ -3,7 +3,7 @@
     :columns="columns"
     :rows="rows"
     :query-columns="queryColumns"
-    sort-by="notes"
+    sort-by="date"
     :form-component="SessionForm"
     :create-form-component="SessionForm"
     removable
@@ -51,6 +51,15 @@ const columns = [
     sort: (a: string, b: string) => a.localeCompare(b),
   },
   {
+    name: 'subsessions',
+    field: 'subsessions',
+    label: t('models.subsession', 9),
+    align: 'center',
+    autoWidth: true,
+    sortable: true,
+    format: (val: number) => (val > 0 ? val.toString() : '-'),
+  },
+  {
     name: 'date',
     field: 'date',
     label: t('fields.date'),
@@ -83,9 +92,10 @@ const rows = computed(() => {
     _self: obj,
     code: obj.code || '-',
     title: obj.title,
-    date: obj.start_at ? new Date(obj.start_at).toLocaleDateString() : '-',
-    start_time: obj.start_at ? new Date(obj.start_at).toLocaleTimeString() : '-',
-    end_time: obj.end_at ? new Date(obj.end_at).toLocaleTimeString() : '-',
+    subsessions: obj.subsessions?.length || 0,
+    date: obj.start_at ? new Date(obj.start_at).toLocaleDateString('en-BE') : '-',
+    start_time: obj.start_at ? new Date(obj.start_at).toLocaleTimeString('en-BE', { timeStyle: 'short' }) : '-',
+    end_time: obj.end_at ? new Date(obj.end_at).toLocaleTimeString('en-BE', { timeStyle: 'short' }) : '-',
   }));
 });
 

@@ -22,13 +22,17 @@ def now():
 
 
 @pytest.fixture
-def test_event(db):
+def t_event(db):
+    from evan.models import Fee
+
     event = EventFactory()
+    Fee.objects.create(event=event, type="regular", value=100)
+
     return event
 
 
 @pytest.fixture
-def test_event_manager(db, test_event):
+def t_event_manager(db, t_event):
     user = UserFactory()
-    test_event.acl.create(user=user, level=Permission.ADMIN)
+    t_event.acl.create(user=user, level=Permission.ADMIN)
     return user

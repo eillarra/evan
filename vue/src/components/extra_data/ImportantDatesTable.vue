@@ -1,12 +1,9 @@
 <template>
   <div class="flex justify-between q-gutter-sm q-mb-lg">
     <div v-if="$slots.banner">
-      <q-banner dense class="bg-orange-1 q-px-md">
-        <template v-slot:avatar>
-          <q-icon :name="iconNotifyInfo" color="orange" size="sm" />
-        </template>
+      <warning-banner type="warning">
         <slot name="banner" />
-      </q-banner>
+      </warning-banner>
     </div>
     <div class="ugent__create-btn">
       <q-btn
@@ -42,8 +39,9 @@ import { notify } from '@/utils/notify';
 
 import DataTable from '@/components/tables/DataTable.vue';
 import ImportantDateForm from './ImportantDateForm.vue';
+import WarningBanner from '@/components/ui/WarningBanner.vue';
 
-import { iconAdd, iconNotifyInfo } from '@/icons';
+import { iconAdd } from '@/icons';
 
 const emit = defineEmits(['update:modelValue']);
 

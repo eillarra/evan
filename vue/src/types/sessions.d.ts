@@ -3,10 +3,26 @@ interface SessionExtraData {
   important_dates: ImportantDate[];
 }
 
+interface SubsessionData {
+  title: string;
+  order: number;
+  program?: string;
+  rendered_program?: string;
+  start_at?: string | null | undefined;
+  end_at?: string | null | undefined;
+}
+
+interface Subsession extends ApiObject, SubsessionData {
+  session: number;
+  updated_at: string;
+}
+
 interface SessionData {
   code: string;
   title: string;
   description: MarkdownText;
+  program?: string;
+  rendered_program?: string;
   start_at?: string | null | undefined;
   end_at?: string | null | undefined;
   track?: number | null;
@@ -21,4 +37,5 @@ interface Session extends ApiObject, SessionData {
   slug: string;
   updated_at: string;
   extra_data: SessionExtraData;
+  subsessions?: Subsession[];
 }
