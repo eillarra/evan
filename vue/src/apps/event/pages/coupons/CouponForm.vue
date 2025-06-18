@@ -82,6 +82,7 @@ const coverageOptions = [
 ];
 
 const linkedRegistration = computed<Registration | null>(() => {
+  if (!props.obj) return null;
   return registrations.value.find((r) => r.coupon?.id === props.obj?.id) || null;
 });
 
