@@ -214,19 +214,19 @@ const programValidation = ref<{
 // Separate ref for rendered program since it's just for display
 const renderedProgram = ref<string>('');
 
-const programTemplate = computed(() => useProgramTemplate(session.value?.id || 0, store.evanEvent?.self || ''));
+const programTemplate = useProgramTemplate();
 
 // Debounced validation
 const debouncedValidation = debounce(async (template: string) => {
-  if (template && session.value?.id) {
-    programValidation.value = await programTemplate.value.validateTemplate(template);
+  if (template) {
+    programValidation.value = await programTemplate.validateTemplate(template);
   }
 }, 500);
 
 // Debounced rendering
 const debouncedRendering = debounce(async (template: string) => {
-  if (template && session.value?.id) {
-    const rendered = await programTemplate.value.renderTemplate(template);
+  if (template) {
+    const rendered = await programTemplate.renderTemplate(template);
     renderedProgram.value = rendered;
   }
 }, 1000);
@@ -235,6 +235,19 @@ function onProgramChanged(template: string) {
   debouncedValidation(template);
   debouncedRendering(template);
 }
+
+// Watch for program changes to trigger rendering
+watch(
+  () => formData.value.program,
+  (newProgram) => {
+    if (newProgram) {
+      onProgramChanged(newProgram);
+    } else {
+      renderedProgram.value = '';
+    }
+  },
+  { immediate: true },
+);
 
 // Helper function to convert number to Roman numeral
 function toRomanNumeral(num: number): string {
@@ -298,22 +311,7 @@ onMounted(() => {
   if (papers.value.length === 0) {
     store.fetchPapers();
   }
-  // Initialize rendered program if session exists
-  if (session.value?.rendered_program) {
-    renderedProgram.value = session.value.rendered_program;
-  }
 });
-
-// Watch for changes in session to update rendered program
-watch(
-  () => session.value?.rendered_program,
-  (newRendered) => {
-    if (newRendered) {
-      renderedProgram.value = newRendered;
-    }
-  },
-  { immediate: true },
-);
 
 function createUpdate() {
   if (!formData.value.code || !formData.value.title) return;

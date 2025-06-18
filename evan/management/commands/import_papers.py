@@ -208,10 +208,14 @@ class Command(BaseCommand):
                         if paper_id and str(paper_id).strip():
                             paper_ids.append(str(paper_id).strip())
 
+                    # Track valid paper IDs for program generation
+                    valid_paper_ids = []
+
                     for paper_internal_id in paper_ids:
                         paper = Paper.objects.filter(event=event, extra_data__internal_id=paper_internal_id).first()
 
                         if paper:
+                            valid_paper_ids.append(paper_internal_id)
                             if dry_run:
                                 if paper.session:
                                     self.stdout.write(
@@ -237,6 +241,24 @@ class Command(BaseCommand):
                                     )
                         else:
                             session_errors.append(f"Session row {i + 1}: Paper with ID '{paper_internal_id}' not found")
+
+                    # Generate and update session program content
+                    if valid_paper_ids:
+                        program_content = "\n".join([f"- [paperi:{pid}]" for pid in valid_paper_ids])
+                        self.stdout.write(
+                            f"Row {i + 1}: Generated program for session {session_code} "
+                            f"with {len(valid_paper_ids)} papers"
+                        )
+
+                        if not dry_run:
+                            if session.program != program_content:
+                                session.program = program_content
+                                session.save(update_fields=["program"])
+                                self.stdout.write(f"Row {i + 1}: Updated program for session {session_code}")
+                            else:
+                                self.stdout.write(f"Row {i + 1}: Program for session {session_code} already up to date")
+                        else:
+                            self.stdout.write(f"Row {i + 1}: Would update program for session {session_code}")
 
                 except Exception as e:
                     session_errors.append(f"Session row {i + 1}: Error processing row - {e}")

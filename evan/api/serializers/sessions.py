@@ -3,7 +3,7 @@ from rest_framework import serializers
 from evan.models import Event, Session, validate_datetime
 
 from .rel.files import FileSerializer, FilesMixin
-from .subsessions import SubsessionReadOnlySerializer
+from .subsessions import SubsessionReadOnlySerializer, SubsessionSerializer
 
 
 class SessionReadOnlySerializer(serializers.ModelSerializer):
@@ -19,14 +19,13 @@ class SessionReadOnlySerializer(serializers.ModelSerializer):
 
 class SessionSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:session-detail")
-    subsessions = SubsessionReadOnlySerializer(many=True, read_only=True)
+    subsessions = SubsessionSerializer(many=True, read_only=True)
     slug = serializers.SlugField(read_only=True)
-    rendered_program = serializers.CharField(read_only=True)
 
     class Meta:  # noqa: D106
         model = Session
-        exclude = ["event", "created_at", "uuid", "program"]
-        read_only_fields = ["id", "event", "updated_at", "rendered_program", "subsessions"]
+        exclude = ["event", "created_at", "uuid"]
+        read_only_fields = ["id", "event", "updated_at", "subsessions"]
 
     def validate(self, data):
         if not self.instance:
@@ -58,7 +57,6 @@ class SessionWithSecretsSerializer(SessionSerializer):
             "updated_at",
             "uuid",
             "secret",
-            "rendered_program",
             "program_validation",
             "program_paper_references",
         ]

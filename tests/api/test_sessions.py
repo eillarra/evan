@@ -130,26 +130,15 @@ class TestForEventManager(TestForAuthenticated):
         response = api_client.delete(session.get_api_url())
         assert response.status_code == self.expected_status_codes["delete"]
 
-    def test_rendered_program_field(self, api_client, t_event, session) -> None:
-        """Test that rendered_program field works with paper templates."""
-        # Create a paper for the session
-        paper = PaperFactory(
-            event=t_event, session=session, title="Test Paper", abstract="Test abstract", doi="10.1000/test"
-        )
-        paper.extra_data = {"authors": [{"name": "John Doe"}, {"name": "Jane Smith"}]}
-        paper.save()
-
-        session.program = f"Session program includes [paper:{paper.id}] as main presentation."
+    def test_program_field_available_in_detail(self, api_client, t_event, session) -> None:
+        """Test that program field is available in detail view."""
+        session.program = "Session program includes detailed information."
         session.save()
 
         response = api_client.get(session.get_api_url())
         assert response.status_code == status.OK
-        assert "rendered_program" in response.data
-
-        expected_text = (
-            "Session program includes Test Paper, John Doe, Jane Smith (DOI: 10.1000/test) as main presentation."
-        )
-        assert response.data["rendered_program"] == expected_text
+        assert "program" in response.data
+        assert response.data["program"] == "Session program includes detailed information."
 
     def test_program_validation_with_secrets(self, api_client, t_event, session) -> None:
         """Test that SessionWithSecretsSerializer includes program validation."""

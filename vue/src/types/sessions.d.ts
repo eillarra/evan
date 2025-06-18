@@ -7,7 +7,6 @@ interface SubsessionData {
   title: string;
   order: number;
   program?: string;
-  rendered_program?: string;
   start_at?: string | null | undefined;
   end_at?: string | null | undefined;
 }
@@ -22,7 +21,6 @@ interface SessionData {
   title: string;
   description: MarkdownText;
   program?: string;
-  rendered_program?: string;
   start_at?: string | null | undefined;
   end_at?: string | null | undefined;
   track?: number | null;

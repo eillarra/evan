@@ -46,7 +46,6 @@
         @update:model-value="(value) => (mutableSubsession.program = value)"
         :label="$t('fields.program')"
         :papers="papers"
-        :rendered-program="subsession.rendered_program"
         :validation="undefined"
         :event-id="eventId"
         :item-id="subsession.id"

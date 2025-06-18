@@ -10,17 +10,16 @@ class SubsessionReadOnlySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subsession
-        exclude = ["session", "created_at", "uuid"]
+        exclude = ["session", "created_at", "uuid", "program"]
 
 
 class SubsessionSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:subsession-detail")
-    rendered_program = serializers.CharField(read_only=True)
 
     class Meta:
         model = Subsession
         exclude = ["session", "created_at", "uuid"]
-        read_only_fields = ["id", "session", "updated_at", "rendered_program"]
+        read_only_fields = ["id", "session", "updated_at"]
 
     def validate(self, data):
         if not self.instance:
@@ -66,7 +65,6 @@ class SubsessionWithSecretsSerializer(SubsessionSerializer):
             "updated_at",
             "uuid",
             "secret",
-            "rendered_program",
             "program_validation",
             "program_paper_references",
         ]
