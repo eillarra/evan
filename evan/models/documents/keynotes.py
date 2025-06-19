@@ -1,6 +1,6 @@
 import json
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, HttpUrl, ValidationError
 
 
 class KeynoteExtraData(BaseModel):
@@ -9,7 +9,7 @@ class KeynoteExtraData(BaseModel):
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
     speaker_affiliation: str | None = None
-    speaker_email: str | None = None
+    speaker_website: HttpUrl | None = None
     presentation_url: str | None = None
 
 

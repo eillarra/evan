@@ -66,9 +66,9 @@
               />
               <q-input
                 dense
-                v-model="extraData.speaker_email"
-                :label="$t('fields.speaker_email')"
-                type="email"
+                v-model="extraData.speaker_website"
+                :label="$t('fields.speaker_website')"
+                type="url"
                 class="col-12"
               />
               <q-input
@@ -114,7 +114,7 @@ import { iconKeynote } from '@/icons';
 
 interface KeynoteExtraData {
   speaker_affiliation: string | null;
-  speaker_email: string | null;
+  speaker_website: string | null;
   presentation_url: string | null;
 }
 
@@ -141,7 +141,7 @@ const formData = ref<KeynoteData>({
 
 const extraData = ref<KeynoteExtraData>({
   speaker_affiliation: props.obj?.extra_data?.speaker_affiliation || null,
-  speaker_email: props.obj?.extra_data?.speaker_email || null,
+  speaker_website: props.obj?.extra_data?.speaker_website || null,
   presentation_url: props.obj?.extra_data?.presentation_url || null,
 });
 
@@ -176,7 +176,7 @@ function createUpdate() {
 
   const cleanedExtraData = {
     speaker_affiliation: extraData.value.speaker_affiliation || undefined,
-    speaker_email: extraData.value.speaker_email || undefined,
+    speaker_website: extraData.value.speaker_website || undefined,
     presentation_url: extraData.value.presentation_url || undefined,
   };
 

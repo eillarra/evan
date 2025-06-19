@@ -92,7 +92,7 @@ export default {
     sent_to: 'Verstuurd naar',
     speaker: 'Spreker | Sprekers',
     speaker_affiliation: 'Spreker affiliatie | Spreker affiliaties',
-    speaker_email: 'Spreker e-mail | Spreker e-mails',
+    speaker_website: 'Spreker website | Spreker websites',
     start: 'Start',
     start_date: 'Startdatum',
     start_time: 'Beginuur',

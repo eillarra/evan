@@ -1,6 +1,6 @@
 interface KeynoteExtraData {
   speaker_affiliation?: string;
-  speaker_email?: string;
+  speaker_website?: string;
   presentation_url?: string;
 }
 

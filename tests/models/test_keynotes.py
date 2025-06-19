@@ -33,7 +33,7 @@ class TestKeynoteModel:
         keynote = KeynoteFactory()
         keynote.extra_data = {
             "speaker_affiliation": "MIT",
-            "speaker_email": "speaker@example.com",
+            "speaker_website": "https://speaker.example.com",
             "presentation_url": "https://example.com/slides",
         }
         keynote.save()  # Should not raise

@@ -101,7 +101,7 @@ export default {
     sent_to: 'Sent to',
     speaker: 'Speaker | Speakers',
     speaker_affiliation: 'Speaker affiliation | Speaker affiliations',
-    speaker_email: 'Speaker email | Speaker emails',
+    speaker_website: 'Speaker website | Speaker websites',
     start: 'Start',
     start_date: 'Start date',
     start_time: 'Start time',
