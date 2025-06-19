@@ -152,6 +152,11 @@ class ProgramService:
                         paper.session = session_obj
                     paper.save()
 
+                # Allow subsession to reference paper assigned to same session (auto-assign to subsession)
+                elif subsession_obj and paper.session == subsession_obj.session and not paper.subsession:
+                    paper.subsession = subsession_obj
+                    paper.save()
+
                 # Validate assignments
                 elif subsession_obj and paper.subsession and paper.subsession != subsession_obj:
                     if paper.subsession.session == subsession_obj.session:
@@ -167,10 +172,19 @@ class ProgramService:
                         f"of session '{subsession_obj.session.title}'."
                     )
 
+                # Block papers assigned to session but referenced by different session
                 elif not subsession_obj and paper.session and paper.session != session_obj:
                     raise ValidationError(
                         f"Paper '{paper.title}' is already assigned to session '{paper.session.title}'. "
                         f"Cannot reference it in session '{session_obj.title}'."
+                    )
+
+                # Block papers assigned to different session being referenced by subsession
+                elif subsession_obj and paper.session and paper.session != subsession_obj.session:
+                    session_title = subsession_obj.session.title
+                    raise ValidationError(
+                        f"Paper '{paper.title}' is already assigned to session '{paper.session.title}'. "
+                        f"Cannot reference it in subsession '{subsession_obj.title}' of session '{session_title}'."
                     )
 
             except Paper.DoesNotExist as exc:
@@ -201,6 +215,11 @@ class ProgramService:
                         keynote.session = session_obj
                     keynote.save()
 
+                # Allow subsession to reference keynote assigned to same session (auto-assign to subsession)
+                elif subsession_obj and keynote.session == subsession_obj.session and not keynote.subsession:
+                    keynote.subsession = subsession_obj
+                    keynote.save()
+
                 # Validate assignments
                 elif subsession_obj and keynote.subsession and keynote.subsession != subsession_obj:
                     if keynote.subsession.session == subsession_obj.session:
@@ -216,10 +235,19 @@ class ProgramService:
                         f"of session '{subsession_obj.session.title}'."
                     )
 
+                # Block keynotes assigned to session but referenced by different session
                 elif not subsession_obj and keynote.session and keynote.session != session_obj:
                     raise ValidationError(
                         f"Keynote '{keynote.title}' is already assigned to session '{keynote.session.title}'. "
                         f"Cannot reference it in session '{session_obj.title}'."
+                    )
+
+                # Block keynotes assigned to different session being referenced by subsession
+                elif subsession_obj and keynote.session and keynote.session != subsession_obj.session:
+                    session_title = subsession_obj.session.title
+                    raise ValidationError(
+                        f"Keynote '{keynote.title}' is already assigned to session '{keynote.session.title}'. "
+                        f"Cannot reference it in subsession '{subsession_obj.title}' of session '{session_title}'."
                     )
 
             except Keynote.DoesNotExist as exc:

@@ -61,7 +61,7 @@ const columns = [
     name: 'session',
     field: 'session_code',
     label: t('models.session'),
-    align: 'right',
+    align: 'left',
     autoWidth: true,
     sortable: true,
   },

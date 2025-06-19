@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 from evan.models import Session, Subsession, validate_datetime
@@ -49,6 +50,19 @@ class SubsessionSerializer(FilesMixin, serializers.ModelSerializer):
             raise serializers.ValidationError({"start_at": "Subsession start time must be before end time."})
 
         return data
+
+    def save(self, **kwargs):
+        """Override save to convert Django ValidationError to DRF ValidationError."""
+        try:
+            return super().save(**kwargs)
+        except ValidationError as e:
+            # Convert Django ValidationError to DRF ValidationError for proper 400 status
+            if hasattr(e, "message_dict"):
+                # ValidationError with field-specific errors
+                raise serializers.ValidationError(e.message_dict) from e
+            else:
+                # ValidationError with general errors
+                raise serializers.ValidationError(e.messages if hasattr(e, "messages") else str(e)) from e
 
 
 class SubsessionWithSecretsSerializer(SubsessionSerializer):

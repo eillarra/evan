@@ -121,11 +121,15 @@ class Subsession(models.Model):
                 queryset = queryset.exclude(subsession=self)
 
             for paper in queryset:
-                if paper.subsession:
-                    location = f"subsession '{paper.subsession.title}'"
-                else:
+                # Block papers assigned to different sessions
+                if paper.session != self.session:
                     location = f"session '{paper.session.title if paper.session else 'Unknown'}'"
-                raise ValidationError({"program": f"Paper {paper.pk} is already assigned to {location}"})
+                    raise ValidationError({"program": f"Paper {paper.pk} is already assigned to {location}"})
+
+                # Block papers assigned to different subsessions (within same session)
+                if paper.subsession and paper.subsession != self:
+                    location = f"subsession '{paper.subsession.title}'"
+                    raise ValidationError({"program": f"Paper {paper.pk} is already assigned to {location}"})
 
         if keynote_codes:
             from evan.models import Keynote
@@ -136,8 +140,12 @@ class Subsession(models.Model):
                 queryset = queryset.exclude(subsession=self)
 
             for keynote in queryset:
-                if keynote.subsession:
-                    location = f"subsession '{keynote.subsession.title}'"
-                else:
+                # Block keynotes assigned to different sessions
+                if keynote.session != self.session:
                     location = f"session '{keynote.session.title if keynote.session else 'Unknown'}'"
-                raise ValidationError({"program": f"Keynote '{keynote.code}' is already assigned to {location}"})
+                    raise ValidationError({"program": f"Keynote '{keynote.code}' is already assigned to {location}"})
+
+                # Block keynotes assigned to different subsessions (within same session)
+                if keynote.subsession and keynote.subsession != self:
+                    location = f"subsession '{keynote.subsession.title}'"
+                    raise ValidationError({"program": f"Keynote '{keynote.code}' is already assigned to {location}"})

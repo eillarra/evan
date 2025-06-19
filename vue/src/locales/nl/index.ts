@@ -1,3 +1,5 @@
+import { sub } from 'date-fns';
+
 export default {
   ugent: 'Universiteit Gent',
   ea: 'Faculteit Ingenieurswetenschappen en Architectuur',
@@ -142,10 +144,22 @@ export default {
     file_confirm_delete: 'Weet je zeker dat je dit bestand wilt verwijderen?',
     file_deleted: 'Bestand verwijderd',
     file_updated: 'Bestand bijgewerkt',
+    keynote_created: 'Keynote aangemaakt',
+    keynote_confirm_delete: 'Weet je zeker dat je deze keynote wilt verwijderen?',
+    keynote_deleted: 'Keynote verwijderd',
+    keynote_updated: 'Keynote bijgewerkt',
     remark_created: 'Opmerking aangemaakt',
     remark_confirm_delete: 'Weet je zeker dat je deze opmerking wilt verwijderen?',
     remark_deleted: 'Opmerking verwijderd',
     remark_updated: 'Opmerking bijgewerkt',
+    session_created: 'Sessie aangemaakt',
+    session_confirm_delete: 'Weet je zeker dat je deze sessie wilt verwijderen?',
+    session_deleted: 'Sessie verwijderd',
+    session_updated: 'Sessie bijgewerkt',
+    subsession_created: 'Subsessie aangemaakt',
+    subsession_confirm_delete: 'Weet je zeker dat je deze subsessie wilt verwijderen?',
+    subsession_deleted: 'Subsessie verwijderd',
+    subsession_updated: 'Subsessie bijgewerkt',
   },
   keynote: {
     session_locked_warning: 'Gerefereerd in programma template. Verwijder uit template om sessie te wijzigen.',
