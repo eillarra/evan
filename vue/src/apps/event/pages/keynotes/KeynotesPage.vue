@@ -1,7 +1,7 @@
 <template>
   <div class="row q-col-gutter-sm q-mb-lg">
     <h3 class="text-ugent col-12 col-md-3 q-mb-none use-default-q-btn">
-      {{ $t('models.paper', 9) }}
+      {{ $t('models.keynote', 9) }}
     </h3>
     <div class="col"></div>
     <evan-filter-select
@@ -17,7 +17,7 @@
       :label="$t('models.topic')"
     />
   </div>
-  <papers-table :papers="filteredPapers" />
+  <keynotes-table :keynotes="filteredKeynotes" />
 </template>
 
 <script setup lang="ts">
@@ -26,32 +26,32 @@ import { storeToRefs } from 'pinia';
 
 import { useStore } from '../../store';
 
-import PapersTable from './PapersTable.vue';
+import KeynotesTable from './KeynotesTable.vue';
 
 const store = useStore();
 
-const { papers, topicOptions, trackOptions, sessions } = storeToRefs(store);
+const { keynotes, topicOptions, trackOptions, sessions } = storeToRefs(store);
 
 const topicFilter = ref<number | null>(null);
 const trackFilter = ref<number | null>(null);
 
-const filteredPapers = computed<Paper[]>(() => {
+const filteredKeynotes = computed<Keynote[]>(() => {
   if (trackFilter.value === null && topicFilter.value === null) {
-    return papers.value;
+    return keynotes.value;
   }
 
-  return papers.value.filter((paper) => {
+  return keynotes.value.filter((keynote) => {
     // Filter by track through session.track relationship
     if (trackFilter.value !== null) {
-      if (!paper.session) return false;
+      if (!keynote.session) return false;
 
-      const session = sessions.value.find((s) => s.id === paper.session);
+      const session = sessions.value.find((s) => s.id === keynote.session);
       if (!session || session.track !== trackFilter.value) {
         return false;
       }
     }
 
-    if (topicFilter.value !== null && (!paper.topics || !paper.topics.includes(topicFilter.value))) {
+    if (topicFilter.value !== null && (!keynote.topics || !keynote.topics.includes(topicFilter.value))) {
       return false;
     }
 

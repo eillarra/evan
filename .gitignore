@@ -1,6 +1,9 @@
 .DS_Store
 ._*
 
+# Copilot helper files
+.copilot
+
 # Python
 
 .python-version

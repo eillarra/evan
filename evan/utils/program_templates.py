@@ -5,26 +5,34 @@ from evan.models import Paper
 
 
 class ProgramTemplateProcessor:
-    """Service to process program templates with paper references."""
+    """Service to process program templates with paper and keynote references."""
 
     # Pattern to match [paper:ID] references
     PAPER_PATTERN = re.compile(r"\[paper:(\d+)\]")
     # Pattern to match [paperi:ID] references (internal IDs - can be alphanumeric)
     PAPER_INTERNAL_PATTERN = re.compile(r"\[paperi:([A-Za-z0-9_-]+)\]")
+    # Pattern to match [keynote:CODE] references (using keynote codes)
+    KEYNOTE_PATTERN = re.compile(r"\[keynote:([A-Za-z0-9_-]+)\]")
 
     def __init__(self):
         self._paper_cache = {}
+        self._keynote_cache = {}
 
     def process_template(self, template_text: str, event_id: int | None = None) -> str:
         """
-        Process a template string, replacing [paper:ID] and [paperi:ID] with formatted paper info.
+        Process a template string, replacing references with formatted info.
+
+        Supports:
+        - [paper:ID] - Paper by database ID
+        - [paperi:ID] - Paper by internal ID
+        - [keynote:CODE] - Keynote by code
 
         Args:
             template_text: The raw template string
-            event_id: Optional event ID to scope paper lookups
+            event_id: Optional event ID to scope lookups
 
         Returns:
-            Processed template with paper references replaced
+            Processed template with references replaced
         """
         if not template_text:
             return template_text
@@ -37,9 +45,14 @@ class ProgramTemplateProcessor:
             internal_id = match.group(1)
             return self._format_paper_internal_reference(internal_id, event_id)
 
-        # Process both patterns
+        def replace_keynote_reference(match):
+            keynote_code = match.group(1)
+            return self._format_keynote_reference(keynote_code, event_id)
+
+        # Process all patterns
         result = self.PAPER_PATTERN.sub(replace_paper_reference, template_text)
         result = self.PAPER_INTERNAL_PATTERN.sub(replace_paper_internal_reference, result)
+        result = self.KEYNOTE_PATTERN.sub(replace_keynote_reference, result)
 
         return result
 
@@ -102,6 +115,46 @@ class ProgramTemplateProcessor:
 
         except Exception:
             return f"[Error loading paper i{internal_id}]"
+
+    def _format_keynote_reference(self, keynote_code: str, event_id: int | None = None) -> str:
+        """Format a keynote reference by code."""
+        try:
+            keynote = self._get_keynote_by_code(keynote_code, event_id)
+            return f"{keynote.title} - {keynote.speaker}"
+        except Exception:
+            return f"[Keynote {keynote_code} not found]"
+
+    def _get_keynote_by_code(self, keynote_code: str, event_id: int | None = None):
+        """Get keynote by code from cache or database."""
+        from evan.models import Keynote
+
+        cache_key = f"keynote_code_{keynote_code}_{event_id or 'any'}"
+
+        if cache_key not in self._keynote_cache:
+            queryset = Keynote.objects.select_related("event")
+
+            if event_id:
+                queryset = queryset.filter(event_id=event_id)
+
+            self._keynote_cache[cache_key] = queryset.get(code=keynote_code)
+
+        return self._keynote_cache[cache_key]
+
+    def _get_keynote(self, keynote_id: int, event_id: int | None = None):
+        """Get keynote from cache or database."""
+        from evan.models import Keynote
+
+        cache_key = f"keynote_{keynote_id}_{event_id or 'any'}"
+
+        if cache_key not in self._keynote_cache:
+            queryset = Keynote.objects.select_related("event")
+
+            if event_id:
+                queryset = queryset.filter(event_id=event_id)
+
+            self._keynote_cache[cache_key] = queryset.get(id=keynote_id)
+
+        return self._keynote_cache[cache_key]
 
     def _get_paper(self, paper_id: int, event_id: int | None = None) -> Paper:
         """Get paper from cache or database."""
@@ -170,15 +223,25 @@ class ProgramTemplateProcessor:
 
         return list(set(paper_ids))  # Remove duplicates
 
+    def extract_keynote_references(self, template_text: str) -> list[str]:
+        """Extract all keynote codes referenced in a template."""
+        if not template_text:
+            return []
+
+        # Extract keynote codes from [keynote:CODE] references
+        code_matches = self.KEYNOTE_PATTERN.findall(template_text)
+        return list(set(code_matches))  # Remove duplicates
+
     def validate_template(self, template_text: str, event_id: int | None = None) -> dict[str, Any]:
         """
         Validate a template and return validation results.
 
         Returns:
-            Dict with 'is_valid', 'errors', and 'paper_references' keys
+            Dict with 'is_valid', 'errors', 'paper_references', and 'keynote_references' keys
         """
         errors = []
         paper_ids = self.extract_paper_references(template_text)
+        keynote_codes = self.extract_keynote_references(template_text)
 
         # Check if referenced papers exist
         for paper_id in paper_ids:
@@ -189,7 +252,19 @@ class ProgramTemplateProcessor:
             except Exception as e:
                 errors.append(f"Error validating paper {paper_id}: {str(e)}")
 
-        return {"is_valid": len(errors) == 0, "errors": errors, "paper_references": paper_ids}
+        # Check if referenced keynotes exist
+        for keynote_code in keynote_codes:
+            try:
+                self._get_keynote_by_code(keynote_code, event_id)
+            except Exception as e:
+                errors.append(f"Error validating keynote {keynote_code}: {str(e)}")
+
+        return {
+            "is_valid": len(errors) == 0,
+            "errors": errors,
+            "paper_references": paper_ids,
+            "keynote_references": keynote_codes,
+        }
 
 
 # Global instance

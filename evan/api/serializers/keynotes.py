@@ -1,29 +1,26 @@
 from rest_framework import serializers
 
-from evan.models import Paper
+from evan.models import Keynote
 
-from .rel.files import FileSerializer, FilesMixin
-
-
-class PaperReadOnlySerializer(serializers.ModelSerializer):
-    self = serializers.HyperlinkedIdentityField(view_name="v1:paper-detail")
-    files = FileSerializer(many=True, read_only=True)
-
-    class Meta:  # noqa: D106
-        model = Paper
-        exclude = ["event", "created_at", "uuid", "abstract"]
+from .rel.files import FilesMixin
 
 
-class PaperSerializer(FilesMixin, serializers.ModelSerializer):
-    self = serializers.HyperlinkedIdentityField(view_name="v1:paper-detail")
+class KeynoteReadOnlySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Keynote
+        fields = ["id", "code", "title", "speaker", "bio", "abstract"]
 
-    class Meta:  # noqa: D106
-        model = Paper
+
+class KeynoteSerializer(FilesMixin, serializers.ModelSerializer):
+    self = serializers.HyperlinkedIdentityField(view_name="v1:keynote-detail")
+
+    class Meta:
+        model = Keynote
         exclude = ["event", "created_at", "uuid"]
         read_only_fields = ["id", "event", "updated_at"]
 
     def validate(self, data):
-        """Validate paper data."""
+        """Validate keynote data."""
         # Check that subsession belongs to session if both are provided
         if data.get("subsession") and data.get("session") and data["subsession"].session != data["session"]:
             raise serializers.ValidationError({"subsession": "Subsession must belong to the selected session."})
@@ -35,11 +32,11 @@ class PaperSerializer(FilesMixin, serializers.ModelSerializer):
         return data
 
 
-class PaperWithSecretsSerializer(PaperSerializer):
+class KeynoteWithSecretsSerializer(KeynoteSerializer):
     secret_url = serializers.SerializerMethodField()
 
     class Meta:  # noqa: D106
-        model = Paper
+        model = Keynote
         exclude = ["event"]
         read_only_fields = ["id", "event", "created_at", "updated_at", "uuid", "secret"]
 

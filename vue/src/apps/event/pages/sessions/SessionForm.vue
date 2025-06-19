@@ -2,9 +2,9 @@
   <dialog-form :icon="iconSession" :title="$t('models.session')">
     <template #tabs>
       <q-tabs v-model="activeTab" dense narrow-indicator no-caps align="left">
-        <q-tab name="general" :label="$t('session.tabs.general')" />
-        <q-tab name="description" :label="$t('session.tabs.description')" />
-        <q-tab name="program" :label="$t('session.tabs.program')" />
+        <q-tab name="general" :label="$t('tabs.general')" />
+        <q-tab name="description" :label="$t('fields.description')" />
+        <q-tab name="program" :label="$t('fields.program')" />
         <q-tab
           v-for="(subsession, index) in sortedSubsessions"
           :key="`tab-${subsession.id}`"
@@ -25,20 +25,26 @@
                 class="col-12"
                 with-copy
               />
-              <q-input dense v-model="formData.code" :label="`${$t('fields.code')} *`" class="col-12 col-md-3" />
-              <q-input dense v-model="formData.title" :label="`${$t('fields.title')} *`" class="col-12 col-md-9" />
+              <q-input
+                dense
+                v-model="formData.code"
+                :label="`${$t('fields.code')} *`"
+                :readonly="!!props.obj"
+                class="col-12 col-md-3"
+              />
               <evan-select
                 v-model="formData.track"
                 :label="$t('models.track')"
                 :options="trackOptions"
-                class="col-12 col-md-3"
+                class="col-12 col-md-9"
               />
+              <q-input dense v-model="formData.title" :label="`${$t('fields.title')} *`" class="col-12" />
               <evan-select
                 v-model="formData.topics"
                 :label="$t('models.topic', 9)"
                 :options="topicOptions"
                 multiple
-                class="col-12 col-md-9"
+                class="col-12"
               />
               <date-select
                 v-model="formData.start_at"
@@ -69,6 +75,7 @@
                   v-model="sessionProgram"
                   :label="$t('fields.program')"
                   :papers="papers"
+                  :keynotes="store.keynotes"
                   :rendered-program="renderedProgram"
                   :validation="programValidation || undefined"
                   :current-session="session"
@@ -209,6 +216,7 @@ const programValidation = ref<{
   is_valid: boolean;
   errors: string[];
   paper_references: number[];
+  keynote_references: string[];
 } | null>(null);
 
 // Separate ref for rendered program since it's just for display

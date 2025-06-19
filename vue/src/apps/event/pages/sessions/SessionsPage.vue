@@ -92,5 +92,5 @@ const filteredSessions = computed<Session[]>(() => {
   });
 });
 
-onMounted(() => store.fetchSessions());
+onMounted(() => store.fecthProgramData());
 </script>

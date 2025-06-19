@@ -259,13 +259,17 @@ class TestSubsessionPaperValidation:
             order=1,
             program="",
         )
-        paper = PaperFactory(event=t_event, session=session, extra_data={"internal_id": "SUB123"})
+        # Create paper without initial assignment for auto-assignment to work
+        paper = PaperFactory(event=t_event, session=None, subsession=None, extra_data={"internal_id": "SUB123"})
 
         subsession.program = f"[paper:{paper.pk}] and [paperi:SUB123]"
         subsession.full_clean()
         subsession.save()
 
+        # Check that paper has been assigned to session and subsession
+        paper.refresh_from_db()
         assert paper.session == session
+        assert paper.subsession == subsession
 
     def test_subsession_auto_assigns_papers_with_internal_id_references(self, db, t_event):
         """Test that papers are auto-assigned to subsessions when referenced by internal ID."""

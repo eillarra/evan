@@ -12,6 +12,7 @@ export const useStore = defineStore('evanEvent', () => {
   const evanEvent = ref<ManagedEvanEvent | null>(null);
   const contents = ref<Content[]>([]);
   const coupons = ref<Coupon[]>([]);
+  const keynotes = ref<Keynote[]>([]);
   const papers = ref<Paper[]>([]);
   const registrations = ref<Registration[]>([]);
   const sessions = ref<Session[]>([]);
@@ -34,6 +35,12 @@ export const useStore = defineStore('evanEvent', () => {
 
   async function init() {
     await refetch(true);
+  }
+
+  async function fecthProgramData() {
+    await fetchSessions();
+    await fetchKeynotes();
+    await fetchPapers();
   }
 
   async function refetch(first?: boolean) {
@@ -186,6 +193,44 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  // Keynotes ------
+
+  async function createKeynote(data: KeynoteData) {
+    if (!evanEvent.value) return;
+
+    return api.post(evanEvent.value.self + 'keynotes/', data).then((res) => {
+      keynotes.value.push(res.data);
+      notify.success(t('messages.keynote_created'));
+      return res;
+    });
+  }
+
+  async function fetchKeynotes() {
+    if (!evanEvent.value) return;
+
+    return await api.get(evanEvent.value.self + 'keynotes/').then((res) => {
+      keynotes.value = res.data;
+    });
+  }
+
+  async function updateKeynote(keynote: Keynote) {
+    return await api.put(keynote.self, keynote).then((res) => {
+      const index = keynotes.value.findIndex((s) => s.id === keynote.id);
+      keynotes.value[index] = res.data;
+      notify.success(t('messages.keynote_updated'));
+      return res;
+    });
+  }
+
+  function removeKeynote(keynote: Keynote) {
+    confirm(t('messages.keynote_confirm_delete'), () => {
+      api.delete(keynote.self).then(() => {
+        keynotes.value = keynotes.value.filter((s) => s.id !== keynote.id);
+        notify.success(t('messages.keynote_deleted'));
+      });
+    });
+  }
+
   // Registrations ------
 
   async function fetchRegistrations() {
@@ -223,10 +268,16 @@ export const useStore = defineStore('evanEvent', () => {
   }
 
   async function updateSession(session: Session) {
-    return await api.put(session.self, session).then((res) => {
+    return await api.put(session.self, session).then(async (res) => {
       const index = sessions.value.findIndex((s) => s.id === session.id);
       sessions.value[index] = res.data;
       notify.success(t('messages.session_updated'));
+
+      // Refetch keynotes and papers since program template might have assigned items
+      if (session.program) {
+        await Promise.all([fetchKeynotes(), fetchPapers()]);
+      }
+
       return res;
     });
   }
@@ -265,7 +316,7 @@ export const useStore = defineStore('evanEvent', () => {
   }
 
   async function updateSubsession(subsession: Subsession) {
-    return await api.put(subsession.self, subsession).then((res) => {
+    return await api.put(subsession.self, subsession).then(async (res) => {
       // If subsession.session is not set, we need to find it by searching all sessions
       let sessionIndex = -1;
       if (subsession.session) {
@@ -297,7 +348,14 @@ export const useStore = defineStore('evanEvent', () => {
           };
         }
       }
+
       notify.success(t('messages.subsession_updated'));
+
+      // Refetch keynotes and papers since program template might have assigned items
+      if (subsession.program) {
+        await Promise.all([fetchKeynotes(), fetchPapers()]);
+      }
+
       return res;
     });
   }
@@ -454,6 +512,7 @@ export const useStore = defineStore('evanEvent', () => {
     init,
     setData,
     createCoupon,
+    createKeynote,
     createPaper,
     createSession,
     createSubsession,
@@ -461,18 +520,22 @@ export const useStore = defineStore('evanEvent', () => {
     createTrack,
     fetchContents,
     fetchCoupons,
+    fetchKeynotes,
     fetchPapers,
     fetchRegistrations,
     fetchSessions,
+    fecthProgramData,
     patchEvent,
     updateContent,
     updateCoupon,
+    updateKeynote,
     updatePaper,
     updateSession,
     updateSubsession,
     updateTopic,
     updateTrack,
     removeCoupon,
+    removeKeynote,
     removePaper,
     removeSession,
     removeSubsession,
@@ -483,6 +546,7 @@ export const useStore = defineStore('evanEvent', () => {
     coupons,
     couponIdsUsed,
     emails,
+    keynotes,
     papers,
     registrations,
     sessions,

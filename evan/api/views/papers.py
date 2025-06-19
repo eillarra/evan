@@ -20,17 +20,6 @@ class PaperPermission(EventRelatedObjectPermission):
     allow_update_to_manager = True
     allow_delete_to_manager = True
 
-    def has_object_permission(self, request, view, obj):
-        # some users can send an X-Evan-Secret header that allows them to edit the paper
-        if (
-            request.method in ["PUT", "PATCH"]
-            and "HTTP_X_EVAN_SECRET" in request.META
-            and request.META["HTTP_X_EVAN_SECRET"] == obj.secret
-        ):
-            return True
-
-        return super().has_object_permission(request, view, obj)
-
 
 class PapersViewSet(EventRelatedViewSet):
     permission_classes = [PapersPermission]

@@ -52,11 +52,17 @@
           </q-item-section>
           <q-item-section>{{ $t('models.session', 9) }}</q-item-section>
         </q-item>
+        <q-item clickable :to="{ name: 'keynotes' }" active-class="bg-ugent text-white">
+          <q-item-section avatar>
+            <q-icon :name="iconKeynote" size="xs" />
+          </q-item-section>
+          <q-item-section>— {{ $t('models.keynote', 9) }}</q-item-section>
+        </q-item>
         <q-item clickable :to="{ name: 'papers' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconPaper" size="xs" />
           </q-item-section>
-          <q-item-section>{{ $t('models.paper', 9) }}</q-item-section>
+          <q-item-section>— {{ $t('models.paper', 9) }}</q-item-section>
         </q-item>
         <q-item-label header>Website</q-item-label>
         <q-item clickable :to="{ name: 'contents' }" active-class="bg-ugent text-white">
@@ -84,6 +90,7 @@ import {
   iconEmails,
   iconEvent,
   iconImportantDates,
+  iconKeynote,
   iconLabel,
   iconPaper,
   iconPlanning,

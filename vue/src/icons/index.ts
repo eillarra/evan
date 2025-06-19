@@ -25,6 +25,7 @@ import {
   symSharpEvent,
   symSharpEventAvailable,
   symSharpFolderShared,
+  symSharpForYou,
   symSharpHideSource,
   symSharpHistoryToggleOff,
   symSharpInfo,
@@ -83,6 +84,7 @@ export const iconEmail = symSharpMail;
 export const iconEmails = symSharpStackedEmail;
 export const iconEvent = symSharpWidgets;
 export const iconImportantDates = symSharpEventAvailable;
+export const iconKeynote = symSharpForYou;
 export const iconPaper = symSharpContract;
 export const iconPayment = symSharpCreditCard;
 export const iconPlanning = symSharpViewWeek;

@@ -62,6 +62,12 @@ class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
 
         super().save(*args, **kwargs)
 
+        if self.program:
+            from evan.services.program import program_service
+
+            program_service.validate_and_sync_program_papers(self.program, session_obj=self, subsession_obj=None)
+            program_service.validate_and_sync_program_keynotes(self.program, session_obj=self, subsession_obj=None)
+
     def clean(self) -> None:
         validate_datetime(self.start_at, self.event)
         validate_datetime(self.end_at, self.event)
@@ -72,8 +78,14 @@ class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         if self.track and self.track.event != self.event:
             raise ValidationError("Track is not from the same event.")
 
-        # Validate and sync program paper references
-        self._validate_and_sync_program_papers()
+        if self.program:
+            from evan.services.program import program_service
+
+            validation_result = program_service.validate_template(self.program, self.event.id)
+            if not validation_result["is_valid"]:
+                raise ValidationError({"program": validation_result["errors"]})
+
+            self._validate_program_cross_assignments()
 
     def get_api_url(self) -> str:
         return reverse("v1:session-detail", args=[self.pk])
@@ -104,61 +116,64 @@ class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def files_viewable_by_user(self, user) -> bool:
         return self.editable_by_user(user) or self.event.registrations.filter(user_id=user.id).exists()
 
-    @property
-    def rendered_program(self) -> str:
-        """Get the program with paper templates rendered."""
-        if not self.program:
-            return ""
-
-        from ..utils.program_templates import program_processor
-
-        return program_processor.process_template(self.program, self.event.id)
-
     def validate_program_template(self) -> dict[str, Any]:
         """Validate the program template and return validation results."""
-        if not self.program:
-            return {"is_valid": True, "errors": [], "paper_references": []}
+        from ..services.program import program_service
 
-        from ..utils.program_templates import program_processor
-
-        return program_processor.validate_template(self.program, self.event.id)
+        return program_service.validate_template(self.program, self.event.id)
 
     def get_program_paper_references(self) -> list[int]:
         """Get all paper IDs referenced in the program template."""
-        if not self.program:
-            return []
+        from ..services.program import program_service
 
-        from ..utils.program_templates import program_processor
+        return program_service.extract_paper_references(self.program)
 
-        return program_processor.extract_paper_references(self.program)
+    def get_program_keynote_references(self) -> list[str]:
+        """Get all keynote codes referenced in the program template."""
+        from ..services.program import program_service
+
+        return program_service.extract_keynote_references(self.program)
 
     def _validate_and_sync_program_papers(self) -> None:
         """Validate and sync papers referenced in program template with session assignments."""
-        if not self.program:
-            return
+        from ..services.program import program_service
 
-        referenced_paper_ids = self.get_program_paper_references()
-        if not referenced_paper_ids:
-            return
+        program_service.validate_and_sync_program_papers(self.program, session_obj=self, subsession_obj=None)
 
-        # Import here to avoid circular imports
-        from .papers import Paper
+    def _validate_and_sync_program_keynotes(self) -> None:
+        """Validate and sync keynotes referenced in program template with session assignments."""
+        from ..services.program import program_service
 
-        for paper_id in referenced_paper_ids:
-            try:
-                paper = Paper.objects.get(id=paper_id, event=self.event)
+        program_service.validate_and_sync_program_keynotes(self.program, session_obj=self, subsession_obj=None)
 
-                # Auto-assign unassigned papers to this session
-                if not paper.session and not paper.subsession:
-                    paper.session = self
-                    paper.save()
+    def _validate_program_cross_assignments(self):
+        from evan.services.program import program_service
 
-                # Validate that assigned papers belong to this session
-                elif paper.session and paper.session != self:
-                    raise ValidationError(
-                        f"Paper '{paper.title}' is already assigned to session '{paper.session.title}'. "
-                        f"Cannot reference it in session '{self.title}'."
-                    )
+        paper_ids = program_service.extract_paper_references(self.program)
+        keynote_codes = program_service.extract_keynote_references(self.program)
 
-            except Paper.DoesNotExist as exc:
-                raise ValidationError(f"Paper {paper_id} referenced in program template not found.") from exc
+        if paper_ids:
+            from evan.models import Paper
+
+            queryset = Paper.objects.filter(pk__in=paper_ids, event=self.event).exclude(session=None)
+
+            if self.pk:
+                queryset = queryset.exclude(session=self)
+
+            for paper in queryset:
+                session_title = paper.session.title if paper.session else "Unknown"
+                raise ValidationError({"program": f"Paper {paper.pk} is already assigned to session '{session_title}'"})
+
+        if keynote_codes:
+            from evan.models import Keynote
+
+            queryset = Keynote.objects.filter(code__in=keynote_codes, event=self.event).exclude(session=None)
+
+            if self.pk:
+                queryset = queryset.exclude(session=self)
+
+            for keynote in queryset:
+                session_title = keynote.session.title if keynote.session else "Unknown"
+                raise ValidationError(
+                    {"program": f"Keynote '{keynote.code}' is already assigned to session '{session_title}'"}
+                )

@@ -1,5 +1,5 @@
 <template>
-  <q-banner dense inline-actions :class="bannerClasses" class="q-pl-md q-pr-lg">
+  <q-banner dense inline-actions :class="bannerClasses" class="q-pl-md" role="alert">
     <template v-slot:avatar>
       <q-icon :name="iconName" :color="iconColor" size="sm" class="justify-center" />
     </template>

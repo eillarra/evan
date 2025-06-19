@@ -9,6 +9,7 @@ from .coupons import *
 from .emails import *
 from .events import *
 from .fees import *
+from .keynotes import *
 from .papers import *
 from .payments import *
 from .registrations import *

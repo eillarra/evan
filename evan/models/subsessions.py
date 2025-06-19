@@ -33,6 +33,16 @@ class Subsession(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
+        if self.program:
+            from evan.services.program import program_service
+
+            program_service.validate_and_sync_program_papers(
+                self.program, session_obj=self.session, subsession_obj=self
+            )
+            program_service.validate_and_sync_program_keynotes(
+                self.program, session_obj=self.session, subsession_obj=self
+            )
+
     def clean(self) -> None:
         if self.start_at and self.session.start_at and self.start_at < self.session.start_at:
             raise ValidationError({"start_at": "Subsession start time cannot be before session start time."})
@@ -49,8 +59,14 @@ class Subsession(models.Model):
         if self.end_at and not self.session.end_at:
             raise ValidationError({"end_at": "Cannot set subsession end time when session has no end time."})
 
-        # Validate and sync program paper references
-        self._validate_and_sync_program_papers()
+        if self.program:
+            from evan.services.program import program_service
+
+            validation_result = program_service.validate_template(self.program, self.session.event.id)
+            if not validation_result["is_valid"]:
+                raise ValidationError({"program": validation_result["errors"]})
+
+            self._validate_program_cross_assignments()
 
     def get_api_url(self) -> str:
         return reverse("v1:subsession-detail", args=[self.pk])
@@ -63,73 +79,65 @@ class Subsession(models.Model):
     def secret(self) -> str:
         return sha256(f"{self.uuid}{settings.SECRET_KEY}".encode()).hexdigest()
 
-    @property
-    def rendered_program(self) -> str:
-        if not self.program:
-            return ""
-
-        from ..utils.program_templates import program_processor
-
-        return program_processor.process_template(self.program, self.session.event.id)
-
     def validate_program_template(self) -> dict:
-        if not self.program:
-            return {"is_valid": True, "errors": [], "paper_references": []}
+        from ..services.program import program_service
 
-        from ..utils.program_templates import program_processor
-
-        return program_processor.validate_template(self.program, self.session.event.id)
+        return program_service.validate_template(self.program, self.session.event.id)
 
     def get_program_paper_references(self) -> list[int]:
-        if not self.program:
-            return []
+        from ..services.program import program_service
 
-        from ..utils.program_templates import program_processor
+        return program_service.extract_paper_references(self.program)
 
-        return program_processor.extract_paper_references(self.program)
+    def get_program_keynote_references(self) -> list[str]:
+        from ..services.program import program_service
+
+        return program_service.extract_keynote_references(self.program)
 
     def _validate_and_sync_program_papers(self) -> None:
         """Validate and sync papers referenced in program template with subsession assignments."""
-        if not self.program:
-            return
+        from ..services.program import program_service
 
-        referenced_paper_ids = self.get_program_paper_references()
-        if not referenced_paper_ids:
-            return
+        program_service.validate_and_sync_program_papers(self.program, session_obj=self.session, subsession_obj=self)
 
-        # Import here to avoid circular imports
-        from .papers import Paper
+    def _validate_and_sync_program_keynotes(self) -> None:
+        """Validate and sync keynotes referenced in program template with subsession assignments."""
+        from ..services.program import program_service
 
-        for paper_id in referenced_paper_ids:
-            try:
-                paper = Paper.objects.get(id=paper_id, event=self.session.event)
+        program_service.validate_and_sync_program_keynotes(self.program, session_obj=self.session, subsession_obj=self)
 
-                # Auto-assign unassigned papers to this subsession
-                if not paper.session and not paper.subsession:
-                    paper.session = self.session
-                    paper.subsession = self
-                    paper.save()
+    def _validate_program_cross_assignments(self):
+        from evan.services.program import program_service
 
-                # Validate that assigned papers belong to this subsession
-                elif paper.subsession and paper.subsession != self:
-                    if paper.subsession.session == self.session:
-                        subsession_info = f"subsession '{paper.subsession.title}'"
-                    else:
-                        subsession_info = (
-                            f"session '{paper.subsession.session.title}' → subsession '{paper.subsession.title}'"
-                        )
+        paper_ids = program_service.extract_paper_references(self.program)
+        keynote_codes = program_service.extract_keynote_references(self.program)
 
-                    raise ValidationError(
-                        f"Paper '{paper.title}' is already assigned to {subsession_info}. "
-                        f"Cannot reference it in subsession '{self.title}'."
-                    )
+        if paper_ids:
+            from evan.models import Paper
 
-                # Validate that papers assigned to session (but not subsession) can't be used
-                elif paper.session and paper.session != self.session:
-                    raise ValidationError(
-                        f"Paper '{paper.title}' is already assigned to session '{paper.session.title}'. "
-                        f"Cannot reference it in subsession '{self.title}' of session '{self.session.title}'."
-                    )
+            queryset = Paper.objects.filter(pk__in=paper_ids, event=self.session.event).exclude(session=None)
 
-            except Paper.DoesNotExist as exc:
-                raise ValidationError(f"Paper {paper_id} referenced in program template not found.") from exc
+            if self.pk:
+                queryset = queryset.exclude(subsession=self)
+
+            for paper in queryset:
+                if paper.subsession:
+                    location = f"subsession '{paper.subsession.title}'"
+                else:
+                    location = f"session '{paper.session.title if paper.session else 'Unknown'}'"
+                raise ValidationError({"program": f"Paper {paper.pk} is already assigned to {location}"})
+
+        if keynote_codes:
+            from evan.models import Keynote
+
+            queryset = Keynote.objects.filter(code__in=keynote_codes, event=self.session.event).exclude(session=None)
+
+            if self.pk:
+                queryset = queryset.exclude(subsession=self)
+
+            for keynote in queryset:
+                if keynote.subsession:
+                    location = f"subsession '{keynote.subsession.title}'"
+                else:
+                    location = f"session '{keynote.session.title if keynote.session else 'Unknown'}'"
+                raise ValidationError({"program": f"Keynote '{keynote.code}' is already assigned to {location}"})

@@ -34,6 +34,28 @@ def paper_without_internal_id(t_event, session):
     return Paper.objects.create(event=t_event, session=session, title="Paper without Internal ID", extra_data={})
 
 
+@pytest.fixture
+def keynote(t_event):
+    from evan.models import Keynote
+
+    return Keynote.objects.create(
+        event=t_event, code="KN001", title="Opening Keynote", speaker="Dr. Jane Expert", extra_data={}
+    )
+
+
+@pytest.fixture
+def keynote_with_complex_code(t_event):
+    from evan.models import Keynote
+
+    return Keynote.objects.create(
+        event=t_event,
+        code="KN-2023-MAIN",
+        title="Advanced Research Directions",
+        speaker="Prof. John Researcher",
+        extra_data={},
+    )
+
+
 @pytest.mark.django_db
 class TestProgramTemplateProcessor:
     def test_extract_paper_database_id_references(self, paper_without_internal_id):
@@ -148,3 +170,64 @@ class TestProgramTemplateProcessor:
 
         validation = program_processor.validate_template("", t_event.pk)
         assert validation["is_valid"] is True
+
+
+@pytest.mark.django_db
+class TestKeynoteTemplateProcessor:
+    def test_extract_keynote_code_references(self, keynote):
+        template = f"Opening: [keynote:{keynote.code}]"
+        keynote_codes = program_processor.extract_keynote_references(template)
+        assert keynote_codes == [keynote.code]
+
+    def test_extract_keynote_complex_code_references(self, keynote_with_complex_code):
+        template = f"Main keynote: [keynote:{keynote_with_complex_code.code}]"
+        keynote_codes = program_processor.extract_keynote_references(template)
+        assert keynote_codes == [keynote_with_complex_code.code]
+
+    def test_extract_multiple_keynote_references(self, keynote, keynote_with_complex_code):
+        template = f"""
+        Opening: [keynote:{keynote.code}]
+        Main: [keynote:{keynote_with_complex_code.code}]
+        """
+        keynote_codes = program_processor.extract_keynote_references(template)
+        expected_codes = [keynote.code, keynote_with_complex_code.code]
+        assert sorted(keynote_codes) == sorted(expected_codes)
+
+    def test_process_template_with_keynote_code(self, t_event, keynote):
+        template = f"Keynote: [keynote:{keynote.code}]"
+        result = program_processor.process_template(template, t_event.pk)
+        assert "Opening Keynote - Dr. Jane Expert" in result
+
+    def test_process_template_with_nonexistent_keynote_code(self, t_event):
+        template = "[keynote:NONEXISTENT]"
+        result = program_processor.process_template(template, t_event.pk)
+        assert "[Keynote NONEXISTENT not found]" in result
+
+    def test_validate_template_with_valid_keynote_references(self, t_event, keynote):
+        template = f"Conference opens with [keynote:{keynote.code}]"
+        validation = program_processor.validate_template(template, t_event.pk)
+        assert validation["is_valid"] is True
+        assert len(validation["errors"]) == 0
+        assert validation["keynote_references"] == [keynote.code]
+
+    def test_validate_template_with_invalid_keynote_code(self, t_event):
+        template = "[keynote:INVALID]"
+        validation = program_processor.validate_template(template, t_event.pk)
+        assert validation["is_valid"] is False
+        assert any("keynote invalid" in error.lower() for error in validation["errors"])
+
+    def test_keynote_reference_deduplication(self, keynote):
+        template = f"[keynote:{keynote.code}] [keynote:{keynote.code}]"
+        keynote_codes = program_processor.extract_keynote_references(template)
+        assert keynote_codes == [keynote.code]
+
+    def test_mixed_paper_and_keynote_references(self, t_event, paper_without_internal_id, keynote):
+        template = f"Paper: [paper:{paper_without_internal_id.pk}], Keynote: [keynote:{keynote.code}]"
+        validation = program_processor.validate_template(template, t_event.pk)
+        assert validation["is_valid"] is True
+        assert validation["paper_references"] == [paper_without_internal_id.pk]
+        assert validation["keynote_references"] == [keynote.code]
+
+    def test_empty_keynote_template_handling(self, t_event):
+        keynote_codes = program_processor.extract_keynote_references("")
+        assert keynote_codes == []

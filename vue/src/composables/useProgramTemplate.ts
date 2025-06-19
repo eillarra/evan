@@ -5,12 +5,21 @@ interface ProgramValidation {
   is_valid: boolean;
   errors: string[];
   paper_references: number[];
+  keynote_references: string[];
 }
 
 interface PaperInfo {
   id: number;
   title: string;
   authors: string;
+  abstract?: string;
+}
+
+interface KeynoteInfo {
+  id: number;
+  code: string;
+  title: string;
+  speaker: string;
   abstract?: string;
 }
 
@@ -77,9 +86,26 @@ export function useProgramTemplate() {
     return result;
   }
 
+  function findKeynote(keynoteCode: string): KeynoteInfo | null {
+    const keynote = store.keynotes.find((k) => k.code === keynoteCode);
+    if (!keynote) return null;
+
+    return {
+      id: keynote.id,
+      code: keynote.code,
+      title: keynote.title,
+      speaker: keynote.speaker,
+      abstract: keynote.abstract,
+    };
+  }
+
+  function formatKeynoteReference(keynote: KeynoteInfo): string {
+    return `**${keynote.title}** - *${keynote.speaker}*`;
+  }
+
   async function validateTemplate(template: string): Promise<ProgramValidation> {
     if (!template.trim()) {
-      return { is_valid: true, errors: [], paper_references: [] };
+      return { is_valid: true, errors: [], paper_references: [], keynote_references: [] };
     }
 
     const cacheKey = template;
@@ -90,6 +116,7 @@ export function useProgramTemplate() {
     isValidating.value = true;
     try {
       const paperRefs = extractPaperReferences(template);
+      const keynoteRefs = extractKeynoteReferences(template);
       const errors: string[] = [];
 
       // Validate [paper:ID] references
@@ -122,10 +149,26 @@ export function useProgramTemplate() {
         }
       }
 
+      // Validate [keynote:CODE] references
+      const keynoteMatches = template.match(/\[keynote:([A-Za-z0-9_-]+)\]/g);
+      if (keynoteMatches) {
+        for (const match of keynoteMatches) {
+          const codeMatch = match.match(/\[keynote:([A-Za-z0-9_-]+)\]/);
+          if (codeMatch) {
+            const keynoteCode = codeMatch[1];
+            const keynote = findKeynote(keynoteCode);
+            if (!keynote) {
+              errors.push(`Keynote ${keynoteCode} not found`);
+            }
+          }
+        }
+      }
+
       const validation: ProgramValidation = {
         is_valid: errors.length === 0,
         errors,
         paper_references: paperRefs,
+        keynote_references: keynoteRefs,
       };
 
       validationCache.value.set(cacheKey, validation);
@@ -135,6 +178,7 @@ export function useProgramTemplate() {
         is_valid: false,
         errors: ['Validation error'],
         paper_references: [],
+        keynote_references: [],
       };
       return validation;
     } finally {
@@ -198,6 +242,30 @@ export function useProgramTemplate() {
         }
       }
 
+      // Process [keynote:CODE] references
+      const keynoteMatches = template.match(/\[keynote:([A-Za-z0-9_-]+)\]/g);
+      if (keynoteMatches) {
+        for (const match of keynoteMatches) {
+          const codeMatch = match.match(/\[keynote:([A-Za-z0-9_-]+)\]/);
+          if (codeMatch) {
+            const keynoteCode = codeMatch[1];
+            const keynote = findKeynote(keynoteCode);
+            if (keynote) {
+              const keynoteMarkdown = formatKeynoteReference(keynote);
+              rendered = rendered.replace(
+                new RegExp(`\\[keynote:${keynoteCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g'),
+                keynoteMarkdown,
+              );
+            } else {
+              rendered = rendered.replace(
+                new RegExp(`\\[keynote:${keynoteCode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g'),
+                `**Keynote ${keynoteCode} not found**`,
+              );
+            }
+          }
+        }
+      }
+
       renderedCache.value.set(cacheKey, rendered);
       return rendered;
     } catch (error) {
@@ -243,6 +311,24 @@ export function useProgramTemplate() {
     return Array.from(new Set(paperIds)); // Remove duplicates
   }
 
+  function extractKeynoteReferences(template: string): string[] {
+    const keynoteCodes: string[] = [];
+
+    // Extract [keynote:CODE] references
+    const keynoteMatches = template.match(/\[keynote:([A-Za-z0-9_-]+)\]/g);
+    if (keynoteMatches) {
+      for (const match of keynoteMatches) {
+        const codeMatch = match.match(/\[keynote:([A-Za-z0-9_-]+)\]/);
+        if (codeMatch) {
+          const keynoteCode = codeMatch[1];
+          keynoteCodes.push(keynoteCode);
+        }
+      }
+    }
+
+    return Array.from(new Set(keynoteCodes)); // Remove duplicates
+  }
+
   function clearCache() {
     validationCache.value.clear();
     renderedCache.value.clear();
@@ -252,6 +338,7 @@ export function useProgramTemplate() {
     validateTemplate,
     renderTemplate,
     extractPaperReferences,
+    extractKeynoteReferences,
     clearCache,
     isValidating: computed(() => isValidating.value),
     isRendering: computed(() => isRendering.value),

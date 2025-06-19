@@ -1,8 +1,10 @@
 from datetime import UTC, timedelta
 
 import factory
-from factory.declarations import LazyAttribute
+from factory.declarations import LazyAttribute, SubFactory
 from factory.faker import Faker
+
+from .events import EventFactory
 
 
 def generate_session_start_time(obj):
@@ -16,6 +18,7 @@ def generate_session_start_time(obj):
 class SessionFactory(factory.django.DjangoModelFactory):
     """Factory for Session model."""
 
+    event = SubFactory(EventFactory)
     title = Faker("sentence", nb_words=4)  # Shorter title to avoid max length issues
     description = Faker("text")
     start_at = LazyAttribute(generate_session_start_time)
