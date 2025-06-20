@@ -27,9 +27,9 @@
               />
               <q-input
                 dense
-                v-model="formData.code"
-                :label="`${$t('fields.code')} *`"
-                :readonly="!!props.obj"
+                v-model.trim="formData.code"
+                :label="$t('fields.code')"
+                :readonly="!!props.obj && !!props.obj.code"
                 class="col-12 col-md-3"
               />
               <evan-select
@@ -38,7 +38,7 @@
                 :options="trackOptions"
                 class="col-12 col-md-9"
               />
-              <q-input dense v-model="formData.title" :label="`${$t('fields.title')} *`" class="col-12" />
+              <q-input dense v-model.trim="formData.title" :label="`${$t('fields.title')} *`" class="col-12" />
               <evan-select
                 v-model="formData.topics"
                 :label="$t('models.topic', 9)"
@@ -159,7 +159,7 @@ const session = computed(() => {
 const activeTab = ref('general');
 
 const formData = ref<SessionData>({
-  code: props.obj?.code || '',
+  code: props.obj?.code || null,
   title: props.obj?.title || '',
   description: props.obj?.description || '',
   program: props.obj?.program || '',
@@ -170,6 +170,16 @@ const formData = ref<SessionData>({
   is_social_event: props.obj?.is_social_event || false,
   extra_attendees_fee: props.obj?.extra_attendees_fee || 0,
 });
+
+// Ensure empty code strings are converted to null to avoid unique constraint issues
+watch(
+  () => formData.value.code,
+  (newCode) => {
+    if (newCode === '') {
+      formData.value.code = null;
+    }
+  },
+);
 
 // Computed property for session program with default value
 const sessionProgram = computed({
@@ -322,7 +332,7 @@ onMounted(() => {
 });
 
 function createUpdate() {
-  if (!formData.value.code || !formData.value.title) return;
+  if (!formData.value.title) return;
 
   if (props.obj) {
     store.updateSession({ ...props.obj, ...formData.value });

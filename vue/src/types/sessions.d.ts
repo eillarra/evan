@@ -17,7 +17,7 @@ interface Subsession extends ApiObject, SubsessionData {
 }
 
 interface SessionData {
-  code: string;
+  code: string | null;
   title: string;
   description: MarkdownText;
   program?: string;
