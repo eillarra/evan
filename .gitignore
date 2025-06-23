@@ -2,7 +2,9 @@
 ._*
 
 # Copilot helper files
+
 .copilot
+run.sh
 
 # Python
 
