@@ -5,7 +5,8 @@
     :label="label || $t('field.date', 9)"
     :disable="disable"
     :readonly="readonly"
-    placeholder="YYYY-MM-DD HH:mm"
+    :placeholder="placeholder"
+    :mask="mask"
   >
     <template v-slot:append v-if="!readonly">
       <template v-if="calendarType === 'date' || calendarType === 'datetime'">
@@ -56,6 +57,19 @@ const calendarType = computed<'datetime' | 'date' | 'time'>(() => {
   if (props.type) return props.type;
   return 'date';
 });
+
+const placeholder = computed(() => {
+  if (calendarType.value === 'time') return 'HH:MM';
+  if (calendarType.value === 'date') return 'YYYY-MM-DD';
+  return 'YYYY-MM-DD HH:MM';
+});
+
+const mask = computed(() => {
+  if (calendarType.value === 'time') return '##:##';
+  if (calendarType.value === 'date') return '####-##-##';
+  return '####-##-## ##:##';
+});
+
 const mutableDate = ref<string | null | undefined>(props.modelValue ? props.modelValue.split('T')[0] : null);
 const mutableTime = ref<string | null | undefined>(props.modelValue ? props.modelValue.split('T')[1] : null);
 
@@ -91,11 +105,33 @@ const timeOptions = computed(() => {
   };
 });
 
-const text = computed<string>(() => {
-  if (!mutableDate.value && !mutableTime.value) return '';
-  if (calendarType.value == 'time') return mutableTime.value ? mutableTime.value.substring(0, 5) : '';
-  if (calendarType.value == 'date') return mutableDate.value || '';
-  return `${mutableDate.value} ${mutableTime.value ? mutableTime.value.substring(0, 5) : ''}`;
+const text = computed<string>({
+  get: () => {
+    if (!mutableDate.value && !mutableTime.value) return '';
+    if (calendarType.value == 'time') return mutableTime.value ? mutableTime.value.substring(0, 5) : '';
+    if (calendarType.value == 'date') return mutableDate.value || '';
+    return `${mutableDate.value} ${mutableTime.value ? mutableTime.value.substring(0, 5) : ''}`;
+  },
+  set: (value: string) => {
+    if (!value) {
+      mutableDate.value = null;
+      mutableTime.value = null;
+      return;
+    }
+
+    // With mask, format is guaranteed, so parsing is simpler
+    if (calendarType.value === 'time' && value.length >= 5) {
+      const [hours, minutes] = value.split(':');
+      mutableTime.value = `${hours}:${minutes}:00`;
+    } else if (calendarType.value === 'date' && value.length >= 10) {
+      mutableDate.value = value;
+    } else if (calendarType.value === 'datetime' && value.length >= 16) {
+      const [datePart, timePart] = value.split(' ');
+      mutableDate.value = datePart;
+      const [hours, minutes] = timePart.split(':');
+      mutableTime.value = `${hours}:${minutes}:00`;
+    }
+  }
 });
 
 watch([mutableDate, mutableTime], ([newDate, newTime]) => {
