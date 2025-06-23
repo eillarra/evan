@@ -130,10 +130,52 @@ def draw_badge(  # type: ignore
 class BadgesPdfMaker:
     def __init__(self, *, registrations, filename: str, as_attachment: bool = True):
         self._response = PdfResponse(filename=filename, as_attachment=as_attachment)
-        self.registrations = registrations.select_related("coupon", "event", "user").order_by(
-            "user__first_name", "user__last_name"
-        )
+        self.registrations = registrations.select_related("coupon", "event", "user")
         self.make_pdf()
+
+    def _sort_registrations(self, registrations, sort_by: str):
+        """Sort registrations based on the sort_by field."""
+        if sort_by == "last_name":
+            return registrations.order_by("user__last_name", "user__first_name")
+        else:  # default to first_name
+            return registrations.order_by("user__first_name", "user__last_name")
+
+    def _group_registrations(self, registrations, group_by: str):
+        """Group registrations based on the group_by field."""
+        if group_by == "fee":
+            # Group by fee_type, maintaining sort order within each group
+            groups = {}
+            for reg in registrations:
+                fee_type = reg.fee_type or "no_fee"
+                if fee_type not in groups:
+                    groups[fee_type] = []
+                groups[fee_type].append(reg)
+            # Return groups in a consistent order
+            return [groups[key] for key in sorted(groups.keys())]
+        elif group_by == "color":
+            # Group by badge color (groups different fee types that have the same color)
+            event = registrations.first().event if registrations else None
+            if not event:
+                return [list(registrations)]
+
+            badge_config = event.badges_configuration
+            fee_colors = badge_config.get("fee_colors", {})
+            default_color = badge_config.get("default", "#2196F3")
+
+            # Build color groups
+            color_groups = {}
+            for reg in registrations:
+                # Determine the color for this registration
+                color = fee_colors[reg.fee_type] if reg.fee_type and reg.fee_type in fee_colors else default_color
+
+                if color not in color_groups:
+                    color_groups[color] = []
+                color_groups[color].append(reg)
+
+            # Return groups in a consistent order (sorted by color hex value)
+            return [color_groups[color] for color in sorted(color_groups.keys())]
+        else:  # group_by == "none" - return all registrations as a single group
+            return [list(registrations)]
 
     def make_pdf(self):
         side_margin = 6 * mm  # a minimum on the sides for the printers
@@ -142,55 +184,72 @@ class BadgesPdfMaker:
             event = self.registrations.first().event
             badge_config = event.badges_configuration
 
-            for i, reg in enumerate(self.registrations, start=1):
-                fee_colors = badge_config.get("fee_colors", {})
-                if reg.fee_type in fee_colors:
-                    badge_color = HexColor(fee_colors[reg.fee_type])
-                else:
-                    badge_color = HexColor(badge_config.get("default", UGENT_BLUE))
+            # Get sorting and grouping preferences from badge config
+            sort_by = badge_config.get("sort_by", "first_name")
+            group_by = badge_config.get("group_by", "none")
 
-                event_info = (
-                    f"{date_filter(reg.event.start_date, ('F j'))}-{date_filter(reg.event.end_date, ('j'))}, "
-                    f"{reg.event.city}, {reg.event.country.name}"
-                )
+            # Apply sorting
+            sorted_registrations = self._sort_registrations(self.registrations, sort_by)
 
-                draw = draw_badge(
-                    event_name=event.name,
-                    event_hashtag=event.hashtag,
-                    event_info=event_info,
-                    attendee_name=reg.user.name,
-                    color=badge_color,
-                    institution=reg.user.affiliation,
-                    country=reg.user.country.name,
-                    show_social=False,
-                )
+            # Apply grouping
+            registration_groups = self._group_registrations(sorted_registrations, group_by)
 
-                pdf.parts.append(draw)
+            badge_count = 0
 
-                if i % 3 == 0:
-                    pdf.add_page_break()
+            for group in registration_groups:
+                for reg in group:
+                    badge_count += 1
+                    fee_colors = badge_config.get("fee_colors", {})
+                    if reg.fee_type in fee_colors:
+                        badge_color = HexColor(fee_colors[reg.fee_type])
+                    else:
+                        badge_color = HexColor(badge_config.get("default", UGENT_BLUE))
 
-                # Generate badges for accompanying persons
-                accompanying_persons = reg.extra_data.get("accompanying_persons", [])
-                for person in accompanying_persons:
-                    guest_color = HexColor(badge_config.get("guest", "#4CAF50"))
+                    event_info = (
+                        f"{date_filter(reg.event.start_date, ('F j'))}-{date_filter(reg.event.end_date, ('j'))}, "
+                        f"{reg.event.city}, {reg.event.country.name}"
+                    )
 
                     draw = draw_badge(
                         event_name=event.name,
                         event_hashtag=event.hashtag,
                         event_info=event_info,
-                        attendee_name=person["name"],
-                        color=guest_color,
-                        institution=reg.user.name,
+                        attendee_name=reg.user.name,
+                        color=badge_color,
+                        institution=reg.user.affiliation,
                         country=reg.user.country.name,
                         show_social=False,
                     )
 
                     pdf.parts.append(draw)
-                    i += 1
 
-                    if i % 3 == 0:
+                    if badge_count % 3 == 0:
                         pdf.add_page_break()
+
+                    # Generate badges for accompanying persons
+                    accompanying_persons = reg.extra_data.get("accompanying_persons", [])
+                    for person in accompanying_persons:
+                        badge_count += 1
+                        guest_color = HexColor(badge_config.get("guest", "#4CAF50"))
+
+                        # Use the country field for "guest of [name]" text (smaller font, better positioning)
+                        guest_relationship = f"guest of {reg.user.name}"
+
+                        draw = draw_badge(
+                            event_name=event.name,
+                            event_hashtag=event.hashtag,
+                            event_info=event_info,
+                            attendee_name=person["name"],
+                            color=guest_color,
+                            institution=None,  # Leave institution empty for cleaner look
+                            country=guest_relationship,  # Use country field for guest relationship (smaller font)
+                            show_social=False,
+                        )
+
+                        pdf.parts.append(draw)
+
+                        if badge_count % 3 == 0:
+                            pdf.add_page_break()
 
             self._response.write(pdf.get())
 

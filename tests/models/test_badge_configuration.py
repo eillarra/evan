@@ -19,6 +19,8 @@ class TestBadgeConfig:
         assert config.default.as_hex() == "#2563eb"
         assert config.guest.as_hex() == "#059669"
         assert config.fee_colors == {}
+        assert config.sort_by == "first_name"
+        assert config.group_by == "none"
 
     def test_custom_badge_colors(self):
         """Test custom badge color configuration."""
@@ -127,3 +129,52 @@ class TestBadgeConfig:
         assert "faculty" in result_filtered["fee_colors"]
         assert "invalid_fee" not in result_filtered["fee_colors"]
         assert len(result_filtered["fee_colors"]) == 2
+
+    def test_custom_sort_by_configuration(self):
+        """Test custom sort_by field configuration."""
+        config = BadgesConfig(sort_by="last_name")
+        assert config.sort_by == "last_name"
+
+        config = BadgesConfig(sort_by="first_name")
+        assert config.sort_by == "first_name"
+
+    def test_invalid_sort_by_configuration(self):
+        """Test that invalid sort_by values are rejected."""
+        with pytest.raises(ValidationError):
+            BadgesConfig(sort_by="invalid_sort")
+
+    def test_custom_group_by_configuration(self):
+        """Test custom group_by field configuration."""
+        config = BadgesConfig(group_by="fee")
+        assert config.group_by == "fee"
+
+        config = BadgesConfig(group_by="none")
+        assert config.group_by == "none"
+
+    def test_invalid_group_by_configuration(self):
+        """Test that invalid group_by values are rejected."""
+        with pytest.raises(ValidationError):
+            BadgesConfig(group_by="invalid_group")
+
+    def test_get_validated_badges_configuration_with_sort_and_group(self):
+        """Test get_validated_badges_configuration includes sort_by and group_by fields."""
+        config_data = {"default": "#ff5733", "guest": "#33ff57", "sort_by": "last_name", "group_by": "fee"}
+
+        result = get_validated_badges_configuration(config_data)
+
+        assert result["default"] == "#ff5733"
+        assert result["guest"] == "#33ff57"
+        assert result["sort_by"] == "last_name"
+        assert result["group_by"] == "fee"
+
+    def test_get_validated_badges_configuration_with_defaults(self):
+        """Test that default values are included when sort_by and group_by are not provided."""
+        config_data = {
+            "default": "#ff5733",
+            "guest": "#33ff57",
+        }
+
+        result = get_validated_badges_configuration(config_data)
+
+        assert result["sort_by"] == "first_name"  # default value
+        assert result["group_by"] == "none"  # default value

@@ -2,6 +2,8 @@ interface BadgesConfig {
   default: string;
   guest: string;
   fee_colors: Record<string, string>;
+  sort_by: 'first_name' | 'last_name';
+  group_by: 'none' | 'fee' | 'color';
 }
 
 interface FeeConfig {

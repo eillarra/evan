@@ -110,3 +110,40 @@ class TestEventBadgeConfiguration:
         assert default_config["default"] == "#2563eb"  # Default blue
         assert default_config["guest"] == "#059669"  # Default green
         assert default_config["fee_colors"] == {}  # Empty by default
+        assert default_config["sort_by"] == "first_name"  # Default sort
+        assert default_config["group_by"] == "none"  # Default group
+
+    def test_update_badges_configuration_with_sort_and_group(self, api_client, t_event, t_event_manager) -> None:
+        """Test updating badge configuration with sort_by and group_by options."""
+        from evan.models import Fee
+
+        api_client.force_authenticate(user=t_event_manager)
+
+        # Create fees
+        Fee.objects.create(event=t_event, type="student", value=50)
+        Fee.objects.create(event=t_event, type="faculty", value=100)
+
+        badge_config = {
+            "default": "#2563eb",
+            "guest": "#059669",
+            "fee_colors": {"student": "#2ecc71", "faculty": "#f39c12"},
+            "sort_by": "last_name",
+            "group_by": "fee",
+        }
+
+        data = {"extra_data": {"badges": badge_config}}
+
+        url = t_event.get_api_url()
+        response = api_client.patch(url, data, format="json")
+
+        assert response.status_code == status.OK
+
+        t_event.refresh_from_db()
+        badges_config = t_event.badges_configuration
+
+        assert badges_config["default"] == "#2563eb"
+        assert badges_config["guest"] == "#059669"
+        assert badges_config["fee_colors"]["student"] == "#2ecc71"
+        assert badges_config["fee_colors"]["faculty"] == "#f39c12"
+        assert badges_config["sort_by"] == "last_name"
+        assert badges_config["group_by"] == "fee"

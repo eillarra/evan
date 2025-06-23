@@ -106,19 +106,39 @@
             dense
             class="col-12 col-md-6"
           />
+          <q-select
+            v-model="badgeConfigSortBy"
+            :options="sortByOptions"
+            :label="$t('fields.sort_by')"
+            dense
+            options-dense
+            emit-value
+            map-options
+            class="col-12 col-md-6"
+          />
+          <q-select
+            v-model="badgeConfigGroupBy"
+            :options="groupByOptions"
+            :label="$t('fields.group_by')"
+            dense
+            options-dense
+            emit-value
+            map-options
+            class="col-12 col-md-6"
+          />
           <div class="col-12">
             <h6 class="text-subtitle2 q-mb-sm">{{ $t('badges.fee_type_colors') }}</h6>
             <div v-if="evanEvent?.fees?.length" class="q-mb-md">
               <div v-for="fee in evanEvent.fees" :key="fee.type" class="row q-col-gutter-sm q-mb-sm items-top">
                 <div class="col-6">
-                  <q-input :model-value="fee.type" :label="$t('badges.fee_type')" dense readonly />
+                  <q-input :model-value="fee.type" :label="$t('models.fee_type')" dense readonly />
                   <div class="text-caption text-grey-6">{{ fee.notes }}</div>
                 </div>
                 <div class="col-6">
                   <color-input
                     :model-value="feeTypeColors[fee.type] || badgeConfigDefault"
                     @update:model-value="(value) => updateFeeTypeColor(fee.type, value)"
-                    :label="$t('badges.color')"
+                    :label="$t('fields.color')"
                     dense
                     :clearable="isFeeColorCustom(fee.type)"
                   />
@@ -156,8 +176,8 @@
                 <q-btn
                   outline
                   color="ugent"
-                  :label="$t('badges.download_badge_pdf')"
-                  @click="downloadBadgePdf"
+                  :label="$t('badges.download')"
+                  @click="viewBadgesPdf"
                   :loading="pdfLoading"
                 />
               </div>
@@ -176,6 +196,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
 
 import { useStore } from '../../store';
 
@@ -188,6 +209,7 @@ import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 
 const store = useStore();
 const { evanEvent } = storeToRefs(store);
+const { t } = useI18n();
 
 const activeTab = ref('general');
 const pdfLoading = ref(false);
@@ -201,11 +223,17 @@ const feeTypeColors = computed({
     if (evanEvent.value) {
       if (!evanEvent.value.extra_data) {
         evanEvent.value.extra_data = {
-          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: value },
+          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: value, sort_by: 'first_name', group_by: 'none' },
           important_dates: [],
         };
       } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = { default: '#2196F3', guest: '#4CAF50', fee_colors: value };
+        evanEvent.value.extra_data.badges = {
+          default: '#2196F3',
+          guest: '#4CAF50',
+          fee_colors: value,
+          sort_by: 'first_name',
+          group_by: 'none',
+        };
       } else {
         evanEvent.value.extra_data.badges.fee_colors = value;
       }
@@ -219,11 +247,17 @@ const badgeConfigDefault = computed({
     if (evanEvent.value) {
       if (!evanEvent.value.extra_data) {
         evanEvent.value.extra_data = {
-          badges: { default: value, guest: '#4CAF50', fee_colors: {} },
+          badges: { default: value, guest: '#4CAF50', fee_colors: {}, sort_by: 'first_name', group_by: 'none' },
           important_dates: [],
         };
       } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = { default: value, guest: '#4CAF50', fee_colors: {} };
+        evanEvent.value.extra_data.badges = {
+          default: value,
+          guest: '#4CAF50',
+          fee_colors: {},
+          sort_by: 'first_name',
+          group_by: 'none',
+        };
       } else {
         evanEvent.value.extra_data.badges.default = value;
       }
@@ -237,13 +271,78 @@ const badgeConfigGuest = computed({
     if (evanEvent.value) {
       if (!evanEvent.value.extra_data) {
         evanEvent.value.extra_data = {
-          badges: { default: '#2196F3', guest: value, fee_colors: {} },
+          badges: { default: '#2196F3', guest: value, fee_colors: {}, sort_by: 'first_name', group_by: 'none' },
           important_dates: [],
         };
       } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = { default: '#2196F3', guest: value, fee_colors: {} };
+        evanEvent.value.extra_data.badges = {
+          default: '#2196F3',
+          guest: value,
+          fee_colors: {},
+          sort_by: 'first_name',
+          group_by: 'none',
+        };
       } else {
         evanEvent.value.extra_data.badges.guest = value;
+      }
+    }
+  },
+});
+
+const sortByOptions = [
+  { label: t('fields.first_name'), value: 'first_name' },
+  { label: t('fields.last_name'), value: 'last_name' },
+];
+
+const groupByOptions = [
+  { label: 'None', value: 'none' },
+  { label: t('fields.fee'), value: 'fee' },
+  { label: t('fields.color'), value: 'color' },
+];
+
+const badgeConfigSortBy = computed({
+  get: () => evanEvent.value?.extra_data?.badges?.sort_by ?? 'first_name',
+  set: (value: 'first_name' | 'last_name') => {
+    if (evanEvent.value) {
+      if (!evanEvent.value.extra_data) {
+        evanEvent.value.extra_data = {
+          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: {}, sort_by: value, group_by: 'none' },
+          important_dates: [],
+        };
+      } else if (!evanEvent.value.extra_data.badges) {
+        evanEvent.value.extra_data.badges = {
+          default: '#2196F3',
+          guest: '#4CAF50',
+          fee_colors: {},
+          sort_by: value,
+          group_by: 'none',
+        };
+      } else {
+        evanEvent.value.extra_data.badges.sort_by = value;
+      }
+    }
+  },
+});
+
+const badgeConfigGroupBy = computed({
+  get: () => evanEvent.value?.extra_data?.badges?.group_by ?? 'none',
+  set: (value: 'none' | 'fee' | 'color') => {
+    if (evanEvent.value) {
+      if (!evanEvent.value.extra_data) {
+        evanEvent.value.extra_data = {
+          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: {}, sort_by: 'first_name', group_by: value },
+          important_dates: [],
+        };
+      } else if (!evanEvent.value.extra_data.badges) {
+        evanEvent.value.extra_data.badges = {
+          default: '#2196F3',
+          guest: '#4CAF50',
+          fee_colors: {},
+          sort_by: 'first_name',
+          group_by: value,
+        };
+      } else {
+        evanEvent.value.extra_data.badges.group_by = value;
       }
     }
   },
@@ -265,27 +364,16 @@ function isFeeColorCustom(feeType: string): boolean {
   return feeTypeColors.value[feeType] !== undefined;
 }
 
-async function downloadBadgePdf() {
+async function viewBadgesPdf() {
   if (!evanEvent.value) return;
 
   pdfLoading.value = true;
 
   try {
-    const response = await fetch(`/e/${evanEvent.value.code}/files/badges.pdf`);
-
-    if (response.ok) {
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${evanEvent.value.code}_badges.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-    } else {
-      throw new Error('PDF download failed');
-    }
+    // Open PDF in browser instead of downloading
+    window.open(`/e/${evanEvent.value.code}/files/badges.pdf`, '_blank');
   } catch (error) {
-    console.error('Error downloading PDF:', error);
+    console.error('Error opening PDF:', error);
   } finally {
     pdfLoading.value = false;
   }
