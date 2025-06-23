@@ -28,6 +28,7 @@ mysqlclient = "*"
 nh3 = "*"
 polars = "*"
 pydantic = "*"
+pydantic-extra-types = "*"
 redis = "*"
 sentry-sdk = {version = "*", extras = ["django"]}
 tld = "*"
