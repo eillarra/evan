@@ -2,6 +2,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from .badges import BadgesConfig
 from .base import ImportantDate
 from .fees import FeeSelectionConfig
 from .files import FileUploaderConfig
@@ -21,7 +22,7 @@ class EventModules(BaseModel):
 class EventConfig(BaseModel):
     """General configuration for an event."""
 
-    model_config = ConfigDict(extra="ignore", validate_default=True)
+    model_config = ConfigDict(extra="ignore", validate_default=False)
 
     active_modules: EventModules = Field(default_factory=EventModules)
     payments: PaymentsConfig = None
@@ -41,6 +42,7 @@ class EventExtraData(BaseModel):
 
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
+    badges: BadgesConfig = Field(default_factory=BadgesConfig, description="Badge configuration for the event")
     important_dates: list[ImportantDate] = Field(default_factory=list)
 
 

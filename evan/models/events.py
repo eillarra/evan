@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_countries.fields import CountryField
 
+from .documents.badges import get_validated_badges_configuration
 from .documents.events import (
     get_validated_event_configuration,
     get_validated_event_extra_data,
@@ -155,6 +156,12 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
                 activation_date = datetime.strptime(activation_date, "%Y-%m-%d").date()
             return activation_date is not None and activation_date <= timezone.now().date()
         return True
+
+    @property
+    def badges_configuration(self) -> dict:
+        badges_data = self.extra_data.get("badges", {})
+        valid_fee_types = list(self.fees.values_list("type", flat=True))
+        return get_validated_badges_configuration(badges_data, valid_fee_types)
 
     @property
     def configuration(self) -> dict:

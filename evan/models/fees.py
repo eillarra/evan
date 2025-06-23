@@ -8,6 +8,7 @@ class Fee(models.Model):
     """Event fees."""
 
     event = models.ForeignKey("evan.Event", on_delete=models.CASCADE, related_name="fees")
+    # TODO: Rename 'type' field to 'code' for consistency
     type = models.CharField(max_length=64)
     early_value = models.PositiveIntegerField(null=True, blank=True)
     value = models.PositiveIntegerField(default=0)

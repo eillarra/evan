@@ -79,6 +79,45 @@ export const useStore = defineStore('evanEvent', () => {
     return api.patch(evanEvent.value.self, data);
   }
 
+  async function updateEvent(): Promise<void> {
+    if (!evanEvent.value) return;
+
+    return api.put(evanEvent.value.self, evanEvent.value).then(() => {
+      notify.success(t('messages.event_updated'));
+    });
+  }
+
+  async function updateEventPartial(data: Partial<ManagedEvanEvent>): Promise<void> {
+    if (!evanEvent.value) return;
+
+    return api.patch(evanEvent.value.self, data).then(() => {
+      // Update the local state with the new data
+      Object.assign(evanEvent.value!, data);
+      notify.success(t('messages.event_updated'));
+    });
+  }
+
+  async function updateBadgeConfig(badgesConfig: BadgesConfig): Promise<void> {
+    if (!evanEvent.value) return;
+
+    const currentExtraData = evanEvent.value.extra_data || { important_dates: [] };
+    const extraData = {
+      extra_data: {
+        ...currentExtraData,
+        badges: badgesConfig,
+      },
+    };
+
+    await patchEvent(extraData);
+
+    // Update local state
+    if (evanEvent.value.extra_data) {
+      evanEvent.value.extra_data.badges = badgesConfig;
+    } else {
+      evanEvent.value.extra_data = { important_dates: [], badges: badgesConfig };
+    }
+  }
+
   // Contents ------
 
   async function fetchContents() {
@@ -526,6 +565,9 @@ export const useStore = defineStore('evanEvent', () => {
     fetchSessions,
     fecthProgramData,
     patchEvent,
+    updateEvent,
+    updateEventPartial,
+    updateBadgeConfig,
     updateContent,
     updateCoupon,
     updateKeynote,

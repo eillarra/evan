@@ -10,7 +10,7 @@ def check_file_access(file: "models.rel.File", user: "models.User | AbstractBase
 
     :param file: The file to check access for
     :param user: The user to check access for
-    :return: True if the user has access to the file
+    :returns: True if the user has access to the file
     :raises: NotImplementedError if no access control is implemented for the file's content object
     """
 

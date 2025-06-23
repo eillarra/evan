@@ -11,7 +11,7 @@ interface UserData {
   first_name: string;
   last_name: string;
   affiliation: string;
-  country: string;
+  country: CountryCode;
   extra_data: UserExtraData;
 }
 

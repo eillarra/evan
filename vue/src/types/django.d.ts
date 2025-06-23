@@ -2,6 +2,13 @@ type ApiEndpoint = string;
 type Url = string;
 type MarkdownText = string;
 
+type CountryCode = string;
+
+interface CountryDict {
+  code: CountryCode;
+  name: string;
+}
+
 interface ApiObject {
   readonly id: number;
   readonly self: ApiEndpoint;

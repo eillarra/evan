@@ -10,6 +10,7 @@ import {
   symSharpBackspace,
   symSharpCampaign,
   symSharpChatBubble,
+  symSharpColors,
   symSharpMarkChatUnread,
   symSharpCheck,
   symSharpCheckBox,
@@ -73,6 +74,7 @@ export const iconLogin = symSharpLogin;
 export const iconLogout = symSharpLogout;
 export const iconMenu = symSharpMenu;
 export const iconOpenDialog = symSharpOpenInBrowser;
+export const iconPalette = symSharpColors;
 export const iconSearch = symSharpSearch;
 
 export const iconChat = symSharpChatBubble;

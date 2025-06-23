@@ -9,6 +9,7 @@ from django.views import View
 from evan.api.serializers.events import EventListSerializer, ManagedEventSerializer
 from evan.models import Event
 from evan.services.excel import DataSheet, ExcelView
+from evan.site.pdfs.badges import BadgesPdfMaker
 
 from .inertia import InertiaView
 
@@ -45,6 +46,16 @@ class EventView(EventFirewallMixin, InertiaView):
 
     def get_page_title(self, request, *args, **kwargs) -> str:
         return f"{self.get_event().name} - Evan"
+
+
+class EventBadgesPdf(EventFirewallMixin, View):
+    """A view that generates a PDF with event badges."""
+
+    def get(self, request, *args, **kwargs):
+        event = self.get_event()
+        registrations = event.registrations.filter(is_accepted=True).select_related("user")  # type: ignore
+        maker = BadgesPdfMaker(registrations=registrations, filename="badges.pdf")
+        return maker.response
 
 
 class EventExcelView(EventFirewallMixin, ExcelView):

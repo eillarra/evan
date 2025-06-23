@@ -131,7 +131,7 @@ const text = computed<string>({
       const [hours, minutes] = timePart.split(':');
       mutableTime.value = `${hours}:${minutes}:00`;
     }
-  }
+  },
 });
 
 watch([mutableDate, mutableTime], ([newDate, newTime]) => {
