@@ -24,7 +24,6 @@
       <div class="flex q-gutter-sm q-pa-lg">
         <q-space />
         <q-btn
-          v-close-popup
           unelevated
           @click="createUpdate"
           color="ugent"

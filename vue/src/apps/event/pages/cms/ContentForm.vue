@@ -30,14 +30,7 @@
     <template #footer>
       <div v-if="tab == 'content'" class="flex q-gutter-sm q-pa-lg">
         <q-space />
-        <q-btn
-          v-close-popup
-          unelevated
-          @click="update"
-          color="ugent"
-          :label="$t('form.update')"
-          :disable="!formData.content"
-        />
+        <update-btn @click="update" :disabled="!formData.content" :loading="loading" />
       </div>
     </template>
   </dialog-form>
@@ -47,7 +40,9 @@
 import { ref } from 'vue';
 
 import { useStore } from '../../store';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
@@ -60,6 +55,7 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const { loading, executeWithMinLoading } = useMinimumLoading();
 
 const formData = ref({
   content: props.obj.value,
@@ -67,13 +63,15 @@ const formData = ref({
 
 const tab = ref('content');
 
-function update() {
+async function update() {
   if (!formData.value.content) return;
 
-  const data: Partial<Content> = {
-    value: formData.value.content,
-  };
+  await executeWithMinLoading(async () => {
+    const data: Partial<Content> = {
+      value: formData.value.content,
+    };
 
-  store.updateContent(props.obj, data);
+    await store.updateContent(props.obj, data);
+  });
 }
 </script>

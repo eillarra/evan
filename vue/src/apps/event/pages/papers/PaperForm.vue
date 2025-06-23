@@ -82,13 +82,11 @@
     <template #footer>
       <div class="flex q-gutter-sm q-pa-lg">
         <q-space />
-        <q-btn
-          v-close-popup
-          unelevated
+        <update-btn
           @click="createUpdate"
-          color="ugent"
+          :disabled="!formData.title"
+          :loading="loading"
           :label="props.obj ? $t('form.update') : $t('form.create')"
-          :disable="!formData.title"
         />
       </div>
     </template>
@@ -100,7 +98,9 @@ import { ref, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import { useStore } from '../../store';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
@@ -124,6 +124,7 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const { loading, executeWithMinLoading } = useMinimumLoading();
 
 const { topicOptions, sessionOptions } = storeToRefs(store);
 
@@ -190,31 +191,32 @@ function removeAuthor(index: number) {
   extraData.value.authors.splice(index, 1);
 }
 
-function createUpdate() {
+async function createUpdate() {
   if (!formData.value.title) return;
 
-  const cleanedExtraData = {
-    authors_str: extraData.value.authors_str || '',
-    authors: extraData.value.authors.map((author) => ({
-      name: author.name,
-      affiliation: author.affiliation || '',
-    })),
-    internal_id: extraData.value.internal_id || undefined,
-  };
+  await executeWithMinLoading(async () => {
+    const cleanedExtraData = {
+      authors_str: extraData.value.authors_str || '',
+      authors: extraData.value.authors.map((author) => ({
+        name: author.name,
+        affiliation: author.affiliation || '',
+      })),
+      internal_id: extraData.value.internal_id || undefined,
+    };
 
-  const data = {
-    ...formData.value,
-    extra_data: cleanedExtraData,
-  };
+    const data = {
+      ...formData.value,
+      extra_data: cleanedExtraData,
+    };
 
-  if (props.obj) {
-    store.updatePaper({ ...props.obj, ...data });
-  } else {
-    store.createPaper(data).then((res) => {
+    if (props.obj) {
+      await store.updatePaper({ ...props.obj, ...data });
+    } else {
+      const res = await store.createPaper(data);
       if (res && res.data) {
         obj.value = res.data as Paper;
       }
-    });
-  }
+    }
+  });
 }
 </script>

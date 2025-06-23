@@ -111,14 +111,7 @@
           :label="$t('form.add') + ' ' + $t('models.subsession').toLocaleLowerCase()"
         />
         <q-space />
-        <q-btn
-          v-close-popup
-          unelevated
-          @click="createUpdate"
-          color="ugent"
-          :label="props.obj ? $t('form.update') : $t('form.create')"
-          :disable="!formData.title"
-        />
+        <update-btn @click="createUpdate" :disabled="!formData.title" :loading="loading" :is-create="!props.obj" />
       </div>
     </template>
   </dialog-form>
@@ -131,14 +124,16 @@ import { debounce } from 'quasar';
 
 import { useStore } from '../../store';
 import { useProgramTemplate } from '@/composables/useProgramTemplate';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DateSelect from '@/components/forms/DateSelect.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
-import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 import ProgramTemplateEditor from '@/components/forms/ProgramTemplateEditor.vue';
-import SubsessionForm from './SubsessionForm.vue';
+import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 import WarningBanner from '@/components/ui/WarningBanner.vue';
+import SubsessionForm from './SubsessionForm.vue';
 
 import { iconAdd, iconSession } from '@/icons';
 
@@ -147,6 +142,7 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const { loading, executeWithMinLoading } = useMinimumLoading();
 
 const { topicOptions, trackOptions, papers, sessions } = storeToRefs(store);
 
@@ -331,14 +327,16 @@ onMounted(() => {
   }
 });
 
-function createUpdate() {
+async function createUpdate() {
   if (!formData.value.title) return;
 
-  if (props.obj) {
-    store.updateSession({ ...props.obj, ...formData.value });
-  } else {
-    store.createSession(formData.value);
-  }
+  await executeWithMinLoading(async () => {
+    if (props.obj) {
+      await store.updateSession({ ...props.obj, ...formData.value });
+    } else {
+      await store.createSession(formData.value);
+    }
+  });
 }
 
 function unlinkPaperFromSession(paper: Paper) {

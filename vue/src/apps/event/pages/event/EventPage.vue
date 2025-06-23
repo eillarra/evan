@@ -38,7 +38,7 @@
         <div class="row items-center q-mt-md">
           <div class="col"></div>
           <div class="col-auto">
-            <q-btn unelevated @click="updateGeneral" color="ugent" :label="$t('form.update')" :loading="generalLoading" />
+            <update-btn @click="updateGeneral" :loading="generalLoading" />
           </div>
         </div>
       </q-tab-panel>
@@ -88,13 +88,7 @@
         <div class="row items-center q-mt-md">
           <div class="col"></div>
           <div class="col-auto">
-            <q-btn
-              unelevated
-              @click="updateRegistration"
-              color="ugent"
-              :label="$t('form.update')"
-              :loading="registrationLoading"
-            />
+            <update-btn @click="updateRegistration" :loading="registrationLoading" />
           </div>
         </div>
       </q-tab-panel>
@@ -113,7 +107,7 @@
             class="col-12 col-md-6"
           />
           <div class="col-12">
-            <div class="text-subtitle2 q-mb-sm">{{ $t('badges.fee_type_colors') }}</div>
+            <h6 class="text-subtitle2 q-mb-sm">{{ $t('badges.fee_type_colors') }}</h6>
             <div v-if="evanEvent?.fees?.length" class="q-mb-md">
               <div v-for="fee in evanEvent.fees" :key="fee.type" class="row q-col-gutter-sm q-mb-sm items-top">
                 <div class="col-6">
@@ -136,7 +130,7 @@
             </div>
           </div>
           <div class="col-12 q-mt-md">
-            <div class="text-subtitle2 q-mb-sm">{{ $t('badges.preview') }}</div>
+            <h6 class="text-subtitle2 q-my-sm">{{ $t('badges.preview') }}</h6>
             <div class="row q-col-gutter-sm">
               <div class="col-sm-6 col-md">
                 <div class="text-center text-white q-pa-md" :style="{ backgroundColor: badgeConfigDefault }">
@@ -169,7 +163,7 @@
               </div>
               <div class="col"></div>
               <div class="col-auto">
-                <q-btn unelevated @click="updateBadges" color="ugent" :label="$t('form.update')" :loading="badgesLoading" />
+                <update-btn @click="updateBadges" :loading="badgesLoading" />
               </div>
             </div>
           </div>
@@ -185,8 +179,9 @@ import { storeToRefs } from 'pinia';
 
 import { useStore } from '../../store';
 
-import ColorInput from '@/components/forms/ColorInput.vue';
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import CountrySelect from '@/components/CountrySelect.vue';
+import ColorInput from '@/components/forms/ColorInput.vue';
 import DateSelect from '@/components/forms/DateSelect.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';

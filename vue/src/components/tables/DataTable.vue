@@ -190,7 +190,8 @@
       <component
         :is="formComponent"
         :obj="selectedObj"
-        @update:obj="updateCallback"
+        :loading="formLoading"
+        @update:obj="handleUpdateCallback"
         @delete:obj="() => (selectedObj = null)"
       />
     </q-dialog>
@@ -214,6 +215,7 @@ import { Md5 } from 'ts-md5';
 
 import { notify } from '@/utils/notify';
 import { storage } from '@/utils/storage';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
 import NoResults from '@/components/NoResults.vue';
 import RemarksDialog from '@/components/rel/RemarksDialog.vue';
@@ -267,6 +269,17 @@ const props = defineProps<{
 const openDialog = ref<boolean>(props.openDialog || false);
 const selected = ref<QuasarTableRow[]>(props.selected || []);
 const selectableAmount = computed<number>(() => props.rows.filter((r) => !r._hide_selection).length);
+
+const { loading: formLoading, executeWithMinLoading } = useMinimumLoading();
+
+// Wrapper for update callback with minimum loading
+async function handleUpdateCallback(...args: any[]) {
+  if (!props.updateCallback) return;
+
+  await executeWithMinLoading(async () => {
+    await props.updateCallback!(...args);
+  });
+}
 
 const initialPagination = {
   rowsPerPage: props.rowsPerPage || (props.hidePagination ? 1000 : 25),

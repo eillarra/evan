@@ -10,13 +10,11 @@
     <template #footer>
       <div class="flex q-gutter-sm q-pa-lg">
         <q-space />
-        <q-btn
-          v-close-popup
-          unelevated
+        <update-btn
           @click="createUpdate"
-          color="ugent"
+          :disabled="!formData.name"
+          :loading="loading"
           :label="props.obj ? $t('form.update') : $t('form.create')"
-          :disable="!formData.name"
         />
       </div>
     </template>
@@ -27,7 +25,9 @@
 import { ref } from 'vue';
 
 import { useStore } from '../../store';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';
 
 import { iconLabel } from '@/icons';
@@ -37,15 +37,21 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const { loading, executeWithMinLoading } = useMinimumLoading();
 
 const formData = ref({
   name: props.obj?.name || '',
 });
 
-function createUpdate() {
+async function createUpdate() {
   if (!formData.value.name) return;
 
-  if (props.obj) store.updateTopic({ ...props.obj, ...formData.value });
-  else store.createTopic(formData.value);
+  await executeWithMinLoading(async () => {
+    if (props.obj) {
+      await store.updateTopic({ ...props.obj, ...formData.value });
+    } else {
+      await store.createTopic(formData.value);
+    }
+  });
 }
 </script>

@@ -33,7 +33,7 @@
       <marked-textarea v-model="session.description" :label="$t('fields.description')" class="col-12" />
     </div>
     <div v-if="session" class="flex q-gutter-sm q-mt-md">
-      <q-btn unelevated @click="update" color="ugent" :label="$t('form.update')" :disable="!session.title" />
+      <update-btn @click="update" :disabled="!session.title" :loading="loading" />
     </div>
   </div>
 </template>
@@ -42,15 +42,20 @@
 import { storeToRefs } from 'pinia';
 
 import { useStore } from '../store';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 
 const store = useStore();
+const { loading, executeWithMinLoading } = useMinimumLoading();
 
 const { evanEvent, session, topicOptions, trackName } = storeToRefs(store);
 
-function update() {
-  store.updateSession();
+async function update() {
+  await executeWithMinLoading(async () => {
+    await store.updateSession();
+  });
 }
 </script>

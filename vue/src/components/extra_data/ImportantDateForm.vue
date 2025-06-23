@@ -18,13 +18,11 @@
     <template #footer>
       <div class="flex q-gutter-sm q-pa-lg">
         <q-space />
-        <q-btn
-          v-close-popup
-          unelevated
+        <update-btn
           @click="createUpdate"
-          color="ugent"
+          :disabled="!formData.label || !formData.start_date"
+          :loading="loading"
           :label="props.obj ? $t('form.update') : $t('form.create')"
-          :disable="!formData.label || !formData.start_date"
         />
       </div>
     </template>
@@ -34,6 +32,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DateSelect from '@/components/forms/DateSelect.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';
 
@@ -43,6 +42,7 @@ const emit = defineEmits(['create:obj', 'update:obj']);
 
 const props = defineProps<{
   obj?: ImportantDate;
+  loading?: boolean;
 }>();
 
 const formData = ref<ImportantDate>({

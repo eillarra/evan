@@ -86,13 +86,11 @@
     <template #footer>
       <div class="flex q-gutter-sm q-pa-lg">
         <q-space />
-        <q-btn
-          v-close-popup
-          unelevated
+        <update-btn
           @click="createUpdate"
-          color="ugent"
+          :disabled="!formData.code || !formData.title || !formData.speaker"
+          :loading="loading"
           :label="props.obj ? $t('form.update') : $t('form.create')"
-          :disable="!formData.code || !formData.title || !formData.speaker"
         />
       </div>
     </template>
@@ -104,7 +102,9 @@ import { ref, onMounted, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import { useStore } from '../../store';
+import { useMinimumLoading } from '@/composables/useMinimumLoading';
 
+import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DialogForm from '@/components/forms/DialogForm.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
@@ -123,6 +123,7 @@ const props = defineProps<{
 }>();
 
 const store = useStore();
+const { loading, executeWithMinLoading } = useMinimumLoading();
 
 const { topicOptions, sessionOptions } = storeToRefs(store);
 
@@ -171,28 +172,29 @@ const isReferencedInProgram = computed(() => {
   });
 });
 
-function createUpdate() {
+async function createUpdate() {
   if (!formData.value.code || !formData.value.title || !formData.value.speaker) return;
 
-  const cleanedExtraData = {
-    speaker_affiliation: extraData.value.speaker_affiliation || undefined,
-    speaker_website: extraData.value.speaker_website || undefined,
-    presentation_url: extraData.value.presentation_url || undefined,
-  };
+  await executeWithMinLoading(async () => {
+    const cleanedExtraData = {
+      speaker_affiliation: extraData.value.speaker_affiliation || undefined,
+      speaker_website: extraData.value.speaker_website || undefined,
+      presentation_url: extraData.value.presentation_url || undefined,
+    };
 
-  const data = {
-    ...formData.value,
-    extra_data: cleanedExtraData,
-  };
+    const data = {
+      ...formData.value,
+      extra_data: cleanedExtraData,
+    };
 
-  if (props.obj) {
-    store.updateKeynote({ ...props.obj, ...data });
-  } else {
-    store.createKeynote(data).then((res) => {
+    if (props.obj) {
+      await store.updateKeynote({ ...props.obj, ...data });
+    } else {
+      const res = await store.createKeynote(data);
       if (res && res.data) {
         obj.value = res.data as Keynote;
       }
-    });
-  }
+    }
+  });
 }
 </script>
