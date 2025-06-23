@@ -33,15 +33,11 @@ class Subsession(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-        if self.program:
-            from evan.services.program import program_service
+        # Always call program service, even for empty programs (to handle cleanup)
+        from evan.services.program import program_service
 
-            program_service.validate_and_sync_program_papers(
-                self.program, session_obj=self.session, subsession_obj=self
-            )
-            program_service.validate_and_sync_program_keynotes(
-                self.program, session_obj=self.session, subsession_obj=self
-            )
+        program_service.validate_and_sync_program_papers(self.program, session_obj=self.session, subsession_obj=self)
+        program_service.validate_and_sync_program_keynotes(self.program, session_obj=self.session, subsession_obj=self)
 
     def clean(self) -> None:
         if self.start_at and self.session.start_at and self.start_at < self.session.start_at:
@@ -123,13 +119,21 @@ class Subsession(models.Model):
             for paper in queryset:
                 # Block papers assigned to different sessions
                 if paper.session != self.session:
-                    location = f"session '{paper.session.title if paper.session else 'Unknown'}'"
-                    raise ValidationError({"program": f"Paper {paper.pk} is already assigned to {location}"})
+                    paper_desc = program_service._format_paper_description(paper)
+                    session_title = paper.session.title if paper.session else "Unknown"
+                    raise ValidationError({"program": f"{paper_desc} is already assigned to session '{session_title}'"})
 
                 # Block papers assigned to different subsessions (within same session)
                 if paper.subsession and paper.subsession != self:
-                    location = f"subsession '{paper.subsession.title}'"
-                    raise ValidationError({"program": f"Paper {paper.pk} is already assigned to {location}"})
+                    paper_desc = program_service._format_paper_description(paper)
+                    assigned_subsession_desc = program_service._format_subsession_description(paper.subsession)
+                    target_subsession_desc = program_service._format_subsession_description(self)
+                    raise ValidationError(
+                        {
+                            "program": f"{paper_desc} is already assigned to subsession {assigned_subsession_desc}. "
+                            f"Cannot reference it in subsession {target_subsession_desc}."
+                        }
+                    )
 
         if keynote_codes:
             from evan.models import Keynote
@@ -142,10 +146,20 @@ class Subsession(models.Model):
             for keynote in queryset:
                 # Block keynotes assigned to different sessions
                 if keynote.session != self.session:
-                    location = f"session '{keynote.session.title if keynote.session else 'Unknown'}'"
-                    raise ValidationError({"program": f"Keynote '{keynote.code}' is already assigned to {location}"})
+                    keynote_desc = program_service._format_keynote_description(keynote)
+                    session_title = keynote.session.title if keynote.session else "Unknown"
+                    raise ValidationError(
+                        {"program": f"{keynote_desc} is already assigned to session '{session_title}'"}
+                    )
 
                 # Block keynotes assigned to different subsessions (within same session)
                 if keynote.subsession and keynote.subsession != self:
-                    location = f"subsession '{keynote.subsession.title}'"
-                    raise ValidationError({"program": f"Keynote '{keynote.code}' is already assigned to {location}"})
+                    keynote_desc = program_service._format_keynote_description(keynote)
+                    assigned_subsession_desc = program_service._format_subsession_description(keynote.subsession)
+                    target_subsession_desc = program_service._format_subsession_description(self)
+                    raise ValidationError(
+                        {
+                            "program": f"{keynote_desc} is already assigned to subsession {assigned_subsession_desc}. "
+                            f"Cannot reference it in subsession {target_subsession_desc}."
+                        }
+                    )
