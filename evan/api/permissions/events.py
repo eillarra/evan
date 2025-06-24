@@ -97,15 +97,36 @@ class EventRelatedObjectPermission(BasePermission):
 
 
 class EventAttendeePermission(IsAuthenticated):
+    """Permission class for attendees and event managers to access event-specific features."""
+
     # Permission flags
     allow_retrieve_to_all = False
 
+    def has_permission(self, request, view):
+        """Check if user is authenticated (delegated to parent class)."""
+        return super().has_permission(request, view)
+
     def has_object_permission(self, request, view, obj):
+        """Check if user is an attendee or event manager for the specific event."""
         if request.method in ["OPTIONS", "HEAD"]:
             return True
 
+        # For GET requests (like attendees list)
         if request.method == "GET":
             if self.allow_retrieve_to_all:
                 return True
-            return obj.registrations.filter(user_id=request.user.id).exists()
+            # Allow if user is an attendee
+            if obj.registrations.filter(user_id=request.user.id).exists():
+                return True
+            # Also allow if user is an event manager
+            return obj.editable_by_user(request.user)
+
+        # For POST requests (like contact), check if user is an attendee OR an event manager
+        if request.method == "POST":
+            # Allow if user is an attendee
+            if obj.registrations.filter(user_id=request.user.id).exists():
+                return True
+            # Also allow if user is an event manager
+            return obj.editable_by_user(request.user)
+
         return False

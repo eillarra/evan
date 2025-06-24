@@ -52,7 +52,7 @@ class User(AbstractUser):
         return f"{self.name}, {self.affiliation if self.affiliation else '-'}"
 
     def can_be_contacted(self) -> bool:
-        return self.extra_data["connect"]
+        return self.extra_data.get("connect", True)
 
     @property
     def name(self) -> str:

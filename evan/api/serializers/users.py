@@ -14,7 +14,7 @@ class AttendeeSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "affiliation", "country", "connect"]
 
     def get_connect(self, obj) -> bool:
-        return obj.profile.can_be_contacted()
+        return obj.can_be_contacted()
 
 
 class UserTinySerializer(serializers.ModelSerializer):

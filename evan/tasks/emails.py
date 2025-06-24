@@ -10,7 +10,7 @@ from huey.contrib.djhuey import db_periodic_task
 from markdown import markdown
 
 from evan.models.emails import EmailLog
-from evan.services.mailer.base import send_email_to_admins
+from evan.services.mailer.base import schedule_email, send_email_to_admins
 
 
 EMAILS_PER_MINUTE = int(os.getenv("UGENT_EMAILS_PER_MINUTE", 2))
@@ -50,3 +50,37 @@ def send_email() -> None:
             raise e
 
         sleep(60 / EMAILS_PER_MINUTE)
+
+
+def send_template_email(template_path: str, subject: str, from_email: str, to: list[str], context: dict) -> None:
+    """Send a template-based email immediately.
+
+    This function is used by the contact API to send emails to attendees.
+
+    :param template_path: The path to the email template (currently not used, but kept for API compatibility)
+    :param subject: The subject of the email
+    :param from_email: The from email address
+    :param to: List of recipient email addresses
+    :param context: Context dictionary for template rendering
+    """
+    # For now, we'll create a simple text email from the context
+    # TODO: Implement proper template rendering using template_path
+    message_body = f"""
+{context.get("message", "")}
+
+---
+This message was sent via {context.get("event_name", "Evan")} (#{context.get("event_hashtag", "")})
+
+From: {context.get("sender_name", "")} ({context.get("sender_affiliation", "")})
+Email: {context.get("sender_email", "")}
+
+Best regards,
+The Evan Team
+"""
+
+    schedule_email(
+        from_email=from_email,
+        to=to,
+        subject=subject,
+        text_content=message_body.strip(),
+    )

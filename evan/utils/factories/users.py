@@ -24,6 +24,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = Faker("first_name")
     last_name = Faker("last_name")
     email = Faker("email")
+    affiliation = Faker("company")
     last_login = LazyFunction(timezone.now)
 
     username = LazyAttribute(lambda self: self.email.split("@")[0])

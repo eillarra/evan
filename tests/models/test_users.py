@@ -9,6 +9,8 @@ def test_affiliation_updates(db):
         first_name="John",
         last_name="Doe",
         email="john@example.com",
+        affiliation="",
+        country="",
     )
 
     assert user.affiliation == "Example Inc."

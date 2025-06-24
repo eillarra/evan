@@ -43,7 +43,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     )
     @method_decorator(never_cache)
     def attendees(self, request, *args, **kwargs):
-        self.queryset = User.objects.filter(registrations__event_id=self.get_object().id).select_related("profile")
+        self.queryset = User.objects.filter(registrations__event_id=self.get_object().id)
         return ListModelMixin.list(self, request, *args, **kwargs)
 
     @action(
@@ -53,16 +53,27 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     )
     @method_decorator(never_cache)
     def contact(self, request, *args, **kwargs):
+        from rest_framework.exceptions import PermissionDenied
+
         import evan.tasks.emails
 
-        try:
-            event = self.get_object()
-            user = User.objects.select_related("profile").get(id=self.request.data["user_id"])
-            sender = self.request.user
+        event = self.get_object()
+        user = User.objects.get(id=self.request.data["user_id"])
+        sender = self.request.user
 
+        # Check if target user can be contacted
+        # Event managers can contact any registered user (bypassing contact preferences)
+        # Regular attendees can only contact other registered users who allow contact
+        if event.editable_by_user(sender):
+            # Event managers can contact any user registered for their event
+            if not event.registrations.filter(user_id=user.id).exists():
+                raise PermissionDenied("User cannot be contacted.")
+        else:
+            # Regular attendees must respect contact preferences and registration status
             if not user.can_be_contacted() or not event.registrations.filter(user_id=user.id).exists():
-                return Response({"message": "User cannot be contacted."}, status=HTTPStatus.FORBIDDEN)
+                raise PermissionDenied("User cannot be contacted.")
 
+        try:
             email = (
                 "_emails/contact.md.html",
                 f"You have received a message for #{event.hashtag} (via Evan)",
@@ -75,19 +86,16 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
                     "sender_email": sender.email,
                     "sender_first_name": sender.first_name,
                     "sender_name": f"{sender.first_name} {sender.last_name}",
-                    "sender_affiliation": sender.profile.affiliation,
+                    "sender_affiliation": sender.affiliation,
                     "message": self.request.data["message"],
                 },
             )
             evan.tasks.emails.send_template_email(*email)
 
-            return Response({"message": "Your message has been sent."})
+            return Response({"detail": "Your message has been sent."})
 
-        except Exception as exc:
-            return Response(
-                {"message": "We could not send your message.", "detail": str(exc)},
-                status=HTTPStatus.INTERNAL_SERVER_ERROR,
-            )
+        except Exception:
+            return Response({"detail": "We could not send your message."}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     @action(
         detail=True,
