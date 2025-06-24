@@ -74,7 +74,7 @@ const routes: RouteRecordRaw[] = [
         path: 'venues/',
         name: 'venues',
         strict: true,
-        component: () => import('./pages/event/VenuesPage.vue'),
+        component: () => import('./pages/venues/VenuesPage.vue'),
       },
       {
         path: 'cms/contents/',

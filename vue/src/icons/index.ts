@@ -36,6 +36,7 @@ import {
   symSharpLogin,
   symSharpLogout,
   symSharpMail,
+  symSharpMeetingRoom,
   symSharpMenu,
   symSharpOpenInBrowser,
   symSharpPinDrop,
@@ -92,6 +93,7 @@ export const iconPayment = symSharpCreditCard;
 export const iconPlanning = symSharpViewWeek;
 export const iconRegistration = symSharpAssignmentTurnedIn;
 export const iconRegistrations = symSharpFolderShared;
+export const iconRoom = symSharpMeetingRoom;
 export const iconSession = symSharpEvent;
 export const iconStats = symSharpTableChartView;
 export const iconTime = symSharpSchedule;

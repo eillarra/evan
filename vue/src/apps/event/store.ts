@@ -16,6 +16,7 @@ export const useStore = defineStore('evanEvent', () => {
   const papers = ref<Paper[]>([]);
   const registrations = ref<Registration[]>([]);
   const sessions = ref<Session[]>([]);
+  const venues = ref<Venue[]>([]);
 
   const { t } = useI18n();
 
@@ -532,6 +533,118 @@ export const useStore = defineStore('evanEvent', () => {
     }));
   });
 
+  // Venues ------
+
+  function sortVenues() {
+    if (!evanEvent.value) return;
+    evanEvent.value.venues = evanEvent.value.venues.slice().sort((a, b) => {
+      if (a.is_main !== b.is_main) {
+        return a.is_main ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  async function createVenue(data: VenueData) {
+    if (!evanEvent.value) return;
+
+    return api.post(evanEvent.value.self + 'venues/', data).then((res) => {
+      if (!evanEvent.value) return;
+
+      // If this new venue is being set as main, update other venues to not be main
+      if (res.data.is_main) {
+        evanEvent.value.venues.forEach((v) => {
+          v.is_main = false;
+        });
+      }
+
+      evanEvent.value.venues.push(res.data);
+      sortVenues();
+      notify.success(t('messages.venue_created'));
+      return res;
+    });
+  }
+
+  async function updateVenue(venue: Venue) {
+    return await api.put(venue.self, venue).then((res) => {
+      if (!evanEvent.value) return;
+
+      // If this venue is being set as main, update other venues to not be main
+      if (res.data.is_main) {
+        evanEvent.value.venues.forEach((v) => {
+          if (v.id !== venue.id) {
+            v.is_main = false;
+          }
+        });
+      }
+
+      const index = evanEvent.value.venues.findIndex((v) => v.id === venue.id);
+      evanEvent.value.venues[index] = res.data;
+      sortVenues();
+      notify.success(t('messages.venue_updated'));
+      return res;
+    });
+  }
+
+  function removeVenue(venue: Venue) {
+    confirm(t('messages.venue_confirm_delete'), () => {
+      api.delete(venue.self).then(() => {
+        if (!evanEvent.value) return;
+        evanEvent.value.venues = evanEvent.value.venues.filter((v) => v.id !== venue.id);
+        notify.success(t('messages.venue_deleted'));
+      });
+    });
+  }
+
+  // Rooms ------
+
+  async function createRoom(data: RoomData) {
+    if (!evanEvent.value) return;
+
+    return api.post(evanEvent.value.self + 'rooms/', data).then((res) => {
+      if (!evanEvent.value) return;
+      const venueIndex = evanEvent.value.venues.findIndex((v) => v.id === data.venue);
+      if (venueIndex !== -1) {
+        evanEvent.value.venues[venueIndex].rooms.push(res.data);
+        evanEvent.value.venues[venueIndex].rooms.sort((a, b) => a.position - b.position);
+      }
+      notify.success(t('messages.room_created'));
+      return res;
+    });
+  }
+
+  async function updateRoom(room: Room) {
+    return await api.put(room.self, room).then((res) => {
+      if (!evanEvent.value) return;
+      for (const venue of evanEvent.value.venues) {
+        const roomIndex = venue.rooms.findIndex((r) => r.id === room.id);
+        if (roomIndex !== -1) {
+          venue.rooms[roomIndex] = res.data;
+          venue.rooms.sort((a, b) => a.position - b.position);
+          break;
+        }
+      }
+      notify.success(t('messages.room_updated'));
+      return res;
+    });
+  }
+
+  function removeRoom(room: Room) {
+    confirm(t('messages.room_confirm_delete'), () => {
+      api.delete(room.self).then(() => {
+        if (!evanEvent.value) return;
+        for (const venue of evanEvent.value.venues) {
+          const roomIndex = venue.rooms.findIndex((r) => r.id === room.id);
+          if (roomIndex !== -1) {
+            venue.rooms.splice(roomIndex, 1);
+            break;
+          }
+        }
+        notify.success(t('messages.room_deleted'));
+      });
+    });
+  }
+
   // Sessions Options ------
 
   const sessionOptions = computed<QuasarSelectOption[]>(() => {
@@ -545,8 +658,6 @@ export const useStore = defineStore('evanEvent', () => {
       }));
   });
 
-  // ------
-
   return {
     init,
     setData,
@@ -557,6 +668,8 @@ export const useStore = defineStore('evanEvent', () => {
     createSubsession,
     createTopic,
     createTrack,
+    createVenue,
+    createRoom,
     fetchContents,
     fetchCoupons,
     fetchKeynotes,
@@ -576,6 +689,8 @@ export const useStore = defineStore('evanEvent', () => {
     updateSubsession,
     updateTopic,
     updateTrack,
+    updateVenue,
+    updateRoom,
     removeCoupon,
     removeKeynote,
     removePaper,
@@ -583,6 +698,8 @@ export const useStore = defineStore('evanEvent', () => {
     removeSubsession,
     removeTopic,
     removeTrack,
+    removeVenue,
+    removeRoom,
     evanEvent,
     contents,
     coupons,
@@ -592,6 +709,7 @@ export const useStore = defineStore('evanEvent', () => {
     papers,
     registrations,
     sessions,
+    venues,
     topicOptions,
     trackOptions,
     sessionOptions,

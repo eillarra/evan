@@ -12,6 +12,8 @@ Core philosophy
 
 - Maintainability first: Prioritize code that is easy to read, understand, and modify in the future.
 
+- Simplicity (KISS & YAGNI): Adhere strictly to the "Keep It Simple, Stupid" and "You Ain't Gonna Need It" principles. Always favor the most straightforward, clear solution that meets the requirements. Avoid premature optimization and do not add any functionality that has not been explicitly requested.
+
 Code generation style
 ---------------------
 

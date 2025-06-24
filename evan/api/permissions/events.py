@@ -65,10 +65,15 @@ class EventRelatedObjectPermission(BasePermission):
     allow_update_to_manager = True
     allow_delete_to_manager = False
 
+    def get_event_id(self, obj):
+        """Get the event ID from the object. Can be overridden by subclasses."""
+        return obj.event_id
+
     def get_event(self, obj) -> Event:
         if not self._event:
             try:
-                self._event = Event.objects.get(id=obj.event_id)
+                event_id = self.get_event_id(obj)
+                self._event = Event.objects.get(id=event_id)
             except Event.DoesNotExist as exc:
                 raise NotFound("Event does not exist.") from exc
         return self._event

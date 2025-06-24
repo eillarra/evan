@@ -3,7 +3,14 @@ from http import HTTPStatus as status
 import pytest
 from django.core.exceptions import ValidationError
 
-from evan.utils.factories import EventFactory, PaperFactory, SessionFactory, UserFactory
+from evan.utils.factories import (
+    EventFactory,
+    PaperFactory,
+    RoomFactory,
+    SessionFactory,
+    UserFactory,
+    VenueFactory,
+)
 
 
 @pytest.fixture
@@ -155,6 +162,28 @@ class TestForEventManager(TestForAuthenticated):
         validation = response.data["program_validation"]
         assert validation["is_valid"] is True
         assert validation["paper_references"] == []
+
+    def test_create_session_with_room(self, api_client, t_event) -> None:
+        """Test creating a session with a room field."""
+        venue = VenueFactory(event=t_event)
+        room = RoomFactory(venue=venue)
+
+        url = self._get_endpoint(t_event)
+        data = {
+            "title": "Session with room",
+            "description": "This session has a room assigned",
+            "room": room.id,
+        }
+
+        response = api_client.post(url, data)
+        assert response.status_code == status.CREATED
+        assert response.data["room"] == room.id
+
+        # Verify the session was created with the correct room
+        session_detail_url = response.data["self"]
+        response = api_client.get(session_detail_url)
+        assert response.status_code == status.OK
+        assert response.data["room"] == room.id
 
 
 @pytest.mark.api

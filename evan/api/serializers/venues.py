@@ -5,12 +5,15 @@ from evan.models.venues import Room, Venue
 
 class RoomSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:room-detail")
+    venue = serializers.PrimaryKeyRelatedField(
+        queryset=Venue.objects.all(),
+        required=False,  # Allow venue to be optional on updates
+    )
 
     class Meta:  # noqa: D106
         model = Room
         exclude = []
         read_only_fields = ["id"]
-        write_only_fields = ["venue"]
 
 
 class VenueReadOnlySerializer(serializers.ModelSerializer):

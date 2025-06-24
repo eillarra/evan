@@ -67,6 +67,7 @@ interface EvanEvent extends ApiObject {
   sessions: Session[];
   topics: Topic[];
   tracks: Track[];
+  venues: Venue[];
 
   registration_configuration: EvanEventRegistrationConfig;
   extra_data: EvanEventExtraData;

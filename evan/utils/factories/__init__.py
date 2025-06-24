@@ -11,3 +11,4 @@ from .subsessions import *
 from .tracks import *
 from .topics import *
 from .users import *
+from .venues import *

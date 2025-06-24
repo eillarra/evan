@@ -58,6 +58,13 @@
                 :label="$t('fields.end')"
                 class="col-12 col-md-3"
               />
+              <evan-select
+                v-model="formData.room"
+                :label="$t('models.room')"
+                :options="roomOptions"
+                clearable
+                class="col-12 col-md-6"
+              />
             </div>
           </q-tab-panel>
           <q-tab-panel name="description">
@@ -143,14 +150,7 @@ const props = defineProps<{
 
 const store = useStore();
 const { loading, executeWithMinLoading } = useMinimumLoading();
-
 const { topicOptions, trackOptions, papers, sessions } = storeToRefs(store);
-
-// Get session directly from store when available, otherwise use prop
-const session = computed(() => {
-  if (!props.obj?.id) return props.obj;
-  return sessions.value.find((s) => s.id === props.obj!.id) || props.obj;
-});
 
 const activeTab = ref('general');
 
@@ -163,21 +163,61 @@ const formData = ref<SessionData>({
   end_at: props.obj?.end_at || null,
   track: props.obj?.track || null,
   topics: props.obj?.topics || [],
+  room: props.obj?.room || null,
   is_social_event: props.obj?.is_social_event || false,
   extra_attendees_fee: props.obj?.extra_attendees_fee || 0,
 });
 
-// Ensure empty code strings are converted to null to avoid unique constraint issues
-watch(
-  () => formData.value.code,
-  (newCode) => {
-    if (newCode === '') {
-      formData.value.code = null;
-    }
-  },
-);
+const programValidation = ref<{
+  is_valid: boolean;
+  errors: string[];
+  paper_references: number[];
+  keynote_references: string[];
+} | null>(null);
 
-// Computed property for session program with default value
+const renderedProgram = ref<string>('');
+const programTemplate = useProgramTemplate();
+
+// Get session directly from store when available, otherwise use prop
+const session = computed(() => {
+  if (!props.obj?.id) return props.obj;
+  return sessions.value.find((s) => s.id === props.obj!.id) || props.obj;
+});
+
+const roomOptions = computed<QuasarSelectOption[]>(() => {
+  if (!store.evanEvent?.venues || store.evanEvent.venues.length === 0) return [];
+
+  const result = [];
+
+  const sortedVenues = [...store.evanEvent.venues].sort((a, b) => {
+    if (a.is_main && !b.is_main) return -1;
+    if (!a.is_main && b.is_main) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  for (const venue of sortedVenues) {
+    if (venue.rooms && venue.rooms.length > 0) {
+      const sortedRooms = [...venue.rooms].sort((a, b) => a.position - b.position);
+
+      result.push({
+        label: venue.name,
+        value: `--venue--${venue.id}--`,
+        disable: true,
+        header: true,
+      });
+
+      for (const room of sortedRooms) {
+        result.push({
+          label: `— ${room.name}`,
+          value: room.id,
+        });
+      }
+    }
+  }
+
+  return result;
+});
+
 const sessionProgram = computed({
   get: () => formData.value.program || '',
   set: (value: string) => {
@@ -185,12 +225,10 @@ const sessionProgram = computed({
   },
 });
 
-// Computed property to check if this session has subsessions
 const hasSubsessions = computed(() => {
   return session.value?.subsessions && session.value.subsessions.length > 0;
 });
 
-// Computed property for sorted subsessions - sorted by start time
 const sortedSubsessions = computed(() => {
   if (!session.value?.subsessions) return [];
   return session.value.subsessions.slice().sort((a, b) => {
@@ -206,29 +244,26 @@ const sortedSubsessions = computed(() => {
   });
 });
 
-// Watch for subsessions and set default tab
 watch(
-  () => sortedSubsessions.value,
-  (newSubsessions) => {
-    // If we're on general tab and there are subsessions, switch to first subsession
-    if (activeTab.value === 'general' && newSubsessions.length > 0) {
-      activeTab.value = `subsession-${newSubsessions[0].id}`;
+  () => formData.value.code,
+  (newCode) => {
+    if (newCode === '') {
+      formData.value.code = null;
+    }
+  },
+);
+
+watch(
+  () => formData.value.program,
+  (newProgram) => {
+    if (newProgram) {
+      onProgramChanged(newProgram);
+    } else {
+      renderedProgram.value = '';
     }
   },
   { immediate: true },
 );
-
-const programValidation = ref<{
-  is_valid: boolean;
-  errors: string[];
-  paper_references: number[];
-  keynote_references: string[];
-} | null>(null);
-
-// Separate ref for rendered program since it's just for display
-const renderedProgram = ref<string>('');
-
-const programTemplate = useProgramTemplate();
 
 // Debounced validation
 const debouncedValidation = debounce(async (template: string) => {
@@ -250,35 +285,6 @@ function onProgramChanged(template: string) {
   debouncedRendering(template);
 }
 
-// Watch for program changes to trigger rendering
-watch(
-  () => formData.value.program,
-  (newProgram) => {
-    if (newProgram) {
-      onProgramChanged(newProgram);
-    } else {
-      renderedProgram.value = '';
-    }
-  },
-  { immediate: true },
-);
-
-// Helper function to convert number to Roman numeral
-function toRomanNumeral(num: number): string {
-  const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
-  const numerals = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
-
-  let result = '';
-  for (let i = 0; i < values.length; i++) {
-    while (num >= values[i]) {
-      result += numerals[i];
-      num -= values[i];
-    }
-  }
-  return result;
-}
-
-// Subsession management functions
 function addSubsession() {
   if (!session.value) return;
 
@@ -320,13 +326,6 @@ function removeSubsessionItem(subsession: Subsession) {
   }
 }
 
-// Initialize papers when component mounts
-onMounted(() => {
-  if (papers.value.length === 0) {
-    store.fetchPapers();
-  }
-});
-
 async function createUpdate() {
   if (!formData.value.title) return;
 
@@ -345,4 +344,24 @@ function unlinkPaperFromSession(paper: Paper) {
   // For now, just refresh the papers list
   store.fetchPapers();
 }
+
+function toRomanNumeral(num: number): string {
+  const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const numerals = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+
+  let result = '';
+  for (let i = 0; i < values.length; i++) {
+    while (num >= values[i]) {
+      result += numerals[i];
+      num -= values[i];
+    }
+  }
+  return result;
+}
+
+onMounted(() => {
+  if (papers.value.length === 0) {
+    store.fetchPapers();
+  }
+});
 </script>
