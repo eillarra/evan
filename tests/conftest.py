@@ -36,3 +36,12 @@ def t_event_manager(db, t_event):
     user = UserFactory()
     t_event.acl.create(user=user, level=Permission.ADMIN)
     return user
+
+
+@pytest.fixture
+def t_superuser(db):
+    """Create a superuser for admin testing."""
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    return User.objects.create_superuser("admin", "admin@test.com", "password")

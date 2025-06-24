@@ -52,8 +52,6 @@ class Router(NestedRouterMixin, DefaultRouter):
         self.register(r"events/(?P<code>[\w-]+)/register", views.RegistrationCreateViewSet, basename="register")
         self.register(r"events/(?P<code>[\w-]+)/review", views.AbstractReviewCreateViewSet, basename="create_review")
 
-        # view routes
-
         self.register("abstracts", views.AbstractViewSet, basename="abstract")
         self.register("contents", views.ContentViewSet, basename="content")
         self.register("coupons", views.CouponViewSet, basename="coupon")

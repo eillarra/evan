@@ -137,23 +137,20 @@ class BadgesPdfMaker:
         """Sort registrations based on the sort_by field."""
         if sort_by == "last_name":
             return registrations.order_by("user__last_name", "user__first_name")
-        else:  # default to first_name
+        else:
             return registrations.order_by("user__first_name", "user__last_name")
 
     def _group_registrations(self, registrations, group_by: str):
         """Group registrations based on the group_by field."""
         if group_by == "fee":
-            # Group by fee_type, maintaining sort order within each group
             groups = {}
             for reg in registrations:
                 fee_type = reg.fee_type or "no_fee"
                 if fee_type not in groups:
                     groups[fee_type] = []
                 groups[fee_type].append(reg)
-            # Return groups in a consistent order
             return [groups[key] for key in sorted(groups.keys())]
         elif group_by == "color":
-            # Group by badge color (groups different fee types that have the same color)
             event = registrations.first().event if registrations else None
             if not event:
                 return [list(registrations)]
@@ -162,36 +159,30 @@ class BadgesPdfMaker:
             fee_colors = badge_config.get("fee_colors", {})
             default_color = badge_config.get("default", "#2196F3")
 
-            # Build color groups
             color_groups = {}
             for reg in registrations:
-                # Determine the color for this registration
                 color = fee_colors[reg.fee_type] if reg.fee_type and reg.fee_type in fee_colors else default_color
 
                 if color not in color_groups:
                     color_groups[color] = []
                 color_groups[color].append(reg)
 
-            # Return groups in a consistent order (sorted by color hex value)
             return [color_groups[color] for color in sorted(color_groups.keys())]
-        else:  # group_by == "none" - return all registrations as a single group
+        else:
             return [list(registrations)]
 
     def make_pdf(self):
-        side_margin = 6 * mm  # a minimum on the sides for the printers
+        side_margin = 6 * mm
 
         with Wrapdf(margins=[10 * mm, 0, 10 * mm, side_margin]) as pdf:
             event = self.registrations.first().event
             badge_config = event.badges_configuration
 
-            # Get sorting and grouping preferences from badge config
             sort_by = badge_config.get("sort_by", "first_name")
             group_by = badge_config.get("group_by", "none")
 
-            # Apply sorting
             sorted_registrations = self._sort_registrations(self.registrations, sort_by)
 
-            # Apply grouping
             registration_groups = self._group_registrations(sorted_registrations, group_by)
 
             badge_count = 0
@@ -226,13 +217,11 @@ class BadgesPdfMaker:
                     if badge_count % 3 == 0:
                         pdf.add_page_break()
 
-                    # Generate badges for accompanying persons
                     accompanying_persons = reg.extra_data.get("accompanying_persons", [])
                     for person in accompanying_persons:
                         badge_count += 1
                         guest_color = HexColor(badge_config.get("guest", "#4CAF50"))
 
-                        # Use the country field for "guest of [name]" text (smaller font, better positioning)
                         guest_relationship = f"guest of {reg.user.name}"
 
                         draw = draw_badge(
@@ -241,8 +230,8 @@ class BadgesPdfMaker:
                             event_info=event_info,
                             attendee_name=person["name"],
                             color=guest_color,
-                            institution=None,  # Leave institution empty for cleaner look
-                            country=guest_relationship,  # Use country field for guest relationship (smaller font)
+                            institution=None,
+                            country=guest_relationship,
                             show_social=False,
                         )
 

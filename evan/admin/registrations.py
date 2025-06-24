@@ -5,6 +5,7 @@ from django.utils.html import format_html
 
 from evan.models import InvitationLetter, Registration
 from evan.services.mailer.registrations import schedule_registration_email
+from evan.site.pdfs.badges import BadgesPdfMaker
 
 
 class RegistrationIsPaidFilter(admin.SimpleListFilter):
@@ -110,6 +111,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         "send_payment_reminder",
         "send_delegated_payment",
         "send_profile_reminder",
+        "view_badges_pdf",
     )
 
     def get_queryset(self, request):
@@ -202,6 +204,33 @@ class RegistrationAdmin(admin.ModelAdmin):
         for registration in queryset:
             schedule_registration_email(registration, code="registration.visa_reminder")
         admin.ModelAdmin.message_user(self, request, "Emails are being sent.")
+
+    @admin.action(description="[PDF] View badges PDF for selected registrations")
+    def view_badges_pdf(self, request, queryset):
+        """Generate and view badges PDF for selected registrations in the browser."""
+        accepted_registrations = queryset.filter(is_accepted=True).select_related("user")
+
+        if not accepted_registrations.exists():
+            self.message_user(request, "No accepted registrations selected.", level="warning")
+            return
+
+        event = accepted_registrations.first().event
+
+        if accepted_registrations.values("event").distinct().count() > 1:
+            self.message_user(
+                request,
+                "Cannot generate badges for registrations from different events. "
+                "Please select registrations from a single event only.",
+                level="error",
+            )
+            return
+
+        maker = BadgesPdfMaker(
+            registrations=accepted_registrations,
+            filename=f"{event.code}_selected_badges.pdf",
+            as_attachment=False,
+        )
+        return maker.response
 
     # custom fields
 
