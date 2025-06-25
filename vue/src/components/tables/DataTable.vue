@@ -32,7 +32,7 @@
           <q-icon :name="iconColumns" :size="iconSizeToolbar" />
         </template>
       </q-select>
-      <div v-if="createFormComponent" class="col-6 col-md-1 ugent__create-btn">
+      <div v-if="createFormComponent" class="col-6 col-md-auto ugent__create-btn">
         <q-btn
           unelevated
           color="blue-1"

@@ -1,11 +1,11 @@
 <template>
-  <div class="flex justify-between q-gutter-sm q-mb-lg">
-    <div v-if="$slots.banner">
-      <warning-banner type="warning">
+  <div class="row q-gutter-sm q-mb-lg">
+    <div class="col-12 col-md">
+      <warning-banner v-if="$slots.banner" type="warning">
         <slot name="banner" />
       </warning-banner>
     </div>
-    <div class="ugent__create-btn">
+    <div class="col-auto ugent__create-btn">
       <q-btn
         unelevated
         color="blue-1"
