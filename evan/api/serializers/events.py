@@ -4,9 +4,7 @@ from rest_framework.reverse import reverse
 
 from evan.models import Event, Fee, validate_event_dates
 
-from .papers import PaperReadOnlySerializer, PaperSerializer
 from .rel.files import FilesMixin
-from .sessions import SessionReadOnlySerializer, SessionSerializer
 from .sponsors import SponsorReadOnlySerializer, SponsorSerializer
 from .topics import TopicReadOnlySerializer, TopicSerializer
 from .tracks import TrackReadOnlySerializer, TrackSerializer
@@ -68,8 +66,6 @@ class EventSerializer(FilesMixin, EventListSerializer):
     fees = FeeSerializer(many=True, read_only=True)
     dates_display = serializers.CharField(read_only=True)
 
-    papers = PaperReadOnlySerializer(many=True, read_only=True)
-    sessions = SessionReadOnlySerializer(many=True, read_only=True)
     sponsors = SponsorReadOnlySerializer(many=True, read_only=True)
     venues = VenueReadOnlySerializer(many=True, read_only=True)
 
@@ -93,8 +89,6 @@ class EventSerializer(FilesMixin, EventListSerializer):
 class ManagedEventSerializer(EventSerializer):
     """Serializer for managed events."""
 
-    papers = PaperSerializer(many=True, read_only=True)
-    sessions = SessionSerializer(many=True, read_only=True)
     sponsors = SponsorSerializer(many=True, read_only=True)
     tracks = TrackSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)

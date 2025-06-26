@@ -14,7 +14,7 @@ from ..viewsets import EventRelatedViewSet
 
 
 class RegistrationsViewSet(EventRelatedViewSet):
-    queryset = Registration.objects.select_related("coupon", "user")
+    queryset = Registration.objects.select_related("coupon", "user").prefetch_related("event")
     serializer_class = RegistrationRetrieveSerializer
 
     def list(self, request, *args, **kwargs):
@@ -24,7 +24,7 @@ class RegistrationsViewSet(EventRelatedViewSet):
 
 class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    queryset = Registration.objects.select_related("user").prefetch_related("coupon")
+    queryset = Registration.objects.select_related("user").prefetch_related("coupon", "event")
     serializer_class = RegistrationRetrieveSerializer
 
     def perform_create(self, serializer):
@@ -40,7 +40,7 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
 class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     lookup_field = "uuid"
     permission_classes = (RegistrationPermission,)
-    queryset = Registration.objects.prefetch_related("sessions").select_related("user")
+    queryset = Registration.objects.select_related("user").prefetch_related("sessions", "event")
     serializer_class = AuthRegistrationRetrieveSerializer
 
     @method_decorator(never_cache)

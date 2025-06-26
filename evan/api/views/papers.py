@@ -26,8 +26,13 @@ class PapersViewSet(EventRelatedViewSet):
     queryset = Paper.objects.all()
     serializer_class = PaperSerializer
 
+    def get_queryset(self):
+        """Optimize queryset based on action."""
+        queryset = super().get_queryset()
+        return queryset.prefetch_related("files", "topics", "session", "subsession")
+
     def get_serializer_class(self):
-        """Event managers can see the UUID and secret."""
+        """Use appropriate serializer based on action and permissions."""
         if user_is_manager_of_event(self.request.user, self.get_event()):
             return PaperWithSecretsSerializer
         return super().get_serializer_class()
@@ -35,7 +40,7 @@ class PapersViewSet(EventRelatedViewSet):
 
 class PaperViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     permission_classes = [PaperPermission]
-    queryset = Paper.objects.all()
+    queryset = Paper.objects.prefetch_related("files", "topics").all()
     serializer_class = PaperSerializer
     max_files = 30
     default_file_type = File.PRIVATE

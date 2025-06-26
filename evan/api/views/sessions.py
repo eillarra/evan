@@ -1,7 +1,7 @@
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import File, Session
+from evan.models import Session
 
 from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import SessionSerializer, SessionWithSecretsSerializer
@@ -37,8 +37,13 @@ class SessionsViewSet(EventRelatedViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
 
+    def get_queryset(self):
+        """Optimize queryset based on action."""
+        queryset = super().get_queryset()
+        return queryset.prefetch_related("files", "topics", "subsessions", "track", "room")
+
     def get_serializer_class(self):
-        """Event managers can see the UUID and secret."""
+        """Use appropriate serializer based on action and permissions."""
         if user_is_manager_of_event(self.request.user, self.get_event()):
             return SessionWithSecretsSerializer
         return super().get_serializer_class()
@@ -46,10 +51,8 @@ class SessionsViewSet(EventRelatedViewSet):
 
 class SessionViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
     permission_classes = [SessionPermission]
-    queryset = Session.objects.all()
+    queryset = Session.objects.prefetch_related("files", "topics").all()
     serializer_class = SessionSerializer
-    max_files = 30
-    default_file_type = File.PRIVATE
 
     def get_serializer_class(self):
         """Event managers can see the UUID and secret."""

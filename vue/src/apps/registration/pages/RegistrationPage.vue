@@ -123,6 +123,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
+import { usePage } from '@inertiajs/vue3';
 
 import { useUserStore } from '@/stores/user';
 import { formatDate } from '@/utils/dates';
@@ -135,18 +136,21 @@ import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 import AccompanyingPersons from '../components/AccompanyingPersons.vue';
 import FeeFormComponent from '../components/FeeFormComponent.vue';
 
+const page = usePage();
 const userStore = useUserStore();
 const store = useStore();
 
 const { user } = storeToRefs(userStore);
 const { evanEvent, registration } = storeToRefs(store);
 
+const sessions = computed<Session[]>(() => page.props.sessions as Session[]);
+
 const isEarly = computed<boolean>(() => {
   const deadline = registration.value ? new Date(registration.value.created_at) : new Date();
   return new Date(evanEvent.value?.registration_early_deadline || '') > deadline;
 });
 const socialEvents = computed<Session[]>(
-  () => evanEvent.value?.sessions.filter((s: Session) => s.is_social_event) || [],
+  () => sessions.value?.filter((s: Session) => s.is_social_event) || [],
 );
 const includedSocialEvents = computed<number[]>(() => selectedFee.value?.config.included_social_events || []);
 

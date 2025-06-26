@@ -24,9 +24,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     def retrieve(self, request, *args, **kwargs):
         self.queryset = self.queryset.prefetch_related(
             "fees",
-            "papers__topics",
-            "papers__files",
-            "sessions__topics",
+            "files",
             "sponsors__files",
             "topics",
             "tracks",

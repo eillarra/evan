@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import RedirectView, TemplateView, View
 
 from evan.api.serializers.events import EventSerializer
+from evan.api.serializers.sessions import SessionReadOnlySerializer
 from evan.api.serializers.users import UserSerializer
 from evan.models import Coupon, Event, Registration
 from evan.services.mailer.registrations import schedule_registration_email
@@ -33,7 +34,21 @@ class RegistrationView(InertiaView):
 
     def get_event(self, queryset=None) -> Event:
         if not hasattr(self, "object"):
-            self.object = get_object_or_404(Event, code=self.kwargs.get("code"))
+            self.object = get_object_or_404(
+                Event.objects.prefetch_related(
+                    "files",
+                    "fees",
+                    "sessions",
+                    "sessions__topics",
+                    "sessions__subsessions",
+                    "sponsors",
+                    "sponsors__files",
+                    "topics",
+                    "tracks",
+                    "venues__rooms",
+                ),
+                code=self.kwargs.get("code"),
+            )
         return self.object
 
     @method_decorator(login_required)
@@ -44,9 +59,11 @@ class RegistrationView(InertiaView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_props(self, request, *args, **kwargs) -> dict:
+        event = self.get_event()
         return {
             "user": UserSerializer(request.user, context={"request": request}).data,
-            "event": EventSerializer(self.get_event(), context={"request": request}).data,
+            "event": EventSerializer(event, context={"request": request}).data,
+            "sessions": SessionReadOnlySerializer(event.sessions.all(), many=True, context={"request": request}).data,
         }
 
     def get_page_title(self, request, *args, **kwargs) -> str:

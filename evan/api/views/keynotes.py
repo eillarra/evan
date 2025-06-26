@@ -23,7 +23,7 @@ class KeynotePermission(EventRelatedObjectPermission):
 
 class KeynotesViewSet(EventRelatedViewSet):
     permission_classes = [KeynotesPermission]
-    queryset = Keynote.objects.select_related("event", "session", "subsession").prefetch_related("topics")
+    queryset = Keynote.objects.select_related("event", "session", "subsession").prefetch_related("topics", "files")
     serializer_class = KeynoteSerializer
     filterset_fields = ["session", "subsession", "topics"]
     search_fields = ["code", "title", "speaker", "bio", "abstract"]
@@ -38,7 +38,7 @@ class KeynotesViewSet(EventRelatedViewSet):
 
 
 class KeynoteViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
-    queryset = Keynote.objects.select_related("event", "session", "subsession").prefetch_related("topics")
+    queryset = Keynote.objects.select_related("event", "session", "subsession").prefetch_related("topics", "files")
     serializer_class = KeynoteSerializer
     permission_classes = [KeynotePermission]
 

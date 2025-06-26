@@ -19,7 +19,17 @@ class EventFirewallMixin(View):
 
     def get_event(self, queryset=None) -> Event:
         if not hasattr(self, "object"):
-            self.object = get_object_or_404(Event, code=self.kwargs.get("code"))
+            self.object = get_object_or_404(
+                Event.objects.prefetch_related(
+                    "files",
+                    "fees",
+                    "sponsors__files",
+                    "topics",
+                    "tracks",
+                    "venues__rooms",
+                ),
+                code=self.kwargs.get("code"),
+            )
         return self.object
 
     @method_decorator(login_required)
