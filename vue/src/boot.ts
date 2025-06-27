@@ -6,6 +6,7 @@ import { createPinia } from 'pinia';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { Quasar, Dialog, Notify } from 'quasar';
 import * as Sentry from '@sentry/vue';
+import { AxiosError } from 'axios';
 
 import symSharp from 'quasar/icon-set/svg-material-symbols-sharp';
 
@@ -18,6 +19,25 @@ import EvanSelect from './components/EvanSelect.vue';
 import EvanFilterSelect from './components/EvanFilterSelect.vue';
 import EvanSectionTitle from './components/EvanSectionTitle.vue';
 import UgentBtn from './components/UgentBtn.vue';
+
+// See https://sentry.io/tropela/tropela-app/getting-started/javascript-vue/
+
+const PRELOAD_ERRORS = [
+  /Loading chunk/i,
+  /Failed to fetch dynamically imported module/i,
+  /Error loading dynamically imported module/i,
+  /Importing a module script failed/i,
+  /Unable to preload CSS/i,
+  /'text\/html' is not a valid JavaScript MIME type/i,
+];
+
+const SHARE_ABORT_ERRORS = [
+  /AbortError: Share canceled/i,
+  /AbortError: Abort due to cancellation of share/i,
+  /AbortError: The operation was aborted/i,
+];
+
+const STORAGE_ERRORS = [/The operation is insecure/i, /Failed to read the 'localStorage'/i];
 
 const bootApp = (routes: RouteRecordRaw[]) => {
   createInertiaApp({
@@ -92,7 +112,17 @@ const bootApp = (routes: RouteRecordRaw[]) => {
           tracePropagationTargets: ['localhost', 'evan.ugent.be', /^\//],
           // Ignore some errors: https://docs.sentry.io/platforms/javascript/configuration/filtering/
           // - ResizeObserver loop errors
-          ignoreErrors: ['ResizeObserver loop'],
+          // - 'vite:preloadError` equivalent errors
+          ignoreErrors: ['ResizeObserver loop', ...PRELOAD_ERRORS, ...SHARE_ABORT_ERRORS, ...STORAGE_ERRORS],
+          beforeSend(event, hint) {
+            // ignore AxiosError on beforeSend, as these, if critical, are already caught by the API server
+            if (hint.originalException instanceof AxiosError) {
+              return null;
+            }
+            return event;
+          },
+          // VueOptions: suppress reporting of all props data
+          attachProps: false,
         });
 
         // send user id
