@@ -23,6 +23,12 @@ Code generation style
 
 - Strategic commenting: **avoid comments that explain what the code is doing** (the code should do that).
 
+Commit messages
+---------------
+
+- Rule: All commit messages must follow the Conventional Commits specification with the format `<type>(<scope>): <description>`.
+- Allowed types: Use only `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`, or `build`.
+
 Knowledge management: the `.copilot` directory
 ----------------------------------------------
 

@@ -8,6 +8,7 @@ Core architecture
 
 - Framework: Vue 3.
 - API: Composition API with `<script setup lang="ts">` is mandatory.
+- Package manager: Use `yarn` for all package management commands (e.g., `yarn add`, `yarn remove`).
 - State management: Pinia is the only state management library.
 
 Component structure
