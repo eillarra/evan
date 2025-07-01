@@ -1,7 +1,10 @@
+import os
+
 from rest_framework import serializers
 
 from evan.models.documents.files import BaseFileUploaderConfig
 from evan.models.rel.files import File
+from evan.services.image_processor import ImageProcessor
 
 from ..base import TagsMixin
 from .base import NestedRelHyperlinkField, RelHyperlinkedField
@@ -51,6 +54,31 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Maximum number of files ({max_files_allowed}) already uploaded.")
 
         return data
+
+    def create(self, validated_data):
+        """Create a new file instance with image processing if applicable."""
+        # Process image if it's an image file
+        uploaded_file = validated_data.get("file")
+        tags = validated_data.get("tags", [])
+
+        if uploaded_file and ImageProcessor.should_process_image(uploaded_file.name, tags):
+            # Process the image and replace the uploaded file
+            processed_file = ImageProcessor.process_image(uploaded_file, tags)
+            validated_data["file"] = processed_file
+
+            # Update description to reflect new extension if needed
+            original_description = validated_data.get("description", "")
+            if original_description:
+                # Extract extensions
+                original_ext = os.path.splitext(uploaded_file.name)[1].lower()
+                new_ext = os.path.splitext(processed_file.name)[1].lower()
+
+                # If extensions differ and description ends with the original extension,
+                # replace it with the new extension
+                if original_ext != new_ext and original_description.lower().endswith(original_ext):
+                    validated_data["description"] = original_description[: -len(original_ext)] + new_ext
+
+        return super().create(validated_data)
 
 
 class FilesMixin(serializers.ModelSerializer):

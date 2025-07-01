@@ -58,16 +58,22 @@
           </q-tab-panel>
           <q-tab-panel name="extra_data">
             <div class="row q-col-gutter-y-sm q-col-gutter-x-md">
-              <file-field
-                v-if="obj"
-                public
-                dense
-                :api-endpoint="obj.rel_files"
-                :tags="['_internal:avatar']"
-                :label="$t('fields.speaker_photo')"
-                accept="image/*"
-                class="col-12 col-md-6"
-              />
+              <template v-if="obj">
+                <file-field
+                  public
+                  dense
+                  :api-endpoint="obj.rel_files"
+                  :tags="['_internal:avatar', '_process:square_512']"
+                  :label="$t('fields.speaker_photo')"
+                  accept="image/*"
+                  class="col-12 col-md-6"
+                />
+                <div class="col-12 col-md-6">
+                  <warning-banner class="full-heigth full-width">
+                    Image will be resized to a 512px square
+                  </warning-banner>
+                </div>
+              </template>
               <q-input
                 dense
                 v-model="extraData.speaker_affiliation"
