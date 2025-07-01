@@ -8,7 +8,7 @@ from django.http import HttpResponse
 
 from evan.admin.registrations import RegistrationAdmin
 from evan.models import Registration
-from evan.utils.factories import EventFactory, UserFactory
+from tests._factories import EventFactory, UserFactory
 
 
 @pytest.mark.django_db

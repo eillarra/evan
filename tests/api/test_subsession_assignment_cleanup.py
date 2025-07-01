@@ -7,7 +7,7 @@ subsessions when their references are removed from program templates.
 
 import pytest
 
-from evan.utils.factories import KeynoteFactory, PaperFactory, SessionFactory, SubsessionFactory
+from tests._factories import KeynoteFactory, PaperFactory, SessionFactory, SubsessionFactory
 
 
 @pytest.mark.api

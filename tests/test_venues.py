@@ -2,7 +2,7 @@
 
 import pytest
 
-from evan.utils.factories import EventFactory, VenueFactory
+from tests._factories import EventFactory, VenueFactory
 
 
 @pytest.mark.django_db

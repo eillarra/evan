@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from evan.utils.factories import ContentFactory
+from tests._factories import ContentFactory
 
 
 @pytest.fixture

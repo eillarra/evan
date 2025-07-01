@@ -1,4 +1,4 @@
-from evan.utils.factories import AffiliationDomainFactory, UserFactory
+from tests._factories import AffiliationDomainFactory, UserFactory
 
 
 def test_affiliation_updates(db):

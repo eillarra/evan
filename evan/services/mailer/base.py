@@ -20,26 +20,19 @@ def render_context(body: str, context: dict) -> str:
     return templ.render(Context(context))
 
 
-def get_template(event: "Event", code: str, language: str = "nl") -> "EmailTemplate":
-    """Get an email template for an education.
+def get_template(event: "Event", code: str) -> "EmailTemplate":
+    """Get an email template for an event.
 
-    :param education: The education to get the email template for.
+    :param event: The event to get the email template for.
     :param code: The code of the email template to get.
-    :param language: The language of the email template to get.
-    :returns: The email template for the education, code and language.
+    :returns: The email template for the event and code.
     :raises ValueError: If the email template is not found.
     """
-    from evan.models import EmailTemplate
-
-    try:
-        return EmailTemplate.objects.get(code=code, event=event, language=language)
-    except EmailTemplate.DoesNotExist:
-        try:
-            return EmailTemplate.objects.get(code=code, education=None, language=language)
-        except EmailTemplate.DoesNotExist:
-            send_email_to_admins(f"Email template not found for {event} EOM", f"{code} - {language}")
-
-    raise ValueError(f"Email template not found for {event} - {code} - {language}")
+    template = event.get_email_template(code=code)
+    if template is None:
+        send_email_to_admins(f"Email template not found for {event}", f"Code: {code}")
+        raise ValueError(f"Email template not found for {event} - {code}")
+    return template
 
 
 def send_email_to_admins(subject: str, message: str = "") -> None:

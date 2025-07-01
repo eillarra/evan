@@ -3,7 +3,7 @@ from http import HTTPStatus as status
 import pytest
 from django.core.exceptions import ValidationError
 
-from evan.utils.factories import (
+from tests._factories import (
     EventFactory,
     PaperFactory,
     RoomFactory,

@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 
 from evan.models import Subsession
-from evan.utils.factories import EventFactory, PaperFactory, SessionFactory, UserFactory
+from tests._factories import EventFactory, PaperFactory, SessionFactory, UserFactory
 
 
 @pytest.fixture

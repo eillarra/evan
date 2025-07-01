@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from evan.models import Subsession
-from evan.utils.factories import SessionFactory
+from tests._factories import SessionFactory
 
 
 @pytest.fixture

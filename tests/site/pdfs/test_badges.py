@@ -6,7 +6,7 @@ import pytest
 
 from evan.models import Fee, Registration
 from evan.site.pdfs.badges import BadgesPdfMaker
-from evan.utils.factories import UserFactory
+from tests._factories import UserFactory
 
 
 @pytest.mark.django_db

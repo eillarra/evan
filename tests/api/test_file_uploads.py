@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
-from evan.utils.factories import ContentFactory, UserFactory
+from tests._factories import ContentFactory, UserFactory
 
 
 @pytest.fixture

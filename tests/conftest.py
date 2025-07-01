@@ -3,7 +3,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from evan.models.rel.permissions import Permission
-from evan.utils.factories import (
+from tests._factories import (
     EventFactory,
     UserFactory,
 )

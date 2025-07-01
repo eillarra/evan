@@ -2,6 +2,7 @@
 
 from .contents import *
 from .coupons import *
+from .emails import *
 from .events import *
 from .keynotes import *
 from .papers import *

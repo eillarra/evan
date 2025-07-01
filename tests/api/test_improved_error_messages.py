@@ -5,7 +5,7 @@ Test for improved error messages in program assignment conflicts.
 import pytest
 from django.core.exceptions import ValidationError
 
-from evan.utils.factories import KeynoteFactory, PaperFactory, SessionFactory, SubsessionFactory
+from tests._factories import KeynoteFactory, PaperFactory, SessionFactory, SubsessionFactory
 
 
 @pytest.mark.api

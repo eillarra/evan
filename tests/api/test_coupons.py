@@ -2,7 +2,7 @@ from http import HTTPStatus as status
 
 import pytest
 
-from evan.utils.factories import CouponFactory, EventFactory, RegistrationFactory, UserFactory
+from tests._factories import CouponFactory, EventFactory, RegistrationFactory, UserFactory
 
 
 @pytest.fixture

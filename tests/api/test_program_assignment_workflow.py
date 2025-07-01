@@ -11,7 +11,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
-from evan.utils.factories import KeynoteFactory, PaperFactory, SessionFactory, SubsessionFactory
+from tests._factories import KeynoteFactory, PaperFactory, SessionFactory, SubsessionFactory
 
 
 @pytest.mark.api

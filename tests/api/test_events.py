@@ -4,7 +4,7 @@ from http import HTTPStatus as status
 
 import pytest
 
-from evan.utils.factories import RegistrationFactory, UserFactory
+from tests._factories import RegistrationFactory, UserFactory
 
 
 @pytest.fixture

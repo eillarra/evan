@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from evan.models import Keynote
-from evan.utils.factories import EventFactory, KeynoteFactory, SessionFactory, SubsessionFactory, TopicFactory
+from tests._factories import EventFactory, KeynoteFactory, SessionFactory, SubsessionFactory, TopicFactory
 
 
 @pytest.mark.django_db
