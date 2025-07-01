@@ -26,11 +26,11 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps<{
   label: string;
-  modelValue: string;
+  modelValue: string | null;
   options: { label: string; value: string | number | boolean | null }[];
 }>();
 
-const mutable = ref<string>(props.modelValue);
+const mutable = ref<string | null>(props.modelValue);
 
 watch(mutable, (val) => {
   emit('update:modelValue', val);

@@ -3,6 +3,7 @@ const { resolve } = require('path');
 
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 
 // read apps folder and create a list of entries
 const apps = fs.readdirSync(resolve(__dirname, './vue/src/apps'));
@@ -13,7 +14,12 @@ apps.forEach((app) => {
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue({
+      template: { transformAssetUrls }
+    }),
+    quasar()
+  ],
   root: resolve('./vue/src'),
   base: '/static/vite/',
   server: {
@@ -34,9 +40,9 @@ export default defineConfig({
   build: {
     outDir: resolve('./vue/dist'),
     assetsDir: '',
-    manifest: true,
+    manifest: 'manifest.json',
     emptyOutDir: true,
-    target: 'es2015',
+    target: 'es2020',
     rollupOptions: {
       input: appsToBuild,
       output: {
