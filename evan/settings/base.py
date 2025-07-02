@@ -73,6 +73,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "evan.middleware.NoCookiesMiddleware",  # Clean up cookies after all other middleware
     "django.middleware.cache.FetchFromCacheMiddleware",
     "django.contrib.redirects.middleware.RedirectFallbackMiddleware",
     "inertia.middleware.InertiaMiddleware",

@@ -1,8 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
 from django.views.generic import View
 from requests.exceptions import HTTPError
 
@@ -16,7 +14,7 @@ class MediaFileView(View):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.get_object().is_accessible_by_user(request.user):
+        if not self.get_object().is_accessible_by_user(request.user):  # type: ignore
             raise PermissionDenied("You don't have the necessary permissions to access this file.")
         return super().dispatch(request, *args, **kwargs)
 
@@ -25,7 +23,6 @@ class MediaFileView(View):
             self.object = get_object_or_404(File, file=self.request.path.replace("/media/", "", 1))
         return self.object
 
-    @method_decorator(never_cache)
     def get(self, request, *args, **kwargs):
         file = self.get_object()
 
@@ -34,11 +31,20 @@ class MediaFileView(View):
         except HTTPError as exc:
             raise Http404("File not found.") from exc
 
-        return HttpResponse(
+        # Determine cache behavior based on file visibility
+        cache_control = "public, max-age=3600" if file.is_public else "private, no-cache"
+
+        response = HttpResponse(
             res.raw,
             headers={
                 "Content-Disposition": f'inline; filename="{file.file.name}"',
                 "Content-Length": res.headers["Content-Length"],
                 "Content-Type": res.headers["Content-Type"],
+                "Cache-Control": cache_control,
             },
         )
+
+        # Mark response to prevent middleware from adding cookies
+        response._no_cookies = True  # type: ignore
+
+        return response

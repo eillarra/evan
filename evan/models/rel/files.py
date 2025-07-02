@@ -77,9 +77,14 @@ class File(models.Model):
 
     def is_accessible_by_user(self, user: "User") -> bool:
         """Check if the file is accessible by a user."""
-        if self.file.name.startswith("public/"):
+        if self.is_public:
             return True
         return check_file_access(self, user)
+
+    @property
+    def is_public(self) -> bool:
+        """Check if the file is public."""
+        return self.type == self.PUBLIC
 
     @property
     def s3_object_key(self):
