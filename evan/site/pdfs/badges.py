@@ -1,14 +1,21 @@
+import importlib
 import os
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.template.defaultfilters import date as date_filter
 from reportlab.graphics.shapes import Drawing, Image, Rect, String  # type: ignore
 from reportlab.lib.colors import Color, HexColor, black, white  # type: ignore
 from reportlab.lib.units import mm  # type: ignore
+from svglib.svglib import svg2rlg  # type: ignore
 
 from evan.services.pdf import PdfResponse
 from evan.services.pdf.styles import UGENT_BLUE
 from evan.services.pdf.wrapdf import Wrapdf
+
+
+if TYPE_CHECKING:
+    from evan.models.registrations import Registration
 
 
 def get_font_size(text, *, max_size: float, char_max: int) -> float:
@@ -16,6 +23,25 @@ def get_font_size(text, *, max_size: float, char_max: int) -> float:
     if len(text) <= char_max:
         return max_size
     return max_size / (len(text) / char_max)
+
+
+def get_custom_icons(event_code: str, registration: "Registration", person_data: dict | None = None) -> list[dict]:
+    """Get custom icons for a registration based on event code.
+
+    :param event_code: The event code to check for custom extensions.
+    :param registration: The registration to get custom info for.
+    :param person_data: Optional data for accompanying person.
+    :returns: List of icon dictionaries with 'filename' and optional styling info.
+    """
+    try:
+        module_name = f"evan.site.pdfs.custom.{event_code}"
+        custom_module = importlib.import_module(module_name)
+        if hasattr(custom_module, "get_custom_info"):
+            return custom_module.get_custom_info(registration, person_data)
+    except ImportError:
+        # No custom module for this event
+        pass
+    return []
 
 
 def draw_badge(  # type: ignore
@@ -27,6 +53,7 @@ def draw_badge(  # type: ignore
     show_social: bool = False,
     institution: str | None = None,
     country: str | None = None,
+    custom_icons: list[dict] | None = None,
 ) -> Drawing:
     side_margin = 6 * mm  # a minimum on the sides for the printers
     width = (210 * mm) - (2 * side_margin)
@@ -98,6 +125,82 @@ def draw_badge(  # type: ignore
                     textAnchor="middle",
                 )
             )
+
+        # Draw custom icons if available
+        if custom_icons:
+            icon_size = 7 * mm  # Size for each icon
+            icon_spacing = 2 * mm  # Horizontal spacing between icons
+            # Position icons closer to the lower band
+            icon_y = 13 * mm
+
+            # Separate social icons from camera icon
+            social_icons = [icon for icon in custom_icons if not icon["filename"].startswith("camera")]
+            camera_icons = [icon for icon in custom_icons if icon["filename"].startswith("camera")]
+
+            # Draw social icons on the left side
+            if social_icons:
+                # Start from left margin
+                start_x = x - (width * 0.20)  # Position on left side of badge half
+
+                for i, icon_info in enumerate(social_icons):
+                    icon_path = os.path.join(settings.SITE_ROOT, "static", "images", "icons", icon_info["filename"])
+                    if os.path.exists(icon_path):
+                        icon_x = start_x + i * (icon_size + icon_spacing)
+                        try:
+                            # Convert SVG to ReportLab drawing
+                            svg_drawing = svg2rlg(icon_path)
+                            if svg_drawing is not None:
+                                # Scale the SVG to fit our icon size
+                                scale_x = icon_size / svg_drawing.width
+                                scale_y = icon_size / svg_drawing.height
+                                scale = min(scale_x, scale_y)  # Maintain aspect ratio
+
+                                svg_drawing.width = svg_drawing.width * scale
+                                svg_drawing.height = svg_drawing.height * scale
+                                svg_drawing.scale(scale, scale)
+
+                                # Position the SVG
+                                svg_drawing.shift(icon_x, icon_y)
+                                draw.add(svg_drawing)
+                        except Exception:
+                            # Fallback: try to use as regular image (for PNG/JPG)
+                            try:
+                                draw.add(Image(icon_x, icon_y, icon_size, icon_size, icon_path))
+                            except Exception:
+                                # Skip this icon if it can't be loaded
+                                pass
+
+            # Draw camera icon on the right side
+            if camera_icons:
+                # Position on right side of badge half
+                camera_x = x + (width * 0.15)  # Position on right side of badge half
+
+                for icon_info in camera_icons:
+                    icon_path = os.path.join(settings.SITE_ROOT, "static", "images", "icons", icon_info["filename"])
+                    if os.path.exists(icon_path):
+                        try:
+                            # Convert SVG to ReportLab drawing
+                            svg_drawing = svg2rlg(icon_path)
+                            if svg_drawing is not None:
+                                # Scale the SVG to fit our icon size
+                                scale_x = icon_size / svg_drawing.width
+                                scale_y = icon_size / svg_drawing.height
+                                scale = min(scale_x, scale_y)  # Maintain aspect ratio
+
+                                svg_drawing.width = svg_drawing.width * scale
+                                svg_drawing.height = svg_drawing.height * scale
+                                svg_drawing.scale(scale, scale)
+
+                                # Position the SVG
+                                svg_drawing.shift(camera_x, icon_y)
+                                draw.add(svg_drawing)
+                        except Exception:
+                            # Fallback: try to use as regular image (for PNG/JPG)
+                            try:
+                                draw.add(Image(camera_x, icon_y, icon_size, icon_size, icon_path))
+                            except Exception:
+                                # Skip this icon if it can't be loaded
+                                pass
 
         draw.add(
             String(
@@ -201,6 +304,9 @@ class BadgesPdfMaker:
                         f"{reg.event.city}, {reg.event.country.name}"
                     )
 
+                    # Get custom icons for this registration
+                    custom_icons = get_custom_icons(event.code, reg)
+
                     draw = draw_badge(
                         event_name=event.name,
                         event_hashtag=event.hashtag,
@@ -210,6 +316,7 @@ class BadgesPdfMaker:
                         institution=reg.user.affiliation,
                         country=reg.user.country.name,
                         show_social=False,
+                        custom_icons=custom_icons,
                     )
 
                     pdf.parts.append(draw)
@@ -224,6 +331,9 @@ class BadgesPdfMaker:
 
                         guest_relationship = f"guest of {reg.user.name}"
 
+                        # Get custom icons for accompanying persons using their specific social event selections
+                        custom_icons = get_custom_icons(event.code, reg, person)
+
                         draw = draw_badge(
                             event_name=event.name,
                             event_hashtag=event.hashtag,
@@ -233,6 +343,7 @@ class BadgesPdfMaker:
                             institution=None,
                             country=guest_relationship,
                             show_social=False,
+                            custom_icons=custom_icons,
                         )
 
                         pdf.parts.append(draw)
