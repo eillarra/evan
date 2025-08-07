@@ -99,6 +99,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
                 "email": registration.user.email,
                 "user": registration.user.name,
                 "affiliation": registration.user.affiliation,
+                "country": registration.user.country.name if registration.user.country else "-",
                 "registration_type": registration.fee_type,
                 "base_fee": registration.base_fee,
                 "extra_fees": registration.extra_fees + registration.manual_extra_fees,
@@ -124,6 +125,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
                     "email": registration.user.email,
                     "user": registration.user.name,
                     "affiliation": registration.user.affiliation,
+                    "country": registration.user.country.name if registration.user.country else "-",
                     "dietary": registration.user.extra_data.get("dietary"),
                     "special_needs": registration.user.extra_data.get("special_needs"),
                 }
@@ -137,6 +139,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
                             "email": "-",
                             "user": person.get("name", "-"),
                             "affiliation": "(accompanying)",
+                            "country": "-",
                             "dietary": person.get("dietary", "-"),
                             "special_needs": "-",
                         }
