@@ -36,6 +36,8 @@ interface Registration extends RegistrationData {
   readonly is_early: boolean;
   readonly url: Url;
   readonly payment_url: Url;
+  readonly receipt_url: Url;
+  readonly certificate_url: Url;
   readonly uuid: string;
   readonly user: UserTiny;
   readonly created_at: string;

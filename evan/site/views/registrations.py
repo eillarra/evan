@@ -30,6 +30,7 @@ class RegistrationRedirectView(View):
 
 
 class RegistrationView(InertiaView):
+    is_after_event = False
     vue_entry_point = "apps/registration/main.ts"
 
     def get_event(self, queryset=None) -> Event:
@@ -54,16 +55,26 @@ class RegistrationView(InertiaView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not self.get_event().is_open_for_registration:
-            messages.error(request, "Registrations are not open for this event.")
-            raise PermissionDenied
+            # check if the user has a registration for this event
+            if not Registration.objects.filter(event=self.get_event(), user=request.user).exists():
+                messages.error(request, "Registrations are not open for this event.")
+                raise PermissionDenied
+            if self.get_event().is_closed:
+                self.is_after_event = True
         return super().dispatch(request, *args, **kwargs)
+
+    def get_vue_entry_point(self, request, *args, **kwargs) -> str:
+        if self.is_after_event:
+            return "apps/registrationAfter/main.ts"
+        return self.vue_entry_point
 
     def get_props(self, request, *args, **kwargs) -> dict:
         event = self.get_event()
+        sessions = event.sessions.all()  # type: ignore
         return {
             "user": UserSerializer(request.user, context={"request": request}).data,
             "event": EventSerializer(event, context={"request": request}).data,
-            "sessions": SessionReadOnlySerializer(event.sessions.all(), many=True, context={"request": request}).data,
+            "sessions": SessionReadOnlySerializer(sessions, many=True, context={"request": request}).data,
         }
 
     def get_page_title(self, request, *args, **kwargs) -> str:

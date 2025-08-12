@@ -180,6 +180,14 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @property
     def registration_configuration(self) -> dict:
         return get_validated_event_registration_configuration(self.registration_config or {})
+    
+    @property
+    def is_active(self) -> bool:
+        return self.start_date <= timezone.now().date() <= self.end_date
+
+    @property
+    def is_closed(self) -> bool:
+        return timezone.now().date() > self.end_date
 
     ### vvvvvvvv Below needs to be checked/refactored vvvvvvvv ###
 
@@ -206,14 +214,6 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @property
     def has_social_event_bundle(self) -> bool:
         return self.social_event_bundle_fee > 0
-
-    @property
-    def is_active(self) -> bool:
-        return self.start_date <= timezone.now().date() <= self.end_date
-
-    @property
-    def is_closed(self) -> bool:
-        return timezone.now().date() > self.end_date
 
     @property
     def is_early(self) -> bool:

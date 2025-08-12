@@ -62,6 +62,11 @@ class InertiaView(View):
     page_title: str | None = None
     vue_entry_point: str
 
+    def get_vue_entry_point(self, request, *args, **kwargs) -> str:
+        if self.vue_entry_point is None:
+            raise NotImplementedError("`vue_entry_point` must be set")
+        return self.vue_entry_point
+
     def get_page_title(self, request, *args, **kwargs) -> str | None:
         return f"{self.page_title} - Evan" if self.page_title and self.page_title != "Evan" else None
 
@@ -75,7 +80,7 @@ class InertiaView(View):
 
         return render_inertia(
             request,
-            self.vue_entry_point,
+            self.get_vue_entry_point(request, *args, **kwargs),
             props=self.get_props(request, *args, **kwargs),
             page_title=self.get_page_title(self, request, *args, **kwargs),
         )

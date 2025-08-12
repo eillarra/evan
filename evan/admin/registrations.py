@@ -52,6 +52,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         "with_coupon",
         "invoice",
         "visa",
+        "no_show",
     )
     list_filter = (
         RegistrationIsPaidFilter,
@@ -61,6 +62,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         "visa_sent",
         ("event", admin.RelatedOnlyFieldListFilter),
         "is_accepted",
+        "no_show",
     )
     search_fields = (
         "id",
@@ -105,6 +107,7 @@ class RegistrationAdmin(admin.ModelAdmin):
     inlines = (InvitationLetterInline,)
     actions = (
         "mark_as_accepted",
+        "mark_as_no_show",
         "regenerate_payment_hash",
         "send_reminder",
         "send_visa_reminder",
@@ -163,6 +166,11 @@ class RegistrationAdmin(admin.ModelAdmin):
     def mark_as_accepted(self, request, queryset):
         queryset.update(is_accepted=True)
         admin.ModelAdmin.message_user(self, request, "Registrations are marked as accepted.")
+
+    @admin.action(description="[Bulk] Mark registrations as no-show")
+    def mark_as_no_show(self, request, queryset):
+        queryset.update(no_show=True)
+        admin.ModelAdmin.message_user(self, request, "Registrations are marked as no-show.")
 
     @admin.action(description="[Bulk] Regenerate payment hash")
     def regenerate_payment_hash(self, request, queryset):

@@ -28,6 +28,8 @@ class RegistrationSerializer(RemarksMixin, serializers.ModelSerializer):
     coupon = CouponSerializer(read_only=True)
     url = serializers.URLField(source="get_absolute_url", read_only=True)
     payment_url = serializers.URLField(source="get_payment_url", read_only=True)
+    receipt_url = serializers.URLField(source="get_receipt_url", read_only=True)
+    certificate_url = serializers.URLField(source="get_certificate_url", read_only=True)
     total_fee = serializers.IntegerField(read_only=True)
 
     class Meta:  # noqa: D106

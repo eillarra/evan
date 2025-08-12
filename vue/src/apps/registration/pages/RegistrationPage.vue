@@ -1,5 +1,5 @@
 <template>
-  <div class="row q-col-gutter-x-xl">
+  <div v-if="!loading" class="row q-col-gutter-x-xl">
     <h3 class="text-ugent col-12">
       <span v-if="registration">My registration</span>
       <span v-else>New registration</span>
@@ -141,7 +141,7 @@ const userStore = useUserStore();
 const store = useStore();
 
 const { user } = storeToRefs(userStore);
-const { evanEvent, registration } = storeToRefs(store);
+const { loading, evanEvent, registration } = storeToRefs(store);
 
 const sessions = computed<Session[]>(() => page.props.sessions as Session[]);
 

@@ -102,6 +102,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     paid = models.PositiveSmallIntegerField(default=0, editable=False)
     paid_via_invoice = models.PositiveSmallIntegerField(default=0)
     saldo = models.IntegerField(default=0, editable=False)
+    no_show = models.BooleanField(default=False)
 
     is_accepted = models.BooleanField(default=True, null=True)
     extra_data = models.JSONField(default=dict)
@@ -148,7 +149,9 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     def viewable_by_user(self, user) -> bool:
         return self.user.id == user.id
 
-    def get_certificate_url(self) -> str:
+    def get_certificate_url(self) -> str | None:
+        if self.no_show:
+            return None
         return reverse("registration:certificate", args=[self.uuid])
 
     def get_payment_url(self) -> str:
@@ -163,7 +166,9 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     def get_payment_delegated_result_url(self) -> str:
         return reverse("registration:payment_delegated_result", args=[self.uuid, self.secret])
 
-    def get_receipt_url(self) -> str:
+    def get_receipt_url(self) -> str | None:
+        if not self.is_paid or self.paid <= 0:
+            return None
         return reverse("registration:receipt", args=[self.uuid])
 
     def generate_unique_hash(self) -> str:

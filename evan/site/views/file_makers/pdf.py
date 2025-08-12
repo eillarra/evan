@@ -36,13 +36,13 @@ Sincerely yours,
             pdf.add_text("To Whom It May Concern,")
             pdf.add_text(intro, "p", "markdown")
 
-            if reg.sessions.count():
+            """if reg.sessions.count():
                 pdf.add_text(f"{reg.user.name} attended the following sessions:")
                 for session in reg.sessions.select_related("track"):
                     if not session.is_social_event:
                         track = f"*{session.track}:* " if session.track else ""
                         t = f'- {track}"{session.title}" ({date_filter(session.date, "N j")})'
-                        pdf.add_text(t, "p", "markdown")
+                        pdf.add_text(t, "p", "markdown")"""
 
             pdf.add_text(signature, "p", "markdown")
             pdf.add_spacer(1.5)
