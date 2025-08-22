@@ -8,7 +8,7 @@ FROM develop-stage AS build-stage
 RUN yarn
 RUN yarn build
 
-FROM python:3.12-slim-bullseye AS production-stage
+FROM python:3.13-slim-bullseye AS production-stage
 
 EXPOSE 5000
 
