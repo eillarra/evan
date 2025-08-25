@@ -17,4 +17,8 @@ def check_file_access(file: "models.rel.File", user: "models.User | AbstractBase
     if not user.is_authenticated:
         return False
 
+    # For album files, use the album's access control method
+    if isinstance(file.content_object, models.Album):
+        return file.content_object.is_accessible_by_user(user)  # type: ignore
+
     return file.content_object.files_can_be_managed_by(user)  # type: ignore[union-attr]

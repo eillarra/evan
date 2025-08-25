@@ -197,7 +197,7 @@ function downloadAlbum() {
     // Use a timeout to reset the loading state since we can't detect when download actually starts
     setTimeout(() => {
       downloadLoading.value = false;
-    }, 2000); // Reset after 2 seconds
+    }, 4000); // Reset after 4 seconds
   } catch (error) {
     console.error('Error downloading album:', error);
     downloadLoading.value = false;
