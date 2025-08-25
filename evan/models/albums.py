@@ -83,3 +83,15 @@ class Album(FilesMixin, models.Model):
             )
 
         return pairs
+
+    def get_collection_zip(self):
+        """Get the collection zip file for the album.
+
+        :returns: The zip File object or None if it doesn't exist.
+        """
+        # Use icontains for SQLite compatibility in tests
+        from django.db import connection
+
+        if connection.vendor == "sqlite":
+            return self.files.filter(tags__icontains="gallery:collection").first()
+        return self.files.filter(tags__contains=["gallery:collection"]).first()

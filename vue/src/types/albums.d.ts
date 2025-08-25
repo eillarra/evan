@@ -4,6 +4,7 @@ interface Album extends ApiObject {
   title: string;
   photo_count: number;
   photos: PhotoPair[];
+  collection_zip: RelatedFile | null;
 }
 
 interface PhotoPair {

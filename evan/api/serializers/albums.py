@@ -17,10 +17,11 @@ class AlbumSerializer(FilesMixin, serializers.ModelSerializer):
 
     files = FileSerializer(many=True, read_only=True)
     photos = PhotoPairSerializer(source="get_photo_pairs", many=True, read_only=True)
+    collection_zip = FileSerializer(source="get_collection_zip", read_only=True, allow_null=True)
 
     class Meta:  # noqa: D106
         model = Album
-        fields = ["id", "title", "files", "photos"]
+        fields = ["id", "title", "files", "photos", "collection_zip"]
 
 
 class AlbumListSerializer(serializers.ModelSerializer):

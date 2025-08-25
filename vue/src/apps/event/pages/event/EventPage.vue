@@ -179,6 +179,7 @@
                   :label="$t('badges.download')"
                   @click="viewBadgesPdf"
                   :loading="pdfLoading"
+                  :disabled="pdfLoading"
                 />
               </div>
               <div class="col"></div>

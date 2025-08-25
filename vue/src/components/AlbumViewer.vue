@@ -60,6 +60,25 @@
       </q-tabs>
     </div>
 
+    <!-- Download Section -->
+    <div v-if="currentAlbum && currentAlbum.collection_zip" class="q-mb-md">
+      <q-btn
+        @click="downloadAlbum"
+        :icon="iconDownload"
+        color="primary"
+        outline
+        no-caps
+        class="q-mr-sm"
+        :loading="downloadLoading"
+        :disabled="downloadLoading"
+      >
+        Download all photos ({{ currentAlbum.title }})
+      </q-btn>
+      <span class="text-caption text-grey-6">
+        ZIP file with all {{ currentAlbum.photos?.length || 0 }} original photos
+      </span>
+    </div>
+
     <!-- Photos Grid -->
     <div v-if="currentAlbum && currentAlbum.photos" :key="currentAlbum.id" class="photo-grid">
       <div v-for="(photo, index) in currentAlbum.photos" :key="`${currentAlbum.id}-${index}`" class="photo-item">
@@ -114,8 +133,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 
-import { iconArrowForward, iconClose } from '@/icons';
 import NoResults from '@/components/NoResults.vue';
+
+import { iconArrowForward, iconClose, iconDownload } from '@/icons';
 
 interface Props {
   eventCode: string;
@@ -128,6 +148,7 @@ const props = defineProps<Props>();
 const selectedAlbum = ref<number | null>(null);
 const showPhotoDialog = ref(false);
 const currentPhotoIndex = ref<number>(0);
+const downloadLoading = ref(false);
 
 // Computed properties
 const currentAlbum = computed(() => props.albums.find((album) => album.id === selectedAlbum.value) || null);
@@ -156,6 +177,30 @@ function nextPhoto() {
 function previousPhoto() {
   if (currentPhotoIndex.value > 0) {
     currentPhotoIndex.value--;
+  }
+}
+
+function downloadAlbum() {
+  if (!currentAlbum.value?.collection_zip?.file) return;
+
+  downloadLoading.value = true;
+
+  try {
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = currentAlbum.value.collection_zip.file;
+    link.download = `${currentAlbum.value.title}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Use a timeout to reset the loading state since we can't detect when download actually starts
+    setTimeout(() => {
+      downloadLoading.value = false;
+    }, 2000); // Reset after 2 seconds
+  } catch (error) {
+    console.error('Error downloading album:', error);
+    downloadLoading.value = false;
   }
 }
 
