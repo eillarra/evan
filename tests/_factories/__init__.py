@@ -1,5 +1,6 @@
 # flake8: noqa
 
+from .albums import *
 from .contents import *
 from .coupons import *
 from .emails import *

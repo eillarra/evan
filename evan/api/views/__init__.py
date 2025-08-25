@@ -3,6 +3,7 @@
 from .rel import *
 
 from .abstracts import *
+from .albums import *
 from .contents import *
 from .coupons import *
 from .emails import *

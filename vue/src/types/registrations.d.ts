@@ -57,6 +57,9 @@ interface Registration extends RegistrationData {
   readonly saldo: number;
   readonly is_paid: boolean;
 
+  readonly is_accepted: boolean | null;
+  readonly no_show: boolean;
+
   readonly tags: Tags;
 
   _tags_dict?: TagsDict;

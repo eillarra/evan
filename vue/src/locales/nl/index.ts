@@ -15,6 +15,7 @@ export default {
   progress: 'Verloop',
   settings: 'Instellingen',
   stats: 'Statistieken',
+  album: 'Fotoalbum | Fotoalbums',
   user_menu: {
     account: 'Account',
     contact_details: 'Contactgegevens',

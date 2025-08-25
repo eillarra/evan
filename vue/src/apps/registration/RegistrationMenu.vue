@@ -33,6 +33,12 @@
           </q-item-section>
           <q-item-section>{{ $t('models.event') }}</q-item-section>
         </q-item>
+        <q-item clickable :to="{ name: 'albums' }" active-class="bg-ugent text-white">
+          <q-item-section avatar>
+            <q-icon :name="iconPhotoAlbum" size="xs" />
+          </q-item-section>
+          <q-item-section>{{ $t('album', 9) }}</q-item-section>
+        </q-item>
       </q-list>
     </div>
   </q-scroll-area>
@@ -43,7 +49,7 @@ import { storeToRefs } from 'pinia';
 
 import { useStore } from './store';
 
-import { iconAccount, iconEvent, iconPayment, iconRegistration } from '@/icons';
+import { iconAccount, iconEvent, iconPayment, iconRegistration, iconPhotoAlbum } from '@/icons';
 
 const store = useStore();
 

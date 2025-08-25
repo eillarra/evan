@@ -34,6 +34,7 @@ class Router(NestedRouterMixin, DefaultRouter):
 
         self.register(r"events", views.EventViewSet, basename="event")
         self.register(r"events/(?P<code>[\w-]+)/abstracts", views.AbstractsViewSet, basename="abstracts")
+        self.register(r"events/(?P<code>[\w-]+)/albums", views.AlbumsViewSet, basename="albums")
         self.register(r"events/(?P<code>[\w-]+)/contents", views.ContentsViewSet, basename="contents")
         self.register(r"events/(?P<code>[\w-]+)/coupons", views.CouponsViewSet, basename="coupons")
         self.register(r"events/(?P<code>[\w-]+)/emails", views.EmailsViewSet, basename="emails")
@@ -53,6 +54,7 @@ class Router(NestedRouterMixin, DefaultRouter):
         self.register(r"events/(?P<code>[\w-]+)/review", views.AbstractReviewCreateViewSet, basename="create_review")
 
         self.register("abstracts", views.AbstractViewSet, basename="abstract")
+        self.register("albums", views.AlbumViewSet, basename="album")
         self.register("contents", views.ContentViewSet, basename="content")
         self.register("coupons", views.CouponViewSet, basename="coupon")
         self.register("emails", views.EmailViewSet, basename="email")

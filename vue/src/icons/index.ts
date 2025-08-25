@@ -39,6 +39,7 @@ import {
   symSharpMeetingRoom,
   symSharpMenu,
   symSharpOpenInBrowser,
+  symSharpPermMedia,
   symSharpPinDrop,
   symSharpRadioButtonChecked,
   symSharpSearch,
@@ -78,6 +79,7 @@ export const iconLogout = symSharpLogout;
 export const iconMenu = symSharpMenu;
 export const iconOpenDialog = symSharpOpenInBrowser;
 export const iconPalette = symSharpColors;
+export const iconPhotoAlbum = symSharpPermMedia;
 export const iconSearch = symSharpSearch;
 
 export const iconChat = symSharpChatBubble;
