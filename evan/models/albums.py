@@ -30,14 +30,13 @@ class Album(FilesMixin, models.Model):
         if self.event.can_be_managed_by(user):
             return True
 
-        # Check if user is a registered attendee (not no-show)
         return self.event.registrations.filter(
             user_id=user.id,  # type: ignore
             is_accepted=True,
             no_show=False,
         ).exists()
 
-    def get_original_photos(self):
+    def get_original_photos(self) -> models.QuerySet:
         """Get all original photos in the album."""
         # Use icontains for SQLite compatibility in tests
         from django.db import connection
@@ -46,7 +45,7 @@ class Album(FilesMixin, models.Model):
             return self.files.filter(tags__icontains="gallery:original")
         return self.files.filter(tags__contains=["gallery:original"])
 
-    def get_thumbnail_photos(self):
+    def get_thumbnail_photos(self) -> models.QuerySet:
         """Get all thumbnail photos in the album."""
         # Use icontains for SQLite compatibility in tests
         from django.db import connection
@@ -55,25 +54,25 @@ class Album(FilesMixin, models.Model):
             return self.files.filter(tags__icontains="gallery:thumbnail")
         return self.files.filter(tags__contains=["gallery:thumbnail"])
 
-    def get_photo_pairs(self):
+    def get_photo_pairs(self) -> list[dict]:
         """Get all photo pairs (original + thumbnail) in the album."""
         originals = self.get_original_photos()
         pairs = []
 
+        files_by_id = {str(file.id): file for file in self.files.all()}
+
         for original in originals:
-            # Find the thumbnail ID from the original's tags
             thumbnail_id = None
+
             for tag in original.tags:
                 if tag.startswith("thumbnail_id:"):
                     thumbnail_id = tag.split(":", 1)[1]
                     break
 
             thumbnail = None
-            if thumbnail_id:
-                try:
-                    thumbnail = self.files.get(id=thumbnail_id)
-                except self.files.model.DoesNotExist:  # type: ignore
-                    pass
+
+            if thumbnail_id and thumbnail_id in files_by_id:
+                thumbnail = files_by_id[thumbnail_id]
 
             pairs.append(
                 {
