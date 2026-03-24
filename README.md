@@ -11,10 +11,10 @@ The Evan api/website uses [Django][django] and the [Django REST Framework][drf].
 
 ### Install the dependencies
 
-The application uses [Poetry][poetry] to manage application dependencies.
+The application uses [uv][uv] to manage application dependencies.
 
 ```bash
-poetry lock && poetry update && poetry sync
+uv sync --upgrade --group dev
 ```
 
 ### Run the app in development mode
@@ -64,5 +64,5 @@ yarn dev
 [django]: https://www.djangoproject.com/
 [drf]: https://www.django-rest-framework.org/
 [inertia]: https://inertiajs.com/
-[poetry]: https://python-poetry.org/
+[uv]: https://github.com/astral-sh/uv
 [vue]: https://vuejs.org/

@@ -1,0 +1,20 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+      python:
+        target: auto
+        flags:
+          - python
+      typescript:
+        target: auto
+        flags:
+          - typescript
+    patch:
+      default:
+        target: auto

@@ -1,10 +1,10 @@
 .DS_Store
 ._*
 
-# Copilot helper files
+# Coding helper files
 
 .copilot
-run.sh
+.vscode
 
 # Python
 
@@ -16,9 +16,8 @@ __pycache__
 *$py.class
 .mypy_cache
 .ruff_cache
-.vscode
 
-.coverage
+.coverage_py
 .env
 .pytest_cache
 dev.db
@@ -27,6 +26,8 @@ test-reports
 
 # Vue / TypeScript
 
+.coverage_ts
+.quasar
 .vite
 node_modules
 vue/dist

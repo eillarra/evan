@@ -1,61 +1,65 @@
-[tool.poetry]
+[project]
 name = "evan"
 version = "2.0.0"
-description = ""
-authors = ["Eneko Illarramendi <eneko@illarra.com>"]
-license = "MIT"
-package-mode = false
+description = "Event assistant that helps you collect registration fees, manage attendees, and more."
+authors = [
+  {name = "Eneko Illarramendi", email = "eneko@illarra.com"}
+]
+license = {text = "MIT"}
+requires-python = "~=3.14.0"
+dependencies = [
+  "commonmark",
+  "django[bcrypt]>=6.0,<7.0",
+  "django-allauth[socialaccount]",
+  "django-compressor",
+  "django-cors-headers",
+  "django-countries",
+  "django-ical",
+  "django-libsass",
+  "django-storages[s3]",
+  "django-vite",
+  "djangorestframework",
+  "drf-extensions",
+  "gunicorn",
+  "huey",
+  "inertia-django",
+  "markdown",
+  "mysqlclient",
+  "nh3",
+  "pillow",
+  "polars",
+  "pydantic",
+  "pydantic-extra-types",
+  "redis[hiredis]",
+  "sentry-sdk[django]",
+  "tld",
+  "weasyprint",
+  "whitenoise",
+  "xlsxwriter",
+  # this seems to be the latest valid version for UGent S3
+  "boto3~=1.35.0",
+  "botocore~=1.35.0",
+  # only for badges
+  "reportlab",
+  "setuptools>=80.10.2",
+  "svglib",
+]
 
-[tool.poetry.dependencies]
-python = "~3.13.0"
-django = {version = "*", extras = ["bcrypt"]}
-djangorestframework = "*"
-django-allauth = {version = "*", extras = ["socialaccount"]}
-django-compressor = "*"
-django-cors-headers = "*"
-django-countries = "*"
-django-ical = "*"
-django-libsass = "*"
-django-storages = {version = "*", extras = ["s3"]}
-django-vite = "*"
-drf-extensions = "*"
-gunicorn = "*"
-hiredis = "*"
-huey = "*"
-inertia-django = "*"
-markdown = "*"
-mysqlclient = "*"
-nh3 = "*"
-pillow = "*"
-polars = "*"
-pydantic = "*"
-pydantic-extra-types = "*"
-redis = "*"
-sentry-sdk = {version = "*", extras = ["django"]}
-tld = "*"
-weasyprint = "*"
-whitenoise = "*"
-xlsxwriter = "*"
-
-commonmark = "*"
-reportlab = "*"
-svglib = "*"
-
-# this seems to be the latest valid version for UGent S3
-boto3 = "~1.35.0"
-botocore = "~1.35.0"
-
-[tool.poetry.group.dev.dependencies]
-arrow = "*"
-django-debug-toolbar = "*"
-factory-boy = "*"
-fastexcel = "*"
-pytest = "*"
-pytest-cov = "*"
-pytest-django = "*"
-ruff = "*"
+[dependency-groups]
+dev = [
+  "arrow",
+  "django-debug-toolbar",
+  "factory-boy",
+  "fastexcel",
+  "memray",
+  "pytest",
+  "pytest-cov",
+  "pytest-django",
+  "ruff",
+]
 
 [tool.coverage.run]
+data_file = ".coverage_py/data"
 omit = [
   "*/migrations/**",
   "*/settings/**",
@@ -65,6 +69,9 @@ omit = [
   "*wsgi.py",
   "manage.py",
 ]
+
+[tool.coverage.html]
+directory = ".coverage_py"
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "raise NotImplementedError", "def __repr__", "def __str__", "if TYPE_CHECKING:"]
@@ -79,7 +86,7 @@ markers = [
 DJANGO_SETTINGS_MODULE = "evan.settings.test"
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py314"
 line-length = 120
 
 [tool.ruff.lint]
