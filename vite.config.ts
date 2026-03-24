@@ -1,5 +1,5 @@
-const fs = require('fs');
-const { resolve } = require('path');
+import fs from 'fs';
+import { resolve } from 'path';
 
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
@@ -16,9 +16,9 @@ apps.forEach((app) => {
 export default defineConfig({
   plugins: [
     vue({
-      template: { transformAssetUrls }
+      template: { transformAssetUrls },
     }),
-    quasar()
+    quasar(),
   ],
   root: resolve('./vue/src'),
   base: '/static/vite/',
@@ -47,10 +47,10 @@ export default defineConfig({
       input: appsToBuild,
       output: {
         chunkFileNames: undefined,
-        manualChunks: {
-          helpers: ['axios', '@sentry/vue'],
-          quasar: ['quasar'],
-          vue: ['vue', 'vue-router', 'pinia'],
+        manualChunks: (id: string) => {
+          if (id.includes('node_modules/axios') || id.includes('node_modules/@sentry')) return 'helpers';
+          if (id.includes('node_modules/quasar') || id.includes('node_modules/@quasar')) return 'quasar';
+          if (id.includes('node_modules/vue') || id.includes('node_modules/pinia')) return 'vue';
         },
       },
     },
@@ -59,5 +59,15 @@ export default defineConfig({
     __VUE_I18N_FULL_INSTALL__: true,
     __VUE_I18N_LEGACY_API__: false,
     __INTLIFY_PROD_DEVTOOLS__: false,
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    include: ['**/__tests__/**/*.{test,spec}.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: resolve(__dirname, '.coverage_ts'),
+    },
   },
 });
