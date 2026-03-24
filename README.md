@@ -1,6 +1,7 @@
 # Evan
 
 [![github-tests-py-badge]][github-tests-py]
+[![github-tests-ts-badge]][github-tests-ts]
 [![codecov-badge]][codecov]
 [![license-badge]](LICENSE)
 
@@ -59,6 +60,8 @@ yarn dev
 [codecov-badge]: https://codecov.io/gh/eillarra/evan/graph/badge.svg?token=wsvdcCF75L
 [github-tests-py]: https://github.com/eillarra/evan/actions/workflows/tests_py.yml
 [github-tests-py-badge]: https://github.com/eillarra/evan/actions/workflows/tests_py.yml/badge.svg?branch=main
+[github-tests-ts]: https://github.com/eillarra/evan/actions/workflows/tests_ts.yml
+[github-tests-ts-badge]: https://github.com/eillarra/evan/actions/workflows/tests_ts.yml/badge.svg?branch=main
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 
 [django]: https://www.djangoproject.com/
