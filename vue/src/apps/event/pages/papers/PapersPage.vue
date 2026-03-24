@@ -59,5 +59,5 @@ const filteredPapers = computed<Paper[]>(() => {
   });
 });
 
-onMounted(() => store.fecthProgramData());
+onMounted(() => store.fetchProgramData());
 </script>

@@ -59,5 +59,5 @@ const filteredKeynotes = computed<Keynote[]>(() => {
   });
 });
 
-onMounted(() => store.fecthProgramData());
+onMounted(() => store.fetchProgramData());
 </script>

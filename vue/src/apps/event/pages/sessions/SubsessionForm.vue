@@ -157,7 +157,6 @@ function remove() {
 
 function unlinkPaperFromSubsession(paper: Paper) {
   // TODO: Add API call to unlink paper from subsession
-  console.log('Unlinking paper from subsession:', paper.title);
   // For now, just refresh the papers list
   store.fetchPapers();
 }

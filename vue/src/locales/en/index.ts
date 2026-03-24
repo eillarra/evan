@@ -184,6 +184,8 @@ export default {
     file_confirm_delete: 'Are you sure you want to delete this file?',
     file_deleted: 'File deleted',
     file_updated: 'File updated',
+    file_uploaded: 'File uploaded',
+    file_upload_failed: 'File upload failed',
     important_date_created: 'Important date created',
     important_date_confirm_delete: 'Are you sure you want to delete this date?',
     important_date_deleted: 'Important date deleted',

@@ -38,7 +38,7 @@ export const useStore = defineStore('evanEvent', () => {
     await refetch(true);
   }
 
-  async function fecthProgramData() {
+  async function fetchProgramData() {
     await fetchSessions();
     await fetchKeynotes();
     await fetchPapers();
@@ -403,7 +403,6 @@ export const useStore = defineStore('evanEvent', () => {
   function removeSubsession(subsession: Subsession) {
     confirm(t('messages.subsession_confirm_delete'), () => {
       api.delete(subsession.self).then(() => {
-        console.log('test', subsession.session);
         // If subsession.session is not set, we need to find it by searching all sessions
         let sessionIndex = -1;
         if (subsession.session) {
@@ -676,7 +675,7 @@ export const useStore = defineStore('evanEvent', () => {
     fetchPapers,
     fetchRegistrations,
     fetchSessions,
-    fecthProgramData,
+    fetchProgramData,
     patchEvent,
     updateEvent,
     updateEventPartial,

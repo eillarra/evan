@@ -340,7 +340,6 @@ async function createUpdate() {
 
 function unlinkPaperFromSession(paper: Paper) {
   // TODO: Add API call to unlink paper from session
-  console.log('Unlinking paper from session:', paper.title);
   // For now, just refresh the papers list
   store.fetchPapers();
 }
