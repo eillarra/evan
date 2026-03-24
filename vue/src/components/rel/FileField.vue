@@ -1,5 +1,6 @@
 <template>
   <q-file
+    ref="qFileRef"
     :model-value="fileModel"
     :readonly="readOnly"
     :accept="accept"
@@ -9,7 +10,7 @@
   >
     <template #append>
       <q-btn v-if="currentFile" dense round flat :icon="iconEye" color="ugent" size="sm" @click="openLink" />
-      <q-icon v-else :name="iconAttachment" size="xs" />
+      <q-btn v-else dense round flat :icon="iconAttachment" size="xs" @click.stop="(qFileRef as any)?.pickFiles()" />
       <q-btn
         v-if="currentFile && !readOnly"
         dense
@@ -25,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted, useTemplateRef } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { api } from '@/axios';
@@ -48,6 +49,7 @@ const emit = defineEmits<{
   fileChanged: [file: RelatedFile | null];
 }>();
 
+const qFileRef = useTemplateRef('qFileRef');
 const uploading = ref(false);
 const files = ref<RelatedFile[]>([]);
 

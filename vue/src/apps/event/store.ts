@@ -16,6 +16,7 @@ export const useStore = defineStore('evanEvent', () => {
   const papers = ref<Paper[]>([]);
   const registrations = ref<Registration[]>([]);
   const sessions = ref<Session[]>([]);
+  const sponsors = ref<Sponsor[]>([]);
   const venues = ref<Venue[]>([]);
 
   const { t } = useI18n();
@@ -474,6 +475,15 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  // Sponsors Options ------
+
+  const sponsorTypeOptions = computed<QuasarSelectOption[]>(() => {
+    const types = evanEvent.value?.extra_data?.sponsor_types;
+    if (!types?.length) return [];
+
+    return types.map((label, index) => ({ value: index, label }));
+  });
+
   const topicOptions = computed<QuasarSelectOption[]>(() => {
     if (!evanEvent.value) return [];
 
@@ -644,6 +654,46 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  // Sponsors ------
+
+  async function createSponsor(data: SponsorData) {
+    if (!evanEvent.value) return;
+
+    return api.post(evanEvent.value.self + 'sponsors/', data).then((res) => {
+      sponsors.value.push(res.data);
+      sponsors.value = [...sponsors.value].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+      notify.success(t('messages.sponsor_created'));
+      return res;
+    });
+  }
+
+  async function fetchSponsors() {
+    if (!evanEvent.value) return;
+
+    return await api.get(evanEvent.value.self + 'sponsors/').then((res) => {
+      sponsors.value = res.data;
+    });
+  }
+
+  async function updateSponsor(sponsor: Sponsor) {
+    return await api.put(sponsor.self, sponsor).then((res) => {
+      const index = sponsors.value.findIndex((s) => s.id === sponsor.id);
+      sponsors.value[index] = res.data;
+      sponsors.value = [...sponsors.value].sort((a, b) => a.level - b.level || a.name.localeCompare(b.name));
+      notify.success(t('messages.sponsor_updated'));
+      return res;
+    });
+  }
+
+  function removeSponsor(sponsor: Sponsor) {
+    confirm(t('messages.sponsor_confirm_delete'), () => {
+      api.delete(sponsor.self).then(() => {
+        sponsors.value = sponsors.value.filter((s) => s.id !== sponsor.id);
+        notify.success(t('messages.sponsor_deleted'));
+      });
+    });
+  }
+
   // Sessions Options ------
 
   const sessionOptions = computed<QuasarSelectOption[]>(() => {
@@ -663,6 +713,7 @@ export const useStore = defineStore('evanEvent', () => {
     createCoupon,
     createKeynote,
     createPaper,
+    createSponsor,
     createSession,
     createSubsession,
     createTopic,
@@ -674,6 +725,7 @@ export const useStore = defineStore('evanEvent', () => {
     fetchKeynotes,
     fetchPapers,
     fetchRegistrations,
+    fetchSponsors,
     fetchSessions,
     fetchProgramData,
     patchEvent,
@@ -684,6 +736,7 @@ export const useStore = defineStore('evanEvent', () => {
     updateCoupon,
     updateKeynote,
     updatePaper,
+    updateSponsor,
     updateSession,
     updateSubsession,
     updateTopic,
@@ -693,6 +746,7 @@ export const useStore = defineStore('evanEvent', () => {
     removeCoupon,
     removeKeynote,
     removePaper,
+    removeSponsor,
     removeSession,
     removeSubsession,
     removeTopic,
@@ -708,6 +762,8 @@ export const useStore = defineStore('evanEvent', () => {
     papers,
     registrations,
     sessions,
+    sponsors,
+    sponsorTypeOptions,
     venues,
     topicOptions,
     trackOptions,

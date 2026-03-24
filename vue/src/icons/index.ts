@@ -27,6 +27,7 @@ import {
   symSharpEventAvailable,
   symSharpFolderShared,
   symSharpForYou,
+  symSharpHandshake,
   symSharpHideSource,
   symSharpHistoryToggleOff,
   symSharpInfo,
@@ -99,6 +100,7 @@ export const iconRegistration = symSharpAssignmentTurnedIn;
 export const iconRegistrations = symSharpFolderShared;
 export const iconRoom = symSharpMeetingRoom;
 export const iconSession = symSharpEvent;
+export const iconSponsor = symSharpHandshake;
 export const iconStats = symSharpTableChartView;
 export const iconTime = symSharpSchedule;
 export const iconTimeDashed = symSharpHistoryToggleOff;

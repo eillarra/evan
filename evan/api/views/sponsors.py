@@ -1,43 +1,32 @@
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import never_cache
-from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.mixins import DestroyModelMixin, RetrieveModelMixin, UpdateModelMixin
-from rest_framework.parsers import FileUploadParser
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import File, Sponsor
+from evan.models import Sponsor
 
-from ..permissions import EventRelatedObjectPermission
+from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import SponsorSerializer
-from ..viewsets import EventRelatedCreateOnlyViewSet
+from ..viewsets import EventRelatedViewSet
+from .base import ProtectedMixin
 
 
-class SponsorsViewSet(EventRelatedCreateOnlyViewSet):
+class SponsorsPermission(EventRelatedPermission):
+    allow_list_to_all = False
+    allow_create_to_manager = True
+
+
+class SponsorPermission(EventRelatedObjectPermission):
+    allow_update_to_manager = True
+    allow_delete_to_manager = True
+
+
+class SponsorsViewSet(EventRelatedViewSet):
+    permission_classes = [SponsorsPermission]
     queryset = Sponsor.objects.prefetch_related("files").all()
     pagination_class = None
     serializer_class = SponsorSerializer
 
 
-class SponsorViewSet(UpdateModelMixin, DestroyModelMixin, GenericViewSet):
-    permission_classes = (EventRelatedObjectPermission,)
+class SponsorViewSet(ProtectedMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, GenericViewSet):
+    permission_classes = [SponsorPermission]
     queryset = Sponsor.objects.prefetch_related("files").all()
     serializer_class = SponsorSerializer
-
-    @action(
-        detail=True,
-        methods=["post"],
-        pagination_class=None,
-        serializer_class=SponsorSerializer,
-        parser_classes=[FileUploadParser],
-    )
-    @method_decorator(never_cache)
-    def files(self, request, *args, **kwargs):
-        sponsor = self.get_object()
-
-        if sponsor.files.count() > 1:
-            raise ValidationError({"files": ["You have reached the limit on number of files (1)."]})
-
-        File(content_object=sponsor, type=File.PUBLIC, file=request.data["file"]).save()
-
-        return RetrieveModelMixin.retrieve(self, request, *args, **kwargs)

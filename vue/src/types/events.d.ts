@@ -31,6 +31,7 @@ interface Track extends ApiObject {
 interface EvanEventExtraData {
   badges: BadgesConfig;
   important_dates: ImportantDate[];
+  sponsor_types: string[];
 }
 
 interface EvanEvent extends ApiObject {

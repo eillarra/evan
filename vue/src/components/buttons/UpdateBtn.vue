@@ -3,15 +3,15 @@
     unelevated
     color="ugent"
     :label="computedLabel"
-    :loading="loading"
-    :disabled="disabled || loading"
-    @click="$emit('click')"
+    :loading="loading || internalLoading"
+    :disabled="disabled || loading || internalLoading"
+    @click="handleClick"
     v-bind="$attrs"
   />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 interface Props {
@@ -30,13 +30,29 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n();
 
-defineEmits<{
+const emit = defineEmits<{
   click: [];
 }>();
 
 defineOptions({
   inheritAttrs: false,
 });
+
+const internalLoading = ref(false);
+
+function handleClick() {
+  if (props.loading || props.disabled || internalLoading.value) return;
+
+  // Set internal loading immediately to prevent race conditions before
+  // the parent has a chance to set its own loading state.
+  internalLoading.value = true;
+
+  emit('click');
+
+  setTimeout(() => {
+    internalLoading.value = false;
+  }, 100);
+}
 
 const computedLabel = computed(() => {
   if (props.label) return props.label;

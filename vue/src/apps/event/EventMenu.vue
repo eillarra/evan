@@ -71,6 +71,12 @@
           </q-item-section>
           <q-item-section>{{ $t('models.content', 9) }}</q-item-section>
         </q-item>
+        <q-item clickable :to="{ name: 'sponsors' }" active-class="bg-ugent text-white">
+          <q-item-section avatar>
+            <q-icon :name="iconSponsor" size="xs" />
+          </q-item-section>
+          <q-item-section>{{ $t('models.sponsor', 9) }}</q-item-section>
+        </q-item>
         <q-item clickable :to="{ name: 'albums' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconPhotoAlbum" size="xs" />
@@ -102,6 +108,7 @@ import {
   iconPhotoAlbum,
   iconPlanning,
   iconRegistrations,
+  iconSponsor,
   iconStats,
   iconVenue,
 } from '@/icons';

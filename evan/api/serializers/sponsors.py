@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from evan.models import Sponsor
 
-from .rel.files import FileSerializer
+from .rel.files import FileSerializer, FilesMixin
 
 
 class SponsorReadOnlySerializer(serializers.ModelSerializer):
@@ -13,7 +13,7 @@ class SponsorReadOnlySerializer(serializers.ModelSerializer):
         exclude = ["event"]
 
 
-class SponsorSerializer(serializers.ModelSerializer):
+class SponsorSerializer(FilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:sponsor-detail")
 
     class Meta:  # noqa: D106

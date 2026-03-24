@@ -44,6 +44,9 @@ class EventExtraData(BaseModel):
 
     badges: BadgesConfig = Field(default_factory=BadgesConfig, description="Badge configuration for the event")
     important_dates: list[ImportantDate] = Field(default_factory=list)
+    sponsor_types: list[str] = Field(
+        default_factory=list, description="Ordered list of sponsor tier names (e.g. Platinum, Gold, Silver)"
+    )
 
 
 def get_validated_event_configuration(config) -> dict:
