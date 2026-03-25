@@ -68,20 +68,27 @@
             v-model="evanEvent.registration_start_date"
             type="date"
             :label="$t('fields.registration_start_date')"
-            class="col-12 col-md-4"
+            class="col-3"
           />
           <date-select
             v-model="evanEvent.registration_early_deadline"
             type="datetime"
             :label="$t('fields.registration_early_deadline')"
-            class="col-12 col-md-4"
+            class="col-3"
             clearable
           />
           <date-select
             v-model="evanEvent.registration_deadline"
             type="datetime"
             :label="$t('fields.registration_deadline')"
-            class="col-12 col-md-4"
+            class="col-3"
+          />
+          <date-select
+            v-model="evanEvent.registration_onsite_deadline"
+            type="datetime"
+            :label="$t('fields.registration_onsite_deadline')"
+            class="col-3"
+            clearable
           />
           <marked-textarea v-model="evanEvent.signature" :label="$t('fields.visa_signature')" class="col-12" />
         </div>
@@ -412,6 +419,7 @@ async function updateRegistration() {
       registration_start_date: evanEvent.value.registration_start_date,
       registration_early_deadline: evanEvent.value.registration_early_deadline,
       registration_deadline: evanEvent.value.registration_deadline,
+      registration_onsite_deadline: evanEvent.value.registration_onsite_deadline,
       signature: evanEvent.value.signature,
     };
     await store.updateEventPartial(registrationData);

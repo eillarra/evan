@@ -27,7 +27,7 @@ const props = defineProps<{
 const store = useStore();
 const { t } = useI18n();
 
-const queryColumns = ['code', 'title'];
+const queryColumns = ['code', 'title', 'is_social_event'];
 
 const columns = [
   {
@@ -58,6 +58,14 @@ const columns = [
     autoWidth: true,
     sortable: true,
     format: (val: number) => (val > 0 ? val.toString() : '-'),
+  },
+  {
+    name: 'is_social_event',
+    field: 'is_social_event',
+    label: t('event.is_social_event'),
+    align: 'center',
+    autoWidth: true,
+    sortable: true,
   },
   {
     name: 'date',
@@ -93,6 +101,7 @@ const rows = computed(() => {
     code: obj.code || '-',
     title: obj.title,
     subsessions: obj.subsessions?.length || 0,
+    is_social_event: obj.is_social_event,
     date: obj.start_at ? new Date(obj.start_at).toLocaleDateString('en-BE') : '-',
     start_time: obj.start_at ? new Date(obj.start_at).toLocaleTimeString('en-BE', { timeStyle: 'short' }) : '-',
     end_time: obj.end_at ? new Date(obj.end_at).toLocaleTimeString('en-BE', { timeStyle: 'short' }) : '-',

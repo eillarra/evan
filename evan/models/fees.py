@@ -12,6 +12,7 @@ class Fee(models.Model):
     type = models.CharField(max_length=64)
     early_value = models.PositiveIntegerField(null=True, blank=True)
     value = models.PositiveIntegerField(default=0)
+    onsite_value = models.PositiveIntegerField(null=True, blank=True)
     notes = models.CharField(max_length=190, default="", blank=True)
 
     config = models.JSONField(default=dict, blank=True)

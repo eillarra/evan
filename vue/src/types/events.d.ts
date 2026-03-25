@@ -14,6 +14,7 @@ interface Fee {
   type: string;
   early_value: number | null;
   value: number;
+  onsite_value: number | null;
   notes: string;
   config: FeeConfig;
 }
@@ -52,6 +53,7 @@ interface EvanEvent extends ApiObject {
   registration_start_date: string;
   registration_early_deadline: string | null;
   registration_deadline: string;
+  registration_onsite_deadline: string | null;
   readonly registration_url: Url;
   readonly registrations_count: number;
   readonly accept_by_default: boolean;

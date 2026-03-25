@@ -42,6 +42,10 @@ def validate_event_dates(event):
         if event.registration_early_deadline > event.registration_deadline:
             raise ValidationError("Early deadline cannot be later than registration deadline.")
 
+    if event.registration_onsite_deadline:
+        if event.registration_onsite_deadline <= event.registration_deadline:
+            raise ValidationError("On-site deadline must be later than the regular registration deadline.")
+
 
 def validate_event_day(day):
     if day.date < day.event.start_date or day.date > day.event.end_date:
@@ -70,6 +74,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     registration_start_date = models.DateField()
     registration_early_deadline = models.DateTimeField(null=True, blank=True)
     registration_deadline = models.DateTimeField()
+    registration_onsite_deadline = models.DateTimeField(null=True, blank=True)
 
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(default="", blank=True)
@@ -128,7 +133,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def get_registration_url(self) -> str:  # noqa: DJ012
         return reverse("registration:app", args=[self.code])
 
-    def get_email_template(self, *, code: str) -> "EmailTemplate | None":
+    def get_email_template(self, *, code: str) -> EmailTemplate | None:
         """Get an email template for an event.
 
         :param code: The code of the email template to get.
@@ -180,7 +185,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @property
     def registration_configuration(self) -> dict:
         return get_validated_event_registration_configuration(self.registration_config or {})
-    
+
     @property
     def is_active(self) -> bool:
         return self.start_date <= timezone.now().date() <= self.end_date
@@ -222,9 +227,17 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         return timezone.now() <= self.registration_early_deadline
 
     @property
+    def is_onsite(self) -> bool:
+        if not self.registration_onsite_deadline:
+            return False
+        now = timezone.now()
+        return now > self.registration_deadline and now <= self.registration_onsite_deadline
+
+    @property
     def is_open_for_registration(self) -> bool:
         now = timezone.now()
-        return self.registration_start_date <= now.date() and now <= self.registration_deadline
+        end = self.registration_onsite_deadline or self.registration_deadline
+        return self.registration_start_date <= now.date() and now <= end
 
     @property
     def is_open_for_abstract_submission(self) -> bool:
@@ -237,7 +250,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
             return False
 
     @cached_property
-    def abstract_reviewers(self) -> QuerySet["User"]:
+    def abstract_reviewers(self) -> QuerySet[User]:
         try:
             reviewer_ids = [r["id"] for r in self.custom_data["abstracts"]["reviewers"]]
             return User.objects.filter(id__in=reviewer_ids)
@@ -245,7 +258,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
             return User.objects.none()
 
     @cached_property
-    def fees_dict(self) -> dict[int, "Fee"]:
+    def fees_dict(self) -> dict[int, Fee]:
         if not hasattr(self, "_fees"):
             self._fees = {f.type: f for f in self.fees.all()}  # type: ignore
         return self._fees

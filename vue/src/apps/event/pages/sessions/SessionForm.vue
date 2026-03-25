@@ -65,6 +65,22 @@
                 clearable
                 class="col-12 col-md-6"
               />
+              <q-checkbox
+                v-model="formData.is_social_event"
+                :label="$t('event.is_social_event')"
+                class="col-12"
+                disable
+              />
+              <q-input
+                v-if="formData.is_social_event"
+                v-model.number="formData.extra_attendees_fee"
+                type="number"
+                :label="$t('fields.extra_attendees_fee')"
+                min="0"
+                dense
+                readonly
+                class="col-12 col-md-3"
+              />
             </div>
           </q-tab-panel>
           <q-tab-panel name="description">

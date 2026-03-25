@@ -11,7 +11,7 @@ from .base import NonEditableMixin, TagsMixin
 from .rel.remarks import RemarksMixin, append_remarks_tags
 
 
-def calculate_accompanying_fees(registration: "Registration") -> int:
+def calculate_accompanying_fees(registration: Registration) -> int:
     """
     Given a registration, calculate the fees for accompanying persons.
     Accompanying persons always pay the `session.extra_attendees_fee`.
@@ -26,7 +26,7 @@ def calculate_accompanying_fees(registration: "Registration") -> int:
     return extra_fees
 
 
-def calculate_social_event_fees(registration: "Registration") -> int:
+def calculate_social_event_fees(registration: Registration) -> int:
     """
     Given a registration, check if selected fee includes social events.
     If not, sum the `session.extra_attendees_fee` for each selected social event.
@@ -48,7 +48,7 @@ def calculate_social_event_fees(registration: "Registration") -> int:
     return extra_fees
 
 
-def calculate_registration_base_fee(registration: "Registration") -> int:
+def calculate_registration_base_fee(registration: Registration) -> int:
     """
     Given a registration, calculate the base fee.
     The base fee is the sum of the early fee and the extra fees for accompanying persons.
@@ -59,13 +59,21 @@ def calculate_registration_base_fee(registration: "Registration") -> int:
         raise ValueError(f"Fee type {registration.fee_type} not found for event {registration.event}")
 
     is_early = registration.is_early if registration.pk else registration.event.is_early
-    base_fee = (fee.early_value or fee.value) if is_early else fee.value
+    is_onsite = registration.is_onsite if registration.pk else registration.event.is_onsite
+
+    if is_onsite:
+        base_fee = fee.onsite_value if fee.onsite_value is not None else fee.value
+    elif is_early:
+        base_fee = fee.early_value if fee.early_value is not None else fee.value
+    else:
+        base_fee = fee.value
+
     base_fee += calculate_social_event_fees(registration)
 
     return base_fee
 
 
-def get_registration_tags(obj: "Registration", *, type: str = "all") -> list[str]:
+def get_registration_tags(obj: Registration, *, type: str = "all") -> list[str]:
     """For a registration, process the tags.
 
     :param obj: An instance of the Place class.
@@ -186,6 +194,12 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         return self.created_at <= self.event.registration_early_deadline
 
     @property
+    def is_onsite(self) -> bool:
+        if not self.event.registration_onsite_deadline:
+            return False
+        return self.created_at > self.event.registration_deadline
+
+    @property
     def is_paid(self) -> bool:
         return self.saldo >= 0
 
@@ -219,7 +233,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         return self.get_absolute_url()
 
     @classmethod
-    def update_tags(cls, obj: "Registration", *, type: str = "all") -> None:
+    def update_tags(cls, obj: Registration, *, type: str = "all") -> None:
         """Update tags for a student, without calling clean() on the model."""
         tags = get_registration_tags(obj, type=type)
         cls.objects.filter(pk=obj.pk).update(tags=tags)
