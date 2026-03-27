@@ -9,12 +9,18 @@ export const useStore = defineStore('evanSession', () => {
   const loading = ref<boolean>(true);
   const evanEvent = shallowRef<EvanEvent | null>(null);
   const registration = shallowRef<Registration | null>(null);
+  const albums = shallowRef<Album[]>([]);
 
   const { t } = useI18n();
 
   async function setData(inertiaEvanEvent: EvanEvent) {
     evanEvent.value = inertiaEvanEvent;
     await init();
+  }
+
+  async function setPreviewData(inertiaEvanEvent: EvanEvent) {
+    evanEvent.value = inertiaEvanEvent;
+    loading.value = false;
   }
 
   async function init() {
@@ -25,9 +31,21 @@ export const useStore = defineStore('evanSession', () => {
 
   async function getRegistrations() {
     api.get<Registration[]>('/user/registrations/').then((response) => {
-      registration.value =
-        response.data.find((registration) => registration.event.code === evanEvent.value?.code) || null;
+      registration.value = response.data.find((r) => r.event.code === evanEvent.value?.code) || null;
       loading.value = false;
+
+      const reg = registration.value;
+      if (reg?.is_accepted && !reg.no_show && evanEvent.value?.code) {
+        fetchAlbums(evanEvent.value.code);
+      }
+    });
+  }
+
+  // Albums ------
+
+  async function fetchAlbums(code: string) {
+    api.get<Album[]>(`/events/${code}/albums/?include_photos=true`).then((response) => {
+      albums.value = response.data;
     });
   }
 
@@ -60,10 +78,12 @@ export const useStore = defineStore('evanSession', () => {
   return {
     init,
     setData,
+    setPreviewData,
     createRegistration,
     updateRegistration,
     loading,
     evanEvent,
     registration,
+    albums,
   };
 });

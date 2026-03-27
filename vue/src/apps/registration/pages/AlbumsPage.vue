@@ -8,42 +8,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 
 import AlbumViewer from '@/components/AlbumViewer.vue';
-import { useAlbums } from '@/composables/useAlbums';
 
 import { useStore } from '../store';
 
 const store = useStore();
-const { evanEvent, registration } = storeToRefs(store);
-const { albums, loading, fetchAlbums } = useAlbums();
+const { evanEvent, registration, albums } = storeToRefs(store);
 
-// Check if user can view albums (registered and not no-show)
-const canViewAlbums = computed(() => {
-  return registration.value && registration.value.is_accepted && !registration.value.no_show;
-});
+const canViewAlbums = computed(() => registration.value?.is_accepted && !registration.value.no_show);
 
-// Computed property to determine if we should fetch albums
-const shouldFetchAlbums = computed(() => {
-  return evanEvent.value?.code && canViewAlbums.value;
-});
-
-// Watch for changes in conditions and fetch albums when ready
-watch(
-  shouldFetchAlbums,
-  (shouldFetch) => {
-    if (shouldFetch && evanEvent.value?.code) {
-      fetchAlbums(evanEvent.value.code);
-    }
-  },
-  { immediate: true },
-);
-
-onMounted(() => {
-  if (shouldFetchAlbums.value && evanEvent.value?.code) {
-    fetchAlbums(evanEvent.value.code);
-  }
-});
+const loading = computed(() => false);
 </script>

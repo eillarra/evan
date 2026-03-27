@@ -17,6 +17,11 @@ event_patterns = (
                     path("files/badges.pdf", views.EventBadgesPdf.as_view(), name="badges"),
                     # path("files/abstracts.xlsx", views.EventAbstractsSheet.as_view(), name="abstracts_sheet"),
                     path("files/<slug:file_code>.xlsx", views.EventExcelView.as_view(), name="event_excel"),
+                    path(
+                        "registration-preview/",
+                        views.EventRegistrationPreviewView.as_view(),
+                        name="registration_preview",
+                    ),
                 ]
             ),
         ),

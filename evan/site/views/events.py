@@ -6,7 +6,9 @@ from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
 
-from evan.api.serializers.events import EventListSerializer, ManagedEventSerializer
+from evan.api.serializers.events import EventListSerializer, EventSerializer, ManagedEventSerializer
+from evan.api.serializers.sessions import SessionReadOnlySerializer
+from evan.api.serializers.users import UserSerializer
 from evan.models import Event
 from evan.services.excel import DataSheet, ExcelView
 from evan.site.pdfs.badges import BadgesPdfMaker
@@ -56,6 +58,50 @@ class EventView(EventFirewallMixin, InertiaView):
 
     def get_page_title(self, request, *args, **kwargs) -> str:
         return f"{self.get_event().name} - Evan"
+
+
+class EventRegistrationPreviewView(EventFirewallMixin, InertiaView):
+    """Renders the registration form in read-only preview mode for event managers.
+
+    Serves the same Vue SPA as the attendee registration view but with the
+    ``preview`` flag set, so no registration can be created or updated.
+    """
+
+    vue_entry_point = "apps/registration/main.ts"
+
+    def get_event(self, queryset=None) -> Event:
+        """Return the event with all prefetches required by the registration form."""
+        if not hasattr(self, "object"):
+            self.object = get_object_or_404(
+                Event.objects.prefetch_related(
+                    "files",
+                    "fees",
+                    "sessions",
+                    "sessions__topics",
+                    "sessions__subsessions",
+                    "sponsors",
+                    "sponsors__files",
+                    "topics",
+                    "tracks",
+                    "venues__rooms",
+                ),
+                code=self.kwargs.get("code"),
+            )
+        return self.object
+
+    def get_props(self, request, *args, **kwargs) -> dict:
+        """Return Inertia props for the registration form preview."""
+        event = self.get_event()
+        sessions = event.sessions.all()  # type: ignore
+        return {
+            "user": UserSerializer(request.user, context={"request": request}).data,
+            "event": EventSerializer(event, context={"request": request}).data,
+            "sessions": SessionReadOnlySerializer(sessions, many=True, context={"request": request}).data,
+            "preview": True,
+        }
+
+    def get_page_title(self, request, *args, **kwargs) -> str:
+        return f"Registration Preview - {self.get_event().name} - Evan"
 
 
 class EventBadgesPdf(EventFirewallMixin, View):

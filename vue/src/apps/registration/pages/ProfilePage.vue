@@ -10,12 +10,30 @@
         <gender-select v-model="user.extra_data.gender" class="col-12" />
         <dietary-select v-model="user.extra_data.dietary" class="col-12" />
       </div>
+
+      <evan-section-title>Privacy</evan-section-title>
+      <q-list dense>
+        <q-item tag="label">
+          <q-item-section avatar>
+            <q-checkbox v-model="allowContact" keep-color />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Allow other attendees to contact me</q-item-label>
+            <q-item-label caption
+              >Attendees can send you messages through our internal contact form.
+              <strong>We will never share your email directly.</strong></q-item-label
+            >
+          </q-item-section>
+        </q-item>
+      </q-list>
+
       <ugent-btn
         @click="saveProfile"
         :label="$t('form.update')"
         color="primary"
         class="q-mt-xl"
-        :disable="!formIsValid"
+        :disable="!formIsValid || loading"
+        :loading="loading"
       />
       <q-space class="q-mb-xl" />
     </div>
@@ -23,28 +41,52 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, triggerRef } from 'vue';
 import { storeToRefs } from 'pinia';
+import { useI18n } from 'vue-i18n';
 
+import { notify } from '@/utils/notify';
 import { useUserStore } from '@/stores/user';
 
 import CountrySelect from '@/components/CountrySelect.vue';
 import DietarySelect from '@/components/DietarySelect.vue';
 import GenderSelect from '@/components/GenderSelect.vue';
+import EvanSectionTitle from '@/components/EvanSectionTitle.vue';
 
+const { t } = useI18n();
 const userStore = useUserStore();
 
 const { user } = storeToRefs(userStore);
+const loading = ref<boolean>(false);
 
-function saveProfile() {
+const allowContact = computed<boolean>({
+  get: () => user.value?.extra_data?.connect ?? false,
+  set: (value: boolean) => {
+    if (user.value) {
+      if (!user.value.extra_data) {
+        user.value.extra_data = {};
+      }
+      user.value.extra_data.connect = value;
+      triggerRef(user); // Force shallowRef to notify reactivity
+    }
+  },
+});
+
+async function saveProfile() {
   if (user.value) {
-    userStore.updateUser({
-      first_name: user.value.first_name,
-      last_name: user.value.last_name,
-      affiliation: user.value.affiliation,
-      country: user.value.country,
-      extra_data: user.value.extra_data,
-    });
+    loading.value = true;
+    try {
+      await userStore.updateUser({
+        first_name: user.value.first_name,
+        last_name: user.value.last_name,
+        affiliation: user.value.affiliation,
+        country: user.value.country,
+        extra_data: user.value.extra_data,
+      });
+      notify.success(t('messages.profile_updated'));
+    } finally {
+      loading.value = false;
+    }
   }
 }
 

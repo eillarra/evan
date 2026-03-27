@@ -208,6 +208,7 @@ export default {
     registration_updated: 'Registration updated',
     registration_confirm_delete: 'Are you sure you want to delete this registration?',
     registration_deleted: 'Registration deleted',
+    profile_updated: 'Profile updated',
     remark_created: 'Remark created',
     remark_confirm_delete: 'Are you sure you want to delete this remark?',
     remark_deleted: 'Remark deleted',

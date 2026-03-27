@@ -4,6 +4,7 @@ interface UserExtraData {
   gender: import('../utils/gender').GenderOption;
   dietary: DietaryOption;
   special_needs: string | null;
+  /** Whether this user allows other attendees to contact them. Also shown in registration form. */
   connect: boolean;
 }
 

@@ -133,6 +133,10 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def get_registration_url(self) -> str:  # noqa: DJ012
         return reverse("registration:app", args=[self.code])
 
+    def get_registration_preview_url(self) -> str:  # noqa: DJ012
+        """Return the URL for the event manager's registration form preview."""
+        return reverse("event:registration_preview", args=[self.code])
+
     def get_email_template(self, *, code: str) -> EmailTemplate | None:
         """Get an email template for an event.
 

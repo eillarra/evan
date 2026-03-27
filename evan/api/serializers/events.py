@@ -89,6 +89,8 @@ class EventSerializer(FilesMixin, EventListSerializer):
 class ManagedEventSerializer(EventSerializer):
     """Serializer for managed events."""
 
+    registration_preview_url = serializers.SerializerMethodField()
+
     sponsors = SponsorSerializer(many=True, read_only=True)
     tracks = TrackSerializer(many=True, read_only=True)
     topics = TopicSerializer(many=True, read_only=True)
@@ -98,6 +100,17 @@ class ManagedEventSerializer(EventSerializer):
         model = Event
         exclude = []
         read_only_fields = ["id", "code"]
+
+    def get_registration_preview_url(self, obj) -> str:
+        """Return the absolute URL for the registration form preview.
+
+        :returns: The absolute URL managers can visit to preview the registration form.
+        """
+        return reverse(
+            "event:registration_preview",
+            request=self.context.get("request"),
+            kwargs={"code": obj.code},
+        )
 
     def validate(self, data):
         validate_event_dates(Event(**data))

@@ -76,4 +76,6 @@ interface EvanEvent extends ApiObject {
   extra_data: EvanEventExtraData;
 }
 
-interface ManagedEvanEvent extends EvanEvent {}
+interface ManagedEvanEvent extends EvanEvent {
+  readonly registration_preview_url: Url;
+}

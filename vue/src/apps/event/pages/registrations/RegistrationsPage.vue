@@ -4,6 +4,18 @@
       {{ $t('models.registration', 9) }}
     </h3>
     <div class="col"></div>
+    <div v-if="evanEvent?.registration_preview_url" class="col-auto">
+      <q-btn
+        :href="evanEvent.registration_preview_url"
+        target="_blank"
+        label="Preview form"
+        :icon="iconEye"
+        unelevated
+        dense
+        color="blue-1"
+        class="text-ugent"
+      />
+    </div>
     <q-select
       v-show="feeOptions.length > 1"
       v-model="selectedFee"
@@ -58,6 +70,7 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
+import { iconEye } from '@/icons';
 import { useStore } from '../../store';
 
 import RegistrationsTable from './RegistrationsTable.vue';

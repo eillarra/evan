@@ -33,7 +33,7 @@
           </q-item-section>
           <q-item-section>{{ $t('models.event') }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'albums' }" active-class="bg-ugent text-white">
+        <q-item v-if="albums.length > 0" clickable :to="{ name: 'albums' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconPhotoAlbum" size="xs" />
           </q-item-section>
@@ -53,5 +53,5 @@ import { iconAccount, iconEvent, iconPayment, iconRegistration, iconPhotoAlbum }
 
 const store = useStore();
 
-const { registration } = storeToRefs(store);
+const { registration, albums } = storeToRefs(store);
 </script>

@@ -15,7 +15,13 @@ interface AccompanyingPerson {
   selected_social_events: number[];
 }
 
+interface RegistrationExtraDataInternal {
+  share_email_with_sponsors?: boolean;
+  allow_photo_sharing?: boolean;
+}
+
 interface RegistrationExtraData {
+  _internal?: RegistrationExtraDataInternal;
   accompanying_persons?: AccompanyingPerson[];
   [key: string]: unknown;
 }

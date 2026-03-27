@@ -23,8 +23,15 @@ const store = useStore();
 
 const user = computed<AuthenticatedUser>(() => page.props.user as AuthenticatedUser);
 const evanEvent = computed<EvanEvent>(() => page.props.event as EvanEvent);
+const isPreview = computed<boolean>(() => (page.props.preview as boolean) ?? false);
 
 userStore.setData(user.value);
-store.setData(evanEvent.value);
+
+if (isPreview.value) {
+  store.setPreviewData(evanEvent.value);
+} else {
+  store.setData(evanEvent.value);
+}
+
 useCommonStore().setTitle(`${evanEvent.value.name}`);
 </script>
