@@ -15,6 +15,7 @@ export default {
   progress: 'Verloop',
   settings: 'Instellingen',
   stats: 'Statistieken',
+  waiting_for_registrations: 'Wachten op inschrijvingen...',
   album: 'Fotoalbum | Fotoalbums',
   user_menu: {
     account: 'Account',

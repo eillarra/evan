@@ -15,6 +15,7 @@ export default {
   program_shortcut: 'Program shortcut | Program shortcuts',
   settings: 'Settings',
   stats: 'Stats',
+  waiting_for_registrations: 'Waiting for registrations...',
   album: 'Photo album | Photo albums',
   user_menu: {
     account: 'Account',
