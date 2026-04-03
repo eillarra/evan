@@ -20,7 +20,7 @@ class BadgesConfig(BaseModel):
     sort_by: Literal["first_name", "last_name"] = Field(default="first_name", description="Field to sort attendees by")
     group_by: Literal["none", "fee", "color"] = Field(default="none", description="Field to group attendees by")
 
-    def filter_valid_fee_types(self, valid_fee_types: list[str]) -> "BadgesConfig":
+    def filter_valid_fee_types(self, valid_fee_types: list[str]) -> BadgesConfig:
         """Return a new BadgesConfig with only valid fee types.
 
         :param valid_fee_types: List of valid fee type strings for the event

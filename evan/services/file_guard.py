@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from evan import models
 
 
-def check_file_access(file: "models.rel.File", user: "models.User | AbstractBaseUser | AnonymousUser") -> bool:
+def check_file_access(file: models.rel.File, user: models.User | AbstractBaseUser | AnonymousUser) -> bool:
     """
     Check if a user has access to a file.
     This is done in one place to have a better overview of the access control for private files.

@@ -25,7 +25,7 @@ def get_font_size(text, *, max_size: float, char_max: int) -> float:
     return max_size / (len(text) / char_max)
 
 
-def get_custom_icons(event_code: str, registration: "Registration", person_data: dict | None = None) -> list[dict]:
+def get_custom_icons(event_code: str, registration: Registration, person_data: dict | None = None) -> list[dict]:
     """Get custom icons for a registration based on event code.
 
     :param event_code: The event code to check for custom extensions.

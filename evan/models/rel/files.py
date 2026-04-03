@@ -75,7 +75,7 @@ class File(models.Model):
             pass
         super().delete(*args, **kwargs)
 
-    def is_accessible_by_user(self, user: "User") -> bool:
+    def is_accessible_by_user(self, user: User) -> bool:
         """Check if the file is accessible by a user."""
         if self.is_public:
             return True
@@ -99,7 +99,7 @@ class FilesMixin(models.Model):
     class Meta:  # noqa: D106
         abstract = True
 
-    def files_can_be_managed_by(self, user: "User") -> bool:
+    def files_can_be_managed_by(self, user: User) -> bool:
         """Check if the user can manage related files."""
         if hasattr(self, "event") and self.event:  # type: ignore
             return self.event.can_be_managed_by(user)  # type: ignore

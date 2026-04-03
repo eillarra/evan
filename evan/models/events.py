@@ -42,9 +42,8 @@ def validate_event_dates(event):
         if event.registration_early_deadline > event.registration_deadline:
             raise ValidationError("Early deadline cannot be later than registration deadline.")
 
-    if event.registration_onsite_deadline:
-        if event.registration_onsite_deadline <= event.registration_deadline:
-            raise ValidationError("On-site deadline must be later than the regular registration deadline.")
+    if event.registration_onsite_deadline and event.registration_onsite_deadline <= event.registration_deadline:
+        raise ValidationError("On-site deadline must be later than the regular registration deadline.")
 
 
 def validate_event_day(day):

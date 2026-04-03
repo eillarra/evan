@@ -228,7 +228,7 @@ class TestSocialEventFeeInclusion:
             is_social_event=True,
             extra_attendees_fee=75,
         )
-        fee = Fee.objects.create(
+        Fee.objects.create(
             event=event,
             type="full",
             value=1170,

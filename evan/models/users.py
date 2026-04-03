@@ -62,7 +62,7 @@ class User(AbstractUser):
     def to_email(self) -> str:
         return f"{self.name} <{self.email}>"
 
-    def events(self) -> models.QuerySet["Event"]:
+    def events(self) -> models.QuerySet[Event]:
         from evan.models.events import Event
 
         return Event.objects.filter(acl__user=self)

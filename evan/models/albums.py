@@ -21,11 +21,11 @@ class Album(FilesMixin, models.Model):
     def __str__(self) -> str:
         return f"{self.event.code} - {self.title}"
 
-    def files_can_be_managed_by(self, user: "User") -> bool:
+    def files_can_be_managed_by(self, user: User) -> bool:
         """Check if the user can manage album files."""
         return self.event.can_be_managed_by(user)
 
-    def is_accessible_by_user(self, user: "User") -> bool:
+    def is_accessible_by_user(self, user: User) -> bool:
         """Check if the album is accessible by a user (registered attendees only)."""
         if self.event.can_be_managed_by(user):
             return True

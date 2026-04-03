@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('evan', '0019_albums'),
+        ("evan", "0019_albums"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='registration_onsite_deadline',
+            model_name="event",
+            name="registration_onsite_deadline",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='fee',
-            name='onsite_value',
+            model_name="fee",
+            name="onsite_value",
             field=models.PositiveIntegerField(blank=True, null=True),
         ),
     ]

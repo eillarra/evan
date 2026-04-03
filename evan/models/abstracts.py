@@ -1,5 +1,5 @@
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models.signals import post_save
@@ -60,7 +60,7 @@ class Abstract(FilesMixin, models.Model):
         )
 
     @property
-    def file(self) -> Optional["File"]:
+    def file(self) -> File | None:
         return self.files.first()
 
 

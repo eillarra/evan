@@ -42,7 +42,7 @@ class Ingenico:
 
         return sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
 
-    def process_parameters(self, parameters: dict, user: "User", extra_hash: str | None = None) -> dict:
+    def process_parameters(self, parameters: dict, user: User, extra_hash: str | None = None) -> dict:
         """Process and check if a minimum of parameters have been received."""
         ingenico_parameters = {
             "CURRENCY": "EUR",

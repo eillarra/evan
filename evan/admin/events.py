@@ -58,7 +58,32 @@ class EventAdminForm(forms.ModelForm):
 
     class Meta:
         model = Event
-        fields = "__all__"
+        fields = [
+            "is_virtual",
+            "code",
+            "name",
+            "full_name",
+            "city",
+            "country",
+            "presentation",
+            "website",
+            "hashtag",
+            "start_date",
+            "end_date",
+            "registration_start_date",
+            "registration_early_deadline",
+            "registration_deadline",
+            "registration_onsite_deadline",
+            "social_event_bundle_fee",
+            "signature",
+            "email",
+            "config",
+            "registration_config",
+            "extra_data",
+            "custom_fields",
+            "registrations_count",
+            "accept_by_default",
+        ]
 
     def __init__(self, *args, **kwargs):
         """Pre-populate virtual fields from the JSON columns."""

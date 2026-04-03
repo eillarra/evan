@@ -133,7 +133,7 @@ class ImageProcessor:
 
                 instructions.append(instruction)
 
-            except (ValueError, IndexError):
+            except ValueError, IndexError:
                 # Skip invalid tags
                 continue
 

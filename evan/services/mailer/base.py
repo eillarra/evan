@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.core.mail import send_mail as django_send_mail
@@ -20,7 +20,7 @@ def render_context(body: str, context: dict) -> str:
     return templ.render(Context(context))
 
 
-def get_template(event: "Event", code: str) -> "EmailTemplate":
+def get_template(event: Event, code: str) -> EmailTemplate:
     """Get an email template for an event.
 
     :param event: The event to get the email template for.
@@ -58,8 +58,8 @@ def schedule_email(
     text_content: str,
     bcc: list[str] | None = None,
     reply_to: list[str] | None = None,
-    log_user: Optional["User"] = None,
-    log_event: Optional["Event"] = None,
+    log_user: User | None = None,
+    log_event: Event | None = None,
     tags: list[str] | None = None,
 ) -> None:
     """Schedule an email to be sent.
@@ -103,13 +103,13 @@ def schedule_email(
 
 def schedule_template_email(
     *,
-    template: "EmailTemplate",
+    template: EmailTemplate,
     to: list[str],
     bcc: list[str] | None = None,
     reply_to: list[str] | None = None,
     context: dict | None = None,
-    log_user: Optional["User"] = None,
-    log_event: Optional["Event"] = None,
+    log_user: User | None = None,
+    log_event: Event | None = None,
     tags: list[str] | None = None,
 ) -> None:
     """Schedule an email based on a template.

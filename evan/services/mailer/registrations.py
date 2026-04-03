@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from evan.models.registrations import Registration
 
 
-def schedule_registration_email(registration: "Registration", *, code: str) -> None:
+def schedule_registration_email(registration: Registration, *, code: str) -> None:
     """Schedule a registration email."""
 
     template = registration.event.get_email_template(code=code)

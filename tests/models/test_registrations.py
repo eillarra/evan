@@ -196,6 +196,5 @@ class TestRegistrationUniqueness:
 
     def test_duplicate_registration_raises_integrity_error(self, db, event, user, registration) -> None:
         """Attempting a second registration for the same (event, user) pair raises IntegrityError."""
-        with pytest.raises(IntegrityError):
-            with patch("django.utils.timezone.now", return_value=dt("2026-07-01 12:00")):
-                RegistrationFactory(event=event, user=user, fee_type="full")
+        with pytest.raises(IntegrityError), patch("django.utils.timezone.now", return_value=dt("2026-07-01 12:00")):
+            RegistrationFactory(event=event, user=user, fee_type="full")
