@@ -48,4 +48,6 @@ class AbstractAdmin(admin.ModelAdmin):
     def name(self, obj):
         affiliation = obj.user.affiliation if obj.user.affiliation else "-"
         url = reverse("admin:auth_user_changelist")
-        return format_html(f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.name}</a>, {affiliation}')
+        return format_html(
+            '<a href="{}{}" target="admin_user">{}</a>, {}', url, obj.user_id, obj.user.name, affiliation
+        )

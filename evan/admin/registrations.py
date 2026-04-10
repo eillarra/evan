@@ -158,7 +158,9 @@ class RegistrationAdmin(admin.ModelAdmin):
     def name(self, obj):
         affiliation = obj.user.affiliation if obj.user.affiliation else "-"
         url = reverse("admin:evan_user_changelist")
-        return format_html(f'<a href="{url}{obj.user_id}/" target="admin_user">{obj.user.name}</a>, {affiliation}')
+        return format_html(
+            '<a href="{}{}" target="admin_user">{}</a>, {}', url, obj.user_id, obj.user.name, affiliation
+        )
 
     # custom actions
 
@@ -247,7 +249,7 @@ class RegistrationAdmin(admin.ModelAdmin):
         return obj.is_accepted
 
     def fee(self, obj):
-        return format_html(f"{obj.base_fee}&nbsp;+&nbsp;{obj.extra_fees + obj.manual_extra_fees}")
+        return format_html("{}&nbsp;+&nbsp;{}", obj.base_fee, obj.extra_fees + obj.manual_extra_fees)
 
     @admin.display(description="Paid", boolean=True)
     def paid_col(self, obj) -> bool:
@@ -258,10 +260,14 @@ class RegistrationAdmin(admin.ModelAdmin):
         sent = "yes" if obj.invoice_sent else "no"
         return format_html(
             '<span class="text-nowrap">'
-            f'<img src="/static/admin/img/icon-{requested}.svg" title="Invoice requested: {requested}">'
+            '<img src="/static/admin/img/icon-{}.svg" title="Invoice requested: {}">'
             " / "
-            f'<img src="/static/admin/img/icon-{sent}.svg" title="Invoice sent: {sent}">'
-            "<span>"
+            '<img src="/static/admin/img/icon-{}.svg" title="Invoice sent: {}">'
+            "<span>",
+            requested,
+            requested,
+            sent,
+            sent,
         )
 
     def visa(self, obj):
@@ -269,10 +275,14 @@ class RegistrationAdmin(admin.ModelAdmin):
         sent = "yes" if obj.visa_sent else "no"
         return format_html(
             '<span class="text-nowrap">'
-            f'<img src="/static/admin/img/icon-{requested}.svg" title="Visa requested: {requested}">'
+            '<img src="/static/admin/img/icon-{}.svg" title="Visa requested: {}">'
             " / "
-            f'<img src="/static/admin/img/icon-{sent}.svg" title="Visa sent: {sent}">'
-            "</span>"
+            '<img src="/static/admin/img/icon-{}.svg" title="Visa sent: {}">'
+            "</span>",
+            requested,
+            requested,
+            sent,
+            sent,
         )
 
     @admin.display(description="Coupon", boolean=True)
