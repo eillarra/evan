@@ -1,3 +1,4 @@
+import hmac
 import os
 from hashlib import sha512
 from typing import TYPE_CHECKING
@@ -34,7 +35,7 @@ class Ingenico:
         return self.TEST_URL if self.test_mode else self.PRODUCTION_URL
 
     def hash_parameters(self, parameters: dict) -> str:
-        """Generate SHA1 with sorted parameters."""
+        """Generate SHA-512 hash with sorted parameters."""
         string_to_hash = ""
 
         for key in sorted(parameters):
@@ -159,4 +160,5 @@ class Ingenico:
             if ku in sha_out_params and parameters[key]:
                 string_to_hash += f"{ku}={parameters[key]}{outsalt}"
 
-        return shasign == sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
+        expected = sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
+        return hmac.compare_digest(shasign or "", expected)

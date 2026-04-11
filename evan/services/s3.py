@@ -70,6 +70,6 @@ def get_s3_presigned_url(object_key: str, expires_in: int = 60) -> str:
 
 def get_s3_response(object_key: str) -> requests.Response:
     """Return a response from S3."""
-    res = requests.get(url=get_s3_presigned_url(object_key, 10), stream=True)
+    res = requests.get(url=get_s3_presigned_url(object_key, 10), stream=True, timeout=10)
     res.raise_for_status()
     return res
