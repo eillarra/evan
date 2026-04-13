@@ -3,6 +3,7 @@
 cd "$(dirname "$0")"
 
 case "$1" in
+  huey) uv run --env-file .env python manage.py run_huey ;;
   server) uv run --env-file .env python manage.py runserver ;;
   *) uv run --env-file .env "$@" ;;
 esac

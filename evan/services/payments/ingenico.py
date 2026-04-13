@@ -74,6 +74,8 @@ class Ingenico:
                 "COM": "ID" + str(parameters["ORDERID"]),
                 "ACCEPTURL": absolute_uri + parameters["RESULTURL"],
                 "DECLINEURL": absolute_uri + parameters["RESULTURL"],
+                "CANCELURL": absolute_uri + parameters["RESULTURL"],
+                "BACKURL": absolute_uri + parameters["CALLBACKURL"],
             }
         )
 

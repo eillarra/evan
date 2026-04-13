@@ -108,6 +108,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     invoice_requested = models.BooleanField(default=False)
     invoice_sent = models.BooleanField(default=False)
     paid = models.PositiveSmallIntegerField(default=0, editable=False)
+    payid = models.CharField(max_length=64, blank=True, default="")
     paid_via_invoice = models.PositiveSmallIntegerField(default=0)
     saldo = models.IntegerField(default=0, editable=False)
     no_show = models.BooleanField(default=False)
@@ -167,6 +168,9 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
 
     def get_payment_delegated_url(self) -> str:
         return reverse("registration:payment_delegated", args=[self.uuid, self.secret])
+
+    def get_payment_callback_url(self) -> str:
+        return reverse("registration:payment_callback", args=[self.uuid])
 
     def get_payment_result_url(self) -> str:
         return reverse("registration:payment_result", args=[self.uuid])

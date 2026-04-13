@@ -2,10 +2,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
-from django.http import Http404
+from django.http import Http404, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import RedirectView, TemplateView, View
 
 from evan.api.serializers.events import EventSerializer
@@ -111,6 +112,7 @@ class RegistrationPaymentBaseView(TemplateView):
         ingenico_parameters = {
             "AMOUNT": registration.remaining_fee,
             "ORDERID": registration.pk,
+            "CALLBACKURL": registration.get_payment_callback_url(),
             "RESULTURL": self.get_ingenico_result_url(),
         }
         context = super().get_context_data(**kwargs)
@@ -176,6 +178,24 @@ class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
         return super().dispatch(request, *args, **kwargs)
 
 
+def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
+    """Credit an Ingenico payment to a registration if valid and not already processed.
+
+    :param registration: The registration to credit the payment to.
+    :param qs: The query dict from the Ingenico callback (GET params).
+    :returns: True if the payment was credited, False otherwise.
+    """
+    payid = qs.get("PAYID", "")
+    if not payid or registration.payid == payid:
+        return False
+    if not Ingenico.validate_out_parameters(qs, outsalt=registration.event.ingenico.get("ingenico_salt")):
+        return False
+    registration.paid = registration.paid + int(qs.get("AMOUNT", 0))  # type: ignore
+    registration.payid = payid
+    registration.save()
+    return True
+
+
 class RegistrationPaymentResultBaseView(TemplateView):
     """
     Perform actions depending on the result of the payment process.
@@ -192,10 +212,10 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
         # Success
         if status in Ingenico.SUCCESS_STATUSES:
-            if Ingenico.validate_out_parameters(request.GET, outsalt=registration.event.ingenico.get("ingenico_salt")):
-                registration.paid = registration.paid + int(request.GET.get("AMOUNT"))  # type: ignore
-                registration.save()
+            if _credit_ingenico_payment(registration, request.GET):
                 messages.success(request, "Your payment was succesful.")
+            elif registration.is_paid:
+                messages.success(request, "Your payment was already registered.")
             else:
                 messages.error(request, "Invalid query parameters.")
 
@@ -213,6 +233,23 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
         # ...and redirect
         return redirect(self.get_redirect_url())  # type: ignore
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class RegistrationPaymentCallbackView(View):
+    """Server-to-server callback from Ingenico for confirmed payments.
+
+    This endpoint is called directly by Ingenico's servers, bypassing the
+    user's browser. It ensures payments are credited even when the browser
+    redirect to the result URL fails.
+    """
+
+    def get(self, request, *args, **kwargs):
+        """Process the Ingenico server-to-server notification."""
+        registration = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
+        if request.GET.get("STATUS") in Ingenico.SUCCESS_STATUSES:
+            _credit_ingenico_payment(registration, request.GET)
+        return HttpResponse(status=200)
 
 
 class RegistrationPaymentResultView(RegistrationPaymentResultBaseView):

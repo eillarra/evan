@@ -21,19 +21,19 @@ uv sync --upgrade --group dev
 ### Run the app in development mode
 
 ```bash
-python manage.py runserver
+./run server
 ```
 
 ### Run Huey worker
 
 ```bash
-python manage.py run_huey
+./run huey
 ```
 
 ### Run the tests
 
 ```bash
-pytest --cov=evan --cov-report=term
+./run pytest --cov=evan --cov-report=term
 ```
 
 ### Style guide
@@ -41,7 +41,7 @@ pytest --cov=evan --cov-report=term
 Tab size is 4 spaces. Max line length is 120. You should run `ruff` before committing any change.
 
 ```bash
-ruff format . && ruff check evan
+./run ruff format . && ./run ruff check evan
 ```
 
 ## Frontend
