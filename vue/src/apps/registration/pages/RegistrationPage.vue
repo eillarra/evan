@@ -43,7 +43,7 @@
         <small>{{ selectedFee.notes }}</small>
       </p>
 
-      <template v-if="socialEvents.length > 0">
+      <template v-if="socialEvents.length > 0 && !isOnlineAttendee">
         <evan-section-title>Social events</evan-section-title>
         <p>Choose the social events you would like to attend:</p>
         <q-list dense>
@@ -67,7 +67,7 @@
         </p>
       </template>
 
-      <template v-if="user">
+      <template v-if="user && !isOnlineAttendee">
         <evan-section-title>Special needs</evan-section-title>
         <p>
           The following information will only be used to provide you with a better experience during physical events. We
@@ -84,19 +84,21 @@
         </div>
       </template>
 
-      <evan-section-title>Travel visa</evan-section-title>
-      <q-list dense>
-        <q-item tag="label">
-          <q-item-section avatar>
-            <q-checkbox v-model="mutableRegistration.visa_requested" keep-color />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>I require an Invitation Letter for my visa application</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-list>
+      <template v-if="!isOnlineAttendee">
+        <evan-section-title>Travel visa</evan-section-title>
+        <q-list dense>
+          <q-item tag="label">
+            <q-item-section avatar>
+              <q-checkbox v-model="mutableRegistration.visa_requested" keep-color />
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>I require an Invitation Letter for my visa application</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </template>
 
-      <template v-if="socialEvents.length > 0">
+      <template v-if="socialEvents.length > 0 && !isOnlineAttendee">
         <evan-section-title>Accompanying persons</evan-section-title>
         <accompanying-persons v-model="accompaningPersons" :social-events="socialEvents" />
       </template>
@@ -126,7 +128,7 @@
           </q-item-section>
         </q-item>
 
-        <q-item tag="label">
+        <q-item v-if="!isOnlineAttendee" tag="label">
           <q-item-section avatar>
             <q-checkbox v-model="photoConsent" keep-color />
           </q-item-section>
@@ -244,6 +246,7 @@ const mutableRegistration = ref<RegistrationData | undefined>(undefined);
 const selectedFee = computed<Fee | undefined>(() => {
   return evanEvent.value?.fees.find((f: Fee) => f.type == mutableRegistration.value?.fee_type) || undefined;
 });
+const isOnlineAttendee = computed<boolean>(() => !!(evanEvent.value?.is_virtual || selectedFee.value?.online_only));
 const selectedSocialEvents = ref<number[]>([]);
 const accompaningPersons = ref<AccompanyingPerson[]>([]);
 

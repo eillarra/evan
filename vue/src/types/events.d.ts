@@ -12,6 +12,7 @@ interface FeeConfig {
 
 interface Fee {
   type: string;
+  online_only: boolean;
   early_value: number | null;
   value: number;
   onsite_value: number | null;
