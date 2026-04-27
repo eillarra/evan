@@ -110,6 +110,9 @@ class EventBadgesPdf(EventFirewallMixin, View):
     def get(self, request, *args, **kwargs):
         event = self.get_event()
         registrations = event.registrations.filter(is_accepted=True).select_related("user")  # type: ignore
+        if not event.is_virtual:
+            online_only_fee_types = event.fees.filter(online_only=True).values_list("type", flat=True)
+            registrations = registrations.exclude(fee_type__in=online_only_fee_types)
         maker = BadgesPdfMaker(registrations=registrations, filename="badges.pdf", as_attachment=False)
         return maker.response
 

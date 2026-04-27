@@ -135,8 +135,8 @@
           />
           <div class="col-12">
             <h6 class="text-subtitle2 q-mb-sm">{{ $t('badges.fee_type_colors') }}</h6>
-            <div v-if="evanEvent?.fees?.length" class="q-mb-md">
-              <div v-for="fee in evanEvent.fees" :key="fee.type" class="row q-col-gutter-sm q-mb-sm items-top">
+            <div v-if="onsiteFees.length" class="q-mb-md">
+              <div v-for="fee in onsiteFees" :key="fee.type" class="row q-col-gutter-sm q-mb-sm items-top">
                 <div class="col-6">
                   <q-input :model-value="fee.type" :label="$t('models.fee_type')" dense readonly />
                   <div class="text-caption text-grey-6">{{ fee.notes }}</div>
@@ -169,7 +169,7 @@
                   {{ $t('badges.guest') }}
                 </div>
               </div>
-              <div v-for="fee in evanEvent.fees" :key="`preview-${fee.type}`" class="col-sm-6 col-md">
+              <div v-for="fee in onsiteFees" :key="`preview-${fee.type}`" class="col-sm-6 col-md">
                 <div
                   :style="{ backgroundColor: feeTypeColors[fee.type] || badgeConfigDefault }"
                   class="text-center text-white q-pa-md"
@@ -218,6 +218,10 @@ import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 const store = useStore();
 const { evanEvent } = storeToRefs(store);
 const { t } = useI18n();
+
+const onsiteFees = computed(() =>
+  evanEvent.value?.is_virtual ? [] : (evanEvent.value?.fees?.filter((f) => !f.online_only) ?? []),
+);
 
 const activeTab = ref('general');
 const pdfLoading = ref(false);
