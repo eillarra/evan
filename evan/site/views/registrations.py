@@ -190,7 +190,8 @@ def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
         return False
     if not Ingenico.validate_out_parameters(qs, outsalt=registration.event.ingenico.get("ingenico_salt")):
         return False
-    registration.paid = registration.paid + int(qs.get("AMOUNT", 0))  # type: ignore
+    # Ogone returns AMOUNT as a decimal string (e.g. '795.00'); cast via float first.
+    registration.paid = registration.paid + int(float(qs.get("AMOUNT", 0)))  # type: ignore
     registration.payid = payid
     registration.save()
     return True
