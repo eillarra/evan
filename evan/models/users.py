@@ -46,6 +46,11 @@ class User(AbstractUser):
         except ValueError as exc:
             raise ValidationError({"extra_data": [str(exc)]}) from exc
 
+        # CountryField is stored as a non-null database column.
+        # Normalize explicit null values to empty string to avoid DB-level 500s.
+        if self.country is None:
+            self.country = ""
+
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:

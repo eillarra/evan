@@ -31,12 +31,20 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps<{
   label: string;
-  modelValue: CountryCode | CountryDict;
+  modelValue: CountryCode | CountryDict | null;
   asDict?: boolean;
 }>();
 
-const mutable = ref<CountryCode | CountryDict>(props.modelValue);
-const countryCode = ref<CountryCode>(typeof props.modelValue === 'string' ? props.modelValue : props.modelValue.code);
+function getCountryCode(modelValue: CountryCode | CountryDict | null): CountryCode {
+  if (!modelValue) {
+    return '';
+  }
+
+  return typeof modelValue === 'string' ? modelValue : modelValue.code;
+}
+
+const mutable = ref<CountryCode | CountryDict | null>(props.modelValue);
+const countryCode = ref<CountryCode>(getCountryCode(props.modelValue));
 
 const { countries } = storeToRefs(commonStore);
 
@@ -54,6 +62,15 @@ const options = computed(() => {
 });
 
 watch(mutable, (val) => {
+  countryCode.value = getCountryCode(val);
   emit('update:modelValue', val);
 });
+
+watch(
+  () => props.modelValue,
+  (val) => {
+    mutable.value = val;
+    countryCode.value = getCountryCode(val);
+  }
+);
 </script>

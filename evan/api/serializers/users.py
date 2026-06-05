@@ -28,7 +28,7 @@ class UserTinySerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:user-detail")
     name = serializers.CharField()
-    country = CountryField(allow_null=True)
+    country = CountryField(required=False)
     extra_data = serializers.JSONField()
 
     class Meta:  # noqa: D106
