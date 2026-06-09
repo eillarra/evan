@@ -20,4 +20,5 @@ interface FeeSelectionConfig {
 
 interface EvanEventRegistrationConfig {
   fee_selection: FeeSelectionConfig | null;
+  form_fields?: ExtraDataField[];
 }

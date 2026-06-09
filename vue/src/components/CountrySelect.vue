@@ -71,6 +71,6 @@ watch(
   (val) => {
     mutable.value = val;
     countryCode.value = getCountryCode(val);
-  }
+  },
 );
 </script>

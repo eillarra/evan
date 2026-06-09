@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .badges import BadgesConfig
 from .base import ImportantDate
-from .fees import FeeSelectionConfig
+from .fees import ExtraDataField, FeeSelectionConfig
 from .files import FileUploaderConfig
 from .payments import PaymentsConfig
 
@@ -35,6 +35,7 @@ class EventRegistrationConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
     fee_selection: FeeSelectionConfig = None
+    form_fields: list[ExtraDataField] = Field(default_factory=list)
 
 
 class EventExtraData(BaseModel):

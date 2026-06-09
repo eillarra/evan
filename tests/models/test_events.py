@@ -168,3 +168,25 @@ def test_event_is_not_onsite_when_no_onsite_deadline_configured(t_event):
 
     with patch("django.utils.timezone.now", return_value=convtime("2026-09-02 10:00")):
         assert t_event.is_onsite is False
+
+
+@pytest.mark.django_db
+def test_event_registration_configuration_supports_form_fields(t_event):
+    """Event registration configuration supports global form fields."""
+    t_event.registration_config = {
+        "form_fields": [
+            {
+                "code": "paper_id",
+                "label": "Paper ID",
+                "field_type": "text",
+                "required": True,
+            }
+        ]
+    }
+
+    t_event.save()
+    t_event.refresh_from_db()
+
+    config = t_event.registration_configuration
+    assert "form_fields" in config
+    assert config["form_fields"][0]["code"] == "paper_id"

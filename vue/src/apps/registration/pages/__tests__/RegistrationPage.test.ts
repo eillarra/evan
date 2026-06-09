@@ -57,7 +57,7 @@ const makeEvent = (...fees: Fee[]) =>
     code: 'TEST26',
     is_virtual: false,
     fees,
-    registration_configuration: { fee_selection: null },
+    registration_configuration: { fee_selection: null, form_fields: [] },
     registration_early_deadline: '',
   }) as any;
 
@@ -105,7 +105,7 @@ const mockUser: any = {
  */
 const GLOBAL_STUBS = {
   'evan-section-title': { template: '<div class="section-title"><slot /></div>' },
-  'ugent-btn': true,
+  'ugent-btn': { props: ['disable', 'label'], template: '<button :disabled="disable">{{ label }}</button>' },
   'readonly-field': true,
   'country-select': true,
   'dietary-select': true,
@@ -145,6 +145,72 @@ const mountPage = () =>
 // --- Tests ------------------------------------------------------------------
 
 describe('RegistrationPage', () => {
+  describe('Form-level custom fields', () => {
+    it('disables submit when a required global registration field is missing', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+
+      store.evanEvent = {
+        ...makeEvent(makeFee('onsite__regular', false)),
+        registration_configuration: {
+          fee_selection: null,
+          form_fields: [
+            {
+              code: 'paper_id',
+              label: 'Paper ID',
+              field_type: 'text',
+              required: true,
+            },
+          ],
+        },
+      } as any;
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+
+      await nextTick();
+
+      expect(wrapper.find('button').attributes('disabled')).toBeDefined();
+    });
+
+    it('enables submit when a required global registration field is provided', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+
+      store.evanEvent = {
+        ...makeEvent(makeFee('onsite__regular', false)),
+        registration_configuration: {
+          fee_selection: null,
+          form_fields: [
+            {
+              code: 'paper_id',
+              label: 'Paper ID',
+              field_type: 'text',
+              required: true,
+            },
+          ],
+        },
+      } as any;
+      store.loading = false;
+      store.registration = {
+        ...makeRegistration('onsite__regular'),
+        extra_data: {
+          _internal: { share_email_with_sponsors: false, allow_photo_sharing: true },
+          paper_id: '42',
+        },
+      };
+      userStore.user = mockUser;
+
+      await nextTick();
+
+      expect(wrapper.find('button').attributes('disabled')).toBeUndefined();
+    });
+  });
+
   describe('Social events section', () => {
     it('shows the social events section when the selected fee is not online and social events exist', async () => {
       const wrapper = mountPage();

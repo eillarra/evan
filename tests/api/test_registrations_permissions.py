@@ -126,6 +126,22 @@ class TestRegistrationCreate:
         response = api_client.post(_register_url(t_event), {"fee_type": "nonexistent_fee"})
         assert response.status_code == status.BAD_REQUEST
 
+    def test_authenticated_user_can_register_with_extra_data(self, api_client, t_event, user) -> None:
+        """Registration extra_data payload is persisted when creating a registration."""
+        api_client.force_authenticate(user=user)
+        payload = {
+            "fee_type": "regular",
+            "extra_data": {
+                "paper_id": "P-123",
+                "_internal": {"share_email_with_sponsors": False, "allow_photo_sharing": True},
+            },
+        }
+
+        response = api_client.post(_register_url(t_event), payload, format="json")
+
+        assert response.status_code == status.CREATED
+        assert response.data["extra_data"]["paper_id"] == "P-123"
+
 
 # ---------------------------------------------------------------------------
 # 3. Registration owner access
@@ -162,6 +178,22 @@ class TestRegistrationOwnerAccess:
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"visa_requested": True})
         assert response.status_code == status.OK
+
+    def test_owner_can_update_registration_extra_data(self, api_client, user, registration) -> None:
+        """Owner can PATCH registration extra_data and the new values are persisted."""
+        api_client.force_authenticate(user=user)
+        payload = {
+            "extra_data": {
+                "paper_id": "P-456",
+                "_internal": {"share_email_with_sponsors": True, "allow_photo_sharing": False},
+            }
+        }
+
+        response = api_client.patch(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.extra_data["paper_id"] == "P-456"
 
     def test_non_owner_cannot_update_registration(self, api_client, other_user, registration) -> None:
         api_client.force_authenticate(user=other_user)

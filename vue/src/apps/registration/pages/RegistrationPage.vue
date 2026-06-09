@@ -43,6 +43,15 @@
         <small>{{ selectedFee.notes }}</small>
       </p>
 
+      <template v-if="registrationFormFields.length">
+        <evan-section-title>Additional registration information</evan-section-title>
+        <registration-form-fields
+          v-model:extraData="mutableRegistration.extra_data"
+          :fields="registrationFormFields"
+          :fee-type="mutableRegistration.fee_type"
+        />
+      </template>
+
       <template v-if="socialEvents.length > 0 && !isOnlineAttendee">
         <evan-section-title>Social events</evan-section-title>
         <p>Choose the social events you would like to attend:</p>
@@ -223,6 +232,7 @@ import GenderSelect from '@/components/GenderSelect.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 import AccompanyingPersons from '../components/AccompanyingPersons.vue';
 import FeeFormComponent from '../components/FeeFormComponent.vue';
+import RegistrationFormFields from '../components/RegistrationFormFields.vue';
 
 const page = usePage();
 const userStore = useUserStore();
@@ -317,6 +327,26 @@ const validFees = computed<string[]>(() => {
   return evanEvent.value?.fees.map((f: Fee) => f.type) || [];
 });
 
+const registrationFormFields = computed<ExtraDataField[]>(() => {
+  return evanEvent.value?.registration_configuration?.form_fields || [];
+});
+
+function hasFieldValue(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  return true;
+}
+
 function saveRegistration() {
   if (mutableRegistration.value) {
     // TODO: consolidate sessions
@@ -371,10 +401,29 @@ const feeExtraDataIsValid = computed<boolean>(() => {
         const shouldShow =
           !field.show_for || field.show_for.length === 0 || field.show_for.includes(selectedValue as string);
 
-        if (shouldShow && field.required && !mutableRegistration.value?.extra_data?.[field.code]) {
+        if (shouldShow && field.required && !hasFieldValue(mutableRegistration.value?.extra_data?.[field.code])) {
           return false;
         }
       }
+    }
+  }
+
+  return true;
+});
+
+const registrationFormFieldsAreValid = computed<boolean>(() => {
+  if (!registrationFormFields.value.length) {
+    return true;
+  }
+
+  const feeType = mutableRegistration.value?.fee_type;
+
+  for (const field of registrationFormFields.value) {
+    const shouldShow =
+      !field.show_for || field.show_for.length === 0 || (!!feeType && field.show_for.includes(feeType));
+
+    if (shouldShow && field.required && !hasFieldValue(mutableRegistration.value?.extra_data?.[field.code])) {
+      return false;
     }
   }
 
@@ -386,8 +435,34 @@ const formIsValid = computed<boolean>(() => {
     return false;
   }
 
-  return feeExtraDataIsValid.value;
+  return feeExtraDataIsValid.value && registrationFormFieldsAreValid.value;
 });
+
+watch(
+  () => mutableRegistration.value?.fee_type,
+  () => {
+    if (!mutableRegistration.value || !registrationFormFields.value.length) {
+      return;
+    }
+
+    const feeType = mutableRegistration.value.fee_type;
+    const nextExtraData = { ...mutableRegistration.value.extra_data };
+    let changed = false;
+
+    registrationFormFields.value.forEach((field) => {
+      const shouldShow =
+        !field.show_for || field.show_for.length === 0 || (!!feeType && field.show_for.includes(feeType));
+      if (!shouldShow && Object.prototype.hasOwnProperty.call(nextExtraData, field.code)) {
+        delete nextExtraData[field.code];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      mutableRegistration.value.extra_data = nextExtraData;
+    }
+  },
+);
 
 watch(
   () => registration.value,
