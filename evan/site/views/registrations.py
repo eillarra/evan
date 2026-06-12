@@ -275,11 +275,26 @@ class RegistrationInvoiceRequestView(RedirectView):
         if not registration.editable_by_user(request.user):
             messages.error(request, "You don't have the necessary permissions to update this registration.")
             raise PermissionDenied
+        if not registration.is_accepted:
+            messages.error(request, "Your registration has not been accepted.")
+            raise PermissionDenied
         if not registration.event.allows_invoices:
             messages.error(request, "We cannot issue invoices for this event.")
             raise PermissionDenied
+        if registration.is_paid:
+            messages.info(request, "Your registration is already paid.")
+            return super().dispatch(request, *args, **kwargs)
+        if registration.invoice_requested:
+            messages.info(request, "Invoice was already requested.")
+            return super().dispatch(request, *args, **kwargs)
+        updated_count = Registration.objects.filter(pk=registration.pk, invoice_requested=False).update(
+            invoice_requested=True
+        )
+        if updated_count == 0:
+            messages.info(request, "Invoice was already requested.")
+            return super().dispatch(request, *args, **kwargs)
+
         registration.invoice_requested = True
-        registration.save()
         schedule_registration_email(registration, code="registration.payment_reminder")
         return super().dispatch(request, *args, **kwargs)
 
