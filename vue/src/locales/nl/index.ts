@@ -205,4 +205,7 @@ export default {
       end_time_range: 'Eindtijd moet tussen {start} en {end} liggen',
     },
   },
+  registrations: {
+    download_excel: 'Inschrijvingen downloaden (Excel)',
+  },
 };

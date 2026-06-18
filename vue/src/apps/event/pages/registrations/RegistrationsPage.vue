@@ -2,6 +2,18 @@
   <div class="row q-col-gutter-sm q-mb-lg">
     <h3 class="text-ugent col-12 col-md-3 q-mb-none use-default-q-btn">
       {{ $t('models.registration', 9) }}
+      <q-icon
+        v-if="registrationsExcelUrl"
+        tag="a"
+        :href="registrationsExcelUrl"
+        target="_blank"
+        :name="iconDownloadExcel"
+        size="sm"
+        color="grey-7"
+        class="cursor-pointer q-ml-sm"
+      >
+        <q-tooltip :delay="250">{{ $t('registrations.download_excel') }}</q-tooltip>
+      </q-icon>
     </h3>
     <div class="col"></div>
     <div v-if="evanEvent?.registration_preview_url" class="col-auto">
@@ -70,7 +82,7 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import { iconEye } from '@/icons';
+import { iconDownloadExcel, iconEye } from '@/icons';
 import { useStore } from '../../store';
 
 import RegistrationsTable from './RegistrationsTable.vue';
@@ -108,6 +120,14 @@ const paidOptions = computed<QuasarSelectOption[]>(() => [
   { label: 'Not paid, no invoice', value: 'not_paid_no_invoice' },
   { label: 'Not paid, but requested invoice', value: 'not_paid_invoice_requested' },
 ]);
+
+const registrationsExcelUrl = computed<string | null>(() => {
+  if (!evanEvent.value?.code) {
+    return null;
+  }
+
+  return `/e/${evanEvent.value.code}/files/registrations.xlsx`;
+});
 
 const filteredRegistrations = computed<Registration[]>(() => {
   return registrations.value

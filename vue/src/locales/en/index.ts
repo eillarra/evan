@@ -300,4 +300,7 @@ export default {
     download: 'View badges',
     no_fee_types_available: 'No fee types available. Create fee types first.',
   },
+  registrations: {
+    download_excel: 'Download registrations (Excel)',
+  },
 };

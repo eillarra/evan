@@ -1,3 +1,5 @@
+import json
+
 import polars as pl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -140,8 +142,16 @@ class EventExcelView(EventFirewallMixin, ExcelView):
 def get_registration_sheets(event: Event) -> list[DataSheet]:
     """Get the sheets with an overview of the event registrations."""
     rows = []
+    extra_field_codes = [
+        field.get("code")
+        for field in event.registration_configuration.get("form_fields", [])
+        if isinstance(field, dict) and field.get("code")
+    ]
 
     for registration in event.registrations.filter(is_accepted=True).select_related("user", "coupon"):  # type: ignore
+        registration_extra_values = {
+            code: _get_excel_serializable_extra_value(registration.extra_data.get(code)) for code in extra_field_codes
+        }
         rows.append(
             {
                 "uuid": str(registration.uuid),
@@ -159,6 +169,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
                 "gender": registration.user.extra_data.get("gender"),
                 "dietary": registration.user.extra_data.get("dietary"),
                 "special_needs": registration.user.extra_data.get("special_needs"),
+                **registration_extra_values,
             }
         )
 
@@ -197,3 +208,10 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
         sheets.append((pl.DataFrame(rows), f"SOCIAL - {social_event.title}"))
 
     return sheets
+
+
+def _get_excel_serializable_extra_value(value):
+    """Convert extra field values into Excel-safe scalar values."""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    return value

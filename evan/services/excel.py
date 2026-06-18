@@ -1,5 +1,6 @@
 """A module for generating Excel files from Django querysets."""
 
+import re
 from io import BytesIO
 
 import polars as pl
@@ -10,6 +11,8 @@ from django.views import View
 
 
 type DataSheet = tuple[pl.DataFrame, str]
+MAX_WORKSHEET_NAME_LENGTH = 31
+INVALID_WORKSHEET_CHARS_PATTERN = re.compile(r"[\[\]:*?/\\]")
 
 
 def set_column_types(df: pl.DataFrame) -> pl.DataFrame:
@@ -30,6 +33,43 @@ def set_column_types(df: pl.DataFrame) -> pl.DataFrame:
             df = df.with_columns(pl.col(col).cast(pl.Utf8, strict=False))
 
     return df
+
+
+def _sanitize_worksheet_name(name: str) -> str:
+    """Sanitize a worksheet name according to Excel constraints.
+
+    :param name: Requested worksheet name.
+    :returns: Sanitized worksheet name with invalid characters removed and max length applied.
+    """
+    sanitized = INVALID_WORKSHEET_CHARS_PATTERN.sub(" ", name)
+    sanitized = " ".join(sanitized.split())
+    sanitized = sanitized.strip("'").strip()
+
+    if not sanitized:
+        sanitized = "Sheet"
+
+    return sanitized[:MAX_WORKSHEET_NAME_LENGTH]
+
+
+def build_unique_worksheet_name(name: str, used_names: set[str]) -> str:
+    """Build a valid, unique worksheet name.
+
+    :param name: Requested worksheet name.
+    :param used_names: Names that are already used in the workbook.
+    :returns: A worksheet name that is valid for Excel and unique in ``used_names``.
+    """
+    base_name = _sanitize_worksheet_name(name)
+    if base_name not in used_names:
+        return base_name
+
+    suffix_index = 2
+    while True:
+        suffix = f" ({suffix_index})"
+        available_length = MAX_WORKSHEET_NAME_LENGTH - len(suffix)
+        candidate = f"{base_name[:available_length]}{suffix}"
+        if candidate not in used_names:
+            return candidate
+        suffix_index += 1
 
 
 class ExcelResponse(HttpResponse):
@@ -80,9 +120,8 @@ class ExcelView(View):
         sheet_names = set()
 
         with pl.Config(float_precision=2), xlsxwriter.Workbook(buffer) as workbook:
-            for df, sheet_name in self.get_sheets():
-                while sheet_name in sheet_names:
-                    sheet_name += "_"
+            for df, requested_sheet_name in self.get_sheets():
+                sheet_name = build_unique_worksheet_name(requested_sheet_name, sheet_names)
                 set_column_types(df).write_excel(workbook=workbook, worksheet=sheet_name)
                 sheet_names.add(sheet_name)
 
