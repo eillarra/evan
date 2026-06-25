@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from django.http import QueryDict
+from django.urls import reverse
 
 from evan.models import Fee
 from evan.site.views.registrations import _credit_ingenico_payment
@@ -74,3 +75,61 @@ class TestCreditIngenicoPayment:
         assert result is False
         payment_registration.refresh_from_db()
         assert payment_registration.paid == 0
+
+    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    def test_unique_hash_is_rotated_after_successful_payment(self, _mock_validate, payment_registration) -> None:
+        """After a successful payment the unique_hash must change so any future
+        payment attempt gets a fresh ORDERID and Ingenico does not reject it."""
+        original_hash = payment_registration.unique_hash
+        qs = QueryDict("PAYID=1111111111&AMOUNT=100.00&STATUS=9")
+
+        _credit_ingenico_payment(payment_registration, qs)
+
+        payment_registration.refresh_from_db()
+        assert payment_registration.unique_hash != original_hash
+        assert len(payment_registration.unique_hash) == 8
+
+
+@pytest.mark.django_db
+class TestPaymentResultViewHashRotation:
+    """Regression tests: unique_hash must be rotated on cancel and decline so
+    the next payment attempt uses a fresh ORDERID.
+
+    Background: Ingenico registers the ORDERID the moment the payment form is
+    submitted.  If the user cancels (or the card is declined) and immediately
+    tries again, Ingenico rejects the same ORDERID with 'This payment has
+    already been processed.'
+    """
+
+    def _get_result_url(self, registration):
+        return reverse("registration:payment_result", args=[registration.uuid])
+
+    def test_hash_is_rotated_on_cancel(self, client, payment_registration) -> None:
+        """STATUS=1 (cancel) must rotate unique_hash before redirecting."""
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._get_result_url(payment_registration), {"STATUS": "1"})
+
+        payment_registration.refresh_from_db()
+        assert payment_registration.unique_hash != original_hash
+        assert len(payment_registration.unique_hash) == 8
+
+    def test_hash_is_rotated_on_decline(self, client, payment_registration) -> None:
+        """STATUS=2 (decline) must rotate unique_hash before redirecting."""
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._get_result_url(payment_registration), {"STATUS": "2"})
+
+        payment_registration.refresh_from_db()
+        assert payment_registration.unique_hash != original_hash
+        assert len(payment_registration.unique_hash) == 8
+
+    def test_hash_is_not_rotated_on_exception(self, client, payment_registration) -> None:
+        """STATUS=52 (exception / under review) must NOT rotate the hash;
+        admin must manually clear it after confirming the outcome with Ingenico."""
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._get_result_url(payment_registration), {"STATUS": "52"})
+
+        payment_registration.refresh_from_db()
+        assert payment_registration.unique_hash == original_hash

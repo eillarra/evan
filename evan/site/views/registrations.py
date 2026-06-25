@@ -193,6 +193,9 @@ def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
     # Ogone returns AMOUNT as a decimal string (e.g. '795.00'); cast via float first.
     registration.paid = registration.paid + int(float(qs.get("AMOUNT", 0)))  # type: ignore
     registration.payid = payid
+    # Rotate the hash so any future payment attempt gets a fresh ORDERID.
+    # Ingenico marks the ORDERID as permanently used after a successful payment.
+    registration.unique_hash = registration.generate_unique_hash()
     registration.save()
     return True
 
@@ -226,10 +229,19 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
         # Decline
         elif status in Ingenico.DECLINE_STATUSES:
+            # Rotate hash so a retry uses a fresh ORDERID; some Ingenico configurations
+            # reject resubmitting a previously declined ORDERID.
+            registration.unique_hash = registration.generate_unique_hash()
+            registration.save(update_fields=["unique_hash"])
             messages.error(request, "Your payment was declined.")
 
         # Cancel
         elif status in Ingenico.CANCEL_STATUSES:
+            # Rotate hash so a retry uses a fresh ORDERID; Ingenico registers the
+            # ORDERID the moment the form is submitted, so cancelling leaves it
+            # "used" and a second attempt with the same ORDERID is rejected.
+            registration.unique_hash = registration.generate_unique_hash()
+            registration.save(update_fields=["unique_hash"])
             messages.warning(request, "Your payment has been canceled.")
 
         # ...and redirect
