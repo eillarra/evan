@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from .base import NonEditableMixin
 
@@ -38,6 +39,59 @@ class Payment(NonEditableMixin, models.Model):
 
     def __str__(self) -> str:
         return f"{self.registration} ({self.amount}) - {self.type} - {self.status}"
+
+
+class RegistrationPaymentAttempt(models.Model):
+    """Track a single Ingenico payment attempt for a registration.
+
+    The attempt is keyed by the generated ORDERID sent to Ingenico. Callbacks
+    must resolve exactly one attempt once, making payment processing idempotent.
+    """
+
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    OBSOLETE = "obsolete"
+    STATUS_CHOICES = (
+        (PENDING, "Pending"),
+        (SUCCEEDED, "Succeeded"),
+        (FAILED, "Failed"),
+        (CANCELLED, "Cancelled"),
+        (OBSOLETE, "Obsolete"),
+    )
+
+    registration = models.ForeignKey("evan.Registration", related_name="payment_attempts", on_delete=models.CASCADE)
+    order_id = models.CharField(max_length=128, unique=True)
+    expected_amount = models.PositiveSmallIntegerField(default=0)
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default=PENDING)
+    payid = models.CharField(max_length=64, null=True, blank=True, unique=True)
+    callback_data = models.JSONField(default=dict, blank=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:  # noqa: D106
+        db_table = "evan_log_registration_payment_attempt"
+        indexes = [
+            models.Index(fields=["registration", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.registration} - {self.order_id} - {self.status}"
+
+    def mark_resolved(self, *, status: str, payid: str | None = None, callback_data: dict | None = None) -> None:
+        """Transition the attempt to a terminal state.
+
+        :param status: One of the terminal status constants.
+        :param payid: Optional payid returned by Ingenico.
+        :param callback_data: Optional raw callback payload for audit/debugging.
+        """
+        self.status = status
+        if payid:
+            self.payid = payid
+        if callback_data is not None:
+            self.callback_data = callback_data
+        self.resolved_at = timezone.now()
 
 
 @receiver(post_save, sender=Payment)

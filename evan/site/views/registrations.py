@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import Http404, HttpResponse, QueryDict
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -12,7 +12,7 @@ from django.views.generic import RedirectView, TemplateView, View
 from evan.api.serializers.events import EventSerializer
 from evan.api.serializers.sessions import SessionReadOnlySerializer
 from evan.api.serializers.users import UserSerializer
-from evan.models import Coupon, Event, Registration
+from evan.models import Coupon, Event, Registration, RegistrationPaymentAttempt
 from evan.services.mailer.registrations import schedule_registration_email
 from evan.services.payments.ingenico import Ingenico
 from evan.site.views.file_makers.pdf import CertificatePdfMaker, ReceiptPdfMaker
@@ -83,6 +83,27 @@ class RegistrationView(InertiaView):
 
 
 class RegistrationPaymentBaseView(TemplateView):
+    def get_or_create_payment_attempt(self, registration: Registration) -> RegistrationPaymentAttempt | None:
+        """Return the active deterministic payment attempt for the current payment form.
+
+        :param registration: The registration being paid.
+        :returns: The persisted payment attempt, or None when no payment is needed.
+        """
+        if registration.is_paid or registration.remaining_fee <= 0:
+            return None
+
+        expected_amount = registration.remaining_fee
+        order_id = Ingenico.generate_order_id(registration.pk, expected_amount, registration.unique_hash)
+
+        attempt, _ = RegistrationPaymentAttempt.objects.get_or_create(
+            order_id=order_id,
+            defaults={
+                "registration": registration,
+                "expected_amount": expected_amount,
+            },
+        )
+        return attempt
+
     def dispatch(self, request, *args, **kwargs):
         if not self.get_object().event.allows_payments:
             messages.error(request, "Payments are not active for this event.")
@@ -104,6 +125,7 @@ class RegistrationPaymentBaseView(TemplateView):
 
     def get_context_data(self, **kwargs):
         registration = self.get_object()
+        payment_attempt = self.get_or_create_payment_attempt(registration)
         ingenico = Ingenico(
             pspid=registration.event.ingenico.get("wbs_element"),
             salt=registration.event.ingenico.get("ingenico_salt"),
@@ -119,6 +141,7 @@ class RegistrationPaymentBaseView(TemplateView):
         context["registration"] = registration
         context["event"] = registration.event
         context["ingenico_url"] = ingenico.get_url()
+        context["payment_attempt"] = payment_attempt
         context["ingenico_parameters"] = ingenico.process_parameters(
             ingenico_parameters, registration.user, registration.unique_hash
         )
@@ -186,18 +209,77 @@ def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
     :returns: True if the payment was credited, False otherwise.
     """
     payid = qs.get("PAYID", "")
-    if not payid or registration.payid == payid:
+    order_id = qs.get("ORDERID", "")
+    if not payid or not order_id:
         return False
     if not Ingenico.validate_out_parameters(qs, outsalt=registration.event.ingenico.get("ingenico_salt")):
         return False
-    # Ogone returns AMOUNT as a decimal string (e.g. '795.00'); cast via float first.
-    registration.paid = registration.paid + int(float(qs.get("AMOUNT", 0)))  # type: ignore
-    registration.payid = payid
-    # Rotate the hash so any future payment attempt gets a fresh ORDERID.
-    # Ingenico marks the ORDERID as permanently used after a successful payment.
-    registration.unique_hash = registration.generate_unique_hash()
-    registration.save()
-    return True
+
+    try:
+        amount = int(float(qs.get("AMOUNT", 0)))
+    except TypeError, ValueError:
+        return False
+
+    with transaction.atomic():
+        locked_registration = Registration.objects.select_for_update().get(pk=registration.pk)
+        try:
+            attempt = RegistrationPaymentAttempt.objects.select_for_update().get(order_id=order_id)
+        except RegistrationPaymentAttempt.DoesNotExist:
+            return False
+
+        if attempt.registration_id != locked_registration.id:
+            return False
+        if attempt.status != RegistrationPaymentAttempt.PENDING:
+            return False
+        if attempt.expected_amount != amount:
+            return False
+        if RegistrationPaymentAttempt.objects.exclude(pk=attempt.pk).filter(payid=payid).exists():
+            return False
+
+        attempt.mark_resolved(
+            status=RegistrationPaymentAttempt.SUCCEEDED,
+            payid=payid,
+            callback_data=qs.dict(),
+        )
+        attempt.save(update_fields=["status", "payid", "callback_data", "resolved_at"])
+
+        locked_registration.paid = locked_registration.paid + amount
+        locked_registration.payid = payid
+        # Rotate the hash so any future payment attempt gets a fresh ORDERID.
+        # Ingenico marks the ORDERID as permanently used after a successful payment.
+        locked_registration.unique_hash = locked_registration.generate_unique_hash()
+        locked_registration.save()
+        registration.paid = locked_registration.paid
+        registration.payid = locked_registration.payid
+        registration.unique_hash = locked_registration.unique_hash
+        registration.saldo = locked_registration.saldo
+        return True
+
+
+def _finalize_payment_attempt(registration: Registration, qs: QueryDict, *, status: str) -> None:
+    """Persist terminal non-success states for the current payment attempt.
+
+    :param registration: The registration being updated.
+    :param qs: The callback querystring.
+    :param status: The terminal attempt status to persist.
+    """
+    order_id = qs.get("ORDERID", "")
+    if not order_id:
+        return
+
+    with transaction.atomic():
+        try:
+            attempt = RegistrationPaymentAttempt.objects.select_for_update().get(order_id=order_id)
+        except RegistrationPaymentAttempt.DoesNotExist:
+            return
+
+        if attempt.registration_id != registration.id:
+            return
+        if attempt.status != RegistrationPaymentAttempt.PENDING:
+            return
+
+        attempt.mark_resolved(status=status, payid=qs.get("PAYID", ""), callback_data=qs.dict())
+        attempt.save(update_fields=["status", "payid", "callback_data", "resolved_at"])
 
 
 class RegistrationPaymentResultBaseView(TemplateView):
@@ -229,6 +311,7 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
         # Decline
         elif status in Ingenico.DECLINE_STATUSES:
+            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.FAILED)
             # Rotate hash so a retry uses a fresh ORDERID; some Ingenico configurations
             # reject resubmitting a previously declined ORDERID.
             registration.unique_hash = registration.generate_unique_hash()
@@ -237,6 +320,7 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
         # Cancel
         elif status in Ingenico.CANCEL_STATUSES:
+            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.CANCELLED)
             # Rotate hash so a retry uses a fresh ORDERID; Ingenico registers the
             # ORDERID the moment the form is submitted, so cancelling leaves it
             # "used" and a second attempt with the same ORDERID is rejected.

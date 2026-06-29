@@ -13,6 +13,10 @@ if TYPE_CHECKING:
 
 
 def get_absolute_uri():
+    """Return the site absolute base URL used in payment callbacks.
+
+    :returns: The current site domain prefixed with the active protocol.
+    """
     protocol = "https://" if settings.SESSION_COOKIE_SECURE else "http://"
     return protocol + Site.objects.get_current().domain
 
@@ -32,7 +36,26 @@ class Ingenico:
         self.test_mode = test_mode
 
     def get_url(self):
+        """Return the configured Ingenico endpoint URL.
+
+        :returns: The test or production endpoint depending on configuration.
+        """
         return self.TEST_URL if self.test_mode else self.PRODUCTION_URL
+
+    @staticmethod
+    def generate_order_id(base_order_id: str | int, amount: int, extra_hash: str | None = None) -> str:
+        """Generate the deterministic ORDERID sent to Ingenico.
+
+        :param base_order_id: The internal registration identifier.
+        :param amount: The expected payment amount in EUR.
+        :param extra_hash: Optional unique hash used to rotate payment attempts.
+        :returns: The deterministic external ORDERID.
+        """
+        base_string = f"{base_order_id}-{amount}"
+        if extra_hash:
+            base_string += f"-{extra_hash}"
+        short_hash = sha512(base_string.encode()).hexdigest()[:8]
+        return f"{base_order_id}-{short_hash}"
 
     def hash_parameters(self, parameters: dict) -> str:
         """Generate SHA-512 hash with sorted parameters."""
@@ -58,13 +81,7 @@ class Ingenico:
         # Required parameters
         absolute_uri = get_absolute_uri()
 
-        # Generate a short hash from the registration ID and amount
-        # This ensures the same parameters always produce the same ORDERID
-        base_string = f"{parameters['ORDERID']}-{parameters['AMOUNT']}"
-        if extra_hash:
-            base_string += f"-{extra_hash}"
-        short_hash = sha512(base_string.encode()).hexdigest()[:8]
-        order_id = f"{parameters['ORDERID']}-{short_hash}"
+        order_id = self.generate_order_id(parameters["ORDERID"], parameters["AMOUNT"], extra_hash)
 
         ingenico_parameters.update(
             {

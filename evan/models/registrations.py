@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 from django.urls import reverse
+from django.utils import timezone
 
 from .base import NonEditableMixin, TagsMixin
 from .rel.remarks import RemarksMixin, append_remarks_tags
@@ -135,9 +136,12 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         `base_fee` is only calculated when the registration is created.
         `extra_fees` are recalculated every time (accompanying persons, for example).
         """
+        previous = None
         if not self.pk:
             self.is_accepted = True if self.event.accept_by_default else None
             self.unique_hash = self.generate_unique_hash()
+        else:
+            previous = type(self).objects.get(pk=self.pk)
 
         self.base_fee = calculate_registration_base_fee(self)
 
@@ -146,8 +150,17 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         except KeyError:
             pass
 
+        if previous and previous.remaining_fee != self.remaining_fee and previous.unique_hash == self.unique_hash:
+            self.unique_hash = self.generate_unique_hash()
+
         self.saldo = -self.remaining_fee
         super().save(*args, **kwargs)
+
+        if previous:
+            previous_order_id = previous.get_current_payment_order_id()
+            current_order_id = self.get_current_payment_order_id()
+            if previous_order_id != current_order_id:
+                self._obsolete_stale_payment_attempts(current_order_id=current_order_id)
 
     def get_absolute_url(self) -> str:
         return reverse("registration:app", args=[self.uuid])
@@ -190,6 +203,37 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         It can be regenerated if needed, for example to reset payment links.
         """
         return uuid.uuid4().hex[:8]
+
+    def get_current_payment_order_id(self) -> str | None:
+        """Return the currently valid payment ORDERID for this registration.
+
+        :returns: The active payment ORDERID or None when no payment is due.
+        """
+        if not self.pk or self.remaining_fee <= 0:
+            return None
+
+        from evan.services.payments.ingenico import Ingenico
+
+        return Ingenico.generate_order_id(self.pk, self.remaining_fee, self.unique_hash)
+
+    def _obsolete_stale_payment_attempts(self, *, current_order_id: str | None) -> None:
+        """Mark older pending payment attempts as obsolete.
+
+        :param current_order_id: The only still-valid ORDERID, if any.
+        """
+        from .payments import RegistrationPaymentAttempt
+
+        attempts = RegistrationPaymentAttempt.objects.filter(
+            registration=self,
+            status=RegistrationPaymentAttempt.PENDING,
+        )
+        if current_order_id is not None:
+            attempts = attempts.exclude(order_id=current_order_id)
+
+        attempts.update(
+            status=RegistrationPaymentAttempt.OBSOLETE,
+            resolved_at=timezone.now(),
+        )
 
     @property
     def is_early(self) -> bool:
