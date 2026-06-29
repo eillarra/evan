@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { reactive, nextTick } from 'vue';
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createI18n } from 'vue-i18n';
 
@@ -20,6 +20,7 @@ vi.mock('@/axios.ts', () => ({
   api: {
     get: vi.fn().mockResolvedValue({ data: [] }),
     post: vi.fn().mockResolvedValue({ data: {} }),
+    put: vi.fn().mockResolvedValue({ data: {} }),
     patch: vi.fn().mockResolvedValue({ data: {} }),
   },
 }));
@@ -35,7 +36,14 @@ const i18n = createI18n({
   locale: 'en',
   messages: {
     en: {
-      fields: { name: 'Name', email: 'Email', affiliation: 'Affiliation', country: 'Country' },
+      fields: {
+        first_name: 'First name',
+        last_name: 'Last name',
+        email: 'Email',
+        affiliation: 'Affiliation',
+        country: 'Country',
+        name: 'Name',
+      },
       form: { update: 'Update', create: 'Create' },
       messages: { registration_created: 'Registered', registration_updated: 'Updated' },
     },
@@ -94,7 +102,12 @@ const mockUser: any = {
   affiliation: 'UGent',
   country: 'BE',
   self: '/api/users/1/',
-  extra_data: {},
+  extra_data: {
+    gender: '',
+    dietary: 'none',
+    special_needs: null,
+    connect: false,
+  },
 };
 
 // --- Test helpers -----------------------------------------------------------
@@ -105,14 +118,19 @@ const mockUser: any = {
  */
 const GLOBAL_STUBS = {
   'evan-section-title': { template: '<div class="section-title"><slot /></div>' },
-  'ugent-btn': { props: ['disable', 'label'], template: '<button :disabled="disable">{{ label }}</button>' },
+  'ugent-btn': {
+    props: ['disable', 'label', 'loading'],
+    template: '<button :disabled="disable" @click="$emit(\'click\')">{{ label }}</button>',
+  },
   'readonly-field': true,
+  'profile-info-fields': true,
   'country-select': true,
   'dietary-select': true,
   'gender-select': true,
   'accompanying-persons': true,
   'fee-form-component': true,
   'q-select': true,
+  'q-page': { template: '<div><slot /></div>' },
   'q-input': true,
   'q-checkbox': true,
   'q-list': { template: '<div><slot /></div>' },
@@ -120,6 +138,10 @@ const GLOBAL_STUBS = {
   'q-item-section': { template: '<div><slot /></div>' },
   'q-item-label': { template: '<div><slot /></div>' },
   'q-badge': { template: '<span />' },
+  'q-btn': {
+    props: ['label', 'disable', 'href'],
+    template: '<a :href="href" :aria-disabled="disable">{{ label }}</a>',
+  },
   'q-separator': true,
   'q-space': true,
 };
@@ -132,6 +154,7 @@ beforeEach(() => {
   // Reset shared reactive page props between tests.
   mockPageProps.sessions = [];
   mockPageProps.preview = false;
+  vi.stubGlobal('scrollTo', vi.fn());
 });
 
 const mountPage = () =>
@@ -145,6 +168,66 @@ const mountPage = () =>
 // --- Tests ------------------------------------------------------------------
 
 describe('RegistrationPage', () => {
+  describe('Save workflow', () => {
+    it('updates profile before updating registration', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = { ...mockUser };
+
+      await nextTick();
+
+      const callOrder: string[] = [];
+      vi.spyOn(userStore, 'updateUser').mockImplementation(async () => {
+        callOrder.push('profile');
+      });
+      vi.spyOn(store, 'updateRegistration').mockImplementation(async () => {
+        callOrder.push('registration');
+      });
+
+      await wrapper.find('button').trigger('click');
+      await flushPromises();
+
+      expect(callOrder).toEqual(['profile', 'registration']);
+    });
+
+    it('normalizes all-caps first and last names before saving profile', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = {
+        ...mockUser,
+        first_name: 'JEAN',
+        last_name: "DUPONT-D'ARC",
+      };
+
+      await nextTick();
+
+      const updateUserSpy = vi.spyOn(userStore, 'updateUser').mockResolvedValue();
+      vi.spyOn(store, 'updateRegistration').mockResolvedValue();
+
+      await wrapper.find('button').trigger('click');
+      await flushPromises();
+
+      expect(updateUserSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          first_name: 'Jean',
+          last_name: "Dupont-D'Arc",
+        }),
+      );
+    });
+  });
+
   describe('Form-level custom fields', () => {
     it('disables submit when a required global registration field is missing', async () => {
       const wrapper = mountPage();
@@ -338,6 +421,36 @@ describe('RegistrationPage', () => {
       await nextTick();
 
       expect(wrapper.text()).not.toContain('Accompanying persons');
+    });
+
+    it('includes accompanying person extras in the summary total', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = {
+        ...makeRegistration('onsite__regular'),
+        extra_data: {
+          _internal: { share_email_with_sponsors: false, allow_photo_sharing: true },
+          accompanying_persons: [
+            {
+              name: 'Guest User',
+              dietary: 'none',
+              selected_social_events: [1],
+            },
+          ],
+        },
+      };
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeSocialSession()];
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('Accompanying persons');
+      expect(wrapper.text()).toContain('€ 50');
+      expect(wrapper.text()).toContain('€ 250');
     });
   });
 
