@@ -6,12 +6,17 @@ from rest_framework.decorators import action
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.viewsets import GenericViewSet
 
 from evan.models import Abstract, Event, File, User
 
 from ..permissions import EventAttendeePermission, EventPermission
 from ..serializers import AttendeeSerializer, EventSerializer, PublicAbstractSerializer
+
+
+class EventContactThrottle(UserRateThrottle):
+    scope = "event_contact"
 
 
 class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
@@ -48,6 +53,7 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         detail=True,
         methods=["post"],
         permission_classes=(EventAttendeePermission,),
+        throttle_classes=(EventContactThrottle,),
     )
     @method_decorator(never_cache)
     def contact(self, request, *args, **kwargs):

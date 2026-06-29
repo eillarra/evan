@@ -3,7 +3,9 @@
 from http import HTTPStatus as status
 
 import pytest
+from django.core.cache.backends.locmem import LocMemCache
 
+from evan.api.views.events import EventContactThrottle
 from tests._factories import RegistrationFactory, UserFactory
 
 
@@ -133,6 +135,29 @@ class TestForAttendee(TestForAuthenticated):
 
         assert response.status_code == status.FORBIDDEN
         assert "cannot be contacted" in response.json()["detail"]
+
+    def test_contact_attendee_is_throttled(self, api_client, t_event, monkeypatch):
+        """Test event contact endpoint is rate limited for attendees."""
+        target_user = UserFactory()
+        RegistrationFactory(event=t_event, user=target_user, fee_type="regular")
+
+        monkeypatch.setattr("evan.tasks.emails.send_template_email", lambda *args, **kwargs: None)
+        monkeypatch.setattr(EventContactThrottle, "THROTTLE_RATES", {"event_contact": "2/min"})
+
+        throttle_cache = LocMemCache("event-contact-throttle", {})
+        monkeypatch.setattr(EventContactThrottle, "cache", throttle_cache)
+        throttle_cache.clear()
+
+        url = t_event.get_api_url() + "contact/"
+        data = {"user_id": target_user.id, "message": "Hello, fellow attendee!"}
+
+        first_response = api_client.post(url, data)
+        second_response = api_client.post(url, data)
+        third_response = api_client.post(url, data)
+
+        assert first_response.status_code == status.OK
+        assert second_response.status_code == status.OK
+        assert third_response.status_code == status.TOO_MANY_REQUESTS
 
 
 class TestForEventManager(TestForAttendee):
