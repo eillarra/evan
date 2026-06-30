@@ -16,18 +16,6 @@
       </q-icon>
     </h3>
     <div class="col"></div>
-    <div v-if="evanEvent?.registration_preview_url" class="col-auto">
-      <q-btn
-        :href="evanEvent.registration_preview_url"
-        target="_blank"
-        label="Preview form"
-        :icon="iconEye"
-        unelevated
-        dense
-        color="blue-1"
-        class="text-ugent"
-      />
-    </div>
     <q-select
       v-show="feeOptions.length > 1"
       v-model="selectedFee"
@@ -75,14 +63,17 @@
       </template>
     </q-select>
   </div>
-  <registrations-table :registrations="filteredRegistrations" />
+  <registrations-table
+    :registrations="filteredRegistrations"
+    :preview-form-url="evanEvent?.registration_preview_url || null"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
-import { iconDownloadExcel, iconEye } from '@/icons';
+import { iconDownloadExcel } from '@/icons';
 import { useStore } from '../../store';
 
 import RegistrationsTable from './RegistrationsTable.vue';

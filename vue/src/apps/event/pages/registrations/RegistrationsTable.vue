@@ -5,7 +5,21 @@
     :query-columns="queryColumns"
     :hidden-columns="hiddenColumns"
     sort-by="-date"
-  />
+  >
+    <template #selected-action>
+      <div v-if="previewFormUrl" class="col-6 col-md-auto ugent__create-btn">
+        <q-btn
+          :href="previewFormUrl"
+          target="_blank"
+          label="Preview form"
+          :icon="iconEye"
+          unelevated
+          color="blue-1"
+          class="text-ugent full-width"
+        />
+      </div>
+    </template>
+  </data-table>
 </template>
 
 <script setup lang="ts">
@@ -14,6 +28,7 @@ import { useI18n } from 'vue-i18n';
 
 import { formatCurrency } from '@/utils/numbers';
 import { formatDate } from '@/utils/dates';
+import { iconEye } from '@/icons';
 
 import DataTable from '@/components/tables/DataTable.vue';
 // import RegistrationDialog from './RegistrationDialog.vue';
@@ -22,6 +37,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   registrations: Registration[];
+  previewFormUrl: string | null;
 }>();
 
 const queryColumns = ['name', 'affiliation', 'uuid', 'email'];
