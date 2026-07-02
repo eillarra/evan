@@ -356,4 +356,8 @@ class InvitationLetter(models.Model):
     notes = models.TextField(default="", blank=True)
 
     def __str__(self) -> str:
-        return f"{self.registration.uuid}"
+        try:
+            return f"{self.registration.uuid}"
+        except type(self).registration.RelatedObjectDoesNotExist:
+            # During admin inline deletion Django may stringify a detached instance.
+            return f"Invitation letter ({self.registration_id or 'unlinked'})"
