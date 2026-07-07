@@ -269,18 +269,6 @@ watch(
   },
 );
 
-watch(
-  () => formData.value.program,
-  (newProgram) => {
-    if (newProgram) {
-      onProgramChanged(newProgram);
-    } else {
-      renderedProgram.value = '';
-    }
-  },
-  { immediate: true },
-);
-
 // Debounced validation
 const debouncedValidation = debounce(async (template: string) => {
   if (template) {
@@ -300,6 +288,18 @@ function onProgramChanged(template: string) {
   debouncedValidation(template);
   debouncedRendering(template);
 }
+
+watch(
+  () => formData.value.program,
+  (newProgram) => {
+    if (newProgram) {
+      onProgramChanged(newProgram);
+    } else {
+      renderedProgram.value = '';
+    }
+  },
+  { immediate: true },
+);
 
 function addSubsession() {
   if (!session.value) return;
