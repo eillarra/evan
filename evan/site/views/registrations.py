@@ -15,7 +15,8 @@ from evan.api.serializers.users import UserSerializer
 from evan.models import Coupon, Event, Registration, RegistrationPaymentAttempt
 from evan.services.mailer.registrations import schedule_registration_email
 from evan.services.payments.ingenico import Ingenico
-from evan.site.views.file_makers.pdf import CertificatePdfMaker, ReceiptPdfMaker
+from evan.site.views.file_makers.pdf import CertificatePdfMaker
+from evan.site.views.file_makers.receipt import ReceiptPdfMaker
 
 from .inertia import InertiaView
 

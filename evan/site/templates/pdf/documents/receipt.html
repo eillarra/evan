@@ -1,0 +1,57 @@
+{% extends "pdf/documents/base_document.html" %}
+
+{% block title %}Receipt - {{ registration.uuid }}{% endblock %}
+
+{% block body_class %}document-receipt{% endblock %}
+
+{% block date %}{{ current_date|date:"F j, Y" }}{% endblock %}
+
+{% block content %}
+  <p class="text-right text-small">
+    {{ registration.user.name }}<br>
+    {% block payment_recipient %}
+      {% if registration.user.affiliation %}
+        {{ registration.user.affiliation }}
+      {% endif %}
+    {% endblock %}
+  </p>
+
+  <h1 class="q-mt-md">{% block document_title %}Receipt{% endblock %}</h1>
+
+  <h3 class="q-mb-lg"><code>ID {{ registration.uuid }}</code></h3>
+
+  <p>
+    On behalf of the {{ registration.event.name }} organizing committee, I would hereby like to confirm that
+    <strong>{{ registration.user.name }}</strong> registered for this event, which will be held from
+    {{ registration.event.start_date|date:"F j" }} to {{ registration.event.end_date|date:"F j, Y" }}
+    in {{ registration.event.city }}, {{ registration.event.country.name }}.
+  </p>
+
+  {% block payment_details %}
+    <p>
+      {{ registration.user.name }} registered for this event on {{ registration.created_at|date:"F j, Y" }}
+      and paid the <code>&nbsp;{{ registration.paid }} EUR&nbsp;</code> event participation fee.
+    </p>
+  {% endblock %}
+
+  <p>Payment was done by credit card. Beneficiary of the payment:</p>
+
+  <blockquote class="q-mt-lg q-mb-lg">
+    Universiteit Gent<br>
+    Sint-Pietersnieuwstraat 25<br>
+    BE-9000 Ghent, Belgium<br>
+    VAT: BE 0248.015.142
+  </blockquote>
+
+  <p>
+    More information about this event can be found on:
+    <a href="{{ registration.event.website }}">{{ registration.event.website }}</a><br>
+    Please do not hesitate to contact us for additional information.
+  </p>
+
+  <p>Sincerely yours,</p>
+
+  <div class="q-mt-lg text-small">
+    {{ signature_html|safe }}
+  </div>
+{% endblock %}

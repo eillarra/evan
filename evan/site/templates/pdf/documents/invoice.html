@@ -1,0 +1,59 @@
+{% extends "pdf/documents/receipt.html" %}
+
+{% block title %}Invoice - {{ registration.uuid }}{% endblock %}
+
+{% block document_title %}Invoice{% endblock %}
+
+{% block payment_recipient %}
+  {% if registration.invoice_address %}
+    {{ registration.invoice_address|linebreaksbr }}
+  {% elif registration.user.affiliation %}
+    {{ registration.user.affiliation }}
+  {% endif %}
+{% endblock %}
+
+{% block payment_details %}
+  <p>
+    {{ registration.user.name }} registered for this event on {{ registration.created_at|date:"F j, Y" }}
+    and paid the event participation fee:
+  </p>
+
+  <table class="table-receipt q-mt-lg q-mb-lg">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th class="text-right">Unit price</th>
+        <th class="text-right">VAT</th>
+        <th class="text-right">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Participation fee</td>
+        <td class="text-right"><code>{{ registration.base_fee }} EUR</code></td>
+        <td class="text-right"><code>0%</code></td>
+        <td class="text-right"><code>{{ registration.base_fee }} EUR</code></td>
+      </tr>
+      {% if registration.extra_fees > 0 %}
+        <tr>
+          <td>Extra fees</td>
+          <td class="text-right"><code>{{ registration.extra_fees }} EUR</code></td>
+          <td class="text-right"><code>0%</code></td>
+          <td class="text-right"><code>{{ registration.extra_fees }} EUR</code></td>
+        </tr>
+      {% endif %}
+      {% if registration.manual_extra_fees > 0 %}
+        <tr>
+          <td>Manual extra fees</td>
+          <td class="text-right"><code>{{ registration.manual_extra_fees }} EUR</code></td>
+          <td class="text-right"><code>0%</code></td>
+          <td class="text-right"><code>{{ registration.manual_extra_fees }} EUR</code></td>
+        </tr>
+      {% endif %}
+      <tr>
+        <td class="text-weight-bold" colspan="3">Total paid</td>
+        <td class="text-right text-weight-bold"><code>{{ registration.paid }} EUR</code></td>
+      </tr>
+    </tbody>
+  </table>
+{% endblock %}

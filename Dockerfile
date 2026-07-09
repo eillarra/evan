@@ -30,9 +30,9 @@ RUN yarn build
 # Stage 3: Production image
 FROM python:3.14-slim AS production
 
-# System dependencies for MySQL and Cairo (svglib/pycairo)
+# System dependencies for MySQL, WeasyPrint and Cairo (svglib/pycairo)
 RUN apt-get update && \
-  apt-get install -y --no-install-recommends default-libmysqlclient-dev libcairo2 && \
+  apt-get install -y --no-install-recommends default-libmysqlclient-dev libcairo2 weasyprint && \
   rm -rf /var/lib/apt/lists/*
 
 # 1. Copy Python libraries from builder

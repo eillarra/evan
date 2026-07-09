@@ -108,6 +108,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     coupon = models.OneToOneField("evan.Coupon", null=True, blank=True, on_delete=models.PROTECT)
     invoice_requested = models.BooleanField(default=False)
     invoice_sent = models.BooleanField(default=False)
+    invoice_address = models.TextField(blank=True, default="")
     paid = models.PositiveSmallIntegerField(default=0, editable=False)
     payid = models.CharField(max_length=64, blank=True, default="")
     paid_via_invoice = models.PositiveSmallIntegerField(default=0)

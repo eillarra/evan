@@ -98,6 +98,13 @@ class RegistrationAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Invoice details (for 'fake' invoice)",
+            {
+                "fields": ("invoice_address",),
+                "description": "Optional block printed directly under the user's name on invoices.",
+            },
+        ),
+        (
             "Extra information",
             {
                 "fields": ("visa_requested", "visa_sent"),
@@ -133,6 +140,8 @@ class RegistrationAdmin(admin.ModelAdmin):
     def get_urls(self):
         my_urls = [
             path("<path:object_id>/letter/", self.pdf_letter_view, name="registration_pdf_letter"),
+            path("<path:object_id>/invoice/", self.pdf_invoice_view, name="registration_pdf_invoice"),
+            path("<path:object_id>/receipt/", self.pdf_receipt_view, name="registration_pdf_receipt"),
         ]
         return my_urls + super().get_urls()
 
@@ -143,6 +152,9 @@ class RegistrationAdmin(admin.ModelAdmin):
         extra_context["payment_delegated_url"] = obj.get_payment_delegated_url() if not obj.is_paid else None
         extra_context["certificate_url"] = obj.get_certificate_url() if obj.event.is_closed and obj.is_paid else None
         extra_context["receipt_url"] = obj.get_receipt_url() if obj.is_paid else None
+        extra_context["invoice_url"] = (
+            reverse("admin:registration_pdf_invoice", args=[object_id]) if obj.is_paid and obj.paid > 0 else None
+        )
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     def pdf_letter_view(self, request, object_id, extra_context=None):
@@ -154,6 +166,48 @@ class RegistrationAdmin(admin.ModelAdmin):
             return None
         maker = InvitationLetterPdfMaker(registration=obj, filename=f"letter--{obj.uuid}.pdf", as_attachment=False)
         return maker.response
+
+    def _invoice_pdf_view(self, request, object_id, extra_context=None, as_invoice: bool = False):
+        """Base view for generating invoice/receipt PDFs for admin.
+
+        :param as_invoice: If True, generates an invoice; otherwise generates a receipt.
+        """
+        from evan.site.views.file_makers.receipt import InvoicePdfMaker, ReceiptPdfMaker
+
+        obj = self.get_object(request, unquote(object_id))
+        if obj is None:
+            self.message_user(request, "The requested registration does not exist.", level="error")
+            return None
+        if not obj.is_paid:
+            self.message_user(
+                request,
+                "Invoice is only available for paid registrations."
+                if as_invoice
+                else "Receipt is only available for paid registrations.",
+                level="error",
+            )
+            return None
+        if obj.paid == 0:
+            self.message_user(
+                request,
+                "Invoice is only available for credit card payments."
+                if as_invoice
+                else "Receipt is only available for credit card payments.",
+                level="error",
+            )
+            return None
+        maker_class = InvoicePdfMaker if as_invoice else ReceiptPdfMaker
+        filename = f"invoice--{obj.uuid}.pdf" if as_invoice else f"receipt--{obj.uuid}.pdf"
+        maker = maker_class(registration=obj, filename=filename, as_attachment=False)
+        return maker.response
+
+    def pdf_invoice_view(self, request, object_id, extra_context=None):
+        """Generate an invoice PDF for admin."""
+        return self._invoice_pdf_view(request, object_id, extra_context, as_invoice=True)
+
+    def pdf_receipt_view(self, request, object_id, extra_context=None):
+        """Generate a receipt PDF for admin."""
+        return self._invoice_pdf_view(request, object_id, extra_context, as_invoice=False)
 
     def name(self, obj):
         affiliation = obj.user.affiliation if obj.user.affiliation else "-"

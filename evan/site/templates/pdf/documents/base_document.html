@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Document{% endblock %}</title>
+  </head>
+  <body class="{% block body_class %}{% endblock %}">
+    {% if logo_path %}
+      <img src="file://{{ logo_path }}" alt="UGent" class="header-logo">
+    {% endif %}
+
+    <div class="header-date">
+      {% block date %}{% endblock %}
+    </div>
+
+    <div class="footer-content">
+      <strong>evan.ugent.be</strong> - {% now "DATETIME_FORMAT" %}
+    </div>
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

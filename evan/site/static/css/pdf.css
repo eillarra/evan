@@ -1,0 +1,332 @@
+/* PDF styles for WeasyPrint-generated documents */
+
+/* UGent Panno Fonts - paths will be resolved by WeasyPrint base */
+@font-face {
+  font-family: 'UGent Panno Text';
+  src: url('../fonts/ugentpannotext-normal-web.ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'UGent Panno Text';
+  src: url('../fonts/ugentpannotext-medium-web.ttf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'UGent Panno Text';
+  src: url('../fonts/ugentpannotext-semibold-web.ttf');
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'UGent Panno Text';
+  src: url('../fonts/ugentpannotext-semilight-web.ttf');
+  font-weight: 200;
+  font-style: normal;
+}
+
+/* ========================================
+   CSS CUSTOM PROPERTIES
+   ======================================== */
+
+:root {
+  /* Brand colors */
+  --color-ugent-blue: #1e64c8;
+  --color-ugent-yellow: #ffd200;
+  --color-text-default: #333;
+  --color-text-grey: #666;
+  --color-light: #f8f9fa;
+  --color-border: rgba(0, 0, 0, 0.12);
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  /* Font sizes */
+  --font-size-base: 15px;
+  --font-size-small: 14px;
+  --font-size-caption: 10px;
+}
+
+/* ========================================
+   PAGE SETUP
+   ======================================== */
+
+@page {
+  size: A4 portrait;
+  margin: 3.5cm 2cm 2.5cm 2cm; /* top, right, bottom, left */
+
+  @bottom-right {
+    content: 'Page ' counter(page) ' of ' counter(pages);
+    font-family: 'UGent Panno Text', sans-serif;
+    font-size: var(--font-size-caption);
+    color: var(--color-text-grey);
+  }
+
+  @bottom-left {
+    content: element(footer-content);
+    line-height: 1.3;
+  }
+}
+
+/* ========================================
+   RESET & BASE STYLES
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'UGent Panno Text', sans-serif;
+  font-weight: 200;
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  color: var(--color-text-default);
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code {
+  font-size: 0.7rem;
+}
+
+/* ========================================
+   HEADER & FOOTER (Fixed positioning)
+   ======================================== */
+
+/* Running header - positioned in top margin area */
+.header-logo {
+  position: fixed;
+  top: -2.5cm;
+  left: 0;
+  height: 2cm;
+  width: auto;
+}
+
+.header-date {
+  position: fixed;
+  top: -1.5cm;
+  right: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-grey);
+  text-align: right;
+}
+
+/* Running footer - positioned in bottom margin area */
+.footer-content {
+  position: fixed;
+  bottom: -1.5cm;
+  left: 0;
+  width: 65%;
+  font-size: var(--font-size-caption);
+  color: var(--color-text-grey);
+  line-height: 1.3;
+}
+
+/* ========================================
+   TYPOGRAPHY
+   ======================================== */
+
+b,
+strong {
+  font-family: 'UGent Panno Text', sans-serif;
+  font-weight: bold;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: var(--spacing-lg);
+  color: var(--color-text-default);
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.25;
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.25;
+  margin-top: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+p {
+  margin: var(--spacing-sm) 0;
+  -pdf-keep-with-next: false;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Text alignment */
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Font sizes */
+.text-small {
+  font-size: var(--font-size-small);
+}
+
+p.text-small {
+  line-height: 1.3;
+}
+
+.text-caption {
+  font-size: var(--font-size-caption);
+}
+
+/* Colors */
+.text-ugent {
+  color: var(--color-ugent-blue);
+}
+
+.text-primary {
+  color: var(--color-ugent-blue);
+}
+
+.text-weight-bold {
+  font-weight: bold;
+}
+
+/* Spacing utilities (Quasar-like) */
+.q-mt-lg {
+  margin-top: var(--spacing-lg);
+}
+
+.q-mb-lg {
+  margin-bottom: var(--spacing-lg);
+}
+
+.q-mt-md {
+  margin-top: var(--spacing-md);
+}
+
+.q-mb-md {
+  margin-bottom: var(--spacing-md);
+}
+
+.q-mt-sm {
+  margin-top: var(--spacing-sm);
+}
+
+.q-mb-sm {
+  margin-bottom: var(--spacing-sm);
+}
+
+.q-px-lg {
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+}
+
+/* Document-specific styles */
+.document-receipt h1,
+.document-invoice h1 {
+  padding-right: 3cm;
+}
+
+/* ========================================
+   TABLES
+   ======================================== */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0;
+  font-size: var(--font-size-base);
+}
+
+th,
+td {
+  padding: var(--spacing-sm);
+  text-align: left;
+}
+
+/* Receipt/Invoice item tables */
+.table-receipt {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.table-receipt thead {
+  background-color: var(--color-light);
+  border-bottom: 1px solid var(--color-text-grey);
+}
+
+.table-receipt th {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text-default);
+  border-right: 1px solid var(--color-border);
+}
+
+.table-receipt th:last-child {
+  border-right: none;
+  text-align: right;
+}
+
+.table-receipt tbody tr {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table-receipt tbody tr:last-child {
+  border-bottom: 1px solid var(--color-text-default);
+}
+
+.table-receipt tbody tr:last-child td {
+  font-weight: bold;
+}
+
+.table-receipt td {
+  padding: var(--spacing-xs) var(--spacing-md);
+  vertical-align: top;
+  border-right: 1px solid var(--color-border);
+}
+
+.table-receipt td:last-child {
+  border-right: none;
+  text-align: right;
+}
+
+.table-receipt .text-right {
+  text-align: right;
+}
+
+/* Blockquotes */
+blockquote {
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-md);
+  border-left: 1px solid var(--color-border);
+  font-style: italic;
+}
