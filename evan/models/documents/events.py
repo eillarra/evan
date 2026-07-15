@@ -36,6 +36,7 @@ class EventRegistrationConfig(BaseModel):
 
     fee_selection: FeeSelectionConfig = None
     form_fields: list[ExtraDataField] = Field(default_factory=list)
+    accompanying_persons: bool = Field(default=True, description="Whether the event accepts accompanying persons")
 
 
 class EventExtraData(BaseModel):

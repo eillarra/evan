@@ -111,7 +111,11 @@
           </q-list>
         </template>
 
-        <template v-if="socialEvents.length > 0 && !isOnlineAttendee">
+        <template
+          v-if="
+            socialEvents.length > 0 && !isOnlineAttendee && evanEvent.registration_configuration.accompanying_persons
+          "
+        >
           <evan-section-title>Accompanying persons</evan-section-title>
           <accompanying-persons v-model="accompaningPersons" :social-events="socialEvents" />
         </template>

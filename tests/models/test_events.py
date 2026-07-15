@@ -190,3 +190,23 @@ def test_event_registration_configuration_supports_form_fields(t_event):
     config = t_event.registration_configuration
     assert "form_fields" in config
     assert config["form_fields"][0]["code"] == "paper_id"
+
+
+@pytest.mark.django_db
+def test_event_registration_configuration_accompanying_persons_defaults_true(t_event):
+    """Accompanying persons section is enabled by default for backward compatibility."""
+    t_event.registration_config = {}
+    t_event.save()
+    t_event.refresh_from_db()
+
+    assert t_event.registration_configuration["accompanying_persons"] is True
+
+
+@pytest.mark.django_db
+def test_event_registration_configuration_can_disable_accompanying_persons(t_event):
+    """Organisers can disable the accompanying persons section on the registration form."""
+    t_event.registration_config = {"accompanying_persons": False}
+    t_event.save()
+    t_event.refresh_from_db()
+
+    assert t_event.registration_configuration["accompanying_persons"] is False

@@ -19,6 +19,7 @@ interface FeeSelectionConfig {
 }
 
 interface EvanEventRegistrationConfig {
+  accompanying_persons: boolean;
   fee_selection: FeeSelectionConfig | null;
-  form_fields?: ExtraDataField[];
+  form_fields: ExtraDataField[];
 }

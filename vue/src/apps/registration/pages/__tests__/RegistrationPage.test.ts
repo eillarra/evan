@@ -65,7 +65,7 @@ const makeEvent = (...fees: Fee[]) =>
     code: 'TEST26',
     is_virtual: false,
     fees,
-    registration_configuration: { fee_selection: null, form_fields: [] },
+    registration_configuration: { fee_selection: null, form_fields: [], accompanying_persons: true },
     registration_early_deadline: '',
   }) as any;
 
@@ -247,6 +247,7 @@ describe('RegistrationPage', () => {
               required: true,
             },
           ],
+          accompanying_persons: true,
         },
       } as any;
       store.loading = false;
@@ -276,6 +277,7 @@ describe('RegistrationPage', () => {
               required: true,
             },
           ],
+          accompanying_persons: true,
         },
       } as any;
       store.loading = false;
