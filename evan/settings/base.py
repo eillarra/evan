@@ -87,7 +87,6 @@ WSGI_APPLICATION = "evan.wsgi.application"
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
 db = urlparse(os.environ.get("DATABASE_URL"))
-legacy_db = urlparse(os.environ.get("LEGACY_DATABASE_URL"))
 
 DATABASES = {
     "default": {
@@ -101,17 +100,6 @@ DATABASES = {
         "OPTIONS": {
             "ssl_mode": "REQUIRED",
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-    },
-    "legacy": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": legacy_db.path[1:],
-        "USER": legacy_db.username,
-        "PASSWORD": legacy_db.password,
-        "HOST": legacy_db.hostname,
-        "PORT": legacy_db.port,
-        "OPTIONS": {
-            "ssl_mode": "REQUIRED",
         },
     },
 }
