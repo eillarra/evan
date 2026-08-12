@@ -31,7 +31,11 @@ CACHE_MIDDLEWARE_SECONDS = 20
 
 # https://docs.djangoproject.com/en/dev/topics/email/
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.console.EmailBackend",
+    },
+}
 
 
 # https://github.com/MrBin99/django-vite

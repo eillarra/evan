@@ -92,8 +92,15 @@ DEFAULT_FROM_EMAIL = "Evan <evan@ugent.be>"
 SERVER_EMAIL = "evan@ugent.be"
 EMAIL_SUBJECT_PREFIX = "[Evan] "
 
-EMAIL_HOST = "smtprelay.ugent.be"
-EMAIL_PORT = 25
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": "smtprelay.ugent.be",
+            "port": 25,
+        },
+    },
+}
 
 
 # https://docs.djangoproject.com/en/dev/topics/logging/#django-security
