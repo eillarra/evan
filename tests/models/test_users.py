@@ -1,6 +1,6 @@
 import pytest
 
-from evan.models.users import _username_with_suffix
+from evan.models.users import _strip_emoji, _username_with_suffix
 from tests._factories import AffiliationDomainFactory, UserFactory
 
 
@@ -74,3 +74,46 @@ def test_save_update_preserves_username(db):
     user.refresh_from_db()
     assert user.username == "original"
     assert user.first_name == "Changed"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("Claassen 🟥", "Claassen"),  # EVAN-BACKEND-4V: LinkedIn emoji in last_name
+        ("Jane 🎉 Doe", "Jane Doe"),
+        ("Hello 😀 World 🌍", "Hello World"),
+        ("Plain ASCII", "Plain ASCII"),
+        ("Café Müller", "Café Müller"),  # accented Latin stays (BMP)
+        ("北京", "北京"),  # CJK stays (BMP)
+        ("", ""),
+        (None, ""),
+        ("🟥", ""),  # only emoji
+        ("Trailing space ", "Trailing space"),  # strip() removes whitespace
+    ],
+)
+def test_strip_emoji(value, expected):
+    """Supplementary-plane code points are removed; BMP characters are preserved."""
+    assert _strip_emoji(value) == expected
+
+
+def test_save_strips_emoji_from_name_fields(db):
+    """Saving a user with emoji in first/last name stores the sanitized values.
+
+    Regression test for EVAN-BACKEND-4V: LinkedIn callback received ``last_name``
+    containing U+1F7E5 (🟥) and the non-utf8mb4 column raised OperationalError 1366.
+    """
+    user = UserFactory(first_name="Jane 🎉", last_name="Claassen 🟥")
+
+    user.refresh_from_db()
+    assert user.first_name == "Jane"
+    assert user.last_name == "Claassen"
+
+
+def test_save_strips_emoji_on_update(db):
+    """Updating an existing user's name also strips emoji."""
+    user = UserFactory(first_name="Plain", last_name="Name")
+    user.last_name = "Updated 🟥"
+    user.save()
+
+    user.refresh_from_db()
+    assert user.last_name == "Updated"

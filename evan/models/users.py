@@ -1,3 +1,4 @@
+import re
 from typing import TYPE_CHECKING
 
 from allauth.account.models import EmailAddress
@@ -35,6 +36,23 @@ def _username_with_suffix(base: str, suffix: int) -> str:
     return f"{base[: len(base) - overflow]}{suffix}"
 
 
+def _strip_emoji(value: str | None) -> str:
+    """Remove supplementary-plane code points (4-byte UTF-8, e.g. emoji) from a string.
+
+    LinkedIn profile names occasionally contain emoji such as U+1F7E5 (🟥), which
+    caused MySQL OperationalError 1366 on a non-utf8mb4 column. Stripping code
+    points at or above U+10000 preserves all BMP characters (Latin, accented,
+    CJK) while removing pictographic emoji and trailing whitespace left behind.
+
+    :param value: The string to sanitize, or ``None``.
+    :returns: The sanitized string, or empty string if ``value`` was falsy.
+    """
+    if not value:
+        return ""
+    stripped = "".join(ch for ch in value if ord(ch) < 0x10000)
+    return re.sub(r"\s+", " ", stripped).strip()
+
+
 class AffiliationDomain(models.Model):
     """Reference model that links email domains to affiliations."""
 
@@ -68,6 +86,12 @@ class User(AbstractUser):
         # Normalize explicit null values to empty string to avoid DB-level 500s.
         if self.country is None:
             self.country = ""
+
+        # Social providers (LinkedIn) may supply names containing emoji that the
+        # users table cannot store on a non-utf8mb4 column. Strip them defensively
+        # so sign-up never 500s on the user-facing OAuth callback.
+        self.first_name = _strip_emoji(self.first_name)
+        self.last_name = _strip_emoji(self.last_name)
 
         # allauth validates username uniqueness in the signup form, but a
         # concurrent signup can insert the same username between validation
