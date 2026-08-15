@@ -246,8 +246,8 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def is_open_for_abstract_submission(self) -> bool:
         try:
             now = timezone.now()
-            start_date = datetime.strptime(self.custom_data["abstracts"]["submission_start_date"], "%Y-%m-%d")
-            deadline = datetime.strptime(self.custom_data["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
+            start_date = datetime.strptime(self.custom_fields["abstracts"]["submission_start_date"], "%Y-%m-%d")
+            deadline = datetime.strptime(self.custom_fields["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
             return start_date.replace(tzinfo=UTC).date() <= now.date() and now <= deadline.replace(tzinfo=UTC)
         except Exception:
             return False
@@ -255,7 +255,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @cached_property
     def abstract_reviewers(self) -> QuerySet[User]:
         try:
-            reviewer_ids = [r["id"] for r in self.custom_data["abstracts"]["reviewers"]]
+            reviewer_ids = [r["id"] for r in self.custom_fields["abstracts"]["reviewers"]]
             return User.objects.filter(id__in=reviewer_ids)
         except Exception:
             return User.objects.none()

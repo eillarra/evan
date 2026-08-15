@@ -210,3 +210,278 @@ def test_event_registration_configuration_can_disable_accompanying_persons(t_eve
     t_event.refresh_from_db()
 
     assert t_event.registration_configuration["accompanying_persons"] is False
+
+
+# ---------------------------------------------------------------------------
+# Payment configuration (allows_payments, allows_invoices, ingenico)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventAllowsPayments:
+    """allows_payments reflects the presence of an Ingenico salt and an optional activation date."""
+
+    def test_false_without_ingenico_salt(self, t_event) -> None:
+        # A ugent payment block requires ingenico_salt at config-validation
+        # time, so the only way to reach allows_payments without a salt is to
+        # have no payment block at all — which the pydantic validator keeps
+        # as a plain dict and ingenico returns {} for.
+        t_event.config = {"payments": {"type": "stripe", "wbs_element": "WBS", "stripe_secret": "sk_test"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_payments is False
+
+    def test_true_with_salt_and_no_activation_date(self, t_event) -> None:
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_payments is True
+
+    def test_false_when_activation_date_in_future(self, t_event) -> None:
+        t_event.config = {
+            "payments": {
+                "type": "ugent",
+                "wbs_element": "WBS",
+                "ingenico_salt": "s4lt",
+                "activation_date": "2099-01-01",
+            },
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-08-15 12:00")):
+            assert t_event.allows_payments is False
+
+    def test_true_when_activation_date_in_past(self, t_event) -> None:
+        t_event.config = {
+            "payments": {
+                "type": "ugent",
+                "wbs_element": "WBS",
+                "ingenico_salt": "s4lt",
+                "activation_date": "2026-01-01",
+            },
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-08-15 12:00")):
+            assert t_event.allows_payments is True
+
+    def test_false_when_no_payment_config(self, t_event) -> None:
+        t_event.config = {}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_payments is False
+
+
+@pytest.mark.django_db
+class TestEventAllowsInvoices:
+    """allows_invoices mirrors the allow_invoices flag in the Ingenico payment config."""
+
+    def test_true_when_allow_invoices_set(self, t_event) -> None:
+        t_event.config = {
+            "payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt", "allow_invoices": True}
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_invoices is True
+
+    def test_false_when_allow_invoices_absent(self, t_event) -> None:
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_invoices is True  # defaults to True in UgentPaymentsConfig
+
+    def test_false_when_allow_invoices_false(self, t_event) -> None:
+        t_event.config = {
+            "payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt", "allow_invoices": False}
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_invoices is False
+
+    def test_false_when_no_payment_config(self, t_event) -> None:
+        t_event.config = {}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.allows_invoices is False
+
+
+@pytest.mark.django_db
+class TestEventIngenicoProperty:
+    """ingenico returns the payment config dict for ugent type, empty dict otherwise."""
+
+    def test_ugent_type_returns_payments_dict(self, t_event) -> None:
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.ingenico["type"] == "ugent"
+        assert t_event.ingenico["ingenico_salt"] == "s4lt"
+
+    def test_no_payments_returns_empty_dict(self, t_event) -> None:
+        t_event.config = {}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.ingenico == {}
+
+
+# ---------------------------------------------------------------------------
+# Contact email, social event bundle, active/closed state
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventContactEmail:
+    """contact_email falls back to the default address when the event has none."""
+
+    def test_returns_event_email_when_set(self, t_event) -> None:
+        t_event.email = "organiser@example.com"
+        t_event.save()
+
+        assert t_event.contact_email == "organiser@example.com"
+
+    def test_falls_back_to_default_when_empty(self, t_event) -> None:
+        t_event.email = ""
+        t_event.save()
+
+        assert t_event.contact_email == "evan@ugent.be"
+
+
+@pytest.mark.django_db
+class TestEventSocialEventBundle:
+    """has_social_event_bundle is True only when a bundle fee is configured."""
+
+    def test_true_when_fee_positive(self, t_event) -> None:
+        t_event.social_event_bundle_fee = 25
+        t_event.save()
+
+        assert t_event.has_social_event_bundle is True
+
+    def test_false_when_fee_zero(self, t_event) -> None:
+        t_event.social_event_bundle_fee = 0
+        t_event.save()
+
+        assert t_event.has_social_event_bundle is False
+
+
+@pytest.mark.django_db
+class TestEventActiveClosedState:
+    """is_active and is_closed depend on the current date relative to the event window."""
+
+    def test_is_active_during_event_window(self, t_event) -> None:
+        t_event.start_date = convdate("2026-09-01")
+        t_event.end_date = convdate("2026-09-05")
+        t_event.save()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-09-03 12:00")):
+            assert t_event.is_active is True
+            assert t_event.is_closed is False
+
+    def test_not_active_before_event_starts(self, t_event) -> None:
+        t_event.start_date = convdate("2026-09-01")
+        t_event.end_date = convdate("2026-09-05")
+        t_event.save()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-08-15 12:00")):
+            assert t_event.is_active is False
+            assert t_event.is_closed is False
+
+    def test_is_closed_after_event_ends(self, t_event) -> None:
+        t_event.start_date = convdate("2026-09-01")
+        t_event.end_date = convdate("2026-09-05")
+        t_event.save()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-09-10 12:00")):
+            assert t_event.is_active is False
+            assert t_event.is_closed is True
+
+
+# ---------------------------------------------------------------------------
+# Abstract submission window (is_open_for_abstract_submission)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventAbstractSubmissionWindow:
+    """is_open_for_abstract_submission reads the abstracts config from custom_fields."""
+
+    def test_open_during_configured_window(self, t_event) -> None:
+        t_event.custom_fields = {
+            "abstracts": {"submission_start_date": "2026-01-01", "submission_deadline": "2026-12-31T23:59"}
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-08-15 12:00")):
+            assert t_event.is_open_for_abstract_submission is True
+
+    def test_closed_before_start_date(self, t_event) -> None:
+        t_event.custom_fields = {
+            "abstracts": {"submission_start_date": "2026-12-01", "submission_deadline": "2026-12-31T23:59"}
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-08-15 12:00")):
+            assert t_event.is_open_for_abstract_submission is False
+
+    def test_closed_after_deadline(self, t_event) -> None:
+        t_event.custom_fields = {
+            "abstracts": {"submission_start_date": "2026-01-01", "submission_deadline": "2026-01-31T23:59"}
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        with patch("django.utils.timezone.now", return_value=convtime("2026-08-15 12:00")):
+            assert t_event.is_open_for_abstract_submission is False
+
+    def test_false_when_no_abstracts_config(self, t_event) -> None:
+        t_event.custom_fields = {}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.is_open_for_abstract_submission is False
+
+    def test_false_when_malformed_config(self, t_event) -> None:
+        t_event.custom_fields = {"abstracts": {"submission_start_date": "not-a-date"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.is_open_for_abstract_submission is False
+
+
+# ---------------------------------------------------------------------------
+# Email template lookup (get_email_template)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventGetEmailTemplate:
+    """get_email_template returns the event-specific template, then the global fallback, then None."""
+
+    def test_event_specific_template_returned_first(self, t_event) -> None:
+        from tests._factories import EmailTemplateFactory
+
+        event_tpl = EmailTemplateFactory(code="registration.created", event=t_event)
+        EmailTemplateFactory(code="registration.created", event=None)
+
+        assert t_event.get_email_template(code="registration.created") == event_tpl
+
+    def test_global_fallback_returned_when_no_event_template(self, t_event) -> None:
+        from tests._factories import EmailTemplateFactory
+
+        global_tpl = EmailTemplateFactory(code="registration.created", event=None)
+
+        assert t_event.get_email_template(code="registration.created") == global_tpl
+
+    def test_none_when_no_template_exists(self, t_event) -> None:
+        assert t_event.get_email_template(code="nonexistent.code") is None
