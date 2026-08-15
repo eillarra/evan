@@ -254,3 +254,65 @@ class TestPaymentResultViewHashRotation:
 
         payment_registration.refresh_from_db()
         assert payment_registration.unique_hash == original_hash
+
+
+@pytest.mark.django_db
+class TestPaymentCallbackHandlesAbort:
+    """Server-to-server callbacks must resolve cancel/decline, not just success.
+
+    Background: Ingenico sends async server-to-server feedback for every status
+    transition. When a user aborts in the browser (closes the tab, navigates
+    away) instead of reaching the result redirect, the server callback is the
+    only signal we receive. If we ignore it, the payment attempt stays PENDING
+    with an ORDERID Ingenico has already registered, and the next retry reuses
+    that same ORDERID and is rejected — the user stays blocked until an admin
+    manually regenerates the payment hash.
+    """
+
+    def _callback_url(self, registration):
+        return reverse("registration:payment_callback", args=[registration.uuid])
+
+    def _abort_callback_qs(self, attempt: RegistrationPaymentAttempt, *, status: str) -> QueryDict:
+        return QueryDict(f"STATUS={status}&ORDERID={attempt.order_id}&PAYID=&AMOUNT={attempt.expected_amount}")
+
+    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    def test_cancel_callback_finalizes_attempt_and_rotates_hash(self, _mock, client, payment_registration) -> None:
+        """A STATUS=1 (cancel) server callback must mark the attempt cancelled and rotate the hash."""
+        attempt = create_pending_attempt(payment_registration)
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._callback_url(payment_registration), self._abort_callback_qs(attempt, status="1"))
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.CANCELLED
+        assert payment_registration.unique_hash != original_hash
+
+    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    def test_decline_callback_finalizes_attempt_and_rotates_hash(self, _mock, client, payment_registration) -> None:
+        """A STATUS=2 (decline) server callback must mark the attempt failed and rotate the hash."""
+        attempt = create_pending_attempt(payment_registration)
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._callback_url(payment_registration), self._abort_callback_qs(attempt, status="2"))
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.FAILED
+        assert payment_registration.unique_hash != original_hash
+
+    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    def test_abort_then_retry_uses_fresh_order_id(self, _mock, client, payment_registration) -> None:
+        """After an aborted payment is resolved via server callback, retrying must produce a new ORDERID.
+
+        This is the user-facing outcome: the block is lifted without admin intervention.
+        """
+        attempt = create_pending_attempt(payment_registration)
+        stuck_order_id = attempt.order_id
+
+        client.get(self._callback_url(payment_registration), self._abort_callback_qs(attempt, status="1"))
+
+        payment_registration.refresh_from_db()
+        fresh_order_id = payment_registration.get_current_payment_order_id()
+        assert fresh_order_id is not None
+        assert fresh_order_id != stuck_order_id

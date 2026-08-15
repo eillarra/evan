@@ -283,6 +283,15 @@ def _finalize_payment_attempt(registration: Registration, qs: QueryDict, *, stat
         attempt.save(update_fields=["status", "payid", "callback_data", "resolved_at"])
 
 
+def _rotate_payment_hash(registration: Registration) -> None:
+    """Rotate the registration's unique_hash so the next attempt gets a fresh ORDERID.
+
+    :param registration: The registration whose payment hash should rotate.
+    """
+    registration.unique_hash = registration.generate_unique_hash()
+    registration.save(update_fields=["unique_hash"])
+
+
 class RegistrationPaymentResultBaseView(TemplateView):
     """
     Perform actions depending on the result of the payment process.
@@ -343,10 +352,27 @@ class RegistrationPaymentCallbackView(View):
     """
 
     def get(self, request, *args, **kwargs):
-        """Process the Ingenico server-to-server notification."""
+        """Process the Ingenico server-to-server notification.
+
+        Ingenico calls this endpoint for every status transition, not just
+        success. Ignoring cancel/decline notifications leaves the matching
+        payment attempt PENDING with an ORDERID Ingenico has already
+        registered, which blocks retries until an admin regenerates the hash.
+        """
         registration = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
-        if request.GET.get("STATUS") in Ingenico.SUCCESS_STATUSES:
+        status = request.GET.get("STATUS")
+
+        if status in Ingenico.SUCCESS_STATUSES:
             _credit_ingenico_payment(registration, request.GET)
+        elif status in Ingenico.DECLINE_STATUSES:
+            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.FAILED)
+            _rotate_payment_hash(registration)
+        elif status in Ingenico.CANCEL_STATUSES:
+            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.CANCELLED)
+            _rotate_payment_hash(registration)
+        # Exception and invalid statuses: no action here. The result view's
+        # browser-side redirect handles exception messaging; invalid statuses
+        # carry no useful signal.
         return HttpResponse(status=200)
 
 
