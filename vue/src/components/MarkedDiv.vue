@@ -36,8 +36,5 @@ const props = defineProps<{
   text: string;
 }>();
 
-const html = computed<string>(() => {
-  var text = props.text.replace(/DISCOVER-US/g, '<span class="text-no-wrap">DISCOVER-US</span>');
-  return render(text);
-});
+const html = computed<string>(() => render(props.text));
 </script>
