@@ -2,8 +2,13 @@ import os
 
 import boto3
 import requests
+from botocore.config import Config
 from django.conf import settings
 from storages.backends.s3 import S3Storage as BaseS3Storage
+
+
+# UGent S3 rejects the checksum trailers boto3/botocore send by default since 1.36 (XAmzContentSHA256Mismatch).
+S3_CLIENT_CONFIG = Config(request_checksum_calculation="when_required", response_checksum_validation="when_required")
 
 
 class S3Storage(BaseS3Storage):
@@ -42,6 +47,7 @@ def get_s3_client():
         endpoint_url=os.environ.get("S3_ENDPOINT_URL"),
         aws_access_key_id=os.environ.get("S3_ACCESS_KEY"),
         aws_secret_access_key=os.environ.get("S3_SECRET_KEY"),
+        config=S3_CLIENT_CONFIG,
     )
 
 

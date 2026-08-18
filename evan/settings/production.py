@@ -6,6 +6,8 @@ from django.core.exceptions import DisallowedHost
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
+from evan.services.s3 import S3_CLIENT_CONFIG
+
 from .base import *  # noqa
 
 
@@ -30,6 +32,7 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("S3_SECRET_KEY")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("S3_BUCKET_NAME")
 AWS_QUERYSTRING_AUTH = False
 AWS_IS_GZIPPED = True
+AWS_S3_CLIENT_CONFIG = S3_CLIENT_CONFIG
 
 STORAGES = {
     "default": {

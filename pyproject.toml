@@ -36,9 +36,6 @@ dependencies = [
   "weasyprint",
   "whitenoise",
   "xlsxwriter",
-  # this seems to be the latest valid version for UGent S3
-  "boto3~=1.35.0",
-  "botocore~=1.35.0",
   # only for badges
   "reportlab",
   "setuptools>=80.10.2",
