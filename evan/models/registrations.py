@@ -213,9 +213,9 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         if not self.pk or self.remaining_fee <= 0:
             return None
 
-        from evan.services.payments.ingenico import Ingenico
+        from evan.services.payments.ugent_bridge import UGentBridge
 
-        return Ingenico.generate_order_id(self.pk, self.remaining_fee, self.unique_hash)
+        return UGentBridge.generate_order_id(self.pk, self.remaining_fee, self.unique_hash)
 
     def _obsolete_stale_payment_attempts(self, *, current_order_id: str | None) -> None:
         """Mark older pending payment attempts as obsolete.

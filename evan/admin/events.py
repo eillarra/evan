@@ -47,9 +47,7 @@ class EventAdminForm(forms.ModelForm):
         label="Payment provider",
     )
     payments_wbs_element = forms.CharField(required=False, label="WBS element")
-    payments_ingenico_salt = forms.CharField(
-        required=False, label="Ingenico salt", widget=forms.PasswordInput(render_value=True)
-    )
+    payments_salt = forms.CharField(required=False, label="Salt IN/OUT", widget=forms.PasswordInput(render_value=True))
     payments_activation_date = forms.DateField(
         required=False, label="Activation date", widget=forms.DateInput(attrs={"type": "date"})
     )
@@ -101,7 +99,7 @@ class EventAdminForm(forms.ModelForm):
             payments = config.get("payments") or {}
             self.fields["payments_type"].initial = payments.get("type", "")
             self.fields["payments_wbs_element"].initial = payments.get("wbs_element", "")
-            self.fields["payments_ingenico_salt"].initial = payments.get("ingenico_salt", "")
+            self.fields["payments_salt"].initial = payments.get("salt", "")
             self.fields["payments_activation_date"].initial = payments.get("activation_date")
             self.fields["payments_test_mode"].initial = payments.get("test_mode", False)
             self.fields["payments_allow_invoices"].initial = payments.get("allow_invoices", True)
@@ -131,7 +129,7 @@ class EventAdminForm(forms.ModelForm):
             payments: dict = {"type": payments_type}
             if payments_type == "ugent":
                 payments["wbs_element"] = self.cleaned_data.get("payments_wbs_element", "")
-                payments["ingenico_salt"] = self.cleaned_data.get("payments_ingenico_salt", "")
+                payments["salt"] = self.cleaned_data.get("payments_salt", "")
                 if self.cleaned_data.get("payments_activation_date"):
                     payments["activation_date"] = str(self.cleaned_data["payments_activation_date"])
                 payments["test_mode"] = self.cleaned_data.get("payments_test_mode", False)
@@ -228,7 +226,7 @@ class EventAdmin(admin.ModelAdmin):
                 "fields": (
                     "payments_type",
                     "payments_wbs_element",
-                    "payments_ingenico_salt",
+                    "payments_salt",
                     ("payments_activation_date", "payments_test_mode"),
                     "payments_allow_invoices",
                 ),

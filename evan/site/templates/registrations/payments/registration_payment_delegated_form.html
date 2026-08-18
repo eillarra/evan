@@ -35,9 +35,9 @@
               {% if registration.paid > 0 %}
                 <p>You have already paid <strong>{{ registration.paid }} EUR</strong>.</p>
               {% endif %}
-              <img src="{% static 'images/ingenico.svg' %}" class="float-right mini-logo q-mt-sm">
-              <form method="post" action="{{ ingenico_url }}">
-                {% for key, value in ingenico_parameters.items %}
+              <img src="{% static 'images/worldline.svg' %}" class="float-right mini-logo q-mt-sm">
+              <form method="post" action="{{ worldline_url }}">
+                {% for key, value in worldline_parameters.items %}
                   <input type="hidden" name="{{ key }}" value="{{ value }}">
                 {% endfor %}
                 <q-btn unelevated color="primary" type="submit" icon="vpn_key" label="Pay"></q-btn>

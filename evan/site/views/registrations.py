@@ -14,7 +14,7 @@ from evan.api.serializers.sessions import SessionReadOnlySerializer
 from evan.api.serializers.users import UserSerializer
 from evan.models import Coupon, Event, Registration, RegistrationPaymentAttempt
 from evan.services.mailer.registrations import schedule_registration_email
-from evan.services.payments.ingenico import Ingenico
+from evan.services.payments.ugent_bridge import UGentBridge
 from evan.site.views.file_makers.pdf import CertificatePdfMaker
 from evan.site.views.file_makers.receipt import ReceiptPdfMaker
 
@@ -94,7 +94,7 @@ class RegistrationPaymentBaseView(TemplateView):
             return None
 
         expected_amount = registration.remaining_fee
-        order_id = Ingenico.generate_order_id(registration.pk, expected_amount, registration.unique_hash)
+        order_id = UGentBridge.generate_order_id(registration.pk, expected_amount, registration.unique_hash)
 
         attempt, _ = RegistrationPaymentAttempt.objects.get_or_create(
             order_id=order_id,
@@ -121,30 +121,30 @@ class RegistrationPaymentBaseView(TemplateView):
             self.object = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
         return self.object
 
-    def get_ingenico_result_url(self) -> str:
+    def get_worldline_result_url(self) -> str:
         raise NotImplementedError
 
     def get_context_data(self, **kwargs):
         registration = self.get_object()
         payment_attempt = self.get_or_create_payment_attempt(registration)
-        ingenico = Ingenico(
-            pspid=registration.event.ingenico.get("wbs_element"),
-            salt=registration.event.ingenico.get("ingenico_salt"),
-            test_mode=registration.event.ingenico.get("test_mode"),
+        worldline = UGentBridge(
+            pspid=registration.event.ugent_bridge.get("wbs_element"),
+            salt=registration.event.ugent_bridge.get("salt"),
+            test_mode=registration.event.ugent_bridge.get("test_mode"),
         )
-        ingenico_parameters = {
+        worldline_parameters = {
             "AMOUNT": registration.remaining_fee,
             "ORDERID": registration.pk,
             "CALLBACKURL": registration.get_payment_callback_url(),
-            "RESULTURL": self.get_ingenico_result_url(),
+            "RESULTURL": self.get_worldline_result_url(),
         }
         context = super().get_context_data(**kwargs)
         context["registration"] = registration
         context["event"] = registration.event
-        context["ingenico_url"] = ingenico.get_url()
+        context["worldline_url"] = worldline.get_url()
         context["payment_attempt"] = payment_attempt
-        context["ingenico_parameters"] = ingenico.process_parameters(
-            ingenico_parameters, registration.user, registration.unique_hash, paramvar=str(registration.uuid)
+        context["worldline_parameters"] = worldline.process_parameters(
+            worldline_parameters, registration.user, registration.unique_hash, paramvar=str(registration.uuid)
         )
         return context
 
@@ -156,7 +156,7 @@ class RegistrationPaymentView(RegistrationPaymentBaseView):
 
     template_name = "registrations/payments/registration_payment_form.html"
 
-    def get_ingenico_result_url(self) -> str:
+    def get_worldline_result_url(self) -> str:
         return self.get_object().get_payment_result_url()
 
     @method_decorator(login_required)
@@ -192,7 +192,7 @@ class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
 
     template_name = "registrations/payments/registration_payment_delegated_form.html"
 
-    def get_ingenico_result_url(self) -> str:
+    def get_worldline_result_url(self) -> str:
         return self.get_object().get_payment_delegated_result_url()
 
     def dispatch(self, request, *args, **kwargs):
@@ -202,18 +202,18 @@ class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
         return super().dispatch(request, *args, **kwargs)
 
 
-def _credit_ingenico_payment(registration: Registration, query_params: QueryDict) -> bool:
-    """Credit an Ingenico payment to a registration if valid and not already processed.
+def _credit_worldline_payment(registration: Registration, query_params: QueryDict) -> bool:
+    """Credit a Worldline payment to a registration if valid and not already processed.
 
     :param registration: The registration to credit the payment to.
-    :param query_params: The query dict from the Ingenico callback (GET params).
+    :param query_params: The query dict from the Worldline callback (GET params).
     :returns: True if the payment was credited, False otherwise.
     """
     payid = query_params.get("PAYID", "")
     order_id = query_params.get("ORDERID", "")
     if not payid or not order_id:
         return False
-    if not Ingenico.validate_out_parameters(query_params, outsalt=registration.event.ingenico.get("ingenico_salt")):
+    if not UGentBridge.validate_out_parameters(query_params, outsalt=registration.event.ugent_bridge.get("salt")):
         return False
 
     try:
@@ -247,7 +247,7 @@ def _credit_ingenico_payment(registration: Registration, query_params: QueryDict
         locked_registration.paid = locked_registration.paid + amount
         locked_registration.payid = payid
         # Rotate the hash so any future payment attempt gets a fresh ORDERID.
-        # Ingenico marks the ORDERID as permanently used after a successful payment.
+        # Worldline marks the ORDERID as permanently used after a successful payment.
         locked_registration.unique_hash = locked_registration.generate_unique_hash()
         locked_registration.save()
         registration.paid = locked_registration.paid
@@ -307,8 +307,8 @@ class RegistrationPaymentResultBaseView(TemplateView):
         status = request.GET.get("STATUS")
 
         # Success
-        if status in Ingenico.SUCCESS_STATUSES:
-            if _credit_ingenico_payment(registration, request.GET):
+        if status in UGentBridge.SUCCESS_STATUSES:
+            if _credit_worldline_payment(registration, request.GET):
                 messages.success(request, "Your payment was succesful.")
             elif registration.is_paid:
                 messages.success(request, "Your payment was already registered.")
@@ -316,21 +316,21 @@ class RegistrationPaymentResultBaseView(TemplateView):
                 messages.error(request, "Invalid query parameters.")
 
         # Exception
-        elif status in Ingenico.EXCEPTION_STATUSES:
+        elif status in UGentBridge.EXCEPTION_STATUSES:
             messages.warning(request, "We will revise your payment and let you know when it is authorized.")
 
         # Decline
-        elif status in Ingenico.DECLINE_STATUSES:
+        elif status in UGentBridge.DECLINE_STATUSES:
             _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.FAILED)
-            # Rotate hash so a retry uses a fresh ORDERID; some Ingenico configurations
+            # Rotate hash so a retry uses a fresh ORDERID; some Worldline configurations
             # reject resubmitting a previously declined ORDERID.
             _rotate_payment_hash(registration)
             messages.error(request, "Your payment was declined.")
 
         # Cancel
-        elif status in Ingenico.CANCEL_STATUSES:
+        elif status in UGentBridge.CANCEL_STATUSES:
             _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.CANCELLED)
-            # Rotate hash so a retry uses a fresh ORDERID; Ingenico registers the
+            # Rotate hash so a retry uses a fresh ORDERID; Worldline registers the
             # ORDERID the moment the form is submitted, so cancelling leaves it
             # "used" and a second attempt with the same ORDERID is rejected.
             _rotate_payment_hash(registration)
@@ -342,13 +342,13 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class RegistrationPaymentCallbackView(View):
-    """Server-to-server callback from Ingenico for confirmed payments.
+    """Server-to-server callback from Worldline for confirmed payments.
 
-    This is the target of Ingenico's account-level "Direct HTTP
+    This is the target of Worldline's account-level "Direct HTTP
     server-to-server request" feedback, configured per WBS element in the
-    Ingenico back office with a `<PARAMVAR>`-templated URL (see
-    ``Ingenico.process_parameters``, which submits the registration's uuid as
-    ``PARAMVAR``). Ingenico calls it directly, bypassing the user's browser,
+    Worldline back office with a `<PARAMVAR>`-templated URL (see
+    ``UGentBridge.process_parameters``, which submits the registration's uuid as
+    ``PARAMVAR``). Worldline calls it directly, bypassing the user's browser,
     for every status transition - so it ensures payments are credited (and
     declines/cancels rotate the hash) even when the browser never makes it
     back to the result URL. The back office lets the merchant choose GET or
@@ -362,24 +362,24 @@ class RegistrationPaymentCallbackView(View):
         return self._handle(request, request.POST)
 
     def _handle(self, request, query_params: QueryDict) -> HttpResponse:
-        """Process the Ingenico server-to-server notification.
+        """Process the Worldline server-to-server notification.
 
         Ignoring cancel/decline notifications leaves the matching payment
-        attempt PENDING with an ORDERID Ingenico has already registered,
+        attempt PENDING with an ORDERID Worldline has already registered,
         which blocks retries until an admin regenerates the hash.
 
         :param query_params: The notification parameters, from either GET or POST.
-        :returns: An empty 200 response, acknowledging receipt to Ingenico.
+        :returns: An empty 200 response, acknowledging receipt to Worldline.
         """
         registration = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
         status = query_params.get("STATUS")
 
-        if status in Ingenico.SUCCESS_STATUSES:
-            _credit_ingenico_payment(registration, query_params)
-        elif status in Ingenico.DECLINE_STATUSES:
+        if status in UGentBridge.SUCCESS_STATUSES:
+            _credit_worldline_payment(registration, query_params)
+        elif status in UGentBridge.DECLINE_STATUSES:
             _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.FAILED)
             _rotate_payment_hash(registration)
-        elif status in Ingenico.CANCEL_STATUSES:
+        elif status in UGentBridge.CANCEL_STATUSES:
             _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.CANCELLED)
             _rotate_payment_hash(registration)
         # Exception and invalid statuses: no action here. The result view's

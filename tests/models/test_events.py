@@ -213,19 +213,19 @@ def test_event_registration_configuration_can_disable_accompanying_persons(t_eve
 
 
 # ---------------------------------------------------------------------------
-# Payment configuration (allows_payments, allows_invoices, ingenico)
+# Payment configuration (allows_payments, allows_invoices, ugent_bridge)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.django_db
 class TestEventAllowsPayments:
-    """allows_payments reflects the presence of an Ingenico salt and an optional activation date."""
+    """allows_payments reflects the presence of a Worldline salt and an optional activation date."""
 
-    def test_false_without_ingenico_salt(self, t_event) -> None:
-        # A ugent payment block requires ingenico_salt at config-validation
+    def test_false_without_salt(self, t_event) -> None:
+        # A ugent payment block requires salt at config-validation
         # time, so the only way to reach allows_payments without a salt is to
         # have no payment block at all — which the pydantic validator keeps
-        # as a plain dict and ingenico returns {} for.
+        # as a plain dict and worldline returns {} for.
         t_event.config = {"payments": {"type": "stripe", "wbs_element": "WBS", "stripe_secret": "sk_test"}}
         t_event.save()
         t_event.refresh_from_db()
@@ -233,7 +233,7 @@ class TestEventAllowsPayments:
         assert t_event.allows_payments is False
 
     def test_true_with_salt_and_no_activation_date(self, t_event) -> None:
-        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt"}}
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "salt": "s4lt"}}
         t_event.save()
         t_event.refresh_from_db()
 
@@ -244,7 +244,7 @@ class TestEventAllowsPayments:
             "payments": {
                 "type": "ugent",
                 "wbs_element": "WBS",
-                "ingenico_salt": "s4lt",
+                "salt": "s4lt",
                 "activation_date": "2099-01-01",
             },
         }
@@ -259,7 +259,7 @@ class TestEventAllowsPayments:
             "payments": {
                 "type": "ugent",
                 "wbs_element": "WBS",
-                "ingenico_salt": "s4lt",
+                "salt": "s4lt",
                 "activation_date": "2026-01-01",
             },
         }
@@ -279,28 +279,24 @@ class TestEventAllowsPayments:
 
 @pytest.mark.django_db
 class TestEventAllowsInvoices:
-    """allows_invoices mirrors the allow_invoices flag in the Ingenico payment config."""
+    """allows_invoices mirrors the allow_invoices flag in the Worldline payment config."""
 
     def test_true_when_allow_invoices_set(self, t_event) -> None:
-        t_event.config = {
-            "payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt", "allow_invoices": True}
-        }
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "salt": "s4lt", "allow_invoices": True}}
         t_event.save()
         t_event.refresh_from_db()
 
         assert t_event.allows_invoices is True
 
     def test_false_when_allow_invoices_absent(self, t_event) -> None:
-        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt"}}
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "salt": "s4lt"}}
         t_event.save()
         t_event.refresh_from_db()
 
         assert t_event.allows_invoices is True  # defaults to True in UgentPaymentsConfig
 
     def test_false_when_allow_invoices_false(self, t_event) -> None:
-        t_event.config = {
-            "payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt", "allow_invoices": False}
-        }
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "salt": "s4lt", "allow_invoices": False}}
         t_event.save()
         t_event.refresh_from_db()
 
@@ -315,23 +311,23 @@ class TestEventAllowsInvoices:
 
 
 @pytest.mark.django_db
-class TestEventIngenicoProperty:
-    """ingenico returns the payment config dict for ugent type, empty dict otherwise."""
+class TestEventUGentBridgeProperty:
+    """ugent_bridge returns the payment config dict for ugent type, empty dict otherwise."""
 
     def test_ugent_type_returns_payments_dict(self, t_event) -> None:
-        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "ingenico_salt": "s4lt"}}
+        t_event.config = {"payments": {"type": "ugent", "wbs_element": "WBS", "salt": "s4lt"}}
         t_event.save()
         t_event.refresh_from_db()
 
-        assert t_event.ingenico["type"] == "ugent"
-        assert t_event.ingenico["ingenico_salt"] == "s4lt"
+        assert t_event.ugent_bridge["type"] == "ugent"
+        assert t_event.ugent_bridge["salt"] == "s4lt"
 
     def test_no_payments_returns_empty_dict(self, t_event) -> None:
         t_event.config = {}
         t_event.save()
         t_event.refresh_from_db()
 
-        assert t_event.ingenico == {}
+        assert t_event.ugent_bridge == {}
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Regression tests for the Ingenico payment result flow."""
+"""Regression tests for the Worldline payment result flow."""
 
 from unittest.mock import patch
 
@@ -7,17 +7,17 @@ from django.http import QueryDict
 from django.urls import reverse
 
 from evan.models import Fee, RegistrationPaymentAttempt
-from evan.services.payments.ingenico import Ingenico
-from evan.site.views.registrations import _credit_ingenico_payment
+from evan.services.payments.ugent_bridge import UGentBridge
+from evan.site.views.registrations import _credit_worldline_payment
 from tests._factories import EventFactory, RegistrationFactory, UserFactory
 
 
 @pytest.fixture
 def payment_registration(db):
-    """An accepted registration wired to an event with Ingenico configuration."""
+    """An accepted registration wired to an event with Worldline configuration."""
     event = EventFactory()
-    # Set up Ingenico payment configuration via the underlying config JSONField.
-    event.config = {"payments": {"type": "ugent", "wbs_element": "TESTPSP", "ingenico_salt": "testsalt"}}
+    # Set up Worldline payment configuration via the underlying config JSONField.
+    event.config = {"payments": {"type": "ugent", "wbs_element": "TESTPSP", "salt": "testsalt"}}
     event.save()
     Fee.objects.create(event=event, type="regular", value=100)
 
@@ -27,14 +27,14 @@ def payment_registration(db):
 
 
 def create_pending_attempt(registration, *, amount: int | None = None) -> RegistrationPaymentAttempt:
-    """Create the deterministic pending attempt used by the Ingenico form.
+    """Create the deterministic pending attempt used by the Worldline form.
 
     :param registration: Registration under test.
     :param amount: Optional override amount.
     :returns: The persisted pending payment attempt.
     """
     expected_amount = registration.remaining_fee if amount is None else amount
-    order_id = Ingenico.generate_order_id(registration.pk, expected_amount, registration.unique_hash)
+    order_id = UGentBridge.generate_order_id(registration.pk, expected_amount, registration.unique_hash)
     return RegistrationPaymentAttempt.objects.create(
         registration=registration,
         order_id=order_id,
@@ -48,9 +48,9 @@ def callback_qs(
     """Build a callback querystring for a stored attempt.
 
     :param attempt: The payment attempt to reference.
-    :param payid: Ingenico payment identifier.
+    :param payid: Worldline payment identifier.
     :param amount: Optional override amount in EUR.
-    :param status: Ingenico status code.
+    :param status: Worldline status code.
     :returns: A query dict matching the payment callback format.
     """
     expected_amount = attempt.expected_amount if amount is None else amount
@@ -58,16 +58,16 @@ def callback_qs(
 
 
 @pytest.mark.django_db
-class TestCreditIngenicoPayment:
-    """Boundary tests for the _credit_ingenico_payment helper."""
+class TestCreditWorldlinePayment:
+    """Boundary tests for the _credit_worldline_payment helper."""
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_decimal_amount_string_is_credited_correctly(self, _mock_validate, payment_registration) -> None:
         """Ogone returns AMOUNT as a decimal string; must not raise ValueError."""
         attempt = create_pending_attempt(payment_registration, amount=795)
         qs = callback_qs(attempt, payid="5451031176")
 
-        result = _credit_ingenico_payment(payment_registration, qs)
+        result = _credit_worldline_payment(payment_registration, qs)
 
         assert result is True
         payment_registration.refresh_from_db()
@@ -76,76 +76,76 @@ class TestCreditIngenicoPayment:
         attempt.refresh_from_db()
         assert attempt.status == RegistrationPaymentAttempt.SUCCEEDED
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_integer_amount_string_is_still_credited_correctly(self, _mock_validate, payment_registration) -> None:
         """Integer-formatted AMOUNT strings must continue to work after the fix."""
         attempt = create_pending_attempt(payment_registration, amount=920)
         qs = QueryDict(f"PAYID=1234567890&ORDERID={attempt.order_id}&AMOUNT=920&STATUS=9")
 
-        result = _credit_ingenico_payment(payment_registration, qs)
+        result = _credit_worldline_payment(payment_registration, qs)
 
         assert result is True
         payment_registration.refresh_from_db()
         assert payment_registration.paid == 920
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_duplicate_payid_is_rejected(self, _mock_validate, payment_registration) -> None:
         """A second callback with the same PAYID must not double-credit the registration."""
         attempt = create_pending_attempt(payment_registration, amount=795)
         qs = callback_qs(attempt, payid="5451031176")
 
-        first_result = _credit_ingenico_payment(payment_registration, qs)
-        second_result = _credit_ingenico_payment(payment_registration, qs)
+        first_result = _credit_worldline_payment(payment_registration, qs)
+        second_result = _credit_worldline_payment(payment_registration, qs)
 
         assert first_result is True
         assert second_result is False
         payment_registration.refresh_from_db()
         assert payment_registration.paid == 795
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=False)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=False)
     def test_invalid_signature_is_rejected(self, _mock_validate, payment_registration) -> None:
         """Tampered query parameters must not credit the registration."""
         attempt = create_pending_attempt(payment_registration, amount=795)
         qs = callback_qs(attempt, payid="9999999999")
-        result = _credit_ingenico_payment(payment_registration, qs)
+        result = _credit_worldline_payment(payment_registration, qs)
 
         assert result is False
         payment_registration.refresh_from_db()
         assert payment_registration.paid == 0
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_unique_hash_is_rotated_after_successful_payment(self, _mock_validate, payment_registration) -> None:
         """After a successful payment the unique_hash must change so any future
-        payment attempt gets a fresh ORDERID and Ingenico does not reject it."""
+        payment attempt gets a fresh ORDERID and Worldline does not reject it."""
         original_hash = payment_registration.unique_hash
         attempt = create_pending_attempt(payment_registration, amount=100)
         qs = callback_qs(attempt, payid="1111111111")
 
-        _credit_ingenico_payment(payment_registration, qs)
+        _credit_worldline_payment(payment_registration, qs)
 
         payment_registration.refresh_from_db()
         assert payment_registration.unique_hash != original_hash
         assert len(payment_registration.unique_hash) == 8
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_replayed_callback_with_new_payid_is_rejected(self, _mock_validate, payment_registration) -> None:
         """A replayed callback for the same ORDERID must not re-credit with a new PAYID."""
         attempt = create_pending_attempt(payment_registration, amount=795)
 
-        first_result = _credit_ingenico_payment(payment_registration, callback_qs(attempt, payid="5451031176"))
-        second_result = _credit_ingenico_payment(payment_registration, callback_qs(attempt, payid="9999999999"))
+        first_result = _credit_worldline_payment(payment_registration, callback_qs(attempt, payid="5451031176"))
+        second_result = _credit_worldline_payment(payment_registration, callback_qs(attempt, payid="9999999999"))
 
         assert first_result is True
         assert second_result is False
         payment_registration.refresh_from_db()
         assert payment_registration.paid == 795
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_callback_without_matching_attempt_is_rejected(self, _mock_validate, payment_registration) -> None:
         """Only callbacks for stored payment attempts may credit a registration."""
         qs = QueryDict("PAYID=5451031176&ORDERID=missing-order-id&AMOUNT=795.00&STATUS=9")
 
-        result = _credit_ingenico_payment(payment_registration, qs)
+        result = _credit_worldline_payment(payment_registration, qs)
 
         assert result is False
         payment_registration.refresh_from_db()
@@ -169,14 +169,14 @@ class TestPaymentFormAttempts:
         assert attempt.expected_amount == payment_registration.remaining_fee
 
     def test_payment_page_submits_paramvar_as_registration_uuid(self, client, payment_registration) -> None:
-        """PARAMVAR lets Ingenico's account-level feedback URL resolve to this registration's callback."""
+        """PARAMVAR lets Worldline's account-level feedback URL resolve to this registration's callback."""
         client.force_login(payment_registration.user)
 
         response = client.get(reverse("registration:payment", args=[payment_registration.uuid]))
 
-        assert response.context["ingenico_parameters"]["PARAMVAR"] == str(payment_registration.uuid)
+        assert response.context["worldline_parameters"]["PARAMVAR"] == str(payment_registration.uuid)
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_pending_attempt_is_obsoleted_when_amount_increases(self, _mock_validate, payment_registration) -> None:
         """Increasing the amount due must obsolete the previously pending payment attempt."""
         attempt = create_pending_attempt(payment_registration)
@@ -190,13 +190,13 @@ class TestPaymentFormAttempts:
         assert payment_registration.unique_hash != old_hash
         assert payment_registration.remaining_fee == 140
 
-        result = _credit_ingenico_payment(payment_registration, callback_qs(attempt, payid="stale-amount-up"))
+        result = _credit_worldline_payment(payment_registration, callback_qs(attempt, payid="stale-amount-up"))
 
         assert result is False
         payment_registration.refresh_from_db()
         assert payment_registration.paid == 0
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_pending_attempt_is_obsoleted_when_amount_decreases(self, _mock_validate, payment_registration) -> None:
         """Decreasing the amount due must obsolete the previously pending payment attempt."""
         payment_registration.manual_extra_fees = 40
@@ -212,7 +212,7 @@ class TestPaymentFormAttempts:
         assert payment_registration.unique_hash != old_hash
         assert payment_registration.remaining_fee == 100
 
-        result = _credit_ingenico_payment(payment_registration, callback_qs(attempt, payid="stale-amount-down"))
+        result = _credit_worldline_payment(payment_registration, callback_qs(attempt, payid="stale-amount-down"))
 
         assert result is False
         payment_registration.refresh_from_db()
@@ -224,9 +224,9 @@ class TestPaymentResultViewHashRotation:
     """Regression tests: unique_hash must be rotated on cancel and decline so
     the next payment attempt uses a fresh ORDERID.
 
-    Background: Ingenico registers the ORDERID the moment the payment form is
+    Background: Worldline registers the ORDERID the moment the payment form is
     submitted.  If the user cancels (or the card is declined) and immediately
-    tries again, Ingenico rejects the same ORDERID with 'This payment has
+    tries again, Worldline rejects the same ORDERID with 'This payment has
     already been processed.'
     """
 
@@ -255,7 +255,7 @@ class TestPaymentResultViewHashRotation:
 
     def test_hash_is_not_rotated_on_exception(self, client, payment_registration) -> None:
         """STATUS=52 (exception / under review) must NOT rotate the hash;
-        admin must manually clear it after confirming the outcome with Ingenico."""
+        admin must manually clear it after confirming the outcome with Worldline."""
         original_hash = payment_registration.unique_hash
 
         client.get(self._get_result_url(payment_registration), {"STATUS": "52"})
@@ -268,11 +268,11 @@ class TestPaymentResultViewHashRotation:
 class TestPaymentCallbackHandlesAbort:
     """Server-to-server callbacks must resolve cancel/decline, not just success.
 
-    Background: Ingenico sends async server-to-server feedback for every status
+    Background: Worldline sends async server-to-server feedback for every status
     transition. When a user aborts in the browser (closes the tab, navigates
     away) instead of reaching the result redirect, the server callback is the
     only signal we receive. If we ignore it, the payment attempt stays PENDING
-    with an ORDERID Ingenico has already registered, and the next retry reuses
+    with an ORDERID Worldline has already registered, and the next retry reuses
     that same ORDERID and is rejected — the user stays blocked until an admin
     manually regenerates the payment hash.
     """
@@ -283,7 +283,7 @@ class TestPaymentCallbackHandlesAbort:
     def _abort_callback_qs(self, attempt: RegistrationPaymentAttempt, *, status: str) -> QueryDict:
         return QueryDict(f"STATUS={status}&ORDERID={attempt.order_id}&PAYID=&AMOUNT={attempt.expected_amount}")
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_cancel_callback_finalizes_attempt_and_rotates_hash(self, _mock, client, payment_registration) -> None:
         """A STATUS=1 (cancel) server callback must mark the attempt cancelled and rotate the hash."""
         attempt = create_pending_attempt(payment_registration)
@@ -296,7 +296,7 @@ class TestPaymentCallbackHandlesAbort:
         assert attempt.status == RegistrationPaymentAttempt.CANCELLED
         assert payment_registration.unique_hash != original_hash
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_decline_callback_finalizes_attempt_and_rotates_hash(self, _mock, client, payment_registration) -> None:
         """A STATUS=2 (decline) server callback must mark the attempt failed and rotate the hash."""
         attempt = create_pending_attempt(payment_registration)
@@ -309,11 +309,11 @@ class TestPaymentCallbackHandlesAbort:
         assert attempt.status == RegistrationPaymentAttempt.FAILED
         assert payment_registration.unique_hash != original_hash
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_cancel_callback_via_post_finalizes_attempt_and_rotates_hash(
         self, _mock, client, payment_registration
     ) -> None:
-        """Ingenico's back office lets the merchant choose GET or POST delivery; POST must behave identically."""
+        """Worldline's back office lets the merchant choose GET or POST delivery; POST must behave identically."""
         attempt = create_pending_attempt(payment_registration)
         original_hash = payment_registration.unique_hash
 
@@ -324,7 +324,7 @@ class TestPaymentCallbackHandlesAbort:
         assert attempt.status == RegistrationPaymentAttempt.CANCELLED
         assert payment_registration.unique_hash != original_hash
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_success_callback_via_post_credits_payment(self, _mock, client, payment_registration) -> None:
         attempt = create_pending_attempt(payment_registration, amount=795)
         qs = callback_qs(attempt, payid="5451031176")
@@ -336,7 +336,7 @@ class TestPaymentCallbackHandlesAbort:
         assert attempt.status == RegistrationPaymentAttempt.SUCCEEDED
         assert payment_registration.paid == 795
 
-    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
     def test_abort_then_retry_uses_fresh_order_id(self, _mock, client, payment_registration) -> None:
         """After an aborted payment is resolved via server callback, retrying must produce a new ORDERID.
 

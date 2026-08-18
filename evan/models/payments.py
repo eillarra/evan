@@ -42,9 +42,9 @@ class Payment(NonEditableMixin, models.Model):
 
 
 class RegistrationPaymentAttempt(models.Model):
-    """Track a single Ingenico payment attempt for a registration.
+    """Track a single Worldline payment attempt for a registration.
 
-    The attempt is keyed by the generated ORDERID sent to Ingenico. Callbacks
+    The attempt is keyed by the generated ORDERID sent to Worldline. Callbacks
     must resolve exactly one attempt once, making payment processing idempotent.
     """
 
@@ -83,7 +83,7 @@ class RegistrationPaymentAttempt(models.Model):
         """Transition the attempt to a terminal state.
 
         :param status: One of the terminal status constants.
-        :param payid: Optional payid returned by Ingenico.
+        :param payid: Optional payid returned by Worldline.
         :param callback_data: Optional raw callback payload for audit/debugging.
         """
         self.status = status

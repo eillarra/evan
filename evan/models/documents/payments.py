@@ -24,7 +24,7 @@ class UgentPaymentsConfig(BasePaymentsConfig):
 
     type: Literal["ugent"] = "ugent"
     wbs_element: str
-    ingenico_salt: str
+    salt: str
     allow_invoices: bool = True
 
 

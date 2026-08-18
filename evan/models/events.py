@@ -152,14 +152,14 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
 
     @property
     def allows_invoices(self) -> bool:
-        return self.ingenico.get("allow_invoices", False)
+        return self.ugent_bridge.get("allow_invoices", False)
 
     @property
     def allows_payments(self) -> bool:
-        if "ingenico_salt" not in self.ingenico:
+        if "salt" not in self.ugent_bridge:
             return False
-        if self.ingenico.get("activation_date", None):
-            activation_date = self.ingenico.get("activation_date")
+        if self.ugent_bridge.get("activation_date", None):
+            activation_date = self.ugent_bridge.get("activation_date")
             if activation_date:
                 activation_date = datetime.strptime(activation_date, "%Y-%m-%d").date()
             return activation_date is not None and activation_date <= timezone.now().date()
@@ -180,7 +180,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         return self.email or "evan@ugent.be"
 
     @property
-    def ingenico(self) -> dict:
+    def ugent_bridge(self) -> dict:
         if self.configuration["payments"] and self.configuration["payments"]["type"] == "ugent":
             return self.configuration["payments"]
         return {}

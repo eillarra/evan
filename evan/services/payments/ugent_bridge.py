@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from evan.models.users import User
 
 
+# Ingenico/Ogone e-Commerce API SHA-OUT parameter list (legacy doc host, still current under Worldline):
 # https://shared.ecom-psp.com/v2/docs/guides/e-Commerce/SHA-OUT_params.txt
 SHA_OUT_PARAMS: frozenset[str] = frozenset(
     {
@@ -91,9 +92,21 @@ def get_absolute_uri():
     return protocol + Site.objects.get_current().domain
 
 
-class Ingenico:
-    PRODUCTION_URL = os.environ.get("INGENICO_PRODUCTION_URL")
-    TEST_URL = os.environ.get("INGENICO_TEST_URL")
+class UGentBridge:
+    """UGent's institutional payment bridge (payment config ``type: "ugent"``).
+
+    Speaks the Ingenico/Ogone e-Commerce API protocol: SHA-IN/SHA-OUT signing,
+    ORDERID/PAYID, PARAMVAR. Worldline acquired Ingenico and has kept this
+    protocol running unchanged since, so "Worldline" is what the salt, hashing
+    scheme and status codes below actually belong to today. If UGent's bridge
+    ever fronts a different PSP protocol, that's the point to extract a
+    protocol-level class from this one — until then, one vendor, one class.
+    """
+
+    PRODUCTION_URL = os.environ.get("UGENT_BRIDGE_PRODUCTION_URL")
+    TEST_URL = os.environ.get("UGENT_BRIDGE_TEST_URL")
+
+    # Ingenico/Ogone STATUS codes, unchanged under Worldline.
     SUCCESS_STATUSES = {"5", "51", "9", "91"}
     EXCEPTION_STATUSES = {"52", "92"}
     DECLINE_STATUSES = {"2"}
@@ -106,7 +119,7 @@ class Ingenico:
         self.test_mode = test_mode
 
     def get_url(self):
-        """Return the configured Ingenico endpoint URL.
+        """Return the configured Worldline endpoint URL.
 
         :returns: The test or production endpoint depending on configuration.
         """
@@ -114,7 +127,7 @@ class Ingenico:
 
     @staticmethod
     def generate_order_id(base_order_id: str | int, amount: int, extra_hash: str | None = None) -> str:
-        """Generate the deterministic ORDERID sent to Ingenico.
+        """Generate the deterministic ORDERID sent to Worldline.
 
         :param base_order_id: The internal registration identifier.
         :param amount: The expected payment amount in EUR.
@@ -141,13 +154,13 @@ class Ingenico:
     ) -> dict:
         """Process and check if a minimum of parameters have been received.
 
-        :param paramvar: Optional value submitted as Ingenico's ``PARAMVAR`` field.
-            Ingenico substitutes it into the ``<PARAMVAR>`` placeholder of the
+        :param paramvar: Optional value submitted as Worldline's ``PARAMVAR`` field.
+            Worldline substitutes it into the ``<PARAMVAR>`` placeholder of the
             account's configured "Direct HTTP server-to-server request" URL,
             letting that account-wide feedback URL resolve to a per-registration
             path (see ``RegistrationPaymentCallbackView``).
         """
-        ingenico_parameters = {
+        worldline_parameters = {
             "CURRENCY": "EUR",
             "LANGUAGE": "en_US",
             "BGCOLOR": "#f5f5f5",
@@ -155,14 +168,14 @@ class Ingenico:
         }
 
         # User parameters
-        ingenico_parameters.update({"EMAIL": user.email})
+        worldline_parameters.update({"EMAIL": user.email})
 
         # Required parameters
         absolute_uri = get_absolute_uri()
 
         order_id = self.generate_order_id(parameters["ORDERID"], parameters["AMOUNT"], extra_hash)
 
-        ingenico_parameters.update(
+        worldline_parameters.update(
             {
                 "PSPID": self.pspid,
                 "ORDERID": order_id,
@@ -176,11 +189,11 @@ class Ingenico:
             }
         )
         if paramvar:
-            ingenico_parameters["PARAMVAR"] = paramvar
+            worldline_parameters["PARAMVAR"] = paramvar
 
-        ingenico_parameters.update({"SHASIGN": self.hash_parameters(ingenico_parameters)})
+        worldline_parameters.update({"SHASIGN": self.hash_parameters(worldline_parameters)})
 
-        return ingenico_parameters
+        return worldline_parameters
 
     @classmethod
     def validate_out_parameters(cls, query_params: QueryDict, *, outsalt: str) -> bool:

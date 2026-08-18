@@ -23,7 +23,7 @@ def invoice_ready_registration(db):
         "payments": {
             "type": "ugent",
             "wbs_element": "TESTPSP",
-            "ingenico_salt": "testsalt",
+            "salt": "testsalt",
             "allow_invoices": True,
         }
     }
@@ -107,7 +107,7 @@ class TestRegistrationInvoiceRequestView:
             "payments": {
                 "type": "ugent",
                 "wbs_element": "TESTPSP",
-                "ingenico_salt": "testsalt",
+                "salt": "testsalt",
                 "allow_invoices": False,
             }
         }
