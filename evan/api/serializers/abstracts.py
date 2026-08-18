@@ -35,7 +35,7 @@ class ManagedAbstractSerializer(AbstractSerializer):
     class Meta(AbstractSerializer.Meta):
         model = Abstract
         exclude = ()
-        read_only_fields = ("id", "uuid", "event", "custom_data", "created_at", "updated_at")
+        read_only_fields = ("id", "uuid", "event", "extra_data", "created_at", "updated_at")
 
 
 class FullAbstractReviewSerializer(AbstractReviewSerializer):
@@ -48,4 +48,4 @@ class PublicAbstractSerializer(AbstractSerializer):
 
     class Meta:  # noqa: D106
         model = Abstract
-        fields = ("id", "title", "authors", "custom_data", "abstract", "file")
+        fields = ("id", "title", "authors", "extra_data", "abstract", "file")

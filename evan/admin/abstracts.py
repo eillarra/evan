@@ -30,7 +30,7 @@ class AbstractAdmin(admin.ModelAdmin):
                     "title",
                     "authors",
                     "abstract",
-                    "custom_data",
+                    "extra_data",
                 ),
             },
         ),

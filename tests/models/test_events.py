@@ -458,6 +458,101 @@ class TestEventAbstractSubmissionWindow:
 
         assert t_event.is_open_for_abstract_submission is False
 
+    def test_false_when_deadline_missing(self, t_event) -> None:
+        t_event.custom_fields = {"abstracts": {"submission_start_date": "2026-01-01"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.is_open_for_abstract_submission is False
+
+    def test_false_when_abstracts_not_a_dict(self, t_event) -> None:
+        t_event.custom_fields = {"abstracts": "not-a-dict"}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.is_open_for_abstract_submission is False
+
+    def test_unexpected_exception_is_not_swallowed(self, t_event) -> None:
+        t_event.custom_fields = {
+            "abstracts": {"submission_start_date": "2026-01-01", "submission_deadline": "2026-12-31T23:59"}
+        }
+        t_event.save()
+        t_event.refresh_from_db()
+
+        class Boom(Exception):
+            pass
+
+        with (
+            patch.object(type(t_event), "abstracts_config", new=property(lambda self: (_ for _ in ()).throw(Boom()))),
+            pytest.raises(Boom),
+        ):
+            _ = t_event.is_open_for_abstract_submission
+
+
+# ---------------------------------------------------------------------------
+# Abstracts config accessor (abstracts_config)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventAbstractsConfigAccessor:
+    """abstracts_config centralises custom_fields['abstracts'] access."""
+
+    def test_returns_config_dict(self, t_event) -> None:
+        t_event.custom_fields = {"abstracts": {"submission_start_date": "2026-01-01"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.abstracts_config == {"submission_start_date": "2026-01-01"}
+
+    def test_returns_empty_dict_when_missing(self, t_event) -> None:
+        t_event.custom_fields = {}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.abstracts_config == {}
+
+    def test_returns_empty_dict_when_not_a_dict(self, t_event) -> None:
+        t_event.custom_fields = {"abstracts": ["not", "a", "dict"]}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.abstracts_config == {}
+
+
+# ---------------------------------------------------------------------------
+# Abstract reviewers (abstract_reviewers)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventAbstractReviewers:
+    """abstract_reviewers returns the configured reviewers or an empty queryset."""
+
+    def test_returns_reviewers(self, t_event) -> None:
+        from tests._factories import UserFactory
+
+        user = UserFactory()
+        t_event.custom_fields = {"abstracts": {"reviewers": [{"id": user.id}]}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert list(t_event.abstract_reviewers) == [user]
+
+    def test_empty_when_no_reviewers(self, t_event) -> None:
+        t_event.custom_fields = {}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert list(t_event.abstract_reviewers) == []
+
+    def test_empty_when_reviewers_not_a_list(self, t_event) -> None:
+        t_event.custom_fields = {"abstracts": {"reviewers": "not-a-list"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert list(t_event.abstract_reviewers) == []
+
 
 # ---------------------------------------------------------------------------
 # Email template lookup (get_email_template)

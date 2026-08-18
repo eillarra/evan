@@ -3,6 +3,7 @@ from http import HTTPStatus as status
 import pytest
 from django.urls import reverse
 
+from evan.models import Abstract
 from tests._factories import UserFactory
 
 
@@ -75,3 +76,20 @@ class TestForSuperuser(TestForAdmin):
     @pytest.fixture(autouse=True)
     def setup(self, client, superuser):
         client.force_login(user=superuser)
+
+    def test_abstract_change_form_renders(self, client, t_event, superuser):
+        """The Abstract admin change form must render without a FieldError.
+
+        Regression guard for the ``custom_data`` → ``extra_data`` fieldset fix:
+        referencing a non-existent field in ``fieldsets`` raises ``FieldError``
+        when the change form is opened.
+        """
+        abstract = Abstract.objects.create(
+            event=t_event,
+            user=superuser,
+            title="Test abstract",
+            authors="Test author",
+            abstract="Test body",
+        )
+        response = client.get(reverse("admin:evan_abstract_change", args=[abstract.pk]))
+        assert response.status_code == status.OK

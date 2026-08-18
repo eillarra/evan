@@ -14,13 +14,6 @@ interface ApiObject {
   readonly self: ApiEndpoint;
 }
 
-interface ApiObjectUpdated {
-  readonly id: number;
-  readonly self: ApiEndpoint;
-  readonly updated_at: string;
-  readonly updated_by: UserTiny | null;
-}
-
 interface DjangoAuthenticatedUser {
   readonly id: number;
   readonly username: string;

@@ -242,22 +242,32 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         end = self.registration_onsite_deadline or self.registration_deadline
         return self.registration_start_date <= now.date() and now <= end
 
+    @cached_property
+    def abstracts_config(self) -> dict:
+        """Return the ``abstracts`` section of ``custom_fields`` as a dict.
+
+        :returns: The abstracts configuration dict, or an empty dict when absent.
+        """
+        config = self.custom_fields.get("abstracts", {})
+        return config if isinstance(config, dict) else {}
+
     @property
     def is_open_for_abstract_submission(self) -> bool:
         try:
+            config = self.abstracts_config
             now = timezone.now()
-            start_date = datetime.strptime(self.custom_fields["abstracts"]["submission_start_date"], "%Y-%m-%d")
-            deadline = datetime.strptime(self.custom_fields["abstracts"]["submission_deadline"], "%Y-%m-%dT%H:%M")
+            start_date = datetime.strptime(config["submission_start_date"], "%Y-%m-%d")
+            deadline = datetime.strptime(config["submission_deadline"], "%Y-%m-%dT%H:%M")
             return start_date.replace(tzinfo=UTC).date() <= now.date() and now <= deadline.replace(tzinfo=UTC)
-        except Exception:
+        except KeyError, TypeError, ValueError:
             return False
 
     @cached_property
     def abstract_reviewers(self) -> QuerySet[User]:
         try:
-            reviewer_ids = [r["id"] for r in self.custom_fields["abstracts"]["reviewers"]]
+            reviewer_ids = [r["id"] for r in self.abstracts_config["reviewers"]]
             return User.objects.filter(id__in=reviewer_ids)
-        except Exception:
+        except KeyError, TypeError:
             return User.objects.none()
 
     @cached_property
