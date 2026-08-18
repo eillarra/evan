@@ -19,12 +19,24 @@ PASSWORD_HASHERS = ("django.contrib.auth.hashers.MD5PasswordHasher",)
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
+
+class DisableMigrations(dict):
+    """Disable migrations during testing for speed."""
+
+    def __contains__(self, item):
+        return True
+
+    def __getitem__(self, item):
+        return None
+
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": "dev.db",
+        "NAME": ":memory:",
     },
 }
+MIGRATION_MODULES = DisableMigrations()
 
 
 # https://docs.djangoproject.com/en/dev/topics/cache/
