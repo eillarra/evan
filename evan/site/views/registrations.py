@@ -144,7 +144,7 @@ class RegistrationPaymentBaseView(TemplateView):
         context["ingenico_url"] = ingenico.get_url()
         context["payment_attempt"] = payment_attempt
         context["ingenico_parameters"] = ingenico.process_parameters(
-            ingenico_parameters, registration.user, registration.unique_hash
+            ingenico_parameters, registration.user, registration.unique_hash, paramvar=str(registration.uuid)
         )
         return context
 
@@ -202,22 +202,22 @@ class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
         return super().dispatch(request, *args, **kwargs)
 
 
-def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
+def _credit_ingenico_payment(registration: Registration, query_params: QueryDict) -> bool:
     """Credit an Ingenico payment to a registration if valid and not already processed.
 
     :param registration: The registration to credit the payment to.
-    :param qs: The query dict from the Ingenico callback (GET params).
+    :param query_params: The query dict from the Ingenico callback (GET params).
     :returns: True if the payment was credited, False otherwise.
     """
-    payid = qs.get("PAYID", "")
-    order_id = qs.get("ORDERID", "")
+    payid = query_params.get("PAYID", "")
+    order_id = query_params.get("ORDERID", "")
     if not payid or not order_id:
         return False
-    if not Ingenico.validate_out_parameters(qs, outsalt=registration.event.ingenico.get("ingenico_salt")):
+    if not Ingenico.validate_out_parameters(query_params, outsalt=registration.event.ingenico.get("ingenico_salt")):
         return False
 
     try:
-        amount = int(float(qs.get("AMOUNT", 0)))
+        amount = int(float(query_params.get("AMOUNT", 0)))
     except TypeError, ValueError:
         return False
 
@@ -240,7 +240,7 @@ def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
         attempt.mark_resolved(
             status=RegistrationPaymentAttempt.SUCCEEDED,
             payid=payid,
-            callback_data=qs.dict(),
+            callback_data=query_params.dict(),
         )
         attempt.save(update_fields=["status", "payid", "callback_data", "resolved_at"])
 
@@ -257,14 +257,14 @@ def _credit_ingenico_payment(registration: Registration, qs: QueryDict) -> bool:
         return True
 
 
-def _finalize_payment_attempt(registration: Registration, qs: QueryDict, *, status: str) -> None:
+def _finalize_payment_attempt(registration: Registration, query_params: QueryDict, *, status: str) -> None:
     """Persist terminal non-success states for the current payment attempt.
 
     :param registration: The registration being updated.
-    :param qs: The callback querystring.
+    :param query_params: The callback querystring.
     :param status: The terminal attempt status to persist.
     """
-    order_id = qs.get("ORDERID", "")
+    order_id = query_params.get("ORDERID", "")
     if not order_id:
         return
 
@@ -279,7 +279,7 @@ def _finalize_payment_attempt(registration: Registration, qs: QueryDict, *, stat
         if attempt.status != RegistrationPaymentAttempt.PENDING:
             return
 
-        attempt.mark_resolved(status=status, payid=qs.get("PAYID", ""), callback_data=qs.dict())
+        attempt.mark_resolved(status=status, payid=query_params.get("PAYID", ""), callback_data=query_params.dict())
         attempt.save(update_fields=["status", "payid", "callback_data", "resolved_at"])
 
 
@@ -324,8 +324,7 @@ class RegistrationPaymentResultBaseView(TemplateView):
             _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.FAILED)
             # Rotate hash so a retry uses a fresh ORDERID; some Ingenico configurations
             # reject resubmitting a previously declined ORDERID.
-            registration.unique_hash = registration.generate_unique_hash()
-            registration.save(update_fields=["unique_hash"])
+            _rotate_payment_hash(registration)
             messages.error(request, "Your payment was declined.")
 
         # Cancel
@@ -334,8 +333,7 @@ class RegistrationPaymentResultBaseView(TemplateView):
             # Rotate hash so a retry uses a fresh ORDERID; Ingenico registers the
             # ORDERID the moment the form is submitted, so cancelling leaves it
             # "used" and a second attempt with the same ORDERID is rejected.
-            registration.unique_hash = registration.generate_unique_hash()
-            registration.save(update_fields=["unique_hash"])
+            _rotate_payment_hash(registration)
             messages.warning(request, "Your payment has been canceled.")
 
         # ...and redirect
@@ -346,29 +344,43 @@ class RegistrationPaymentResultBaseView(TemplateView):
 class RegistrationPaymentCallbackView(View):
     """Server-to-server callback from Ingenico for confirmed payments.
 
-    This endpoint is called directly by Ingenico's servers, bypassing the
-    user's browser. It ensures payments are credited even when the browser
-    redirect to the result URL fails.
+    This is the target of Ingenico's account-level "Direct HTTP
+    server-to-server request" feedback, configured per WBS element in the
+    Ingenico back office with a `<PARAMVAR>`-templated URL (see
+    ``Ingenico.process_parameters``, which submits the registration's uuid as
+    ``PARAMVAR``). Ingenico calls it directly, bypassing the user's browser,
+    for every status transition - so it ensures payments are credited (and
+    declines/cancels rotate the hash) even when the browser never makes it
+    back to the result URL. The back office lets the merchant choose GET or
+    POST delivery, so both methods are handled identically here.
     """
 
     def get(self, request, *args, **kwargs):
+        return self._handle(request, request.GET)
+
+    def post(self, request, *args, **kwargs):
+        return self._handle(request, request.POST)
+
+    def _handle(self, request, query_params: QueryDict) -> HttpResponse:
         """Process the Ingenico server-to-server notification.
 
-        Ingenico calls this endpoint for every status transition, not just
-        success. Ignoring cancel/decline notifications leaves the matching
-        payment attempt PENDING with an ORDERID Ingenico has already
-        registered, which blocks retries until an admin regenerates the hash.
+        Ignoring cancel/decline notifications leaves the matching payment
+        attempt PENDING with an ORDERID Ingenico has already registered,
+        which blocks retries until an admin regenerates the hash.
+
+        :param query_params: The notification parameters, from either GET or POST.
+        :returns: An empty 200 response, acknowledging receipt to Ingenico.
         """
         registration = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
-        status = request.GET.get("STATUS")
+        status = query_params.get("STATUS")
 
         if status in Ingenico.SUCCESS_STATUSES:
-            _credit_ingenico_payment(registration, request.GET)
+            _credit_ingenico_payment(registration, query_params)
         elif status in Ingenico.DECLINE_STATUSES:
-            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.FAILED)
+            _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.FAILED)
             _rotate_payment_hash(registration)
         elif status in Ingenico.CANCEL_STATUSES:
-            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.CANCELLED)
+            _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.CANCELLED)
             _rotate_payment_hash(registration)
         # Exception and invalid statuses: no action here. The result view's
         # browser-side redirect handles exception messaging; invalid statuses

@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 from django.http import QueryDict
 
-from evan.services.payments.ingenico import Ingenico
+from evan.services.payments.ingenico import SHA_OUT_PARAMS, Ingenico
 
 
 # ---------------------------------------------------------------------------
@@ -108,76 +108,10 @@ def _build_valid_callback(outsalt: str, **overrides) -> QueryDict:
     params = {"ORDERID": "42", "AMOUNT": "100", "STATUS": "9", "PAYID": "5451031176", "CURRENCY": "EUR"}
     params.update(overrides)
 
-    sha_out_params = {
-        "AAVADDRESS",
-        "AAVCHECK",
-        "AAVMAIL",
-        "AAVNAME",
-        "AAVPHONE",
-        "AAVZIP",
-        "ACCEPTANCE",
-        "ALIAS",
-        "AMOUNT",
-        "BIC",
-        "BIN",
-        "BRAND",
-        "CARDNO",
-        "CCCTY",
-        "CN",
-        "COLLECTOR_BIC",
-        "COLLECTOR_IBAN",
-        "COMPLUS",
-        "CREATION_STATUS",
-        "CREDITDEBIT",
-        "CURRENCY",
-        "CVCCHECK",
-        "DCC_COMMPERCENTAGE",
-        "DCC_CONVAMOUNT",
-        "DCC_CONVCCY",
-        "DCC_EXCHRATE",
-        "DCC_EXCHRATESOURCE",
-        "DCC_EXCHRATETS",
-        "DCC_INDICATOR",
-        "DCC_MARGINPERCENTAGE",
-        "DCC_VALIDHOURS",
-        "DEVICEID",
-        "DIGESTCARDNO",
-        "ECI",
-        "ED",
-        "EMAIL",
-        "ENCCARDNO",
-        "FXAMOUNT",
-        "FXCURRENCY",
-        "IP",
-        "IPCTY",
-        "MANDATEID",
-        "MOBILEMODE",
-        "NBREMAILUSAGE",
-        "NBRIPUSAGE",
-        "NBRIPUSAGE_ALLTX",
-        "NBRUSAGE",
-        "NCERROR",
-        "ORDERID",
-        "PAYID",
-        "PAYIDSUB",
-        "PAYMENT_REFERENCE",
-        "PM",
-        "SCO_CATEGORY",
-        "SCORING",
-        "SEQUENCETYPE",
-        "SIGNDATE",
-        "STATUS",
-        "SUBBRAND",
-        "SUBSCRIPTION_ID",
-        "TICKET",
-        "TRXDATE",
-        "VC",
-    }
-
     string_to_hash = ""
     for key in sorted(params):
         ku = key.upper()
-        if ku in sha_out_params and params[key]:
+        if ku in SHA_OUT_PARAMS and params[key]:
             string_to_hash += f"{ku}={params[key]}{outsalt}"
 
     shasign = sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
@@ -240,9 +174,21 @@ class TestProcessParameters:
         assert result["EMAIL"] == "attendee@example.com"
         assert result["ORDERID"].startswith("42-")
         assert "SHASIGN" in result
-        for key in ("ACCEPTURL", "DECLINEURL", "CANCELURL", "BACKURL"):
+        for key in ("ACCEPTURL", "DECLINEURL", "CANCELURL", "EXCEPTIONURL", "BACKURL"):
             assert key in result
             assert result[key].startswith("https://test.example.com")
+
+    def test_exceptionurl_points_to_the_same_result_page_as_accepturl(self) -> None:
+        """Without an explicit EXCEPTIONURL, Ingenico falls back to a static back-office
+        default instead of the registration's own result page for STATUS 52/92."""
+        ingenico = Ingenico(pspid="TESTPSP", salt="salt", test_mode=True)
+        user = type("FakeUser", (), {"email": "attendee@example.com"})()
+        params = {"ORDERID": 42, "AMOUNT": 100, "RESULTURL": "/result", "CALLBACKURL": "/callback"}
+
+        with patch("evan.services.payments.ingenico.get_absolute_uri", return_value="https://test.example.com"):
+            result = ingenico.process_parameters(params, user, extra_hash="abc12345")
+
+        assert result["EXCEPTIONURL"] == result["ACCEPTURL"]
 
     def test_orderid_is_deterministic_form(self) -> None:
         ingenico = Ingenico(pspid="TESTPSP", salt="salt", test_mode=True)

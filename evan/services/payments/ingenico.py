@@ -12,6 +12,76 @@ if TYPE_CHECKING:
     from evan.models.users import User
 
 
+# https://shared.ecom-psp.com/v2/docs/guides/e-Commerce/SHA-OUT_params.txt
+SHA_OUT_PARAMS: frozenset[str] = frozenset(
+    {
+        "AAVADDRESS",
+        "AAVCHECK",
+        "AAVMAIL",
+        "AAVNAME",
+        "AAVPHONE",
+        "AAVZIP",
+        "ACCEPTANCE",
+        "ALIAS",
+        "AMOUNT",
+        "BIC",
+        "BIN",
+        "BRAND",
+        "CARDNO",
+        "CCCTY",
+        "CN",
+        "COLLECTOR_BIC",
+        "COLLECTOR_IBAN",
+        "COMPLUS",
+        "CREATION_STATUS",
+        "CREDITDEBIT",
+        "CURRENCY",
+        "CVCCHECK",
+        "DCC_COMMPERCENTAGE",
+        "DCC_CONVAMOUNT",
+        "DCC_CONVCCY",
+        "DCC_EXCHRATE",
+        "DCC_EXCHRATESOURCE",
+        "DCC_EXCHRATETS",
+        "DCC_INDICATOR",
+        "DCC_MARGINPERCENTAGE",
+        "DCC_VALIDHOURS",
+        "DEVICEID",
+        "DIGESTCARDNO",
+        "ECI",
+        "ED",
+        "EMAIL",
+        "ENCCARDNO",
+        "FXAMOUNT",
+        "FXCURRENCY",
+        "IP",
+        "IPCTY",
+        "MANDATEID",
+        "MOBILEMODE",
+        "NBREMAILUSAGE",
+        "NBRIPUSAGE",
+        "NBRIPUSAGE_ALLTX",
+        "NBRUSAGE",
+        "NCERROR",
+        "ORDERID",
+        "PAYID",
+        "PAYIDSUB",
+        "PAYMENT_REFERENCE",
+        "PM",
+        "SCO_CATEGORY",
+        "SCORING",
+        "SEQUENCETYPE",
+        "SIGNDATE",
+        "STATUS",
+        "SUBBRAND",
+        "SUBSCRIPTION_ID",
+        "TICKET",
+        "TRXDATE",
+        "VC",
+    }
+)
+
+
 def get_absolute_uri():
     """Return the site absolute base URL used in payment callbacks.
 
@@ -66,8 +136,17 @@ class Ingenico:
 
         return sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
 
-    def process_parameters(self, parameters: dict, user: User, extra_hash: str | None = None) -> dict:
-        """Process and check if a minimum of parameters have been received."""
+    def process_parameters(
+        self, parameters: dict, user: User, extra_hash: str | None = None, *, paramvar: str | None = None
+    ) -> dict:
+        """Process and check if a minimum of parameters have been received.
+
+        :param paramvar: Optional value submitted as Ingenico's ``PARAMVAR`` field.
+            Ingenico substitutes it into the ``<PARAMVAR>`` placeholder of the
+            account's configured "Direct HTTP server-to-server request" URL,
+            letting that account-wide feedback URL resolve to a per-registration
+            path (see ``RegistrationPaymentCallbackView``).
+        """
         ingenico_parameters = {
             "CURRENCY": "EUR",
             "LANGUAGE": "en_US",
@@ -92,91 +171,29 @@ class Ingenico:
                 "ACCEPTURL": absolute_uri + parameters["RESULTURL"],
                 "DECLINEURL": absolute_uri + parameters["RESULTURL"],
                 "CANCELURL": absolute_uri + parameters["RESULTURL"],
+                "EXCEPTIONURL": absolute_uri + parameters["RESULTURL"],
                 "BACKURL": absolute_uri + parameters["CALLBACKURL"],
             }
         )
+        if paramvar:
+            ingenico_parameters["PARAMVAR"] = paramvar
 
         ingenico_parameters.update({"SHASIGN": self.hash_parameters(ingenico_parameters)})
 
         return ingenico_parameters
 
     @classmethod
-    def validate_out_parameters(cls, qs: QueryDict, *, outsalt: str) -> bool:
+    def validate_out_parameters(cls, query_params: QueryDict, *, outsalt: str) -> bool:
         """Check if the URL parameters have been tampered."""
 
-        parameters = qs.dict()
+        parameters = query_params.dict()
         shasign = parameters.pop("SHASIGN", None)
 
         string_to_hash = ""
-        sha_out_params = {  # https://shared.ecom-psp.com/v2/docs/guides/e-Commerce/SHA-OUT_params.txt
-            "AAVADDRESS",
-            "AAVCHECK",
-            "AAVMAIL",
-            "AAVNAME",
-            "AAVPHONE",
-            "AAVZIP",
-            "ACCEPTANCE",
-            "ALIAS",
-            "AMOUNT",
-            "BIC",
-            "BIN",
-            "BRAND",
-            "CARDNO",
-            "CCCTY",
-            "CN",
-            "COLLECTOR_BIC",
-            "COLLECTOR_IBAN",
-            "COMPLUS",
-            "CREATION_STATUS",
-            "CREDITDEBIT",
-            "CURRENCY",
-            "CVCCHECK",
-            "DCC_COMMPERCENTAGE",
-            "DCC_CONVAMOUNT",
-            "DCC_CONVCCY",
-            "DCC_EXCHRATE",
-            "DCC_EXCHRATESOURCE",
-            "DCC_EXCHRATETS",
-            "DCC_INDICATOR",
-            "DCC_MARGINPERCENTAGE",
-            "DCC_VALIDHOURS",
-            "DEVICEID",
-            "DIGESTCARDNO",
-            "ECI",
-            "ED",
-            "EMAIL",
-            "ENCCARDNO",
-            "FXAMOUNT",
-            "FXCURRENCY",
-            "IP",
-            "IPCTY",
-            "MANDATEID",
-            "MOBILEMODE",
-            "NBREMAILUSAGE",
-            "NBRIPUSAGE",
-            "NBRIPUSAGE_ALLTX",
-            "NBRUSAGE",
-            "NCERROR",
-            "ORDERID",
-            "PAYID",
-            "PAYIDSUB",
-            "PAYMENT_REFERENCE",
-            "PM",
-            "SCO_CATEGORY",
-            "SCORING",
-            "SEQUENCETYPE",
-            "SIGNDATE",
-            "STATUS",
-            "SUBBRAND",
-            "SUBSCRIPTION_ID",
-            "TICKET",
-            "TRXDATE",
-            "VC",
-        }
 
         for key in sorted(parameters):
             ku = key.upper()
-            if ku in sha_out_params and parameters[key]:
+            if ku in SHA_OUT_PARAMS and parameters[key]:
                 string_to_hash += f"{ku}={parameters[key]}{outsalt}"
 
         expected = sha512(string_to_hash.encode("utf-8")).hexdigest().upper()

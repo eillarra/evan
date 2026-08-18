@@ -168,6 +168,14 @@ class TestPaymentFormAttempts:
         assert attempt.status == RegistrationPaymentAttempt.PENDING
         assert attempt.expected_amount == payment_registration.remaining_fee
 
+    def test_payment_page_submits_paramvar_as_registration_uuid(self, client, payment_registration) -> None:
+        """PARAMVAR lets Ingenico's account-level feedback URL resolve to this registration's callback."""
+        client.force_login(payment_registration.user)
+
+        response = client.get(reverse("registration:payment", args=[payment_registration.uuid]))
+
+        assert response.context["ingenico_parameters"]["PARAMVAR"] == str(payment_registration.uuid)
+
     @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
     def test_pending_attempt_is_obsoleted_when_amount_increases(self, _mock_validate, payment_registration) -> None:
         """Increasing the amount due must obsolete the previously pending payment attempt."""
@@ -300,6 +308,33 @@ class TestPaymentCallbackHandlesAbort:
         payment_registration.refresh_from_db()
         assert attempt.status == RegistrationPaymentAttempt.FAILED
         assert payment_registration.unique_hash != original_hash
+
+    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    def test_cancel_callback_via_post_finalizes_attempt_and_rotates_hash(
+        self, _mock, client, payment_registration
+    ) -> None:
+        """Ingenico's back office lets the merchant choose GET or POST delivery; POST must behave identically."""
+        attempt = create_pending_attempt(payment_registration)
+        original_hash = payment_registration.unique_hash
+
+        client.post(self._callback_url(payment_registration), self._abort_callback_qs(attempt, status="1"))
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.CANCELLED
+        assert payment_registration.unique_hash != original_hash
+
+    @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
+    def test_success_callback_via_post_credits_payment(self, _mock, client, payment_registration) -> None:
+        attempt = create_pending_attempt(payment_registration, amount=795)
+        qs = callback_qs(attempt, payid="5451031176")
+
+        client.post(self._callback_url(payment_registration), qs)
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.SUCCEEDED
+        assert payment_registration.paid == 795
 
     @patch("evan.site.views.registrations.Ingenico.validate_out_parameters", return_value=True)
     def test_abort_then_retry_uses_fresh_order_id(self, _mock, client, payment_registration) -> None:

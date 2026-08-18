@@ -2,3 +2,4 @@
 
 from .emails import *
 from .cleanup import *
+from .payments import *
