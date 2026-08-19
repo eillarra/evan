@@ -1,6 +1,7 @@
 interface QuasarSelectOption {
   value: boolean | string | number | null;
   label: string;
+  disable?: boolean;
 }
 
 interface QuasarTableColumn {

@@ -3,4 +3,5 @@ export interface FieldOption {
   label: string;
   description?: string;
   is_default?: boolean;
+  disable?: boolean;
 }

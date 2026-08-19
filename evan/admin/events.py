@@ -12,8 +12,42 @@ from .rel.links import LinksInline
 from .rel.permissions import PermissionsInline
 
 
+class FeeInlineForm(forms.ModelForm):
+    """Admin form for Fee exposing ``max_registrations`` from the JSON config column."""
+
+    max_registrations = forms.IntegerField(
+        required=False,
+        min_value=1,
+        label="Max registrations",
+        help_text="Optional cap on the number of registrations for this fee type. Leave blank for no cap.",
+    )
+
+    class Meta:  # noqa: D106
+        model = Fee
+        fields = ["type", "online_only", "early_value", "value", "onsite_value", "notes", "max_registrations", "config"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields["max_registrations"].initial = (self.instance.config or {}).get("max_registrations")
+
+    def save(self, commit: bool = True):
+        instance = super().save(commit=False)
+        config = dict(instance.config or {})
+        max_registrations = self.cleaned_data.get("max_registrations")
+        if max_registrations:
+            config["max_registrations"] = max_registrations
+        else:
+            config.pop("max_registrations", None)
+        instance.config = config
+        if commit:
+            instance.save()
+        return instance
+
+
 class FeesInline(admin.TabularInline):
     model = Fee
+    form = FeeInlineForm
     classes = ("collapse",)
     extra = 0
 

@@ -49,6 +49,33 @@ def calculate_social_event_fees(registration: Registration) -> int:
     return extra_fees
 
 
+def enforce_fee_type_capacity(registration: Registration, previous: Registration | None = None) -> None:
+    """Raise ``ValueError`` if the registration's fee type is already at capacity.
+
+    A fee type is capped via ``Fee.config["max_registrations"]``. The count of
+    non-rejected registrations for that fee type (excluding the current
+    registration itself when updating) must stay below the configured cap.
+
+    :param registration: The registration being created or updated.
+    :param previous: The previous state of the registration when updating, or None on create.
+    :raises ValueError: If the fee type is sold out (the cap is reached).
+    """
+    fee = registration.event.fees_dict.get(registration.fee_type, None)
+    if not fee:
+        return
+
+    max_registrations = fee.config.get("max_registrations")
+    if not max_registrations:
+        return
+
+    reserved_qs = registration.event.registrations.exclude(is_accepted=False).filter(fee_type=registration.fee_type)
+    if previous and previous.pk:
+        reserved_qs = reserved_qs.exclude(pk=previous.pk)
+
+    if reserved_qs.count() >= max_registrations:
+        raise ValueError(f"Fee type {registration.fee_type} is sold out.")
+
+
 def calculate_registration_base_fee(registration: Registration) -> int:
     """
     Given a registration, calculate the base fee.
@@ -144,6 +171,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         else:
             previous = type(self).objects.get(pk=self.pk)
 
+        enforce_fee_type_capacity(self, previous=previous)
         self.base_fee = calculate_registration_base_fee(self)
 
         try:

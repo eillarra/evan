@@ -28,6 +28,7 @@
           v-model:extraData="mutableRegistration.extra_data"
           :fee-config="evanEvent?.registration_configuration?.fee_selection"
           :valid-fees="validFees"
+          :fees="evanEvent?.fees"
         />
         <q-select
           v-else
@@ -44,7 +45,20 @@
           <q-badge class="float-right text-body1 text-white text-weight-bold"
             >€ {{ isEarly ? selectedFee.early_value || selectedFee.value : selectedFee.value }}</q-badge
           >
-          <small>{{ selectedFee.notes }}</small>
+          <small>
+            <span>{{ selectedFee.notes }}</span>
+            <strong v-if="selectedFee.remaining_capacity !== null">
+              <span> - </span>
+              <template v-if="selectedFee.is_sold_out">{{ $t('fee.sold_out') }}</template>
+              <template v-else>
+                {{
+                  selectedFee.remaining_capacity === 1
+                    ? $t('fee.remaining_one')
+                    : $t('fee.remaining', { n: selectedFee.remaining_capacity })
+                }}</template
+              >
+            </strong>
+          </small>
         </p>
 
         <template v-if="registrationFormFields.length">
@@ -271,6 +285,7 @@
 import { computed, ref, watch, triggerRef } from 'vue';
 import { storeToRefs } from 'pinia';
 import { usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 
 import { useUserStore } from '@/stores/user';
 import { formatDate } from '@/utils/dates';
@@ -282,6 +297,8 @@ import AccompanyingPersons from '../components/AccompanyingPersons.vue';
 import FeeFormComponent from '../components/FeeFormComponent.vue';
 import ProfileInfoFields from '../components/ProfileInfoFields.vue';
 import RegistrationFormFields from '../components/RegistrationFormFields.vue';
+
+const { t } = useI18n();
 
 const defaultUserExtraData = (): UserExtraData => ({
   gender: '',
@@ -413,18 +430,37 @@ const showPaymentReminderBox = computed<boolean>(() => {
   return paymentReminderDemo.value;
 });
 
+const currentFeeType = computed<string>(() => registration.value?.fee_type || '');
+
 const feeOptions = computed<QuasarSelectOption[]>(() => {
   return (
     evanEvent.value?.fees.map((f: Fee) => ({
       value: f.type,
-      label: f.notes,
+      label: feeLabel(f),
+      disable: f.is_sold_out && f.type !== currentFeeType.value,
     })) || []
   );
 });
 
 const validFees = computed<string[]>(() => {
-  return evanEvent.value?.fees.map((f: Fee) => f.type) || [];
+  return (
+    evanEvent.value?.fees
+      .filter((f: Fee) => !f.is_sold_out || f.type === currentFeeType.value)
+      .map((f: Fee) => f.type) || []
+  );
 });
+
+function feeLabel(f: Fee): string {
+  const remaining = f.remaining_capacity;
+  if (f.is_sold_out) {
+    return `${f.notes} — ${t('fee.sold_out')}`;
+  }
+  if (remaining !== null && remaining <= 5) {
+    const key = remaining === 1 ? 'fee.remaining_one' : 'fee.remaining';
+    return `${f.notes} — ${t(key, { n: remaining })}`;
+  }
+  return f.notes;
+}
 
 const registrationFormFields = computed<ExtraDataField[]>(() => {
   return evanEvent.value?.registration_configuration?.form_fields || [];

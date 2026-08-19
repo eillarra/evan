@@ -208,4 +208,9 @@ export default {
   registrations: {
     download_excel: 'Inschrijvingen downloaden (Excel)',
   },
+  fee: {
+    remaining: '{n} resterend',
+    remaining_one: '1 resterend',
+    sold_out: 'Uitverkocht',
+  },
 };

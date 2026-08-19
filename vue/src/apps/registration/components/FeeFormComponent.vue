@@ -4,7 +4,7 @@
       <q-select
         v-model="formData[idx]"
         :label="criteria.question + ' *'"
-        :options="criteria.options"
+        :options="availableOptions(idx, criteria)"
         emit-value
         map-options
         dense
@@ -23,6 +23,16 @@
         />
       </template>
     </template>
+    <p v-if="composedFee && composedFee.remaining_capacity !== null" class="bg-blue-1 text-black q-mt-sm q-pa-md">
+      <small>
+        <template v-if="composedFee.is_sold_out">{{ $t('fee.sold_out') }}</template>
+        <template v-else>{{
+          composedFee.remaining_capacity === 1
+            ? $t('fee.remaining_one')
+            : $t('fee.remaining', { n: composedFee.remaining_capacity })
+        }}</template>
+      </small>
+    </p>
   </div>
 </template>
 
@@ -34,6 +44,7 @@ const emit = defineEmits(['update:fee', 'update:extraData']);
 const props = defineProps<{
   feeConfig: FeeSelectionConfig;
   validFees: string[];
+  fees?: Fee[];
 }>();
 
 const fee = defineModel<string>('fee');
@@ -61,6 +72,33 @@ const visibleCriteria = computed(() => {
   }
   return visible;
 });
+
+const composedFee = computed<Fee | undefined>(() => {
+  if (!props.fees || !fee.value) {
+    return undefined;
+  }
+  return props.fees.find((f) => f.type === fee.value);
+});
+
+function optionFeeType(idx: number, optionValue: string): string {
+  const parts = formData.value.map((value, i) => (i === idx ? optionValue : value));
+  return parts.filter((value) => value !== null).join('__');
+}
+
+function availableOptions(idx: number, criteria: SelectionCriteria): typeof criteria.options {
+  if (!props.fees) {
+    return criteria.options;
+  }
+  return criteria.options.map((option) => {
+    const feeType = optionFeeType(idx, option.value);
+    const matchingFee = props.fees?.find((f) => f.type === feeType);
+    const isCurrentFee = fee.value === feeType;
+    if (matchingFee?.is_sold_out && !isCurrentFee) {
+      return { ...option, disable: true };
+    }
+    return option;
+  });
+}
 
 const showExtraDataFields = (criteria: SelectionCriteria) => {
   if (!criteria.extra_data_fields) {

@@ -143,6 +143,43 @@ class TestRegistrationCreate:
         assert response.data["extra_data"]["paper_id"] == "P-123"
 
 
+@pytest.mark.api
+class TestRegistrationCreateFeeCap:
+    """Registration creation against a capped fee type that is sold out."""
+
+    @pytest.fixture
+    def capped_event(self, t_event):
+        """Add a capped ``phd`` fee (max 1) to the standard test event."""
+        from evan.models import Fee
+
+        Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
+        return t_event
+
+    def test_register_for_capped_fee_when_room_available(self, api_client, capped_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(capped_event), {"fee_type": "phd"})
+        assert response.status_code == status.CREATED
+
+    def test_register_for_sold_out_capped_fee_returns_400(self, api_client, capped_event, user) -> None:
+        """When the cap is reached, a new registration gets a clean 400, not a 500."""
+        # Fill the single slot.
+        RegistrationFactory(event=capped_event, user=UserFactory(), fee_type="phd")
+
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(capped_event), {"fee_type": "phd"})
+        assert response.status_code == status.BAD_REQUEST
+        assert "fee_type" in response.data
+        assert "sold out" in str(response.data["fee_type"])
+
+    def test_register_for_uncapped_fee_unaffected_by_cap(self, api_client, capped_event, user) -> None:
+        """The ``regular`` fee stays available even when ``phd`` is sold out."""
+        RegistrationFactory(event=capped_event, user=UserFactory(), fee_type="phd")
+
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(capped_event), {"fee_type": "regular"})
+        assert response.status_code == status.CREATED
+
+
 # ---------------------------------------------------------------------------
 # 3. Registration owner access
 # ---------------------------------------------------------------------------
@@ -208,3 +245,31 @@ class TestRegistrationOwnerAccess:
         api_client.force_authenticate(user=t_event_manager)
         response = api_client.patch(_detail_url(registration), {"visa_requested": True})
         assert response.status_code == status.FORBIDDEN
+
+    def test_owner_changing_fee_type_into_sold_out_returns_400(self, api_client, t_event, user) -> None:
+        """Switching a registration to a sold-out capped fee is rejected with 400."""
+        from evan.models import Fee
+
+        Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
+        # Fill the single slot with another user.
+        RegistrationFactory(event=t_event, user=UserFactory(), fee_type="phd")
+        # The owner has a `regular` registration.
+        own = RegistrationFactory(event=t_event, user=user, fee_type="regular")
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(own), {"fee_type": "phd"})
+        assert response.status_code == status.BAD_REQUEST
+        assert "fee_type" in response.data
+        assert "sold out" in str(response.data["fee_type"])
+
+    def test_owner_changing_fee_type_out_of_capped_frees_slot(self, api_client, t_event, user) -> None:
+        """Switching away from a capped fee frees the slot and succeeds."""
+        from evan.models import Fee
+
+        Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
+        # The owner holds the single `phd` slot.
+        own = RegistrationFactory(event=t_event, user=user, fee_type="phd")
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(own), {"fee_type": "regular"})
+        assert response.status_code == status.OK

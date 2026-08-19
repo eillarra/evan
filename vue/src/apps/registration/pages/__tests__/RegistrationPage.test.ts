@@ -58,6 +58,8 @@ const makeFee = (type: string, isOnline: boolean): Fee => ({
   onsite_value: null,
   notes: `${type} fee`,
   config: { included_social_events: [] },
+  is_sold_out: false,
+  remaining_capacity: null,
 });
 
 const makeEvent = (...fees: Fee[]) =>

@@ -8,6 +8,7 @@ interface BadgesConfig {
 
 interface FeeConfig {
   included_social_events: number[];
+  max_registrations?: number | null;
 }
 
 interface Fee {
@@ -18,6 +19,8 @@ interface Fee {
   onsite_value: number | null;
   notes: string;
   config: FeeConfig;
+  is_sold_out: boolean;
+  remaining_capacity: number | null;
 }
 
 interface Topic extends ApiObject {

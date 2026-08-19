@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { defineComponent, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
+import { createI18n } from 'vue-i18n';
 
 import FeeFormComponent from '../FeeFormComponent.vue';
 
@@ -23,6 +24,21 @@ const STUBS = {
   'q-select': QSelectStub,
   'q-input': true,
 };
+
+const i18n = createI18n({
+  legacy: false,
+  locale: 'en',
+  messages: {
+    en: {
+      fee: {
+        remaining: '{n} remaining',
+        remaining_one: '1 remaining',
+        sold_out: 'Sold out',
+      },
+    },
+  },
+  globalInjection: true,
+});
 
 /**
  * A simple two-level fee config:
@@ -56,7 +72,7 @@ const VALID_FEES = ['onsite__regular', 'onsite__student', 'online'];
 const mountFeeForm = async (fee = '', feeConfig = TWO_LEVEL_CONFIG) => {
   const wrapper = mount(FeeFormComponent, {
     props: { feeConfig, validFees: VALID_FEES, fee },
-    global: { stubs: STUBS },
+    global: { stubs: STUBS, plugins: [i18n] },
   });
   // onMounted initialises formData, then the watcher fires and visibleCriteria updates.
   // Two ticks are needed: one for onMounted, one for the reactive re-render.
@@ -149,7 +165,7 @@ describe('FeeFormComponent', () => {
     it('shows extra_data fields when the selected value matches show_for', async () => {
       const wrapper = mount(FeeFormComponent, {
         props: { feeConfig: CONFIG_WITH_EXTRA_FIELDS, validFees: ['onsite', 'online'], fee: '' },
-        global: { stubs: STUBS },
+        global: { stubs: STUBS, plugins: [i18n] },
       });
 
       await wrapper.find('select').setValue('onsite');
@@ -161,12 +177,73 @@ describe('FeeFormComponent', () => {
     it('hides extra_data fields when the selected value does not match show_for', async () => {
       const wrapper = mount(FeeFormComponent, {
         props: { feeConfig: CONFIG_WITH_EXTRA_FIELDS, validFees: ['onsite', 'online'], fee: '' },
-        global: { stubs: STUBS },
+        global: { stubs: STUBS, plugins: [i18n] },
       });
 
       await wrapper.find('select').setValue('online');
 
       expect(wrapper.find('q-input-stub').exists()).toBe(false);
+    });
+  });
+
+  describe('fee capacity display', () => {
+    const makeFee = (type: string, soldOut: boolean, remaining: number | null): Fee => ({
+      type,
+      online_only: false,
+      value: 0,
+      early_value: null,
+      onsite_value: null,
+      notes: `${type} fee`,
+      config: { included_social_events: [], max_registrations: remaining },
+      is_sold_out: soldOut,
+      remaining_capacity: remaining,
+    });
+
+    it('shows remaining capacity text when a capped fee is fully composed', async () => {
+      const fees: Fee[] = [
+        makeFee('onsite__regular', false, 5),
+        makeFee('onsite__student', false, 1),
+        makeFee('online', false, null),
+      ];
+
+      const wrapper = await mountFeeForm('', TWO_LEVEL_CONFIG);
+      await wrapper.setProps({ fees });
+
+      // Select onsite + regular → composed fee `onsite__regular` has 5 remaining.
+      await wrapper.findAll('select')[0].setValue('onsite');
+      await wrapper.findAll('select')[1].setValue('regular');
+      // Sync the fee prop as a v-model parent would.
+      await wrapper.setProps({ fee: 'onsite__regular' });
+      await nextTick();
+
+      expect(wrapper.text()).toContain('5 remaining');
+    });
+
+    it('shows sold out text when the composed fee is sold out', async () => {
+      const fees: Fee[] = [makeFee('onsite__regular', true, 0), makeFee('online', false, null)];
+
+      const wrapper = await mountFeeForm('', TWO_LEVEL_CONFIG);
+      await wrapper.setProps({ fees });
+
+      await wrapper.find('select').setValue('onsite');
+      await wrapper.findAll('select')[1].setValue('regular');
+      await wrapper.setProps({ fee: 'onsite__regular' });
+      await nextTick();
+
+      expect(wrapper.text()).toContain('Sold out');
+    });
+
+    it('shows no capacity text for uncapped fees', async () => {
+      const fees: Fee[] = [makeFee('online', false, null)];
+
+      const wrapper = await mountFeeForm('', TWO_LEVEL_CONFIG);
+      await wrapper.setProps({ fees });
+
+      await wrapper.find('select').setValue('online');
+      await nextTick();
+
+      expect(wrapper.text()).not.toContain('remaining');
+      expect(wrapper.text()).not.toContain('Sold out');
     });
   });
 });

@@ -14,9 +14,34 @@ from .venues import VenueReadOnlySerializer, VenueSerializer
 class FeeSerializer(serializers.ModelSerializer):
     """Serializer for event fees."""
 
+    is_sold_out = serializers.SerializerMethodField()
+    remaining_capacity = serializers.SerializerMethodField()
+
     class Meta:  # noqa: D106
         model = Fee
         exclude = ["event"]
+        read_only_fields = ["is_sold_out", "remaining_capacity"]
+
+    def _reserved_count(self, obj: Fee) -> int:
+        return obj.event.registrations.exclude(is_accepted=False).filter(fee_type=obj.type).count()
+
+    def get_remaining_capacity(self, obj: Fee) -> int | None:
+        """Return the number of registrations still available for this fee type.
+
+        :returns: The remaining capacity, or None when the fee type is uncapped.
+        """
+        max_registrations = obj.config.get("max_registrations")
+        if not max_registrations:
+            return None
+        return max(max_registrations - self._reserved_count(obj), 0)
+
+    def get_is_sold_out(self, obj: Fee) -> bool:
+        """Return whether the fee type has reached its configured registration cap.
+
+        :returns: True when the fee type is capped and no slots remain.
+        """
+        remaining = self.get_remaining_capacity(obj)
+        return remaining == 0
 
 
 class EventListSerializer(serializers.ModelSerializer):

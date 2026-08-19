@@ -303,4 +303,9 @@ export default {
   registrations: {
     download_excel: 'Download registrations (Excel)',
   },
+  fee: {
+    remaining: '{n} remaining',
+    remaining_one: '1 remaining',
+    sold_out: 'Sold out',
+  },
 };

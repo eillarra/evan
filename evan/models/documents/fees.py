@@ -42,6 +42,7 @@ class FeeConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
     included_social_events: list[int] = []
+    max_registrations: int | None = None
 
 
 def get_validated_fee_configuration(config) -> dict:

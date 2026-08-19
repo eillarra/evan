@@ -48,3 +48,9 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        try:
+            serializer.save()
+        except ValueError as exc:
+            raise ValidationError({"fee_type": [str(exc)]}) from exc
