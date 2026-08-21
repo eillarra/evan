@@ -23,7 +23,10 @@
     {% vite_asset vue_entry_point %}
   </head>
   <body>
-    {% block inertia %}{% endblock %}
+    {% block inertia %}
+      <script data-page="app" type="application/json">{{ page|safe }}</script>
+      <div id="app"></div>
+    {% endblock %}
   </body>
 </html>
 {% endspaceless %}
