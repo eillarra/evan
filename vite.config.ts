@@ -6,10 +6,10 @@ import vue from '@vitejs/plugin-vue';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 
 // read apps folder and create a list of entries
-const apps = fs.readdirSync(resolve(__dirname, './vue/src/apps'));
+const apps = fs.readdirSync(resolve(import.meta.dirname, './vue/src/apps'));
 const appsToBuild = {};
 apps.forEach((app) => {
-  appsToBuild[app] = resolve(__dirname, `./vue/src/apps/${app}/main.ts`);
+  appsToBuild[app] = resolve(import.meta.dirname, `./vue/src/apps/${app}/main.ts`);
 });
 
 // https://vitejs.dev/config/
@@ -34,7 +34,7 @@ export default defineConfig({
   resolve: {
     extensions: ['.vue', '.ts', '.js', '.json'],
     alias: {
-      '@': resolve(__dirname, './vue/src'),
+      '@': resolve(import.meta.dirname, './vue/src'),
     },
   },
   build: {
@@ -67,7 +67,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      reportsDirectory: resolve(__dirname, '.coverage_ts'),
+      reportsDirectory: resolve(import.meta.dirname, '.coverage_ts'),
     },
   },
 });
