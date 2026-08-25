@@ -17,14 +17,17 @@ const stubs = {
   'q-item': { template: '<div class="q-item"><slot name="avatar" /><slot /><slot name="side" /></div>' },
   'q-item-section': { template: '<div class="q-item-section"><slot /></div>' },
   'q-item-label': { template: '<span class="q-item-label"><slot /></span>' },
-  'q-checkbox': { template: '<input type="checkbox" />' },
-  'q-badge': { template: '<span class="q-badge"><slot /></span>' },
+  'q-checkbox': { props: ['disable'], template: '<input type="checkbox" :disabled="disable" />' },
+  'q-badge': { props: ['label'], template: '<span class="q-badge">{{ label }}<slot /></span>' },
   DietarySelect: { template: '<div class="dietary-select" />' },
 };
 
-const mountComponent = (modelValue: AccompanyingPerson[] = []) =>
+const mountComponent = (
+  modelValue: AccompanyingPerson[] = [],
+  isSessionDisabled: (session: Session, isSelectedByBearer: boolean) => boolean = () => false,
+) =>
   mount(AccompanyingPersons, {
-    props: { modelValue, socialEvents },
+    props: { modelValue, socialEvents, isSessionDisabled },
     global: { stubs },
   });
 
@@ -94,5 +97,16 @@ describe('AccompanyingPersons', () => {
     const wrapper = mountComponent(persons);
 
     expect(wrapper.text()).not.toContain('Additional fee');
+  });
+
+  it('disables and badges an unselected event when isSessionDisabled reports it full', () => {
+    const persons: AccompanyingPerson[] = [{ name: 'Alice', selected_social_events: [], dietary: 'none' }];
+    const isSessionDisabled = (session: Session) => session.id === 1;
+    const wrapper = mountComponent(persons, isSessionDisabled);
+
+    const checkboxes = wrapper.findAll('input[type="checkbox"]');
+    expect(checkboxes[0].attributes('disabled')).toBeDefined();
+    expect(checkboxes[1].attributes('disabled')).toBeUndefined();
+    expect(wrapper.text()).toContain('Full');
   });
 });

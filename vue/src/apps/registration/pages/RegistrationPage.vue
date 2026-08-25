@@ -76,15 +76,23 @@
           <q-list dense>
             <q-item v-for="session in socialEvents" :key="session.id" tag="label">
               <q-item-section avatar>
-                <q-checkbox v-model="selectedSocialEvents" :val="session.id" keep-color />
+                <q-checkbox
+                  v-model="selectedSocialEvents"
+                  :val="session.id"
+                  :disable="isSocialEventDisabledForRegistrant(session)"
+                  keep-color
+                />
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ session.title }}</q-item-label>
                 <q-item-label caption>{{ formatDate(session.start_at || '', 'dddd, MMMM D, YYYY') }}</q-item-label>
               </q-item-section>
-              <q-item-section v-show="selectedFee" side>
-                <q-badge v-if="includedSocialEvents.includes(session.id)" outline color="primary" label="Included" />
-                <q-badge v-else color="primary" :label="`+ € ${session.extra_attendees_fee}`" />
+              <q-item-section side>
+                <q-badge v-if="isSocialEventDisabledForRegistrant(session)" color="grey" outline label="Full" />
+                <template v-else-if="selectedFee">
+                  <q-badge v-if="includedSocialEvents.includes(session.id)" outline color="primary" label="Included" />
+                  <q-badge v-else color="primary" :label="`+ € ${session.extra_attendees_fee}`" />
+                </template>
               </q-item-section>
             </q-item>
           </q-list>
@@ -131,7 +139,11 @@
           "
         >
           <evan-section-title>Accompanying persons</evan-section-title>
-          <accompanying-persons v-model="accompaningPersons" :social-events="socialEvents" />
+          <accompanying-persons
+            v-model="accompaningPersons"
+            :social-events="socialEvents"
+            :is-session-disabled="isSocialEventDisabled"
+          />
         </template>
 
         <evan-section-title>Privacy</evan-section-title>
@@ -290,6 +302,7 @@ import { useI18n } from 'vue-i18n';
 import { useUserStore } from '@/stores/user';
 import { formatDate } from '@/utils/dates';
 import { normalizeNameIfAllCaps } from '@/utils/nameNormalization';
+import { isSessionSelectionDisabled, type SessionSelectionState } from '@/utils/sessionCapacity';
 import { useStore } from '../store';
 
 import DietarySelect from '@/components/DietarySelect.vue';
@@ -334,6 +347,32 @@ const isEarly = computed<boolean>(() => {
 });
 const socialEvents = computed<Session[]>(() => sessions.value?.filter((s: Session) => s.is_social_event) || []);
 const includedSocialEvents = computed<number[]>(() => selectedFee.value?.config.included_social_events || []);
+
+const originalSelectedSocialEvents = ref<number[]>([]);
+const originalAccompaningPersons = ref<AccompanyingPerson[]>([]);
+
+const currentSessionSelectionState = computed<SessionSelectionState>(() => ({
+  registrantSessionIds: selectedSocialEvents.value,
+  accompanyingPersonSessionIds: accompaningPersons.value.map((p) => p.selected_social_events),
+}));
+const originalSessionSelectionState = computed<SessionSelectionState>(() => ({
+  registrantSessionIds: originalSelectedSocialEvents.value,
+  accompanyingPersonSessionIds: originalAccompaningPersons.value.map((p) => p.selected_social_events),
+}));
+
+function isSocialEventDisabled(session: Session, isSelectedByBearer: boolean): boolean {
+  return isSessionSelectionDisabled(
+    session.id,
+    session.remaining_capacity,
+    isSelectedByBearer,
+    currentSessionSelectionState.value,
+    originalSessionSelectionState.value,
+  );
+}
+
+function isSocialEventDisabledForRegistrant(session: Session): boolean {
+  return isSocialEventDisabled(session, selectedSocialEvents.value.includes(session.id));
+}
 
 const mutableRegistration = ref<RegistrationData | undefined>(undefined);
 const saving = ref<boolean>(false);
@@ -653,6 +692,13 @@ watch(
       selectedSocialEvents.value = [];
       accompaningPersons.value = [];
     }
+
+    // Snapshot the persisted selections, used as the capacity baseline for this form session.
+    originalSelectedSocialEvents.value = [...selectedSocialEvents.value];
+    originalAccompaningPersons.value = accompaningPersons.value.map((p) => ({
+      ...p,
+      selected_social_events: [...p.selected_social_events],
+    }));
   },
   { immediate: true },
 );

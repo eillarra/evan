@@ -102,6 +102,43 @@ class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         return self.start_at is not None and self.end_at is not None
 
     @property
+    def attendee_count(self) -> int:
+        """Return the number of non-rejected registrants attending this session.
+
+        Counts main registrants (via the ``sessions`` M2M) plus accompanying
+        persons who selected this session in their registration's ``extra_data``.
+
+        :returns: The number of attendees currently reserving a slot.
+        """
+        count = self.registrations.exclude(is_accepted=False).count()
+
+        event_registrations = self.event.registrations.exclude(is_accepted=False)
+        for extra_data in event_registrations.exclude(extra_data={}).values_list("extra_data", flat=True):
+            for person in extra_data.get("accompanying_persons", []):
+                if self.id in person.get("selected_social_events", []):
+                    count += 1
+
+        return count
+
+    @property
+    def remaining_capacity(self) -> int | None:
+        """Return the number of attendee slots still available for this session.
+
+        :returns: The remaining capacity, or None when the session is uncapped.
+        """
+        if not self.max_attendees:
+            return None
+        return max(self.max_attendees - self.attendee_count, 0)
+
+    @property
+    def is_full(self) -> bool:
+        """Return whether the session has reached its configured attendee cap.
+
+        :returns: True when the session is capped and no slots remain.
+        """
+        return self.remaining_capacity == 0
+
+    @property
     def secret(self) -> str:
         """A secret string for the internship."""
         return sha256(f"{self.uuid}{settings.SECRET_KEY}".encode()).hexdigest()

@@ -1,5 +1,6 @@
 import uuid
 from hashlib import sha256
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.db import models
@@ -10,6 +11,10 @@ from django.utils import timezone
 
 from .base import NonEditableMixin, TagsMixin
 from .rel.remarks import RemarksMixin, append_remarks_tags
+
+
+if TYPE_CHECKING:
+    from .events import Event
 
 
 def calculate_accompanying_fees(registration: Registration) -> int:
@@ -47,6 +52,51 @@ def calculate_social_event_fees(registration: Registration) -> int:
         pass
 
     return extra_fees
+
+
+def enforce_session_capacity(session_ids: set[int], *, event: Event) -> None:
+    """Raise ``ValueError`` if any of the given sessions is at capacity.
+
+    Applies to any capped session (``Session.max_attendees``), not just social
+    events - some events also have a detailed, non-social session selector.
+
+    :param session_ids: The session IDs to check.
+    :param event: The event the sessions belong to.
+    :raises ValueError: If one of the sessions is already full.
+    """
+    if not session_ids:
+        return
+
+    for session in event.sessions.filter(id__in=session_ids, max_attendees__gt=0):
+        if session.is_full:
+            raise ValueError(f"Session '{session.title}' is full.")
+
+
+def enforce_accompanying_person_session_capacity(
+    registration: Registration, previous: Registration | None = None
+) -> None:
+    """Raise ``ValueError`` if an accompanying person is added to a full social event.
+
+    Accompanying persons can only select social events. The main registrant's
+    own session selections are enforced separately, via ``enforce_session_capacity``
+    on the ``sessions`` M2M's ``pre_add`` signal, since they are saved after the
+    registration row itself.
+
+    :param registration: The registration being created or updated.
+    :param previous: The previous state of the registration when updating, or None on create.
+    :raises ValueError: If a newly selected social event is already full.
+    """
+    previous_person_session_ids: set[int] = set()
+    if previous:
+        for person in previous.extra_data.get("accompanying_persons", []):
+            previous_person_session_ids.update(person.get("selected_social_events", []))
+
+    new_person_session_ids: set[int] = set()
+    for person in registration.extra_data.get("accompanying_persons", []):
+        new_person_session_ids.update(person.get("selected_social_events", []))
+
+    newly_added_ids = new_person_session_ids - previous_person_session_ids
+    enforce_session_capacity(newly_added_ids, event=registration.event)
 
 
 def enforce_fee_type_capacity(registration: Registration, previous: Registration | None = None) -> None:
@@ -172,6 +222,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
             previous = type(self).objects.get(pk=self.pk)
 
         enforce_fee_type_capacity(self, previous=previous)
+        enforce_accompanying_person_session_capacity(self, previous=previous)
         self.base_fee = calculate_registration_base_fee(self)
 
         try:
@@ -330,7 +381,15 @@ def registration_post_save(sender, instance, created, *args, **kwargs):
 
 @receiver(m2m_changed, sender=Registration.sessions.through)
 def registration_sessions_changed(sender, instance, **kwargs) -> None:
-    if kwargs.get("action") == "post_add":
+    action = kwargs.get("action")
+
+    if action == "pre_add":
+        pk_set = kwargs.get("pk_set") or set()
+        newly_added_ids = pk_set - set(instance.sessions.values_list("id", flat=True))
+        enforce_session_capacity(newly_added_ids, event=instance.event)
+        return
+
+    if action == "post_add":
         logs = list(RegistrationLog.objects.filter(registration_id=instance.id).values_list("session_id", flat=True))
         new_logs = []
 
@@ -340,9 +399,10 @@ def registration_sessions_changed(sender, instance, **kwargs) -> None:
         if new_logs:
             RegistrationLog.objects.bulk_create(new_logs)
 
-    instance.base_fee = calculate_registration_base_fee(instance)
-    instance.saldo = -instance.remaining_fee
-    instance.save()
+    if action in {"post_add", "post_remove", "post_clear"}:
+        instance.base_fee = calculate_registration_base_fee(instance)
+        instance.saldo = -instance.remaining_fee
+        instance.save()
 
 
 class RegistrationLog(NonEditableMixin, models.Model):

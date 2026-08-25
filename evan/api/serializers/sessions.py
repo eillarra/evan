@@ -11,6 +11,8 @@ class SessionReadOnlySerializer(serializers.ModelSerializer):
     files = FileSerializer(many=True, read_only=True)
     subsessions = SubsessionReadOnlySerializer(many=True, read_only=True)
     slug = serializers.SlugField(read_only=True)
+    remaining_capacity = serializers.IntegerField(read_only=True, allow_null=True)
+    is_full = serializers.BooleanField(read_only=True)
 
     class Meta:  # noqa: D106
         model = Session

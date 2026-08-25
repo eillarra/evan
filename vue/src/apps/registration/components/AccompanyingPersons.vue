@@ -21,14 +21,20 @@
       <q-list dense>
         <q-item v-for="event in socialEvents" :key="event.id" tag="label">
           <q-item-section avatar>
-            <q-checkbox v-model="person.selected_social_events" :val="event.id" keep-color />
+            <q-checkbox
+              v-model="person.selected_social_events"
+              :val="event.id"
+              :disable="isEventDisabled(event, person)"
+              keep-color
+            />
           </q-item-section>
           <q-item-section>
             <q-item-label>{{ event.title }}</q-item-label>
             <q-item-label caption>{{ formatDate(event.start_at || '', 'dddd, MMMM D, YYYY') }}</q-item-label>
           </q-item-section>
           <q-item-section side>
-            <q-badge color="primary" :label="`+ € ${event.extra_attendees_fee || 0}`" />
+            <q-badge v-if="isEventDisabled(event, person)" color="grey" outline label="Full" />
+            <q-badge v-else color="primary" :label="`+ € ${event.extra_attendees_fee || 0}`" />
           </q-item-section>
         </q-item>
       </q-list>
@@ -57,6 +63,7 @@ import { iconAdd, iconDelete } from '@/icons';
 const props = defineProps<{
   modelValue: AccompanyingPerson[];
   socialEvents: Session[];
+  isSessionDisabled: (session: Session, isSelectedByBearer: boolean) => boolean;
 }>();
 
 const emit = defineEmits<{
@@ -66,6 +73,10 @@ const emit = defineEmits<{
 function addPerson() {
   const newPersons = [...props.modelValue, { name: '', selected_social_events: [], dietary: 'none' as DietaryOption }];
   emit('update:modelValue', newPersons);
+}
+
+function isEventDisabled(event: Session, person: AccompanyingPerson): boolean {
+  return props.isSessionDisabled(event, person.selected_social_events.includes(event.id));
 }
 
 function removePerson(index: number) {

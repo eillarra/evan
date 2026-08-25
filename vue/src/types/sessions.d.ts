@@ -37,4 +37,6 @@ interface Session extends ApiObject, SessionData {
   updated_at: string;
   extra_data: SessionExtraData;
   subsessions?: Subsession[];
+  remaining_capacity: number | null;
+  is_full: boolean;
 }
