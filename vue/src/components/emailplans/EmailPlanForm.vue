@@ -298,6 +298,22 @@ const formData = ref({
   send_at: props.obj?.send_at || null,
 });
 
+// The list endpoint omits the full body (and bcc/reply-to) for performance,
+// so hydrate the form from the detail endpoint when an existing plan is opened.
+watch(
+  currentObj,
+  async (plan) => {
+    if (!plan || plan.body !== undefined) return;
+    const full = await store.fetchEmailPlan(plan);
+    Object.assign(formData.value, {
+      body: full.body,
+      bcc_email: full.bcc_email,
+      reply_to_email: full.reply_to_email,
+    });
+  },
+  { immediate: true },
+);
+
 async function createUpdate() {
   if (!formData.value.name || !formData.value.subject) return;
 

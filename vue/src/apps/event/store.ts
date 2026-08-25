@@ -752,6 +752,10 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  async function fetchEmailPlan(plan: EmailPlan): Promise<EmailPlan> {
+    return await api.get(plan.self).then((res) => res.data as EmailPlan);
+  }
+
   async function fetchEmailPlanLogs(planId: number) {
     if (!evanEvent.value) return [];
 
@@ -816,6 +820,7 @@ export const useStore = defineStore('evanEvent', () => {
     fetchSessions,
     fetchProgramData,
     fetchEmailPlans,
+    fetchEmailPlan,
     fetchEmailPlanLogs,
     fetchRecipientCount,
     duplicateEmailPlan,
