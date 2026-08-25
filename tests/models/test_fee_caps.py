@@ -146,9 +146,7 @@ class TestFeeDaysConfig:
             registration_start_date=dt("2026-03-01 00:00").date(),
             registration_deadline=dt("2026-08-31 23:59"),
         )
-        fee = Fee.objects.create(
-            event=event, type="phd", value=0, config={"days": ["2026-09-03", "2026-09-04"]}
-        )
+        fee = Fee.objects.create(event=event, type="phd", value=0, config={"days": ["2026-09-03", "2026-09-04"]})
 
         assert fee.config["days"] == ["2026-09-03", "2026-09-04"]
 

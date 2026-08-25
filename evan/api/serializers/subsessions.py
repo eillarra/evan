@@ -60,9 +60,12 @@ class SubsessionSerializer(FilesMixin, serializers.ModelSerializer):
             if hasattr(e, "message_dict"):
                 # ValidationError with field-specific errors
                 raise serializers.ValidationError(e.message_dict) from e
-            else:
+            elif hasattr(e, "messages"):
                 # ValidationError with general errors
-                raise serializers.ValidationError(e.messages if hasattr(e, "messages") else str(e)) from e
+                raise serializers.ValidationError(e.messages) from e
+            else:
+                # Unexpected shape: avoid exposing raw exception text
+                raise serializers.ValidationError("Invalid value.") from e
 
 
 class SubsessionWithSecretsSerializer(SubsessionSerializer):

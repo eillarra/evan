@@ -36,7 +36,7 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
         except IntegrityError as exc:
             raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]}) from exc
         except ValueError as exc:
-            raise ValidationError({"fee_type": [str(exc)]}) from exc
+            raise ValidationError({"non_field_errors": [str(exc)]}) from exc
 
 
 class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
@@ -53,4 +53,4 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         try:
             serializer.save()
         except ValueError as exc:
-            raise ValidationError({"fee_type": [str(exc)]}) from exc
+            raise ValidationError({"non_field_errors": [str(exc)]}) from exc

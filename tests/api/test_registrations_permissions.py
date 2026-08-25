@@ -168,8 +168,8 @@ class TestRegistrationCreateFeeCap:
         api_client.force_authenticate(user=user)
         response = api_client.post(_register_url(capped_event), {"fee_type": "phd"})
         assert response.status_code == status.BAD_REQUEST
-        assert "fee_type" in response.data
-        assert "sold out" in str(response.data["fee_type"])
+        assert "non_field_errors" in response.data
+        assert "sold out" in str(response.data["non_field_errors"])
 
     def test_register_for_uncapped_fee_unaffected_by_cap(self, api_client, capped_event, user) -> None:
         """The ``regular`` fee stays available even when ``phd`` is sold out."""
@@ -178,6 +178,51 @@ class TestRegistrationCreateFeeCap:
         api_client.force_authenticate(user=user)
         response = api_client.post(_register_url(capped_event), {"fee_type": "regular"})
         assert response.status_code == status.CREATED
+
+
+@pytest.mark.api
+class TestRegistrationCreateSessionCap:
+    """A session-capacity error surfaced via the registration endpoint uses the right key.
+
+    Accompanying-person social-event caps are enforced inside ``Registration.save()``,
+    so a full social event raises ``ValueError`` which the view converts into a 400.
+    The error must be reported under ``non_field_errors`` (it is not a fee problem),
+    never under a misleading ``fee_type`` key.
+    """
+
+    def test_full_social_event_returns_400_under_non_field_errors(self, api_client, t_event, user) -> None:
+        from evan.models import Session
+
+        social = Session.objects.create(
+            event=t_event,
+            title="Gala Dinner",
+            is_social_event=True,
+            max_attendees=1,
+        )
+        # Fill the single slot.
+        RegistrationFactory(
+            event=t_event,
+            user=UserFactory(),
+            fee_type="regular",
+            extra_data={"accompanying_persons": [{"name": "Jane", "selected_social_events": [social.id]}]},
+        )
+
+        api_client.force_authenticate(user=user)
+        response = api_client.post(
+            _register_url(t_event),
+            {
+                "fee_type": "regular",
+                "extra_data": {
+                    "accompanying_persons": [{"name": "Bob", "selected_social_events": [social.id]}],
+                },
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        assert "fee_type" not in response.data
+        assert "full" in str(response.data["non_field_errors"])
 
 
 # ---------------------------------------------------------------------------
@@ -259,8 +304,8 @@ class TestRegistrationOwnerAccess:
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(own), {"fee_type": "phd"})
         assert response.status_code == status.BAD_REQUEST
-        assert "fee_type" in response.data
-        assert "sold out" in str(response.data["fee_type"])
+        assert "non_field_errors" in response.data
+        assert "sold out" in str(response.data["non_field_errors"])
 
     def test_owner_changing_fee_type_out_of_capped_frees_slot(self, api_client, t_event, user) -> None:
         """Switching away from a capped fee frees the slot and succeeds."""
