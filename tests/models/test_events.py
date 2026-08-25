@@ -80,6 +80,7 @@ def test_invalid_onsite_deadline(t_event, reg_deadline, reg_onsite_deadline):
 @pytest.mark.django_db
 def test_registration_is_open_during_onsite_period(t_event):
     """Event is still open for registration during the on-site window."""
+    t_event.registration_start_date = convdate("2026-08-01")
     t_event.registration_deadline = convtime("2026-08-31 23:59")
     t_event.registration_onsite_deadline = convtime("2026-09-05 18:00")
     t_event.save()
@@ -92,6 +93,7 @@ def test_registration_is_open_during_onsite_period(t_event):
 @pytest.mark.django_db
 def test_registration_is_closed_after_onsite_deadline(t_event):
     """Event is closed for registration after the on-site deadline passes."""
+    t_event.registration_start_date = convdate("2026-08-01")
     t_event.registration_deadline = convtime("2026-08-31 23:59")
     t_event.registration_onsite_deadline = convtime("2026-09-05 18:00")
     t_event.save()
@@ -104,6 +106,7 @@ def test_registration_is_closed_after_onsite_deadline(t_event):
 @pytest.mark.django_db
 def test_registration_is_closed_after_regular_deadline_when_no_onsite(t_event):
     """Without an on-site deadline, registration closes at the regular deadline."""
+    t_event.registration_start_date = convdate("2026-08-01")
     t_event.registration_deadline = convtime("2026-08-31 23:59")
     t_event.registration_onsite_deadline = None
     t_event.save()
