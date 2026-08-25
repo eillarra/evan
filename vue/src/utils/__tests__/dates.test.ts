@@ -12,6 +12,11 @@ describe('formatDate', () => {
     const result = formatDate('2026-08-15T10:45:00', 'DD/MM/YYYY');
     expect(result).toBe('15/08/2026');
   });
+
+  it('formats a date with Quasar month-abbr token as MMM, not date-fns LLL', () => {
+    const result = formatDate('2026-08-15T18:01:00', 'MMM D, YYYY HH:mm');
+    expect(result).toBe('Aug 15, 2026 18:01');
+  });
 });
 
 describe('formatTimeRange', () => {

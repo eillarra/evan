@@ -349,7 +349,7 @@
             <div class="text-caption text-grey-7">Registration code</div>
             <div class="text-mono text-caption q-mt-sm">{{ registration.uuid }}</div>
             <div class="text-caption text-grey-7 q-mt-md">Updated</div>
-            <div class="text-caption">{{ formatDate(registration.updated_at, 'LLL d, yyyy HH:mm') }}</div>
+            <div class="text-caption">{{ formatDate(registration.updated_at, 'MMM D, YYYY HH:mm') }}</div>
           </div>
         </div>
 
