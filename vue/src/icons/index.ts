@@ -32,6 +32,7 @@ import {
   symSharpHistoryToggleOff,
   symSharpInfo,
   symSharpLabel,
+  symSharpList,
   symSharpLocalActivity,
   symSharpLock,
   symSharpLogin,
@@ -45,6 +46,8 @@ import {
   symSharpRadioButtonChecked,
   symSharpSearch,
   symSharpSchedule,
+  symSharpSend,
+  symSharpGroup,
   symSharpSlideshow,
   symSharpSplitscreenLeft,
   symSharpStackedEmail,
@@ -90,11 +93,13 @@ export const iconChatBadge = symSharpMarkChatUnread;
 export const iconContact = symSharpContacts;
 export const iconCoupon = symSharpLocalActivity;
 export const iconContent = symSharpWysiwyg;
+export const iconDuplicate = symSharpContentCopy;
 export const iconEmail = symSharpMail;
 export const iconEmails = symSharpStackedEmail;
 export const iconEvent = symSharpWidgets;
 export const iconImportantDates = symSharpEventAvailable;
 export const iconKeynote = symSharpForYou;
+export const iconLogs = symSharpList;
 export const iconPaper = symSharpContract;
 export const iconPayment = symSharpCreditCard;
 export const iconPlanning = symSharpViewWeek;
@@ -104,6 +109,8 @@ export const iconRoom = symSharpMeetingRoom;
 export const iconSession = symSharpEvent;
 export const iconSponsor = symSharpHandshake;
 export const iconStats = symSharpTableChartView;
+export const iconSend = symSharpSend;
+export const iconGroup = symSharpGroup;
 export const iconTime = symSharpSchedule;
 export const iconTimeDashed = symSharpHistoryToggleOff;
 export const iconVenue = symSharpPinDrop;

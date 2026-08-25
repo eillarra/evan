@@ -64,6 +64,12 @@
           </q-item-section>
           <q-item-section>— {{ $t('models.paper', 9) }}</q-item-section>
         </q-item>
+        <q-item clickable :to="{ name: 'emailplans' }" active-class="bg-ugent text-white">
+          <q-item-section avatar>
+            <q-icon :name="iconInfo" size="xs"></q-icon>
+          </q-item-section>
+          <q-item-section>{{ $t('send_emails') }}</q-item-section>
+        </q-item>
         <q-item-label header>Website</q-item-label>
         <q-item clickable :to="{ name: 'contents' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
@@ -102,6 +108,7 @@ import {
   iconEmails,
   iconEvent,
   iconImportantDates,
+  iconInfo,
   iconKeynote,
   iconLabel,
   iconPaper,

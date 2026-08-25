@@ -59,3 +59,53 @@ class EmailLog(TagsMixin, models.Model):
 
     def __str__(self) -> str:
         return f"{self.from_email} to {','.join(self.to)} - ({self.sent_at})"
+
+
+class EmailPlan(models.Model):
+    """A planned custom email to a filtered group of registrations.
+
+    ``filters`` is a JSON spec resolving registrations via ``evan.services.mailer.emailplans``.
+    Each sent email is logged as one :class:`EmailLog` tagged ``emailplan.id:<pk>``.
+    """
+
+    event = models.ForeignKey("evan.Event", related_name="email_plans", on_delete=models.CASCADE)
+    name = models.CharField(max_length=190)
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+    from_email = models.CharField(max_length=128, default="UGent <evan@ugent.be>")
+    bcc_email = models.EmailField(default="", blank=True)
+    reply_to_email = models.EmailField(default="", blank=True)
+    filters = models.JSONField(default=dict)
+    send_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        "evan.User", related_name="email_plans", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:  # noqa: D106
+        db_table = "evan_email_plan"
+        ordering = ["-send_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.event})"
+
+    @property
+    def bcc(self) -> list[str]:
+        """Get bcc email addresses as a list."""
+        return [self.bcc_email] if self.bcc_email else []
+
+    @property
+    def reply_to(self) -> list[str]:
+        """Get reply-to email addresses as a list, falling back to the default sender."""
+        return [self.reply_to_email] if self.reply_to_email else []
+
+    @property
+    def status(self) -> str:
+        """Lifecycle status: ``draft``, ``scheduled``, or ``sent``."""
+        if self.sent_at is not None:
+            return "sent"
+        if self.send_at is None:
+            return "draft"
+        return "scheduled"

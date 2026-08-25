@@ -95,50 +95,63 @@
           "
           :class="props.row._class || ''"
         >
-          <span v-if="props.col.name.startsWith('is_') || props.col.name.startsWith('has_')">
-            <q-icon v-if="props.value" :name="iconTableBoolTrue" color="green" :size="iconSize" />
-            <q-icon v-else-if="props.value === null" :name="iconTableCheckPending" color="orange-8" :size="iconSize" />
-            <q-icon v-else :name="iconTableBoolFalse" color="grey" :size="iconSize" />
-          </span>
-          <span v-else-if="props.col.name.endsWith('_badge')" class="q-gutter-x-xs">
-            <q-badge v-if="props.value" outline :label="props.value" color="dark" />
-          </span>
-          <span v-else-if="props.col.name == 'remarks'">
-            <remarks-dialog
-              :api-endpoint="props.row._remarks_endpoint"
-              :title="props.row._remarks_title || undefined"
-              :visibilityOptions="props.row._remarks_visibility_options || undefined"
-              :icon="props.value > 0 ? iconChatBadge : iconChat"
-              :icon-color="props.value > 0 ? 'dark' : 'grey-4'"
-            />
-          </span>
-          <span v-else-if="props.col.name.startsWith('steps_')" class="q-gutter-x-xs">
-            <q-icon v-for="(step, k) in props.value" :key="k" :name="step.icon" :color="step.color" :size="iconSize" />
-          </span>
-          <span v-else-if="props.col.name == 'disciplines'" class="q-gutter-x-xs">
-            <q-badge outline v-for="d in props.value" :key="d.code" :label="d.name" color="dark" />
-          </span>
-          <span v-else-if="props.col.name.startsWith('check_')" class="q-gutter-x-xs">
-            <span>{{ props.value[0] }}</span>
-            <q-icon
-              :name="props.value[1] == true ? iconTableCheck : iconTableCheckPending"
-              :color="props.value[1] == true ? 'dark' : 'orange-8'"
-              :size="iconSize"
-              class="q-ml-xs"
-            />
-          </span>
-          <div v-else-if="props.col.name.startsWith('progress_')" class="row full-width items-center">
-            <div class="col-9 q-pr-xs">
-              <q-linear-progress
-                rounded
-                :value="props.value / 100"
-                :color="props.value < 100 ? 'primary' : 'green'"
-                :instant-feedback="false"
+          <slot :name="`body-cell-${props.col.name}`" :props="props">
+            <span v-if="props.col.name.startsWith('is_') || props.col.name.startsWith('has_')">
+              <q-icon v-if="props.value" :name="iconTableBoolTrue" color="green" :size="iconSize" />
+              <q-icon
+                v-else-if="props.value === null"
+                :name="iconTableCheckPending"
+                color="orange-8"
+                :size="iconSize"
               />
+              <q-icon v-else :name="iconTableBoolFalse" color="grey" :size="iconSize" />
+            </span>
+            <span v-else-if="props.col.name.endsWith('_badge')" class="q-gutter-x-xs">
+              <q-badge v-if="props.value" outline :label="props.value" color="dark" />
+            </span>
+            <span v-else-if="props.col.name == 'remarks'">
+              <remarks-dialog
+                :api-endpoint="props.row._remarks_endpoint"
+                :title="props.row._remarks_title || undefined"
+                :visibilityOptions="props.row._remarks_visibility_options || undefined"
+                :icon="props.value > 0 ? iconChatBadge : iconChat"
+                :icon-color="props.value > 0 ? 'dark' : 'grey-4'"
+              />
+            </span>
+            <span v-else-if="props.col.name.startsWith('steps_')" class="q-gutter-x-xs">
+              <q-icon
+                v-for="(step, k) in props.value"
+                :key="k"
+                :name="step.icon"
+                :color="step.color"
+                :size="iconSize"
+              />
+            </span>
+            <span v-else-if="props.col.name == 'disciplines'" class="q-gutter-x-xs">
+              <q-badge outline v-for="d in props.value" :key="d.code" :label="d.name" color="dark" />
+            </span>
+            <span v-else-if="props.col.name.startsWith('check_')" class="q-gutter-x-xs">
+              <span>{{ props.value[0] }}</span>
+              <q-icon
+                :name="props.value[1] == true ? iconTableCheck : iconTableCheckPending"
+                :color="props.value[1] == true ? 'dark' : 'orange-8'"
+                :size="iconSize"
+                class="q-ml-xs"
+              />
+            </span>
+            <div v-else-if="props.col.name.startsWith('progress_')" class="row full-width items-center">
+              <div class="col-9 q-pr-xs">
+                <q-linear-progress
+                  rounded
+                  :value="props.value / 100"
+                  :color="props.value < 100 ? 'primary' : 'green'"
+                  :instant-feedback="false"
+                />
+              </div>
+              <div class="col text-right text-caption">{{ props.value }}%</div>
             </div>
-            <div class="col text-right text-caption">{{ props.value }}%</div>
-          </div>
-          <span v-else>{{ props.value }}</span>
+            <span v-else>{{ props.value }}</span>
+          </slot>
         </q-td>
       </template>
       <template #body-cell-email="props">

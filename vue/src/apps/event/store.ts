@@ -18,6 +18,7 @@ export const useStore = defineStore('evanEvent', () => {
   const sessions = ref<Session[]>([]);
   const sponsors = ref<Sponsor[]>([]);
   const venues = ref<Venue[]>([]);
+  const emailPlans = shallowRef<EmailPlan[]>([]);
 
   const { t } = useI18n();
 
@@ -694,6 +695,91 @@ export const useStore = defineStore('evanEvent', () => {
     });
   }
 
+  // Email Plans ------
+
+  async function fetchEmailPlans() {
+    if (!evanEvent.value) return;
+
+    return await api.get(evanEvent.value.self + 'emailplans/').then((res) => {
+      emailPlans.value = res.data;
+    });
+  }
+
+  async function createEmailPlan(data: Partial<EmailPlan>) {
+    if (!evanEvent.value) return;
+
+    return api.post(evanEvent.value.self + 'emailplans/', data).then((res) => {
+      emailPlans.value = [res.data, ...emailPlans.value];
+      notify.success(t('messages.email_plan_created'));
+      return res;
+    });
+  }
+
+  async function updateEmailPlan(plan: EmailPlan) {
+    return await api.put(plan.self, plan).then((res) => {
+      emailPlans.value = emailPlans.value.map((p) => (p.id === plan.id ? res.data : p));
+      notify.success(t('messages.email_plan_updated'));
+      return res;
+    });
+  }
+
+  async function removeEmailPlan(plan: EmailPlan) {
+    confirm(t('messages.email_plan_confirm_delete'), () => {
+      api.delete(plan.self).then(() => {
+        emailPlans.value = emailPlans.value.filter((p) => p.id !== plan.id);
+        notify.success(t('messages.email_plan_deleted'));
+      });
+    });
+  }
+
+  async function previewEmailPlan(plan: EmailPlan) {
+    return await api.post(plan.self + 'preview/').then((res) => res.data as { subject: string; body: string });
+  }
+
+  async function demoEmailPlan(plan: EmailPlan) {
+    return await api.post(plan.self + 'demo/').then(() => {
+      notify.success(t('messages.email_plan_demo_sent'));
+    });
+  }
+
+  async function sendEmailPlanNow(plan: EmailPlan) {
+    return await api.post(plan.self + 'send_now/').then((res) => {
+      emailPlans.value = emailPlans.value.map((p) =>
+        p.id === plan.id ? { ...p, sent_at: new Date().toISOString() } : p,
+      );
+      notify.success(t('messages.email_plan_sent', { count: res.data.sent }));
+      return res;
+    });
+  }
+
+  async function fetchEmailPlanLogs(planId: number) {
+    if (!evanEvent.value) return [];
+
+    return await api.get(evanEvent.value.self + `emailplans/${planId}/logs/`).then((res) => res.data as Email[]);
+  }
+
+  async function fetchRecipientCount(filters: EmailPlanFilters): Promise<number> {
+    if (!evanEvent.value) return 0;
+
+    return await api
+      .post(evanEvent.value.self + 'emailplans/recipients_count/', { filters })
+      .then((res) => res.data.count as number);
+  }
+
+  async function duplicateEmailPlan(plan: EmailPlan) {
+    return createEmailPlan({
+      name: plan.name + ' (copy)',
+      subject: plan.subject,
+      body: plan.body,
+      from_email: plan.from_email,
+      bcc_email: plan.bcc_email,
+      reply_to_email: plan.reply_to_email,
+      filters: plan.filters,
+      is_draft: true,
+      send_at: null,
+    });
+  }
+
   // Sessions Options ------
 
   const sessionOptions = computed<QuasarSelectOption[]>(() => {
@@ -720,6 +806,7 @@ export const useStore = defineStore('evanEvent', () => {
     createTrack,
     createVenue,
     createRoom,
+    createEmailPlan,
     fetchContents,
     fetchCoupons,
     fetchKeynotes,
@@ -728,11 +815,18 @@ export const useStore = defineStore('evanEvent', () => {
     fetchSponsors,
     fetchSessions,
     fetchProgramData,
+    fetchEmailPlans,
+    fetchEmailPlanLogs,
+    fetchRecipientCount,
+    duplicateEmailPlan,
     patchEvent,
     updateEvent,
     updateEventPartial,
     updateBadgeConfig,
     updateContent,
+    previewEmailPlan,
+    demoEmailPlan,
+    sendEmailPlanNow,
     updateCoupon,
     updateKeynote,
     updatePaper,
@@ -743,6 +837,7 @@ export const useStore = defineStore('evanEvent', () => {
     updateTrack,
     updateVenue,
     updateRoom,
+    updateEmailPlan,
     removeCoupon,
     removeKeynote,
     removePaper,
@@ -753,11 +848,13 @@ export const useStore = defineStore('evanEvent', () => {
     removeTrack,
     removeVenue,
     removeRoom,
+    removeEmailPlan,
     evanEvent,
     contents,
     coupons,
     couponIdsUsed,
     emails,
+    emailPlans,
     keynotes,
     papers,
     registrations,

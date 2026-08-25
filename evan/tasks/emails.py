@@ -84,3 +84,24 @@ The Evan Team
         subject=subject,
         text_content=message_body.strip(),
     )
+
+
+@db_periodic_task(crontab(minute="*/5"))
+def process_email_plans() -> None:
+    """Process due EmailPlans: resolve recipients, create EmailLog entries, mark sent.
+
+    A plan is due when ``send_at`` is set and in the past or now, and ``sent_at``
+    is still null. Plans with no ``send_at`` are drafts and are skipped.
+    Idempotency is guaranteed by ``execute_plan`` which atomically claims the
+    plan via ``update(sent_at=now())`` filtered by ``sent_at__isnull=True``.
+    """
+    from evan.models.emails import EmailPlan
+    from evan.services.mailer.emailplans import execute_plan
+
+    plans = EmailPlan.objects.filter(
+        send_at__isnull=False,
+        send_at__lte=now(),
+        sent_at__isnull=True,
+    )
+    for plan in plans:
+        execute_plan(plan)
