@@ -54,4 +54,20 @@ describe('MarkedTextarea', () => {
 
     expect(wrapper.findComponent({ name: 'marked-div' }).props('text')).toBe('updated text');
   });
+
+  it('re-syncs the textarea when the model value prop changes after mount', async () => {
+    const wrapper = mountMarkedTextarea('');
+
+    await wrapper.setProps({ modelValue: 'hydrated body' });
+
+    expect(wrapper.find('textarea').element.value).toBe('hydrated body');
+  });
+
+  it('clears the textarea when the model value prop is set to an empty string', async () => {
+    const wrapper = mountMarkedTextarea('existing content');
+
+    await wrapper.setProps({ modelValue: '' });
+
+    expect(wrapper.find('textarea').element.value).toBe('');
+  });
 });

@@ -36,4 +36,13 @@ const lineStyle = ref<string>('line-height: 1.3');
 watch(mutable, (val) => {
   emit('update:modelValue', val);
 });
+
+// Re-sync the internal ref when the parent updates the prop after mount
+// (e.g. when the form hydrates the body from the detail endpoint).
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val !== mutable.value) mutable.value = val;
+  },
+);
 </script>
