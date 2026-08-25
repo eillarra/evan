@@ -3,6 +3,14 @@
   align-self: flex-start;
 }
 
+.group-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 @media (min-width: 1024px) {
   .registration-summary-sidebar {
     position: sticky;
@@ -70,32 +78,122 @@
           />
         </template>
 
-        <template v-if="socialEvents.length > 0 && !isOnlineAttendee">
-          <evan-section-title>Social events</evan-section-title>
-          <p>Choose the social events you would like to attend:</p>
+        <template v-if="sortedProgramSessions.length > 0 && !isOnlineAttendee">
+          <evan-section-title>Sessions</evan-section-title>
+          <p v-if="programSessionSelectionEnabled">Select the sessions you would like to attend:</p>
+          <p v-else>Choose the sessions you will likely follow:</p>
           <q-list dense>
-            <q-item v-for="session in socialEvents" :key="session.id" tag="label">
+            <q-item
+              v-for="session in sortedProgramSessions"
+              :key="session.id"
+              tag="label"
+              :disable="isSocialEventDisabledForRegistrant(session)"
+            >
               <q-item-section avatar>
                 <q-checkbox
+                  v-if="!session.extra_data?.group"
                   v-model="selectedSocialEvents"
                   :val="session.id"
                   :disable="isSocialEventDisabledForRegistrant(session)"
                   keep-color
                 />
+                <q-radio
+                  v-else
+                  :model-value="getGroupedSessionSelection(session.extra_data.group)"
+                  :val="session.id"
+                  :disable="isSocialEventDisabledForRegistrant(session)"
+                  keep-color
+                  @click="toggleGroupedSession(session.extra_data.group, session.id)"
+                />
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ session.title }}</q-item-label>
-                <q-item-label caption>{{ formatDate(session.start_at || '', 'dddd, MMMM D, YYYY') }}</q-item-label>
+                <q-item-label caption
+                  ><span>{{ formatDate(session.start_at || '', 'dddd, MMMM D') }}</span>
+                  <template v-if="formatTimeRange(session.start_at, session.end_at)"
+                    >, {{ formatTimeRange(session.start_at, session.end_at) }}</template
+                  ></q-item-label
+                >
+              </q-item-section>
+              <q-item-section side>
+                <div
+                  v-if="session.extra_data?.group"
+                  class="group-dot"
+                  :style="{ backgroundColor: stringToColor(session.extra_data.group) }"
+                />
               </q-item-section>
               <q-item-section side>
                 <q-badge v-if="isSocialEventDisabledForRegistrant(session)" color="grey" outline label="Full" />
                 <template v-else-if="selectedFee">
                   <q-badge v-if="includedSocialEvents.includes(session.id)" outline color="primary" label="Included" />
-                  <q-badge v-else color="primary" :label="`+ € ${session.extra_attendees_fee}`" />
+                  <q-badge
+                    v-else-if="session.extra_attendees_fee > 0"
+                    color="primary"
+                    :label="`+ € ${session.extra_attendees_fee}`"
+                  />
                 </template>
               </q-item-section>
             </q-item>
           </q-list>
+        </template>
+
+        <template v-if="sortedSocialEvents.length > 0 && !isOnlineAttendee">
+          <evan-section-title>Social events</evan-section-title>
+          <p>Choose the social events you would like to attend:</p>
+          <q-list dense>
+            <q-item
+              v-for="session in sortedSocialEvents"
+              :key="session.id"
+              tag="label"
+              :disable="isSocialEventDisabledForRegistrant(session)"
+            >
+              <q-item-section avatar>
+                <q-checkbox
+                  v-if="!session.extra_data?.group"
+                  v-model="selectedSocialEvents"
+                  :val="session.id"
+                  :disable="isSocialEventDisabledForRegistrant(session)"
+                  keep-color
+                />
+                <q-radio
+                  v-else
+                  :model-value="getGroupedSessionSelection(session.extra_data.group)"
+                  :val="session.id"
+                  :disable="isSocialEventDisabledForRegistrant(session)"
+                  keep-color
+                  @click="toggleGroupedSession(session.extra_data.group, session.id)"
+                />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label>{{ session.title }}</q-item-label>
+                <q-item-label caption
+                  ><span>{{ formatDate(session.start_at || '', 'dddd, MMMM D') }}</span>
+                  <template v-if="formatTimeRange(session.start_at, session.end_at)"
+                    >, {{ formatTimeRange(session.start_at, session.end_at) }}</template
+                  ></q-item-label
+                >
+              </q-item-section>
+              <q-item-section side>
+                <div
+                  v-if="session.extra_data?.group"
+                  class="group-dot"
+                  :style="{ backgroundColor: stringToColor(session.extra_data.group) }"
+                />
+              </q-item-section>
+              <q-item-section side>
+                <q-badge v-if="isSocialEventDisabledForRegistrant(session)" color="grey" outline label="Full" />
+                <template v-else-if="selectedFee">
+                  <q-badge v-if="includedSocialEvents.includes(session.id)" outline color="primary" label="Included" />
+                  <q-badge
+                    v-else-if="session.extra_attendees_fee > 0"
+                    color="primary"
+                    :label="`+ € ${session.extra_attendees_fee}`"
+                  />
+                </template>
+              </q-item-section>
+            </q-item>
+          </q-list>
+
           <p v-if="socialEventFee" class="bg-blue-1 text-black q-my-md q-pa-md">
             <q-badge class="float-right text-body1 text-white text-weight-bold">€ {{ socialEventFee }}</q-badge>
             <small>Additional fee for selected social events</small>
@@ -219,7 +317,7 @@
             </div>
 
             <div
-              v-for="event in socialEvents"
+              v-for="event in summarySocialEvents"
               :key="event.id"
               v-show="selectedSocialEvents.includes(event.id)"
               class="row items-center q-mb-sm"
@@ -300,7 +398,8 @@ import { usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 
 import { useUserStore } from '@/stores/user';
-import { formatDate } from '@/utils/dates';
+import { formatDate, formatTimeRange } from '@/utils/dates';
+import { stringToColor } from '@/utils/groupColors';
 import { normalizeNameIfAllCaps } from '@/utils/nameNormalization';
 import { isSessionSelectionDisabled, type SessionSelectionState } from '@/utils/sessionCapacity';
 import { useStore } from '../store';
@@ -348,6 +447,49 @@ const isEarly = computed<boolean>(() => {
 const socialEvents = computed<Session[]>(() => sessions.value?.filter((s: Session) => s.is_social_event) || []);
 const includedSocialEvents = computed<number[]>(() => selectedFee.value?.config.included_social_events || []);
 
+const programSessionSelectionEnabled = computed<boolean>(
+  () => !!evanEvent.value?.registration_configuration?.program_session_selection,
+);
+
+const formSessions = computed<Session[]>(
+  () =>
+    sessions.value?.filter((s: Session) => {
+      if (s.is_social_event) return true;
+      if (s.is_private) return false;
+      if (programSessionSelectionEnabled.value) return true;
+      return s.extra_data?.selectable_in_form === true;
+    }) || [],
+);
+
+function sortByStartTime(sessions: Session[]): Session[] {
+  return [...sessions].sort((a, b) => {
+    const aTime = a.start_at ? new Date(a.start_at).getTime() : Number.MAX_SAFE_INTEGER;
+    const bTime = b.start_at ? new Date(b.start_at).getTime() : Number.MAX_SAFE_INTEGER;
+    return aTime - bTime;
+  });
+}
+
+const programSessionsInForm = computed<Session[]>(() => formSessions.value.filter((s: Session) => !s.is_social_event));
+
+const selectedFeeDays = computed<string[] | undefined>(() => selectedFee.value?.config.days);
+
+function sessionMatchesFeeDays(session: Session): boolean {
+  const days = selectedFeeDays.value;
+  if (!days || days.length === 0) return true;
+  if (!session.start_at) return false;
+  return days.includes(session.start_at.slice(0, 10));
+}
+
+const sortedProgramSessions = computed<Session[]>(() =>
+  sortByStartTime(programSessionsInForm.value.filter(sessionMatchesFeeDays)),
+);
+
+const sortedSocialEvents = computed<Session[]>(() => sortByStartTime(socialEvents.value));
+
+const summarySessions = computed<Session[]>(() => [...sortedProgramSessions.value, ...sortedSocialEvents.value]);
+
+const summarySocialEvents = computed<Session[]>(() => sortedSocialEvents.value);
+
 const originalSelectedSocialEvents = ref<number[]>([]);
 const originalAccompaningPersons = ref<AccompanyingPerson[]>([]);
 
@@ -372,6 +514,22 @@ function isSocialEventDisabled(session: Session, isSelectedByBearer: boolean): b
 
 function isSocialEventDisabledForRegistrant(session: Session): boolean {
   return isSocialEventDisabled(session, selectedSocialEvents.value.includes(session.id));
+}
+
+function getGroupedSessionSelection(group: string): number | null {
+  const groupSessions = summarySessions.value.filter((s) => s.extra_data?.group === group);
+  return groupSessions.find((s) => selectedSocialEvents.value.includes(s.id))?.id ?? null;
+}
+
+function toggleGroupedSession(group: string, sessionId: number): void {
+  const groupSessions = summarySessions.value.filter((s) => s.extra_data?.group === group);
+  const others = groupSessions.filter((s) => s.id !== sessionId).map((s) => s.id);
+  selectedSocialEvents.value = selectedSocialEvents.value.filter((id) => !others.includes(id));
+  if (selectedSocialEvents.value.includes(sessionId)) {
+    selectedSocialEvents.value = selectedSocialEvents.value.filter((id) => id !== sessionId);
+  } else {
+    selectedSocialEvents.value = [...selectedSocialEvents.value, sessionId];
+  }
 }
 
 const mutableRegistration = ref<RegistrationData | undefined>(undefined);
@@ -424,7 +582,7 @@ const allowContact = computed<boolean>({
 
 const socialEventFee = computed<number>(() => {
   return selectedSocialEvents.value.reduce((acc, id) => {
-    const session = socialEvents.value.find((s) => s.id === id);
+    const session = formSessions.value.find((s) => s.id === id);
     if (session && !includedSocialEvents.value.includes(session.id)) {
       return acc + session.extra_attendees_fee;
     }
@@ -617,19 +775,51 @@ const feeExtraDataIsValid = computed<boolean>(() => {
   return true;
 });
 
+function fieldShowsForFeeType(field: ExtraDataField, feeType: string | undefined): boolean {
+  return !field.show_for || field.show_for.length === 0 || (!!feeType && field.show_for.includes(feeType));
+}
+
+function fieldShowWhenMet(field: ExtraDataField, extraData: { [key: string]: unknown }): boolean {
+  if (!field.show_when) {
+    return true;
+  }
+  const [dependsOnCode, expectedValue] = field.show_when;
+  return extraData[dependsOnCode] === expectedValue;
+}
+
 const registrationFormFieldsAreValid = computed<boolean>(() => {
   if (!registrationFormFields.value.length) {
     return true;
   }
 
   const feeType = mutableRegistration.value?.fee_type;
+  const extraData = mutableRegistration.value?.extra_data || {};
 
   for (const field of registrationFormFields.value) {
-    const shouldShow =
-      !field.show_for || field.show_for.length === 0 || (!!feeType && field.show_for.includes(feeType));
+    if (!fieldShowsForFeeType(field, feeType) || !fieldShowWhenMet(field, extraData)) {
+      continue;
+    }
 
-    if (shouldShow && field.required && !hasFieldValue(mutableRegistration.value?.extra_data?.[field.code])) {
+    const value = extraData[field.code];
+
+    if (field.required && !hasFieldValue(value)) {
       return false;
+    }
+
+    if (field.options && field.options.length > 0) {
+      const optionValues = field.options.map((option) => option.value);
+      if (field.field_type === 'multiselect') {
+        if (Array.isArray(value) && !value.every((item) => optionValues.includes(item))) {
+          return false;
+        }
+      } else if (
+        value !== undefined &&
+        value !== null &&
+        value !== '' &&
+        !optionValues.includes(value as string | number)
+      ) {
+        return false;
+      }
     }
   }
 
@@ -656,9 +846,36 @@ watch(
     let changed = false;
 
     registrationFormFields.value.forEach((field) => {
-      const shouldShow =
-        !field.show_for || field.show_for.length === 0 || (!!feeType && field.show_for.includes(feeType));
-      if (!shouldShow && Object.prototype.hasOwnProperty.call(nextExtraData, field.code)) {
+      if (!fieldShowsForFeeType(field, feeType) && Object.prototype.hasOwnProperty.call(nextExtraData, field.code)) {
+        delete nextExtraData[field.code];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      mutableRegistration.value.extra_data = nextExtraData;
+    }
+  },
+);
+
+watch(
+  () =>
+    JSON.stringify(
+      registrationFormFields.value
+        .filter((field) => field.show_when)
+        .map((field) => mutableRegistration.value?.extra_data?.[field.show_when![0]]),
+    ),
+  () => {
+    if (!mutableRegistration.value || !registrationFormFields.value.length) {
+      return;
+    }
+
+    const extraData = mutableRegistration.value.extra_data || {};
+    const nextExtraData = { ...mutableRegistration.value.extra_data };
+    let changed = false;
+
+    registrationFormFields.value.forEach((field) => {
+      if (!fieldShowWhenMet(field, extraData) && Object.prototype.hasOwnProperty.call(nextExtraData, field.code)) {
         delete nextExtraData[field.code];
         changed = true;
       }

@@ -37,6 +37,9 @@ class EventRegistrationConfig(BaseModel):
     fee_selection: FeeSelectionConfig = None
     form_fields: list[ExtraDataField] = Field(default_factory=list)
     accompanying_persons: bool = Field(default=True, description="Whether the event accepts accompanying persons")
+    program_session_selection: bool = Field(
+        default=False, description="Whether all non-private program sessions appear in the registration form"
+    )
 
 
 class EventExtraData(BaseModel):

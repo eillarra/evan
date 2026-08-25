@@ -72,6 +72,33 @@ def enforce_session_capacity(session_ids: set[int], *, event: Event) -> None:
             raise ValueError(f"Session '{session.title}' is full.")
 
 
+def enforce_session_group_exclusivity(session_ids: set[int], *, registration: Registration) -> None:
+    """Raise ``ValueError`` if a newly selected session's group conflicts with another selection.
+
+    Sessions sharing the same ``extra_data.group`` value are mutually exclusive:
+    a registrant may pick at most one session per group. This guard runs in the
+    ``sessions`` M2M ``pre_add`` signal alongside ``enforce_session_capacity``.
+
+    :param session_ids: The session IDs being added in this M2M operation.
+    :param registration: The registration the sessions are being added to.
+    :raises ValueError: If a newly added session shares a group with an already-selected session.
+    """
+    if not session_ids:
+        return
+
+    new_sessions = registration.event.sessions.filter(id__in=session_ids)
+    existing_ids = set(registration.sessions.values_list("id", flat=True)) - session_ids
+    existing_sessions = registration.event.sessions.filter(id__in=existing_ids)
+
+    existing_groups = {
+        session.extra_data.get("group") for session in existing_sessions if session.extra_data.get("group")
+    }
+    for session in new_sessions:
+        group = session.extra_data.get("group")
+        if group and group in existing_groups:
+            raise ValueError(f"Session '{session.title}' conflicts with another selection in group '{group}'.")
+
+
 def enforce_accompanying_person_session_capacity(
     registration: Registration, previous: Registration | None = None
 ) -> None:
@@ -387,6 +414,7 @@ def registration_sessions_changed(sender, instance, **kwargs) -> None:
         pk_set = kwargs.get("pk_set") or set()
         newly_added_ids = pk_set - set(instance.sessions.values_list("id", flat=True))
         enforce_session_capacity(newly_added_ids, event=instance.event)
+        enforce_session_group_exclusivity(newly_added_ids, registration=instance)
         return
 
     if action == "post_add":

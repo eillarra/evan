@@ -1,6 +1,6 @@
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from .base import Committee, ImportantDate
 
@@ -12,6 +12,16 @@ class SessionExtraData(BaseModel):
 
     committees: list[Committee] = Field(default_factory=list)
     important_dates: list[ImportantDate] = Field(default_factory=list)
+    group: str | None = None
+    selectable_in_form: bool = False
+
+    @field_validator("group", mode="before")
+    @classmethod
+    def _normalize_group(cls, value: str | None) -> str | None:
+        """Treat an empty group string as no grouping."""
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
 
 
 def get_validated_session_extra_data(extra_data) -> dict:

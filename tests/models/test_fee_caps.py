@@ -136,6 +136,34 @@ class TestFeeCapConfigValidation:
         assert fee.config.get("max_registrations") is None
 
 
+class TestFeeDaysConfig:
+    """The fee config schema accepts and persists the optional ``days`` list."""
+
+    def test_days_persisted_in_config(self, db):
+        event = EventFactory(
+            start_date=dt("2026-09-01 00:00").date(),
+            end_date=dt("2026-09-05 00:00").date(),
+            registration_start_date=dt("2026-03-01 00:00").date(),
+            registration_deadline=dt("2026-08-31 23:59"),
+        )
+        fee = Fee.objects.create(
+            event=event, type="phd", value=0, config={"days": ["2026-09-03", "2026-09-04"]}
+        )
+
+        assert fee.config["days"] == ["2026-09-03", "2026-09-04"]
+
+    def test_days_defaults_to_empty_when_absent(self, db):
+        event = EventFactory(
+            start_date=dt("2026-09-01 00:00").date(),
+            end_date=dt("2026-09-05 00:00").date(),
+            registration_start_date=dt("2026-03-01 00:00").date(),
+            registration_deadline=dt("2026-08-31 23:59"),
+        )
+        fee = Fee.objects.create(event=event, type="full", value=500, config={})
+
+        assert fee.config.get("days", []) == []
+
+
 class TestFeeCapSerializerFields:
     """``FeeSerializer`` exposes ``is_sold_out`` and ``remaining_capacity``."""
 

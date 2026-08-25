@@ -207,7 +207,42 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
 
         sheets.append((pl.DataFrame(rows), f"SOCIAL - {social_event.title}"))
 
+    program_sessions = _get_program_sessions_for_export(event)
+    for program_session in program_sessions:
+        rows = []
+
+        for registration in program_session.registrations.filter(is_accepted=True).select_related("user"):
+            rows.append(
+                {
+                    "uuid": str(registration.uuid),
+                    "email": registration.user.email,
+                    "user": registration.user.name,
+                    "affiliation": registration.user.affiliation,
+                    "country": registration.user.country.name if registration.user.country else "-",
+                }
+            )
+
+        if rows:
+            sheets.append((pl.DataFrame(rows), f"PROGRAM - {program_session.title}"))
+
     return sheets
+
+
+def _get_program_sessions_for_export(event: Event):
+    """Return non-social sessions that appear in the registration form.
+
+    :param event: The event whose sessions are being exported.
+    :returns: A queryset of program sessions selectable in the registration form.
+    """
+    if event.registration_configuration.get("program_session_selection"):
+        return event.sessions.filter(is_social_event=False, is_private=False)  # type: ignore
+
+    selectable_ids = [
+        session.id
+        for session in event.sessions.filter(is_social_event=False, is_private=False)  # type: ignore
+        if session.extra_data.get("selectable_in_form") is True
+    ]
+    return event.sessions.filter(id__in=selectable_ids)  # type: ignore
 
 
 def _get_excel_serializable_extra_value(value):

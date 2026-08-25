@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDate, sumHours } from '../dates';
+import { formatDate, formatTimeRange, sumHours } from '../dates';
 
 describe('formatDate', () => {
   it('uses the default YYYY-MM-DD HH:mm format when none is given', () => {
@@ -11,6 +11,24 @@ describe('formatDate', () => {
   it('honours a custom format string', () => {
     const result = formatDate('2026-08-15T10:45:00', 'DD/MM/YYYY');
     expect(result).toBe('15/08/2026');
+  });
+});
+
+describe('formatTimeRange', () => {
+  it('formats a start and end time as HH:mm-HH:mm', () => {
+    expect(formatTimeRange('2026-09-03T10:00:00', '2026-09-03T11:30:00')).toBe('10:00-11:30');
+  });
+
+  it('returns only the start time when no end is given', () => {
+    expect(formatTimeRange('2026-09-03T10:00:00')).toBe('10:00');
+  });
+
+  it('returns an empty string when no start is given', () => {
+    expect(formatTimeRange('', '2026-09-03T11:30:00')).toBe('');
+  });
+
+  it('returns an empty string when both start and end are missing', () => {
+    expect(formatTimeRange()).toBe('');
   });
 });
 

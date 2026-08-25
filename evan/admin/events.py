@@ -13,7 +13,7 @@ from .rel.permissions import PermissionsInline
 
 
 class FeeInlineForm(forms.ModelForm):
-    """Admin form for Fee exposing ``max_registrations`` from the JSON config column."""
+    """Admin form for Fee exposing config fields from the JSON config column."""
 
     max_registrations = forms.IntegerField(
         required=False,
@@ -21,15 +21,36 @@ class FeeInlineForm(forms.ModelForm):
         label="Max registrations",
         help_text="Optional cap on the number of registrations for this fee type. Leave blank for no cap.",
     )
+    days = forms.CharField(
+        required=False,
+        label="Days",
+        help_text=(
+            "Comma-separated ISO dates (YYYY-MM-DD) the fee grants access to. "
+            "Leave blank to show all program/parallel sessions."
+        ),
+        widget=forms.TextInput(attrs={"size": 60}),
+    )
 
     class Meta:  # noqa: D106
         model = Fee
-        fields = ["type", "online_only", "early_value", "value", "onsite_value", "notes", "max_registrations", "config"]
+        fields = [
+            "type",
+            "online_only",
+            "early_value",
+            "value",
+            "onsite_value",
+            "notes",
+            "max_registrations",
+            "days",
+            "config",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.fields["max_registrations"].initial = (self.instance.config or {}).get("max_registrations")
+            days = (self.instance.config or {}).get("days") or []
+            self.fields["days"].initial = ", ".join(days)
 
     def save(self, commit: bool = True):
         instance = super().save(commit=False)
@@ -39,6 +60,14 @@ class FeeInlineForm(forms.ModelForm):
             config["max_registrations"] = max_registrations
         else:
             config.pop("max_registrations", None)
+
+        days_raw = self.cleaned_data.get("days") or ""
+        days = [d.strip() for d in days_raw.split(",") if d.strip()]
+        if days:
+            config["days"] = days
+        else:
+            config.pop("days", None)
+
         instance.config = config
         if commit:
             instance.save()

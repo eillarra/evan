@@ -1,6 +1,8 @@
 interface SessionExtraData {
   committees: Committee[];
   important_dates: ImportantDate[];
+  group?: string | null;
+  selectable_in_form?: boolean;
 }
 
 interface SubsessionData {
@@ -27,6 +29,7 @@ interface SessionData {
   topics?: number[];
   room?: number | null;
   is_social_event: boolean;
+  is_private: boolean;
   extra_attendees_fee: number;
   extra_data?: SessionExtraData;
 }

@@ -90,6 +90,7 @@ const makeSocialSession = (): Session =>
     is_social_event: true,
     title: 'Gala Dinner',
     start_at: '2026-09-01T19:00:00',
+    end_at: '2026-09-01T22:30:00',
     extra_attendees_fee: 50,
     slug: 'gala-dinner',
     code: 'GALA',
@@ -135,6 +136,12 @@ const GLOBAL_STUBS = {
   'q-page': { template: '<div><slot /></div>' },
   'q-input': true,
   'q-checkbox': true,
+  'q-radio': {
+    props: ['modelValue', 'val', 'disable'],
+    emits: ['click', 'update:modelValue'],
+    template:
+      '<input type="radio" :data-val="val" :data-checked="modelValue === val" :disabled="disable" @click="$emit(\'click\', $event)" />',
+  },
   'q-list': { template: '<div><slot /></div>' },
   'q-item': { template: '<label><slot /></label>' },
   'q-item-section': { template: '<div><slot /></div>' },
@@ -164,6 +171,9 @@ const mountPage = () =>
     global: {
       plugins: [pinia, i18n],
       stubs: GLOBAL_STUBS,
+      directives: {
+        ripple: () => {},
+      },
     },
   });
 
@@ -546,6 +556,452 @@ describe('RegistrationPage', () => {
       expect(wrapper.text()).not.toContain('Social events');
       expect(wrapper.text()).not.toContain('Special needs');
       expect(wrapper.text()).not.toContain('Accompanying persons');
+    });
+  });
+
+  describe('Program sessions in registration form', () => {
+    const makeProgramSession = (id: number, title: string, extra: Partial<SessionExtraData> = {}): Session =>
+      ({
+        id,
+        is_social_event: false,
+        is_private: false,
+        title,
+        start_at: '2026-09-03T10:00:00',
+        extra_attendees_fee: 0,
+        slug: `session-${id}`,
+        code: `S${id}`,
+        description: '',
+        extra_data: { committees: [], important_dates: [], ...extra },
+      }) as any;
+
+    it('shows program sessions marked selectable_in_form when program_session_selection is false', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeProgramSession(10, 'Tutorial: Chisel')];
+      mockPageProps.sessions[0].extra_data!.selectable_in_form = true;
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('Tutorial: Chisel');
+    });
+
+    it('hides program sessions without selectable_in_form when program_session_selection is false', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeProgramSession(10, 'Hidden talk')];
+
+      await nextTick();
+
+      expect(wrapper.text()).not.toContain('Hidden talk');
+    });
+
+    it('shows all non-private program sessions when program_session_selection is true', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = {
+        ...makeEvent(makeFee('onsite__regular', false)),
+        registration_configuration: {
+          fee_selection: null,
+          form_fields: [],
+          accompanying_persons: true,
+          program_session_selection: true,
+        },
+      } as any;
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeProgramSession(10, 'Any talk')];
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('Any talk');
+    });
+
+    it('hides private sessions even when program_session_selection is true', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = {
+        ...makeEvent(makeFee('onsite__regular', false)),
+        registration_configuration: {
+          fee_selection: null,
+          form_fields: [],
+          accompanying_persons: true,
+          program_session_selection: true,
+        },
+      } as any;
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeProgramSession(10, 'Closed door', {})];
+      mockPageProps.sessions[0].is_private = true;
+
+      await nextTick();
+
+      expect(wrapper.text()).not.toContain('Closed door');
+    });
+
+    it('renders grouped sessions inline in the sorted list', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(11, 'Track c-H', { group: 'Parallel slot 1', selectable_in_form: true }),
+        makeProgramSession(12, 'Journal j-B', { group: 'Parallel slot 1', selectable_in_form: true }),
+      ];
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('Track c-H');
+      expect(wrapper.text()).toContain('Journal j-B');
+    });
+
+    it('deselects a grouped session when its selected radio is clicked again', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(11, 'Track c-H', { group: 'Parallel slot 1', selectable_in_form: true }),
+        makeProgramSession(12, 'Journal j-B', { group: 'Parallel slot 1', selectable_in_form: true }),
+      ];
+
+      await nextTick();
+
+      const radios = wrapper.findAll('input[type="radio"]');
+      expect(radios).toHaveLength(2);
+
+      // Select the first option in the group.
+      await radios[0].trigger('click');
+      await nextTick();
+      expect(radios[0].attributes('data-checked')).toBe('true');
+      expect(radios[1].attributes('data-checked')).toBe('false');
+
+      // Click the already-selected radio again — it should deselect.
+      await radios[0].trigger('click');
+      await nextTick();
+      expect(radios[0].attributes('data-checked')).toBe('false');
+      expect(radios[1].attributes('data-checked')).toBe('false');
+    });
+
+    it('switches selection within a group when a sibling radio is clicked', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(11, 'Track c-H', { group: 'Parallel slot 1', selectable_in_form: true }),
+        makeProgramSession(12, 'Journal j-B', { group: 'Parallel slot 1', selectable_in_form: true }),
+      ];
+
+      await nextTick();
+
+      const radios = wrapper.findAll('input[type="radio"]');
+
+      // Select the first option.
+      await radios[0].trigger('click');
+      await nextTick();
+      expect(radios[0].attributes('data-checked')).toBe('true');
+
+      // Click the sibling — selection must move, not accumulate.
+      await radios[1].trigger('click');
+      await nextTick();
+      expect(radios[0].attributes('data-checked')).toBe('false');
+      expect(radios[1].attributes('data-checked')).toBe('true');
+    });
+
+    it('renders a color dot for grouped sessions', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(11, 'Track c-H', { group: 'Parallel slot 1', selectable_in_form: true }),
+        makeProgramSession(12, 'Journal j-B', { group: 'Parallel slot 1', selectable_in_form: true }),
+      ];
+
+      await nextTick();
+
+      const dots = wrapper.findAll('.group-dot');
+      expect(dots).toHaveLength(2);
+      // Same group → same color.
+      expect(dots[0].attributes('style')).toBe(dots[1].attributes('style'));
+    });
+
+    it('uses different colors for different groups', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(11, 'Track c-H', { group: 'Parallel slot 1', selectable_in_form: true }),
+        makeProgramSession(12, 'Journal j-B', { group: 'Parallel slot 2', selectable_in_form: true }),
+      ];
+
+      await nextTick();
+
+      const dots = wrapper.findAll('.group-dot');
+      expect(dots).toHaveLength(2);
+      expect(dots[0].attributes('style')).not.toBe(dots[1].attributes('style'));
+    });
+
+    it('sorts sessions by start time', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(20, 'Late talk', { selectable_in_form: true }),
+        makeProgramSession(10, 'Early talk', { selectable_in_form: true }),
+      ];
+      mockPageProps.sessions[0].start_at = '2026-09-05T14:00:00';
+      mockPageProps.sessions[1].start_at = '2026-09-05T09:00:00';
+
+      await nextTick();
+
+      const text = wrapper.text();
+      const earlyIdx = text.indexOf('Early talk');
+      const lateIdx = text.indexOf('Late talk');
+      expect(earlyIdx).toBeLessThan(lateIdx);
+    });
+
+    it('renders ungrouped program sessions alongside social events', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeSocialSession(), makeProgramSession(20, 'Workshop: FINN')];
+      mockPageProps.sessions[1].extra_data!.selectable_in_form = true;
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('Gala Dinner');
+      expect(wrapper.text()).toContain('Workshop: FINN');
+    });
+
+    it('shows a Sessions block before Social events when program sessions are selectable', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(20, 'Workshop: FINN', { selectable_in_form: true }),
+        makeSocialSession(),
+      ];
+
+      await nextTick();
+
+      const text = wrapper.text();
+      const sessionsIdx = text.indexOf('Sessions');
+      const socialIdx = text.indexOf('Social events');
+      expect(sessionsIdx).toBeGreaterThanOrEqual(0);
+      expect(socialIdx).toBeGreaterThanOrEqual(0);
+      expect(sessionsIdx).toBeLessThan(socialIdx);
+      expect(text).toContain('Workshop: FINN');
+      expect(text).toContain('Gala Dinner');
+    });
+
+    it('uses the regular subtitle when program_session_selection is enabled', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = {
+        ...makeEvent(makeFee('onsite__regular', false)),
+        registration_configuration: {
+          fee_selection: null,
+          form_fields: [],
+          accompanying_persons: true,
+          program_session_selection: true,
+        },
+      } as any;
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeProgramSession(10, 'Any talk')];
+
+      await nextTick();
+
+      const text = wrapper.text();
+      expect(text).toContain('Sessions');
+      expect(text).toContain('Select the sessions you would like to attend:');
+    });
+
+    it('uses the constrained subtitle when program_session_selection is disabled', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeProgramSession(10, 'Any talk', { selectable_in_form: true })];
+
+      await nextTick();
+
+      const text = wrapper.text();
+      expect(text).toContain('Sessions');
+      expect(text).toContain('Choose the sessions you will likely follow:');
+      expect(text).not.toContain('Select the sessions you would like to attend:');
+    });
+
+    it('does not render a sessions block when only social events exist', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeSocialSession()];
+
+      await nextTick();
+
+      const text = wrapper.text();
+      expect(text).toContain('Social events');
+      expect(text).not.toContain('Sessions');
+    });
+
+    it('shows the session time range next to the date caption', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(10, 'Workshop: Chisel', { selectable_in_form: true }),
+        makeSocialSession(),
+      ];
+      mockPageProps.sessions[0].start_at = '2026-09-03T10:00:00';
+      mockPageProps.sessions[0].end_at = '2026-09-03T11:30:00';
+
+      await nextTick();
+
+      const text = wrapper.text();
+      expect(text).toContain('10:00-11:30');
+    });
+
+    it('never shows program sessions in the summary box', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(10, 'Workshop: Chisel', { selectable_in_form: true }),
+        makeSocialSession(),
+      ];
+
+      await nextTick();
+
+      const summary = wrapper.find('.registration-summary-sidebar');
+      expect(summary.text()).not.toContain('Workshop: Chisel');
+    });
+
+    it('filters program sessions by the selected fee days config', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      const dayFee: Fee = {
+        ...makeFee('onsite__regular', false),
+        config: { included_social_events: [], days: ['2026-09-03'] },
+      };
+      store.evanEvent = makeEvent(dayFee);
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(10, 'Wednesday workshop', { selectable_in_form: true }),
+        makeProgramSession(20, 'Thursday keynote', { selectable_in_form: true }),
+      ];
+      mockPageProps.sessions[0].start_at = '2026-09-03T09:00:00';
+      mockPageProps.sessions[1].start_at = '2026-09-04T09:00:00';
+
+      await nextTick();
+
+      const text = wrapper.text();
+      expect(text).toContain('Wednesday workshop');
+      expect(text).not.toContain('Thursday keynote');
+    });
+
+    it('shows all program sessions when the fee has no days config', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [
+        makeProgramSession(10, 'Wednesday workshop', { selectable_in_form: true }),
+        makeProgramSession(20, 'Thursday keynote', { selectable_in_form: true }),
+      ];
+      mockPageProps.sessions[0].start_at = '2026-09-03T09:00:00';
+      mockPageProps.sessions[1].start_at = '2026-09-04T09:00:00';
+
+      await nextTick();
+
+      const text = wrapper.text();
+      expect(text).toContain('Wednesday workshop');
+      expect(text).toContain('Thursday keynote');
     });
   });
 });

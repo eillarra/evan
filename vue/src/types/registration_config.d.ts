@@ -4,6 +4,9 @@ interface ExtraDataField {
   field_type: string;
   required: boolean;
   show_for?: string[];
+  show_when?: [string, string];
+  options?: FieldOption[];
+  description?: string;
 }
 
 interface SelectionCriteria {
@@ -22,4 +25,5 @@ interface EvanEventRegistrationConfig {
   accompanying_persons: boolean;
   fee_selection: FeeSelectionConfig | null;
   form_fields: ExtraDataField[];
+  program_session_selection?: boolean;
 }

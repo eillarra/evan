@@ -6,13 +6,23 @@ from .forms import FieldOption
 
 
 class ExtraDataField(BaseModel):
-    """An extra data field for selection criteria."""
+    """An extra data field for selection criteria.
+
+    Supported ``field_type`` values: ``text``, ``number``, ``checkbox``,
+    ``radio``, ``select``, ``multiselect``, ``time``. The ``radio``,
+    ``select``, and ``multiselect`` types require ``options``. The ``show_when``
+    pair ``[field_code, expected_value]`` makes the field visible only when
+    another field has the specified value.
+    """
 
     code: str
     label: str
     field_type: str
     required: bool = False
     show_for: list[str] | None = None
+    show_when: tuple[str, str] | None = None
+    options: list[FieldOption] | None = None
+    description: str | None = None
 
 
 class SelectionCriteria(BaseModel):
@@ -43,6 +53,7 @@ class FeeConfig(BaseModel):
 
     included_social_events: list[int] = []
     max_registrations: int | None = None
+    days: list[str] = []
 
 
 def get_validated_fee_configuration(config) -> dict:

@@ -9,6 +9,7 @@ interface BadgesConfig {
 interface FeeConfig {
   included_social_events: number[];
   max_registrations?: number | null;
+  days?: string[];
 }
 
 interface Fee {
