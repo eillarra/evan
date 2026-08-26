@@ -155,10 +155,12 @@ class UGentBridge:
         """Process and check if a minimum of parameters have been received.
 
         :param paramvar: Optional value submitted as Worldline's ``PARAMVAR`` field.
-            Worldline substitutes it into the ``<PARAMVAR>`` placeholder of the
-            account's configured "Direct HTTP server-to-server request" URL,
-            letting that account-wide feedback URL resolve to a per-registration
-            path (see ``RegistrationPaymentCallbackView``).
+            UGent's Pay currently reuses the per-payment browser-redirect URL
+            (ACCEPTURL/DECLINEURL/CANCELURL/EXCEPTIONURL, all set to the result
+            view) for both browser redirects and asynchronous server-to-server
+            POST feedback, so ``PARAMVAR`` is not actively consumed by the
+            current configuration. It is kept in the payload for compatibility
+            with any back-office URL template that may reference ``<PARAMVAR>``.
         """
         worldline_parameters = {
             "CURRENCY": "EUR",

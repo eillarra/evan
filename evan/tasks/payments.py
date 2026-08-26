@@ -20,17 +20,39 @@ def alert_on_stale_payment_attempts() -> None:
     until an admin manually regenerates the payment hash. Without this alert, such
     cases are only discovered when the affected user complains.
     """
-    stale_attempts = RegistrationPaymentAttempt.objects.filter(
-        status=RegistrationPaymentAttempt.PENDING,
-        created_at__lt=now() - STALE_PENDING_ATTEMPT_THRESHOLD,
+    stale_attempts = list(
+        RegistrationPaymentAttempt.objects.filter(
+            status=RegistrationPaymentAttempt.PENDING,
+            created_at__lt=now() - STALE_PENDING_ATTEMPT_THRESHOLD,
+        )
+        .select_related("registration", "registration__event")
+        .order_by("created_at")
     )
-    count = stale_attempts.count()
-    if not count:
+    if not stale_attempts:
         return
 
-    registration_ids = list(stale_attempts.values_list("registration_id", flat=True))
+    registration_ids = [attempt.registration_id for attempt in stale_attempts]
+    # Per-attempt diagnostic attached as extra data so each Sentry event shows
+    # whether the stuck attempt is a "no callback ever delivered" case (empty
+    # callback_data) or a "callback arrived but status not finalised" case
+    # (EXCEPTION 52/92 left pending by design). Keeps the message string stable
+    # so Sentry keeps grouping all occurrences under one issue.
+    diagnostic = [
+        {
+            "registration_id": attempt.registration_id,
+            "order_id": attempt.order_id,
+            "age_hours": round((now() - attempt.created_at).total_seconds() / 3600, 1),
+            "callback_received": bool(attempt.callback_data),
+            "last_status": (attempt.callback_data or {}).get("STATUS"),
+            "event_id": attempt.registration.event_id,
+            "event_name": attempt.registration.event.name,
+        }
+        for attempt in stale_attempts
+    ]
+    count = len(stale_attempts)
     sentry_sdk.capture_message(
-        f"{count} Worldline payment attempt(s) stuck in PENDING for over {STALE_PENDING_ATTEMPT_THRESHOLD}: "
-        f"registration ids {registration_ids}",
+        f"{count} Worldline payment attempt(s) stuck in PENDING over "
+        f"{STALE_PENDING_ATTEMPT_THRESHOLD}: registration ids {registration_ids}",
         level="warning",
+        extra={"stale_attempts": diagnostic},
     )

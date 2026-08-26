@@ -49,7 +49,7 @@ registration_patterns = (
                     path("payment/", never_cache(views.RegistrationPaymentView.as_view()), name="payment"),
                     path(
                         "payment/callback/",
-                        never_cache(views.RegistrationPaymentCallbackView.as_view()),
+                        never_cache(views.RegistrationPaymentResultView.as_view()),
                         name="payment_callback",
                     ),
                     path(

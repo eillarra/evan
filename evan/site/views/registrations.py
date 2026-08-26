@@ -257,30 +257,40 @@ def _credit_worldline_payment(registration: Registration, query_params: QueryDic
         return True
 
 
-def _finalize_payment_attempt(registration: Registration, query_params: QueryDict, *, status: str) -> None:
+def _finalize_payment_attempt(registration: Registration, query_params: QueryDict, *, status: str) -> bool:
     """Persist terminal non-success states for the current payment attempt.
 
-    :param registration: The registration being updated.
-    :param query_params: The callback querystring.
-    :param status: The terminal attempt status to persist.
+    Rejects feedback that does not carry a valid Worldline SHA-OUT signature, so
+    decline/cancel transitions are as tamper-proof as the success path handled
+    by ``_credit_worldline_payment``.
+
+    :param registration: registration to update.
+    :param query_params: callback querystring.
+    :param status: terminal attempt status to persist.
+    :returns: True only when the attempt was actually transitioned out of PENDING.
     """
+    if not UGentBridge.validate_out_parameters(query_params, outsalt=registration.event.ugent_bridge.get("salt")):
+        return False
+
     order_id = query_params.get("ORDERID", "")
     if not order_id:
-        return
+        return False
 
     with transaction.atomic():
         try:
             attempt = RegistrationPaymentAttempt.objects.select_for_update().get(order_id=order_id)
         except RegistrationPaymentAttempt.DoesNotExist:
-            return
+            return False
 
         if attempt.registration_id != registration.id:
-            return
+            return False
         if attempt.status != RegistrationPaymentAttempt.PENDING:
-            return
+            return False
 
         attempt.mark_resolved(status=status, payid=query_params.get("PAYID", ""), callback_data=query_params.dict())
         attempt.save(update_fields=["status", "payid", "callback_data", "resolved_at"])
+
+    return True
 
 
 def _rotate_payment_hash(registration: Registration) -> None:
@@ -292,9 +302,22 @@ def _rotate_payment_hash(registration: Registration) -> None:
     registration.save(update_fields=["unique_hash"])
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class RegistrationPaymentResultBaseView(TemplateView):
-    """
-    Perform actions depending on the result of the payment process.
+    """Process Worldline payment outcome over the same URL.
+
+    The UGent bridge / Worldline back office is configured with this URL as
+    ACCEPTURL / DECLINEURL / CANCELURL / EXCEPTIONURL, and UGent's Pay reuses
+    it for both feedback channels:
+
+    - Browser redirect (GET): Worldline returns the user here after the payment
+      session. We finalise the attempt, surface a user-facing message, and
+      redirect back to the registration's payment page.
+    - Asynchronous server-to-server feedback (POST): UGent's Pay pushes status
+      transitions here independently of the user's browser, so payments are
+      finalised even when the user closes the browser without returning. No
+      user is behind the request, so we acknowledge with HTTP 200 and skip the
+      message/redirect.
     """
 
     def get_object(self, queryset=None) -> Registration:
@@ -304,88 +327,66 @@ class RegistrationPaymentResultBaseView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         registration = self.get_object()
-        status = request.GET.get("STATUS")
+        # Worldline delivers browser redirects as GET with query params and
+        # server-to-server feedback as POST with a form-encoded body. Read the
+        # status from the right container per method.
+        query_params = request.POST if request.method == "POST" else request.GET
+        status = query_params.get("STATUS")
 
-        # Success
+        credited = self._process_status(registration, query_params, status)
+
+        if request.method == "POST":
+            # Async server-to-server feedback: acknowledge receipt, no user to
+            # message or redirect.
+            return HttpResponse(status=200)
+
+        # Browser redirect: surface a user-facing message and redirect back.
         if status in UGentBridge.SUCCESS_STATUSES:
-            if _credit_worldline_payment(registration, request.GET):
-                messages.success(request, "Your payment was succesful.")
+            if credited:
+                messages.success(request, "Your payment was successful.")
             elif registration.is_paid:
                 messages.success(request, "Your payment was already registered.")
             else:
                 messages.error(request, "Invalid query parameters.")
-
-        # Exception
         elif status in UGentBridge.EXCEPTION_STATUSES:
-            messages.warning(request, "We will revise your payment and let you know when it is authorized.")
-
-        # Decline
+            messages.warning(request, "We will revise your payment and let you know when it is authorised.")
         elif status in UGentBridge.DECLINE_STATUSES:
-            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.FAILED)
-            # Rotate hash so a retry uses a fresh ORDERID; some Worldline configurations
-            # reject resubmitting a previously declined ORDERID.
-            _rotate_payment_hash(registration)
             messages.error(request, "Your payment was declined.")
-
-        # Cancel
         elif status in UGentBridge.CANCEL_STATUSES:
-            _finalize_payment_attempt(registration, request.GET, status=RegistrationPaymentAttempt.CANCELLED)
+            messages.warning(request, "Your payment was canceled.")
+        return redirect(self.get_redirect_url())  # type: ignore
+
+    def _process_status(self, registration: Registration, query_params: QueryDict, status: str | None) -> bool:
+        """Apply the terminal action for a Worldline status, if any.
+
+        :param registration: registration the feedback belongs to.
+        :param query_params: GET or POST params carrying the Worldline payload.
+        :param status: Worldline STATUS code from the feedback.
+        :returns: True only when this call credited a new payment.
+        """
+        if status in UGentBridge.SUCCESS_STATUSES:
+            return _credit_worldline_payment(registration, query_params)
+        if status in UGentBridge.DECLINE_STATUSES:
+            finalised = _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.FAILED)
+            # Rotate hash so a retry uses a fresh ORDERID; some Worldline
+            # configurations reject resubmitting a previously declined ORDERID.
+            if finalised:
+                _rotate_payment_hash(registration)
+            return False
+        if status in UGentBridge.CANCEL_STATUSES:
+            finalised = _finalize_payment_attempt(
+                registration, query_params, status=RegistrationPaymentAttempt.CANCELLED
+            )
             # Rotate hash so a retry uses a fresh ORDERID; Worldline registers the
             # ORDERID the moment the form is submitted, so cancelling leaves it
             # "used" and a second attempt with the same ORDERID is rejected.
-            _rotate_payment_hash(registration)
-            messages.warning(request, "Your payment has been canceled.")
-
-        # ...and redirect
-        return redirect(self.get_redirect_url())  # type: ignore
-
-
-@method_decorator(csrf_exempt, name="dispatch")
-class RegistrationPaymentCallbackView(View):
-    """Server-to-server callback from Worldline for confirmed payments.
-
-    This is the target of Worldline's account-level "Direct HTTP
-    server-to-server request" feedback, configured per WBS element in the
-    Worldline back office with a `<PARAMVAR>`-templated URL (see
-    ``UGentBridge.process_parameters``, which submits the registration's uuid as
-    ``PARAMVAR``). Worldline calls it directly, bypassing the user's browser,
-    for every status transition - so it ensures payments are credited (and
-    declines/cancels rotate the hash) even when the browser never makes it
-    back to the result URL. The back office lets the merchant choose GET or
-    POST delivery, so both methods are handled identically here.
-    """
-
-    def get(self, request, *args, **kwargs):
-        return self._handle(request, request.GET)
-
-    def post(self, request, *args, **kwargs):
-        return self._handle(request, request.POST)
-
-    def _handle(self, request, query_params: QueryDict) -> HttpResponse:
-        """Process the Worldline server-to-server notification.
-
-        Ignoring cancel/decline notifications leaves the matching payment
-        attempt PENDING with an ORDERID Worldline has already registered,
-        which blocks retries until an admin regenerates the hash.
-
-        :param query_params: The notification parameters, from either GET or POST.
-        :returns: An empty 200 response, acknowledging receipt to Worldline.
-        """
-        registration = get_object_or_404(Registration.objects.select_related("event"), uuid=self.kwargs.get("uuid"))
-        status = query_params.get("STATUS")
-
-        if status in UGentBridge.SUCCESS_STATUSES:
-            _credit_worldline_payment(registration, query_params)
-        elif status in UGentBridge.DECLINE_STATUSES:
-            _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.FAILED)
-            _rotate_payment_hash(registration)
-        elif status in UGentBridge.CANCEL_STATUSES:
-            _finalize_payment_attempt(registration, query_params, status=RegistrationPaymentAttempt.CANCELLED)
-            _rotate_payment_hash(registration)
-        # Exception and invalid statuses: no action here. The result view's
-        # browser-side redirect handles exception messaging; invalid statuses
-        # carry no useful signal.
-        return HttpResponse(status=200)
+            if finalised:
+                _rotate_payment_hash(registration)
+            return False
+        # EXCEPTION (52/92) and INVALID (0) carry no terminal action here:
+        # EXCEPTION means the payment is under Worldline review and may still
+        # flip either way, so admin must confirm the outcome before clearing.
+        return False
 
 
 class RegistrationPaymentResultView(RegistrationPaymentResultBaseView):

@@ -233,23 +233,31 @@ class TestPaymentResultViewHashRotation:
     def _get_result_url(self, registration):
         return reverse("registration:payment_result", args=[registration.uuid])
 
-    def test_hash_is_rotated_on_cancel(self, client, payment_registration) -> None:
-        """STATUS=1 (cancel) must rotate unique_hash before redirecting."""
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
+    def test_hash_is_rotated_on_cancel(self, _mock, client, payment_registration) -> None:
+        """A valid STATUS=1 (cancel) feedback finalises the attempt and rotates unique_hash."""
+        attempt = create_pending_attempt(payment_registration)
         original_hash = payment_registration.unique_hash
 
-        client.get(self._get_result_url(payment_registration), {"STATUS": "1"})
+        client.get(self._get_result_url(payment_registration), {"STATUS": "1", "ORDERID": attempt.order_id})
 
+        attempt.refresh_from_db()
         payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.CANCELLED
         assert payment_registration.unique_hash != original_hash
         assert len(payment_registration.unique_hash) == 8
 
-    def test_hash_is_rotated_on_decline(self, client, payment_registration) -> None:
-        """STATUS=2 (decline) must rotate unique_hash before redirecting."""
+    @patch("evan.site.views.registrations.UGentBridge.validate_out_parameters", return_value=True)
+    def test_hash_is_rotated_on_decline(self, _mock, client, payment_registration) -> None:
+        """A valid STATUS=2 (decline) feedback finalises the attempt and rotates unique_hash."""
+        attempt = create_pending_attempt(payment_registration)
         original_hash = payment_registration.unique_hash
 
-        client.get(self._get_result_url(payment_registration), {"STATUS": "2"})
+        client.get(self._get_result_url(payment_registration), {"STATUS": "2", "ORDERID": attempt.order_id})
 
+        attempt.refresh_from_db()
         payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.FAILED
         assert payment_registration.unique_hash != original_hash
         assert len(payment_registration.unique_hash) == 8
 
@@ -261,6 +269,69 @@ class TestPaymentResultViewHashRotation:
         client.get(self._get_result_url(payment_registration), {"STATUS": "52"})
 
         payment_registration.refresh_from_db()
+        assert payment_registration.unique_hash == original_hash
+
+
+@pytest.mark.django_db
+class TestForgedFeedbackIsRejected:
+    """Unsigned feedback (no valid SHASIGN) must not finalise, credit, or rotate anything.
+
+    Regression for the gap where decline/cancel previously skipped SHA-OUT
+    validation: anyone who knew a registration's UUID and ORDERID could
+    force-finalise its pending payment as cancelled/declined. Success was
+    already protected; now all three terminal paths require a valid signature.
+    The repo is public, so this boundary must hold without relying on CSRF.
+    """
+
+    def _result_url(self, registration):
+        return reverse("registration:payment_result", args=[registration.uuid])
+
+    def test_unsigned_cancel_does_not_finalise_or_rotate(self, client, payment_registration) -> None:
+        attempt = create_pending_attempt(payment_registration)
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._result_url(payment_registration), {"STATUS": "1", "ORDERID": attempt.order_id})
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.PENDING
+        assert payment_registration.unique_hash == original_hash
+
+    def test_unsigned_decline_does_not_finalise_or_rotate(self, client, payment_registration) -> None:
+        attempt = create_pending_attempt(payment_registration)
+        original_hash = payment_registration.unique_hash
+
+        client.get(self._result_url(payment_registration), {"STATUS": "2", "ORDERID": attempt.order_id})
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.PENDING
+        assert payment_registration.unique_hash == original_hash
+
+    def test_unsigned_success_does_not_credit(self, client, payment_registration) -> None:
+        attempt = create_pending_attempt(payment_registration, amount=100)
+        original_paid = payment_registration.paid
+
+        client.get(
+            self._result_url(payment_registration),
+            {"STATUS": "9", "ORDERID": attempt.order_id, "PAYID": "999", "AMOUNT": "100.00"},
+        )
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.PENDING
+        assert payment_registration.paid == original_paid
+
+    def test_unsigned_async_post_cancel_does_not_finalise(self, client, payment_registration) -> None:
+        """Async POST without a valid signature must not finalise (UGent Pay scenario)."""
+        attempt = create_pending_attempt(payment_registration)
+        original_hash = payment_registration.unique_hash
+
+        client.post(self._result_url(payment_registration), {"STATUS": "1", "ORDERID": attempt.order_id})
+
+        attempt.refresh_from_db()
+        payment_registration.refresh_from_db()
+        assert attempt.status == RegistrationPaymentAttempt.PENDING
         assert payment_registration.unique_hash == original_hash
 
 
