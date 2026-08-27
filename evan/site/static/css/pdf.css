@@ -47,9 +47,10 @@
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
+  --spacing-xl: 48px;
 
   /* Font sizes */
-  --font-size-base: 15px;
+  --font-size-base: 16px;
   --font-size-small: 14px;
   --font-size-caption: 10px;
 }
@@ -218,6 +219,14 @@ p.text-small {
 }
 
 /* Spacing utilities (Quasar-like) */
+.q-mt-xl {
+  margin-top: var(--spacing-xl);
+}
+
+.q-mb-xl {
+  margin-bottom: var(--spacing-xl);
+}
+
 .q-mt-lg {
   margin-top: var(--spacing-lg);
 }
@@ -240,6 +249,14 @@ p.text-small {
 
 .q-mb-sm {
   margin-bottom: var(--spacing-sm);
+}
+
+.q-pt-md {
+  padding-top: var(--spacing-md);
+}
+
+.q-pt-sm {
+  padding-top: var(--spacing-sm);
 }
 
 .q-px-lg {

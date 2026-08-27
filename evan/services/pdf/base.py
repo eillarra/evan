@@ -16,23 +16,7 @@ from django.utils import timezone
 from weasyprint import CSS, HTML
 from weasyprint.text.fonts import FontConfiguration
 
-
-class PdfResponse(HttpResponse):
-    """HTTP response for PDF documents.
-
-    Handles Content-Type and Content-Disposition headers for proper
-    PDF delivery in the browser or as a download.
-    """
-
-    def __init__(self, filename: str, as_attachment: bool = False):
-        """Initialize PDF response.
-
-        :param filename: Name of the PDF file for download.
-        :param as_attachment: If True, forces download; if False, displays inline.
-        """
-        super().__init__(content_type="application/pdf")
-        disposition = "attachment" if as_attachment else "inline"
-        self["Content-Disposition"] = f'{disposition}; filename="{filename}"'
+from .response import PdfResponse
 
 
 class BasePdfMaker:
@@ -53,12 +37,16 @@ class BasePdfMaker:
     template_name: str = ""
     base_css: list[str] = ["css/pdf.css"]
 
-    def __init__(self, *, filename: str, as_attachment: bool = False):
+    def __init__(self, *, event, filename: str, as_attachment: bool = False):
         """Initialize PDF maker.
 
+        :param event: The Event the document is generated for. Always available
+            in this application; drives the shared signature block and other
+            event-level context.
         :param filename: Name of the PDF file.
         :param as_attachment: Whether to force download.
         """
+        self.event = event
         self._response = PdfResponse(filename=filename, as_attachment=as_attachment)
         self._context: dict = {}
 
@@ -73,6 +61,8 @@ class BasePdfMaker:
             "current_date": timezone.now(),
             "logo_path": self.get_logo_path(),
             "date_format": settings.DATE_FORMAT,
+            "event": self.event,
+            "signature_html": self.markdown_to_html(self.event.signature) if self.event else "",
             **self._context,
         }
 

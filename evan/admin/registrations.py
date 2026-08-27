@@ -158,13 +158,13 @@ class RegistrationAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
 
     def pdf_letter_view(self, request, object_id, extra_context=None):
-        from evan.site.views.file_makers.pdf import InvitationLetterPdfMaker
+        from evan.site.views.file_makers.registrations import InvitationLetterPdfMaker
 
         obj = self.get_object(request, unquote(object_id))
         if obj is None:
             self.message_user(request, "The requested registration does not exist.", level="error")
             return None
-        maker = InvitationLetterPdfMaker(registration=obj, filename=f"letter--{obj.uuid}.pdf", as_attachment=False)
+        maker = InvitationLetterPdfMaker(registration=obj, as_attachment=False)
         return maker.response
 
     def _invoice_pdf_view(self, request, object_id, extra_context=None, as_invoice: bool = False):
@@ -172,7 +172,7 @@ class RegistrationAdmin(admin.ModelAdmin):
 
         :param as_invoice: If True, generates an invoice; otherwise generates a receipt.
         """
-        from evan.site.views.file_makers.receipt import InvoicePdfMaker, ReceiptPdfMaker
+        from evan.site.views.file_makers.registrations import InvoicePdfMaker, ReceiptPdfMaker
 
         obj = self.get_object(request, unquote(object_id))
         if obj is None:
@@ -197,8 +197,7 @@ class RegistrationAdmin(admin.ModelAdmin):
             )
             return None
         maker_class = InvoicePdfMaker if as_invoice else ReceiptPdfMaker
-        filename = f"invoice--{obj.uuid}.pdf" if as_invoice else f"receipt--{obj.uuid}.pdf"
-        maker = maker_class(registration=obj, filename=filename, as_attachment=False)
+        maker = maker_class(registration=obj, as_attachment=False)
         return maker.response
 
     def pdf_invoice_view(self, request, object_id, extra_context=None):

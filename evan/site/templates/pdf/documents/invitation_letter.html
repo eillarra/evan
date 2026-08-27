@@ -1,0 +1,40 @@
+{% extends "pdf/documents/base_document.html" %}
+
+{% block title %}Invitation letter - {{ registration.uuid }}{% endblock %}
+
+{% block body_class %}document-invitation-letter{% endblock %}
+
+{% block date %}{{ current_date|date:"F j, Y" }}{% endblock %}
+
+{% block content %}
+  <p class="text-right text-small">
+    <em>{{ registration.letter.name }}</em><br>
+    <em>{{ registration.letter.address|linebreaksbr }}</em>
+  </p>
+
+  <p class="q-mt-xl">To Whom It May Concern,</p>
+
+  <p>
+    On behalf of the {{ event.name }} organizing committee, I hereby invite
+    <strong>{{ registration.letter.name }}</strong> to attend the
+    &ldquo;{{ event.full_name }} ({{ event.name }})&rdquo; from
+    {{ event.start_date|date:"F j" }} to {{ event.end_date|date:"F j, Y" }},
+    in {{ event.city }}, {{ event.country.name }}.
+  </p>
+
+  <blockquote>
+    Name: <strong>{{ registration.letter.name }}</strong><br>
+    Passport number: <strong>{{ registration.letter.passport_number }}</strong><br>
+    Nationality: <strong>{{ registration.letter.nationality }}</strong>
+  </blockquote>
+
+  {% if registration.letter.submitted %}
+    <p>
+      {{ registration.user.name }} will present a {{ registration.letter.get_submitted_display }}
+      titled "{{ registration.letter.submitted_title }}" during the event.
+      We look forward to welcoming {{ registration.letter.name }} in {{ event.city }}.
+    </p>
+  {% else %}
+    <p>We look forward to welcoming {{ registration.letter.name }} in {{ event.city }}.</p>
+  {% endif %}
+{% endblock %}

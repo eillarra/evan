@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>{% block title %}Document{% endblock %}</title>
   </head>
+
   <body class="{% block body_class %}{% endblock %}">
     {% if logo_path %}
       <img src="file://{{ logo_path }}" alt="UGent" class="header-logo">
@@ -20,5 +21,23 @@
     <main>
       {% block content %}{% endblock %}
     </main>
+
+    {% block signature %}
+      {% if event %}
+        <p>
+          More information about this event can be found on:
+          <a href="{{ event.website }}">{{ event.website }}</a><br>
+          Please do not hesitate to contact us for additional information.
+        </p>
+
+        <p class="q-mt-lg">Sincerely yours,</p>
+
+        <div class="signature-placeholder"></div>
+
+        <div class="q-mt-xl q-pt-md text-small">
+          {{ signature_html|safe }}
+        </div>
+      {% endif %}
+    {% endblock %}
   </body>
 </html>

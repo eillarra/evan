@@ -1,0 +1,21 @@
+{% extends "pdf/documents/base_document.html" %}
+
+{% block title %}Certificate of attendance - {{ registration.uuid }}{% endblock %}
+
+{% block body_class %}document-certificate{% endblock %}
+
+{% block date %}{{ current_date|date:"F j, Y" }}{% endblock %}
+
+{% block content %}
+<h3 class="q-mt-md">To Whom It May Concern,</h3>
+
+<p>
+  On behalf of the {{ event.name }} organizing committee, I hereby like to confirm that
+  <strong>{{ registration.user.name }}</strong>
+  &mdash; {{ registration.user.affiliation }} &mdash; attended {{ event }}
+  from {{ event.start_date|date:"F j" }} to {{ event.end_date|date:"F j, Y" }},
+  {% if event.is_virtual %}virtually{% else %}in {{ event.city }}, {{ event.country.name }}{% endif %}.
+</p>
+
+<p class="text-small"><code>ID: {{ registration.uuid }}</code></p>
+{% endblock %}

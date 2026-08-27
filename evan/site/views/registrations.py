@@ -15,8 +15,7 @@ from evan.api.serializers.users import UserSerializer
 from evan.models import Coupon, Event, Registration, RegistrationPaymentAttempt
 from evan.services.mailer.registrations import schedule_registration_email
 from evan.services.payments.ugent_bridge import UGentBridge
-from evan.site.views.file_makers.pdf import CertificatePdfMaker
-from evan.site.views.file_makers.receipt import ReceiptPdfMaker
+from evan.site.views.file_makers.registrations import CertificatePdfMaker, ReceiptPdfMaker
 
 from .inertia import InertiaView
 
@@ -460,7 +459,7 @@ class RegistrationCertificatePdf(RegistrationPdfView):
 
     def get(self, request, *args, **kwargs):
         obj = self.get_object()
-        maker = CertificatePdfMaker(registration=obj, filename=f"receipt--{obj.uuid}.pdf", as_attachment=False)
+        maker = CertificatePdfMaker(registration=obj, as_attachment=False)
         return maker.response
 
 
@@ -482,5 +481,5 @@ class RegistrationReceiptPdf(RegistrationPdfView):
 
     def get(self, request, *args, **kwargs):
         obj = self.get_object()
-        maker = ReceiptPdfMaker(registration=obj, filename=f"receipt--{obj.uuid}.pdf", as_attachment=False)
+        maker = ReceiptPdfMaker(registration=obj, as_attachment=False)
         return maker.response

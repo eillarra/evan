@@ -21,10 +21,24 @@ class TestPdfResponse:
         assert response["Content-Disposition"] == 'inline; filename="doc.pdf"'
 
     def test_attachment_disposition_when_requested(self):
-        """as_attachment=True forces a download disposition."""
+        """as_attachment=True yields a download disposition."""
         response = PdfResponse(filename="report.pdf", as_attachment=True)
 
         assert response["Content-Disposition"] == 'attachment; filename="report.pdf"'
+
+    def test_filename_slugified_for_safety(self):
+        """Unsafe characters in the stem are slugified; the extension is kept."""
+        response = PdfResponse(filename="Receipt Jane Doe's/Weird!Name 550e8400-e29b-41d4-a716-446655440000.pdf")
+
+        assert response.filename == "receipt-jane-doesweirdname-550e8400-e29b-41d4-a716-446655440000.pdf"
+        assert response.filename.endswith(".pdf")
+        assert response["Content-Disposition"] == f'inline; filename="{response.filename}"'
+
+    def test_filename_without_extension_still_slugified(self):
+        """A filename without an extension is slugified whole."""
+        response = PdfResponse(filename="Some Weird Name")
+
+        assert response.filename == "some-weird-name"
 
 
 class _DummyMaker(BasePdfMaker):
@@ -35,7 +49,9 @@ class _DummyMaker(BasePdfMaker):
 @pytest.fixture
 def maker():
     """A BasePdfMaker subclass instance for testing."""
-    return _DummyMaker(filename="out.pdf", as_attachment=True)
+    event = MagicMock()
+    event.signature = ""
+    return _DummyMaker(event=event, filename="out.pdf", as_attachment=True)
 
 
 class TestGetContextData:

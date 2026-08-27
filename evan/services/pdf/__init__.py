@@ -3,13 +3,13 @@ import os
 
 from commonmark import Parser
 from django.conf import settings
-from django.http import HttpResponse
 from django.template.defaultfilters import escape
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm
 from reportlab.platypus import Flowable, Image, PageBreak, Paragraph, SimpleDocTemplate, Spacer
 from svglib.svglib import svg2rlg
 
+from .response import PdfResponse as PdfResponse
 from .styles import PDF_STYLES
 
 
@@ -112,11 +112,3 @@ class Pdf:
     def get(self):
         self.doc.build(self.parts, onFirstPage=self._first_page, onLaterPages=self._later_pages)
         return self.buffer.getvalue()
-
-
-class PdfResponse(HttpResponse):
-    def __init__(self, *args, as_attachment: bool = False, filename: str = "", **kwargs):
-        self.as_attachment = as_attachment
-        self.filename = filename
-        kwargs.setdefault("content_type", "application/pdf")
-        super().__init__(*args, **kwargs)
