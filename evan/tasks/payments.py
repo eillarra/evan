@@ -54,5 +54,5 @@ def alert_on_stale_payment_attempts() -> None:
         f"{count} Worldline payment attempt(s) stuck in PENDING over "
         f"{STALE_PENDING_ATTEMPT_THRESHOLD}: registration ids {registration_ids}",
         level="warning",
-        extra={"stale_attempts": diagnostic},
+        extras={"stale_attempts": diagnostic},
     )
