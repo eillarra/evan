@@ -117,13 +117,15 @@ class TestRegistrationAllowsPhotos:
         assert registration_allows_photos(registration) is True
 
 
-def make_social_session(event, title: str, icon: str | None = None):
-    """Create a social event session with an optional badge icon."""
+def make_social_session(event, title: str, icon: str | None = None, *, start_at=None):
+    """Create social event session with an optional badge icon and start time."""
+    kwargs = {"start_at": start_at} if start_at is not None else {}
     return SessionFactory(
         event=event,
         title=title,
         is_social_event=True,
         extra_data={"badge_icon": icon} if icon else {},
+        **kwargs,
     )
 
 
@@ -147,12 +149,9 @@ class TestGetBadgeIcons:
 
     def test_returns_icons_of_registered_sessions_in_agenda_order(self, t_event) -> None:
         """Icons of registered social sessions follow the agenda (start_at) order."""
-        boat = make_social_session(t_event, "Boat trip", "boat_trip")
         dinner = make_social_session(t_event, "Conference dinner", "dinner")
+        boat = make_social_session(t_event, "Boat trip", "boat_trip", start_at=dinner.start_at + timedelta(hours=1))
         make_social_session(t_event, "Pub quiz")  # no icon configured
-
-        # Sessions on lower pks but scheduled later still come last.
-        Session.objects.filter(pk=boat.pk).update(start_at=dinner.start_at + timedelta(hours=1))
 
         registration = RegistrationFactory(event=t_event, user=UserFactory())
         registration.sessions.add(dinner, boat)
@@ -171,9 +170,11 @@ class TestGetBadgeIcons:
 
     def test_person_data_uses_selected_social_events(self, t_event) -> None:
         """With person_data, icons come from the person's selected social events."""
-        boat = make_social_session(t_event, "Boat trip", "boat_trip")
         dinner = make_social_session(t_event, "Conference dinner", "dinner")
-        reception = make_social_session(t_event, "Reception", "reception")
+        boat = make_social_session(t_event, "Boat trip", "boat_trip", start_at=dinner.start_at - timedelta(hours=2))
+        reception = make_social_session(
+            t_event, "Reception", "reception", start_at=dinner.start_at + timedelta(hours=1)
+        )
 
         registration = RegistrationFactory(event=t_event, user=UserFactory())
         person = {"name": "John", "selected_social_events": [reception.id, boat.id]}
