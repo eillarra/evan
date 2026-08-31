@@ -24,7 +24,7 @@ Aliases: `CLAUDE.md` and `.github/copilot-instructions.md` are symlinks to this 
 - **DB**: MySQL in production, SQLite (`dev.db`) in dev/test.
 - **Storage**: S3 via django-storages + boto3 (UGent S3 endpoint).
 - **Auth**: django-allauth (GitHub, Google, LinkedIn, UGent provider).
-- **Admin**: django-unfold.
+- **Admin**: django.contrib.admin.
 - **i18n**: en + nl (Dutch is the default `LANGUAGE_CODE`).
 - **Observability**: Sentry SDK (Django + Redis integrations) backend; `@sentry/vue` frontend.
 
@@ -165,11 +165,11 @@ When asked to review, audit, or add tests to existing code, apply this sequence:
 
 Test files are named to indicate what aspect they test:
 
-| Suffix | Purpose | Example |
-| --- | --- | --- |
+| Suffix            | Purpose                                        | Example                             |
+| ----------------- | ---------------------------------------------- | ----------------------------------- |
 | `_permissions.py` | Permission / access-control tests by user role | `test_registrations_permissions.py` |
-| `_api.py` | API behaviour tests (CRUD, response format) | `test_users_api.py` |
-| (no suffix) | Model tests, service tests, or mixed tests | `test_events.py`, `test_venues.py` |
+| `_api.py`         | API behaviour tests (CRUD, response format)    | `test_users_api.py`                 |
+| (no suffix)       | Model tests, service tests, or mixed tests     | `test_events.py`, `test_venues.py`  |
 
 ### Permission tests (inheritance pattern)
 
@@ -319,11 +319,11 @@ it('should throw CustomLibError when the network fails', async () => {
 
 ### Choosing the right ref type
 
-| Type | Use for | Example |
-| :--- | :--- | :--- |
-| `ref` | Primitives, small objects where deep reactivity is needed | `ref(0)`, `ref({ name: '' })` |
-| `shallowRef` | Large arrays, objects from API responses | `shallowRef<User[]>([])` |
-| `readonly` | Exposing state that should not be mutated | `readonly(state)` in composables |
+| Type         | Use for                                                   | Example                          |
+| :----------- | :-------------------------------------------------------- | :------------------------------- |
+| `ref`        | Primitives, small objects where deep reactivity is needed | `ref(0)`, `ref({ name: '' })`    |
+| `shallowRef` | Large arrays, objects from API responses                  | `shallowRef<User[]>([])`         |
+| `readonly`   | Exposing state that should not be mutated                 | `readonly(state)` in composables |
 
 ### Guidelines
 
@@ -389,7 +389,7 @@ You have access to the Sentry MCP server. Use it to investigate errors proactive
 
 - **`regionUrl`**: https://de.sentry.io
 - **`organizationSlug`**: ea06
-- **`projectSlugOrId`**: evan-backend    ← backend (Django) service
+- **`projectSlugOrId`**: evan-backend ← backend (Django) service
 - **`projectSlugOrId`**: evan-frontend ← Vue/TS app
 
 When resolving issues, prefer **`resolvedInNextRelease`** over `resolved` — this signals the fix is in the next deployment rather than already live.

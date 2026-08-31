@@ -4,7 +4,6 @@
 # Coding helper files
 
 .copilot
-.github/instructions
 .vscode
 
 # Python
