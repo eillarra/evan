@@ -48,6 +48,7 @@ export default {
     remark: 'Opmerking | Opmerkingen',
     room: 'Ruimte | Ruimtes',
     session: 'Sessie | Sessies',
+    session_code: 'Sessiecode | Sessiecodes',
     topic: 'Onderwerp | Onderwerpen',
     track: 'Track | Tracks',
     tracks_topics: 'Tracks & onderwerpen',

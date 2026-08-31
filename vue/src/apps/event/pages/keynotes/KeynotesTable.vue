@@ -60,7 +60,7 @@ const columns = [
   {
     name: 'session',
     field: 'session_code',
-    label: t('models.session'),
+    label: t('models.session_code'),
     align: 'left',
     autoWidth: true,
     sortable: true,

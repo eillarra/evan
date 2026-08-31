@@ -51,6 +51,7 @@ export default {
     remark: 'Remark | Remarks',
     room: 'Room | Rooms',
     session: 'Session | Sessions',
+    session_code: 'Session code | Session codes',
     sponsor: 'Sponsor | Sponsors',
     subsession: 'Subsession | Subsessions',
     topic: 'Topic | Topics',
