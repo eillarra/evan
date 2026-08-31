@@ -4,6 +4,10 @@ interface BadgesConfig {
   fee_colors: Record<string, string>;
   sort_by: 'first_name' | 'last_name';
   group_by: 'none' | 'fee' | 'color';
+  show_logo?: boolean;
+  icons_enabled?: boolean;
+  show_camera_icon?: boolean;
+  qr_contact_card?: boolean;
 }
 
 interface FeeConfig {

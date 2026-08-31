@@ -28,6 +28,9 @@ class TestEventBadgeConfiguration:
             "default": "#2563eb",
             "guest": "#059669",
             "fee_colors": {"student": "#2ecc71", "faculty": "#f39c12"},
+            "icons_enabled": True,
+            "show_camera_icon": True,
+            "qr_contact_card": True,
         }
 
         data = {"extra_data": {"badges": badge_config}}
@@ -44,6 +47,9 @@ class TestEventBadgeConfiguration:
         assert badges_config["guest"] == "#059669"
         assert badges_config["fee_colors"]["student"] == "#2ecc71"
         assert badges_config["fee_colors"]["faculty"] == "#f39c12"
+        assert badges_config["icons_enabled"] is True
+        assert badges_config["show_camera_icon"] is True
+        assert badges_config["qr_contact_card"] is True
 
     def test_badges_configuration_filtering(self, api_client, t_event, t_event_manager) -> None:
         """Test that invalid fee types are filtered when accessing badges_configuration."""

@@ -239,3 +239,36 @@ class TestSessionPaperValidation:
             session.full_clean()
 
         assert "99999" in str(exc_info.value)
+
+
+@pytest.mark.api
+class TestSessionBadgeIcon:
+    """Test badge icon configuration through the session API endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
+
+    def test_update_with_valid_badge_icon(self, api_client, session) -> None:
+        """A whitelisted icon key is stored and returned."""
+        payload = {"extra_data": {"badge_icon": "boat_trip"}}
+        response = api_client.patch(session.get_api_url(), payload, format="json")
+
+        assert response.status_code == status.OK
+        assert response.data["extra_data"]["badge_icon"] == "boat_trip"
+
+    def test_update_with_invalid_badge_icon(self, api_client, session) -> None:
+        """An unknown icon key is rejected with a validation error."""
+        response = api_client.patch(session.get_api_url(), {"extra_data": {"badge_icon": "not-an-icon"}}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+
+    def test_empty_badge_icon_clears_icon(self, api_client, session) -> None:
+        """An empty string clears the configured icon."""
+        session.extra_data = {"badge_icon": "boat_trip"}
+        session.save()
+
+        response = api_client.patch(session.get_api_url(), {"extra_data": {"badge_icon": ""}}, format="json")
+
+        assert response.status_code == status.OK
+        assert response.data["extra_data"]["badge_icon"] is None

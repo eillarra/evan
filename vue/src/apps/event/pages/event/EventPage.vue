@@ -131,8 +131,30 @@
             options-dense
             emit-value
             map-options
-            class="col-12 col-md-6"
+            class="col-12 col-md-6 q-mb-lg"
           />
+          <q-toggle v-model="badgeConfigIconsEnabled" :label="$t('badges.icons_enabled')" dense class="col-12" />
+          <div class="text-caption text-grey-6 col-12">{{ $t('badges.icons_hint') }}</div>
+          <q-toggle v-model="badgeConfigShowCameraIcon" :label="$t('badges.show_camera_icon')" dense class="col-12" />
+          <div class="text-caption text-grey-6 col-12">{{ $t('badges.camera_hint') }}</div>
+          <q-toggle v-model="badgeConfigQrContactCard" :label="$t('badges.qr_contact_card')" dense class="col-12" />
+          <div class="text-caption text-grey-6 col-12">{{ $t('badges.qr_contact_hint') }}</div>
+          <div v-if="false">
+            <!-- hidden for now -->
+            <q-toggle v-model="badgeConfigShowLogo" :label="$t('badges.show_logo')" dense class="col-12" />
+            <div v-if="badgeConfigShowLogo" class="col-12">
+              <file-field
+                v-if="evanEvent"
+                public
+                dense
+                :api-endpoint="evanEvent.rel_files"
+                :tags="['logo']"
+                :label="$t('badges.logo')"
+                accept=".svg,image/svg+xml"
+              />
+              <div v-else class="text-caption text-grey-6">{{ $t('badges.logo_hint') }}</div>
+            </div>
+          </div>
           <div class="col-12">
             <h6 class="text-subtitle2 q-mb-sm">{{ $t('badges.fee_type_colors') }}</h6>
             <div v-if="onsiteFees.length" class="q-mb-md">
@@ -214,6 +236,7 @@ import ColorInput from '@/components/forms/ColorInput.vue';
 import DateSelect from '@/components/forms/DateSelect.vue';
 import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
+import FileField from '@/components/rel/FileField.vue';
 
 const store = useStore();
 const { evanEvent } = storeToRefs(store);
@@ -229,77 +252,44 @@ const generalLoading = ref(false);
 const registrationLoading = ref(false);
 const badgesLoading = ref(false);
 
+const DEFAULT_BADGES = (): BadgesConfig => ({
+  default: '#2196F3',
+  guest: '#4CAF50',
+  fee_colors: {},
+  sort_by: 'first_name',
+  group_by: 'none',
+});
+
+const ensureBadgesConfig = (): BadgesConfig => {
+  if (!evanEvent.value) return DEFAULT_BADGES();
+  if (!evanEvent.value.extra_data) {
+    evanEvent.value.extra_data = { badges: DEFAULT_BADGES(), important_dates: [] } as unknown as EvanEventExtraData;
+  }
+  if (!evanEvent.value.extra_data.badges) {
+    evanEvent.value.extra_data.badges = DEFAULT_BADGES();
+  }
+  return evanEvent.value.extra_data.badges;
+};
+
+function badgeField<K extends keyof BadgesConfig>(key: K, fallback: BadgesConfig[K]) {
+  return computed({
+    get: () => (evanEvent.value?.extra_data?.badges?.[key] ?? fallback) as BadgesConfig[K],
+    set: (value: BadgesConfig[K]) => {
+      ensureBadgesConfig()[key] = value;
+    },
+  });
+}
+
 const feeTypeColors = computed({
   get: () => evanEvent.value?.extra_data?.badges?.fee_colors ?? {},
   set: (value: Record<string, string>) => {
-    if (evanEvent.value) {
-      if (!evanEvent.value.extra_data) {
-        evanEvent.value.extra_data = {
-          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: value, sort_by: 'first_name', group_by: 'none' },
-          important_dates: [],
-        };
-      } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = {
-          default: '#2196F3',
-          guest: '#4CAF50',
-          fee_colors: value,
-          sort_by: 'first_name',
-          group_by: 'none',
-        };
-      } else {
-        evanEvent.value.extra_data.badges.fee_colors = value;
-      }
-    }
+    ensureBadgesConfig().fee_colors = value;
   },
 });
 
-const badgeConfigDefault = computed({
-  get: () => evanEvent.value?.extra_data?.badges?.default ?? '#2196F3',
-  set: (value: string) => {
-    if (evanEvent.value) {
-      if (!evanEvent.value.extra_data) {
-        evanEvent.value.extra_data = {
-          badges: { default: value, guest: '#4CAF50', fee_colors: {}, sort_by: 'first_name', group_by: 'none' },
-          important_dates: [],
-        };
-      } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = {
-          default: value,
-          guest: '#4CAF50',
-          fee_colors: {},
-          sort_by: 'first_name',
-          group_by: 'none',
-        };
-      } else {
-        evanEvent.value.extra_data.badges.default = value;
-      }
-    }
-  },
-});
+const badgeConfigDefault = badgeField('default', '#2196F3');
 
-const badgeConfigGuest = computed({
-  get: () => evanEvent.value?.extra_data?.badges?.guest ?? '#4CAF50',
-  set: (value: string) => {
-    if (evanEvent.value) {
-      if (!evanEvent.value.extra_data) {
-        evanEvent.value.extra_data = {
-          badges: { default: '#2196F3', guest: value, fee_colors: {}, sort_by: 'first_name', group_by: 'none' },
-          important_dates: [],
-        };
-      } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = {
-          default: '#2196F3',
-          guest: value,
-          fee_colors: {},
-          sort_by: 'first_name',
-          group_by: 'none',
-        };
-      } else {
-        evanEvent.value.extra_data.badges.guest = value;
-      }
-    }
-  },
-});
+const badgeConfigGuest = badgeField('guest', '#4CAF50');
 
 const sortByOptions = [
   { label: t('fields.first_name'), value: 'first_name' },
@@ -312,53 +302,14 @@ const groupByOptions = [
   { label: t('fields.color'), value: 'color' },
 ];
 
-const badgeConfigSortBy = computed({
-  get: () => evanEvent.value?.extra_data?.badges?.sort_by ?? 'first_name',
-  set: (value: 'first_name' | 'last_name') => {
-    if (evanEvent.value) {
-      if (!evanEvent.value.extra_data) {
-        evanEvent.value.extra_data = {
-          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: {}, sort_by: value, group_by: 'none' },
-          important_dates: [],
-        };
-      } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = {
-          default: '#2196F3',
-          guest: '#4CAF50',
-          fee_colors: {},
-          sort_by: value,
-          group_by: 'none',
-        };
-      } else {
-        evanEvent.value.extra_data.badges.sort_by = value;
-      }
-    }
-  },
-});
+const badgeConfigSortBy = badgeField('sort_by', 'first_name');
 
-const badgeConfigGroupBy = computed({
-  get: () => evanEvent.value?.extra_data?.badges?.group_by ?? 'none',
-  set: (value: 'none' | 'fee' | 'color') => {
-    if (evanEvent.value) {
-      if (!evanEvent.value.extra_data) {
-        evanEvent.value.extra_data = {
-          badges: { default: '#2196F3', guest: '#4CAF50', fee_colors: {}, sort_by: 'first_name', group_by: value },
-          important_dates: [],
-        };
-      } else if (!evanEvent.value.extra_data.badges) {
-        evanEvent.value.extra_data.badges = {
-          default: '#2196F3',
-          guest: '#4CAF50',
-          fee_colors: {},
-          sort_by: 'first_name',
-          group_by: value,
-        };
-      } else {
-        evanEvent.value.extra_data.badges.group_by = value;
-      }
-    }
-  },
-});
+const badgeConfigGroupBy = badgeField('group_by', 'none');
+
+const badgeConfigIconsEnabled = badgeField('icons_enabled', false);
+const badgeConfigShowCameraIcon = badgeField('show_camera_icon', false);
+const badgeConfigQrContactCard = badgeField('qr_contact_card', false);
+const badgeConfigShowLogo = badgeField('show_logo', false);
 
 function updateFeeTypeColor(feeType: string, color: string) {
   const currentColors = { ...feeTypeColors.value };

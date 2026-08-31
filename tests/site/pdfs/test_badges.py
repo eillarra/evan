@@ -249,3 +249,49 @@ class TestBadgesPdfMaker:
             assert guest_badge["attendee_name"] == "John Smith"
             assert guest_badge["institution"] is None  # Institution should be None for cleaner look
             assert guest_badge["country"] == "guest of Dr. Jane Doe"  # Relationship shown in country field
+
+    def test_camera_icon_reflects_photo_consent(self, t_event) -> None:
+        """Show camera icon: consented attendees get the plain camera, opted-out the struck one."""
+        t_event.extra_data = {"badges": {"default": "#2196F3", "guest": "#4CAF50", "show_camera_icon": True}}
+        t_event.save()
+
+        Fee.objects.create(event=t_event, type="regular", value=100)
+
+        consenting = UserFactory(first_name="Anne", last_name="Allow")
+        opt_out = UserFactory(first_name="Paul", last_name="NoPhoto")
+        reg_allow = Registration.objects.create(event=t_event, user=consenting, fee_type="regular", is_accepted=True)
+        reg_no_photo = Registration.objects.create(
+            event=t_event,
+            user=opt_out,
+            fee_type="regular",
+            is_accepted=True,
+            extra_data={"_internal": {"allow_photo_sharing": False}},
+        )
+
+        registrations = Registration.objects.filter(pk__in=[reg_allow.pk, reg_no_photo.pk])
+
+        captured_calls = []
+        with pytest.MonkeyPatch().context() as m:
+
+            def mock_draw_badge(*args, **kwargs):
+                from reportlab.graphics.shapes import Drawing
+
+                captured_calls.append(kwargs)
+                return Drawing(100, 100)
+
+            m.setattr("evan.site.pdfs.badges.draw_badge", mock_draw_badge)
+
+            mock_wrapdf = Mock()
+            mock_wrapdf.__enter__ = Mock(return_value=mock_wrapdf)
+            mock_wrapdf.__exit__ = Mock(return_value=None)
+            mock_wrapdf.parts = []
+            mock_wrapdf.get.return_value = b"fake pdf content"
+
+            m.setattr("evan.site.pdfs.badges.Wrapdf", Mock(return_value=mock_wrapdf))
+
+            BadgesPdfMaker(registrations=registrations, filename="test.pdf")
+
+        assert len(captured_calls) == 2
+        no_photo_by_name = {call["attendee_name"]: call["no_photos"] for call in captured_calls}
+        assert no_photo_by_name["Paul NoPhoto"] is True
+        assert no_photo_by_name["Anne Allow"] is False

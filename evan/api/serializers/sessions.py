@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from evan.models import Event, Session, validate_datetime
+from evan.models.documents.sessions import get_validated_session_extra_data
 
 from .rel.files import FileSerializer, FilesMixin
 from .subsessions import SubsessionReadOnlySerializer, SubsessionSerializer
@@ -28,6 +29,18 @@ class SessionSerializer(FilesMixin, serializers.ModelSerializer):
         model = Session
         exclude = ["event", "created_at", "uuid"]
         read_only_fields = ["id", "event", "updated_at", "subsessions"]
+
+    def validate_extra_data(self, value):
+        """Validate extra_data at the API boundary so unknown badge icons fail with a 400.
+
+        :param value: The extra data dictionary sent by the client.
+        :returns: The validated extra data dictionary.
+        :raises serializers.ValidationError: If the extra data is invalid.
+        """
+        try:
+            return get_validated_session_extra_data(value or {})
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
 
     def validate(self, data):
         if not self.instance:

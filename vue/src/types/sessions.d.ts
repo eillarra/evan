@@ -3,6 +3,7 @@ interface SessionExtraData {
   important_dates: ImportantDate[];
   group?: string | null;
   selectable_in_form?: boolean;
+  badge_icon?: string | null;
 }
 
 interface SubsessionData {

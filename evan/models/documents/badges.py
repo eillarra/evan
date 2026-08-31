@@ -1,3 +1,9 @@
+"""Badge configuration documents (pydantic models).
+
+Badge design, size and background are fixed; behaviour is configurable per
+event through the ``badges`` key of ``EventExtraData``.
+"""
+
 import json
 from typing import Literal
 
@@ -5,11 +11,50 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from pydantic_extra_types.color import Color
 
 
+#: Social event badge icon keys. Keys match the social event session types;
+#: each session type icon maps to a Google Material Symbols SVG file.
+SOCIAL_EVENT_BADGE_ICONS: tuple[str, ...] = (
+    "reception",
+    "dinner",
+    "boat_trip",
+    "kayaking",
+    "guided_tour",
+    "audio_tour",
+    "castle",
+    "star",
+    "asterisk",
+)
+
+#: Internal key for the photo-permission camera icon (not a social event type).
+CAMERA_BADGE_ICON: str = "camera"
+#: Internal key for the pre-struck camera (attendee opted out of photography).
+CAMERA_STRUCK_BADGE_ICON: str = "camera_struck"
+
+#: Icon keys selectable per social event session (plus the camera).
+AVAILABLE_BADGE_ICONS: tuple[str, ...] = (*SOCIAL_EVENT_BADGE_ICONS, CAMERA_BADGE_ICON)
+
+#: Map icon keys to their Google Material Symbols SVG file name
+#: (without extension) in ``evan/site/static/images/icons/``.
+ICON_FILES: dict[str, str] = {
+    "reception": "wine_bar",
+    "dinner": "flatware",
+    "boat_trip": "directions_boat",
+    "kayaking": "kayaking",
+    "guided_tour": "tour",
+    "audio_tour": "headphones",
+    "castle": "fort",
+    "star": "kid_star",
+    "asterisk": "asterisk",
+    CAMERA_BADGE_ICON: "photo_camera",
+    CAMERA_STRUCK_BADGE_ICON: "no_photography",
+}
+
+
 class BadgesConfig(BaseModel):
-    """Badge color configuration for an event.
+    """Badge configuration for an event.
 
     Badge design, size, background (white), and content are fixed.
-    Only colors for different badge types are configurable.
+    Colors, ordering, extra icons and the QR contact card are configurable.
     """
 
     model_config = ConfigDict(extra="ignore", validate_default=True)
@@ -19,6 +64,22 @@ class BadgesConfig(BaseModel):
     fee_colors: dict[str, Color] = Field(default_factory=dict, description="Colors for specific fee types")
     sort_by: Literal["first_name", "last_name"] = Field(default="first_name", description="Field to sort attendees by")
     group_by: Literal["none", "fee", "color"] = Field(default="none", description="Field to group attendees by")
+    show_logo: bool = Field(
+        default=False,
+        description="Print the event logo (an SVG file tagged 'logo') on each badge.",
+    )
+    icons_enabled: bool = Field(
+        default=False,
+        description="Show badge icons selected on social event sessions.",
+    )
+    show_camera_icon: bool = Field(
+        default=False,
+        description="Add a photo-permission camera icon that can be struck through by hand.",
+    )
+    qr_contact_card: bool = Field(
+        default=False,
+        description="Print a QR code encoding attendee contact details as a MECARD.",
+    )
 
     def filter_valid_fee_types(self, valid_fee_types: list[str]) -> BadgesConfig:
         """Return a new BadgesConfig with only valid fee types.
@@ -30,7 +91,6 @@ class BadgesConfig(BaseModel):
         filtered_fee_colors = {
             fee_type: color for fee_type, color in self.fee_colors.items() if fee_type in valid_types
         }
-
         return self.model_copy(update={"fee_colors": filtered_fee_colors})
 
 

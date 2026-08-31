@@ -81,6 +81,13 @@
                 readonly
                 class="col-12 col-md-3"
               />
+              <evan-select
+                v-if="formData.is_social_event"
+                v-model="badgeIcon"
+                :label="$t('fields.badge_icon')"
+                :options="badgeIconOptions"
+                class="col-12 col-md-9"
+              />
             </div>
           </q-tab-panel>
           <q-tab-panel name="description">
@@ -144,10 +151,12 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { debounce } from 'quasar';
+import { useI18n } from 'vue-i18n';
 
 import { useStore } from '../../store';
 import { useProgramTemplate } from '@/composables/useProgramTemplate';
 import { useMinimumLoading } from '@/composables/useMinimumLoading';
+import { BADGE_ICONS, badgeIconName } from '@/utils/badges';
 
 import UpdateBtn from '@/components/buttons/UpdateBtn.vue';
 import DateSelect from '@/components/forms/DateSelect.vue';
@@ -167,6 +176,7 @@ const props = defineProps<{
 const store = useStore();
 const { loading, executeWithMinLoading } = useMinimumLoading();
 const { topicOptions, trackOptions, papers, sessions } = storeToRefs(store);
+const { t } = useI18n();
 
 const activeTab = ref('general');
 
@@ -181,8 +191,36 @@ const formData = ref<SessionData>({
   topics: props.obj?.topics || [],
   room: props.obj?.room || null,
   is_social_event: props.obj?.is_social_event || false,
+  is_private: props.obj?.is_private || false,
   extra_attendees_fee: props.obj?.extra_attendees_fee || 0,
+  extra_data: sessionExtraData(),
 });
+
+function sessionExtraData(): SessionExtraData {
+  return {
+    committees: props.obj?.extra_data?.committees ?? [],
+    important_dates: props.obj?.extra_data?.important_dates ?? [],
+    group: props.obj?.extra_data?.group ?? null,
+    selectable_in_form: props.obj?.extra_data?.selectable_in_form ?? false,
+    badge_icon: props.obj?.extra_data?.badge_icon ?? null,
+  };
+}
+
+const badgeIconOptions = computed(() => [
+  { label: t('badges.no_icon'), value: null as string | null },
+  ...BADGE_ICONS.map((icon) => ({ label: t(`badges.icon_${icon}`), value: icon, icon: badgeIconName(icon) })),
+]);
+
+const badgeIcon = computed({
+  get: (): string | null => formData.value.extra_data?.badge_icon ?? null,
+  set: (value: string | null) => {
+    formData.value.extra_data = { ...sessionExtraData(), badge_icon: value };
+  },
+});
+
+function mergedExtraData(): SessionExtraData {
+  return { ...sessionExtraData(), ...props.obj?.extra_data, ...formData.value.extra_data };
+}
 
 const programValidation = ref<{
   is_valid: boolean;
@@ -347,9 +385,9 @@ async function createUpdate() {
 
   await executeWithMinLoading(async () => {
     if (props.obj) {
-      await store.updateSession({ ...props.obj, ...formData.value });
+      await store.updateSession({ ...props.obj, ...formData.value, extra_data: mergedExtraData() });
     } else {
-      await store.createSession(formData.value);
+      await store.createSession({ ...formData.value, extra_data: mergedExtraData() });
     }
   });
 }

@@ -1,5 +1,6 @@
 import {
   symSharpAdd,
+  symSharpAsterisk,
   symSharpAlternateEmail,
   symSharpArrowDownward,
   symSharpArrowDropDown,
@@ -9,6 +10,8 @@ import {
   symSharpAttachFile,
   symSharpBackspace,
   symSharpCampaign,
+  symSharpDirectionsBoat,
+  symSharpFlatware,
   symSharpChatBubble,
   symSharpColors,
   symSharpMarkChatUnread,
@@ -28,8 +31,13 @@ import {
   symSharpFolderShared,
   symSharpForYou,
   symSharpHandshake,
+  symSharpHeadphones,
   symSharpHideSource,
   symSharpHistoryToggleOff,
+  symSharpKayaking,
+  symSharpKidStar,
+  symSharpFort,
+  symSharpNoPhotography,
   symSharpInfo,
   symSharpLabel,
   symSharpList,
@@ -42,6 +50,7 @@ import {
   symSharpMenu,
   symSharpOpenInBrowser,
   symSharpPermMedia,
+  symSharpPhotoCamera,
   symSharpPinDrop,
   symSharpRadioButtonChecked,
   symSharpSearch,
@@ -52,10 +61,12 @@ import {
   symSharpSplitscreenLeft,
   symSharpStackedEmail,
   symSharpTableChartView,
+  symSharpTour,
   symSharpViewWeek,
   symSharpVisibility,
   symSharpWarning,
   symSharpWidgets,
+  symSharpWineBar,
   symSharpWysiwyg,
 } from '@quasar/extras/material-symbols-sharp';
 
@@ -130,3 +141,16 @@ export const iconNotifyError = symSharpClose;
 export const iconNotifyOk = symSharpCheck;
 export const iconNotifyInfo = symSharpInfo;
 export const iconNotifyWarning = symSharpWarning;
+
+// Badge icons. Keep in sync with ICON_FILES in evan/models/documents/badges.py
+export const iconBadgeReception = symSharpWineBar;
+export const iconBadgeDinner = symSharpFlatware;
+export const iconBadgeBoatTrip = symSharpDirectionsBoat;
+export const iconBadgeKayaking = symSharpKayaking;
+export const iconBadgeGuidedTour = symSharpTour;
+export const iconBadgeAudioTour = symSharpHeadphones;
+export const iconBadgeCastle = symSharpFort;
+export const iconBadgeStar = symSharpKidStar;
+export const iconBadgeAsterisk = symSharpAsterisk;
+export const iconBadgeCamera = symSharpPhotoCamera;
+export const iconBadgeCameraStruck = symSharpNoPhotography;

@@ -18,7 +18,7 @@ from .documents.events import (
     get_validated_event_registration_configuration,
 )
 from .emails import EmailTemplate
-from .rel.files import FilesMixin
+from .rel.files import File, FilesMixin
 from .rel.links import LinksMixin
 from .rel.permissions import Permission, PermissionsMixin
 from .users import User
@@ -174,6 +174,19 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @property
     def configuration(self) -> dict:
         return get_validated_event_configuration(self.config or {})
+
+    def get_logo_file(self) -> File | None:
+        """Return the event's logo file to print on badges.
+
+        The logo is a public file tagged ``logo``. Only SVG logos are
+        returned, since the badge PDF renders them as vectors.
+
+        :returns: The logo File, or None when no SVG logo is attached.
+        """
+        for file in self.files.filter(type=File.PUBLIC).order_by("pk"):
+            if "logo" in (file.tags or []) and file.file.name.lower().endswith(".svg"):
+                return file
+        return None
 
     @property
     def contact_email(self) -> str:
