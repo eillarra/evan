@@ -70,6 +70,21 @@ class TestBadgeConfig:
         assert config.default.as_named() == "red"
         assert config.guest.as_named() == "blue"
 
+    def test_serialized_colors_are_hex(self) -> None:
+        """Test that colors always serialize as hex, never CSS names.
+
+        Regression test for EVAN-BACKEND-5T: reportlab's ``HexColor`` cannot
+        parse CSS color names, so ``get_validated_badges_configuration`` must
+        never emit "blue" for a badge color, only hex values.
+        """
+        result = get_validated_badges_configuration(
+            {"default": "#0000ff", "guest": "blue", "fee_colors": {"vip": "red"}}
+        )
+
+        assert result["default"] == "#0000ff"
+        assert result["guest"] == "#0000ff"
+        assert result["fee_colors"]["vip"] == "#ff0000"
+
     def test_filter_valid_fee_types(self) -> None:
         """Test filtering fee colors to only include valid fee types."""
         config = BadgesConfig(

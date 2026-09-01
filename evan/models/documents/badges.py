@@ -7,7 +7,7 @@ event through the ``badges`` key of ``EventExtraData``.
 import json
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_serializer
 from pydantic_extra_types.color import Color
 
 
@@ -62,6 +62,26 @@ class BadgesConfig(BaseModel):
     default: Color = Field(default=Color("#2563eb"), description="Default badge color")
     guest: Color = Field(default=Color("#059669"), description="Color for guest badges")
     fee_colors: dict[str, Color] = Field(default_factory=dict, description="Colors for specific fee types")
+
+    @field_serializer("default", "guest")
+    def serialize_color(self, value: Color) -> str:
+        """Serialize colors as hex values.
+
+        Pydantic's Color serializes CSS-named colors via ``as_named()`` (e.g.
+        ``#0000ff`` becomes ``"blue"``), which reportlab's ``HexColor`` cannot
+        parse.
+        """
+        return value.as_hex(format="long")
+
+    @field_serializer("fee_colors")
+    def serialize_fee_colors(self, value: dict[str, Color]) -> dict[str, str]:
+        """Serialize fee colors as hex values.
+
+        :param value: Mapping of fee type to color.
+        :returns: Mapping of fee type to hex color string.
+        """
+        return {fee_type: color.as_hex(format="long") for fee_type, color in value.items()}
+
     sort_by: Literal["first_name", "last_name"] = Field(default="first_name", description="Field to sort attendees by")
     group_by: Literal["none", "fee", "color"] = Field(default="none", description="Field to group attendees by")
     show_logo: bool = Field(
