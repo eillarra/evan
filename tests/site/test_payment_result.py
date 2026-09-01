@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 import pytest
+import sentry_sdk
 from django.http import QueryDict
 from django.urls import reverse
 
@@ -286,7 +287,8 @@ class TestForgedFeedbackIsRejected:
     def _result_url(self, registration):
         return reverse("registration:payment_result", args=[registration.uuid])
 
-    def test_unsigned_cancel_does_not_finalise_or_rotate(self, client, payment_registration) -> None:
+    @patch("evan.site.views.registrations.sentry_sdk.capture_message", wraps=sentry_sdk.capture_message)
+    def test_unsigned_cancel_does_not_finalise_or_rotate(self, mock_capture, client, payment_registration) -> None:
         attempt = create_pending_attempt(payment_registration)
         original_hash = payment_registration.unique_hash
 
@@ -296,8 +298,10 @@ class TestForgedFeedbackIsRejected:
         payment_registration.refresh_from_db()
         assert attempt.status == RegistrationPaymentAttempt.PENDING
         assert payment_registration.unique_hash == original_hash
+        assert mock_capture.call_args.kwargs["extras"]["context"] == "finalize"
 
-    def test_unsigned_decline_does_not_finalise_or_rotate(self, client, payment_registration) -> None:
+    @patch("evan.site.views.registrations.sentry_sdk.capture_message", wraps=sentry_sdk.capture_message)
+    def test_unsigned_decline_does_not_finalise_or_rotate(self, mock_capture, client, payment_registration) -> None:
         attempt = create_pending_attempt(payment_registration)
         original_hash = payment_registration.unique_hash
 
@@ -307,8 +311,10 @@ class TestForgedFeedbackIsRejected:
         payment_registration.refresh_from_db()
         assert attempt.status == RegistrationPaymentAttempt.PENDING
         assert payment_registration.unique_hash == original_hash
+        assert mock_capture.call_args.kwargs["extras"]["context"] == "finalize"
 
-    def test_unsigned_success_does_not_credit(self, client, payment_registration) -> None:
+    @patch("evan.site.views.registrations.sentry_sdk.capture_message", wraps=sentry_sdk.capture_message)
+    def test_unsigned_success_does_not_credit(self, mock_capture, client, payment_registration) -> None:
         attempt = create_pending_attempt(payment_registration, amount=100)
         original_paid = payment_registration.paid
 
@@ -321,8 +327,10 @@ class TestForgedFeedbackIsRejected:
         payment_registration.refresh_from_db()
         assert attempt.status == RegistrationPaymentAttempt.PENDING
         assert payment_registration.paid == original_paid
+        assert mock_capture.call_args.kwargs["extras"]["context"] == "credit"
 
-    def test_unsigned_async_post_cancel_does_not_finalise(self, client, payment_registration) -> None:
+    @patch("evan.site.views.registrations.sentry_sdk.capture_message", wraps=sentry_sdk.capture_message)
+    def test_unsigned_async_post_cancel_does_not_finalise(self, mock_capture, client, payment_registration) -> None:
         """Async POST without a valid signature must not finalise (UGent Pay scenario)."""
         attempt = create_pending_attempt(payment_registration)
         original_hash = payment_registration.unique_hash
@@ -333,6 +341,15 @@ class TestForgedFeedbackIsRejected:
         payment_registration.refresh_from_db()
         assert attempt.status == RegistrationPaymentAttempt.PENDING
         assert payment_registration.unique_hash == original_hash
+        assert mock_capture.call_args.kwargs["extras"]["context"] == "finalize"
+
+    @patch("evan.site.views.registrations.sentry_sdk.capture_message", wraps=sentry_sdk.capture_message)
+    def test_unsigned_feedback_does_not_leak_the_salt(self, mock_capture, client, payment_registration) -> None:
+        attempt = create_pending_attempt(payment_registration)
+
+        client.get(self._result_url(payment_registration), {"STATUS": "1", "ORDERID": attempt.order_id})
+
+        assert "testsalt" not in str(mock_capture.call_args)
 
 
 @pytest.mark.django_db

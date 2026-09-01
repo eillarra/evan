@@ -198,18 +198,50 @@ class UGentBridge:
         return worldline_parameters
 
     @classmethod
-    def validate_out_parameters(cls, query_params: QueryDict, *, outsalt: str) -> bool:
-        """Check if the URL parameters have been tampered."""
+    def _compute_out_signature(cls, query_params: QueryDict, *, outsalt: str) -> str:
+        """Recompute the expected SHA-OUT signature for a callback payload.
 
+        :param query_params: The callback query params (GET or POST).
+        :param outsalt: The SHA-OUT passphrase to sign with.
+        :returns: The expected uppercase hex SHA-512 digest.
+        """
         parameters = query_params.dict()
-        shasign = parameters.pop("SHASIGN", None)
+        parameters.pop("SHASIGN", None)
 
         string_to_hash = ""
-
         for key in sorted(parameters):
             ku = key.upper()
             if ku in SHA_OUT_PARAMS and parameters[key]:
                 string_to_hash += f"{ku}={parameters[key]}{outsalt}"
 
-        expected = sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
+        return sha512(string_to_hash.encode("utf-8")).hexdigest().upper()
+
+    @classmethod
+    def validate_out_parameters(cls, query_params: QueryDict, *, outsalt: str) -> bool:
+        """Check if the URL parameters have been tampered."""
+
+        shasign = query_params.get("SHASIGN", "")
+        expected = cls._compute_out_signature(query_params, outsalt=outsalt)
         return hmac.compare_digest(shasign or "", expected)
+
+    @classmethod
+    def describe_out_signature_mismatch(cls, query_params: QueryDict, *, outsalt: str) -> dict:
+        """Build Sentry-safe diagnostic fields for a failed SHA-OUT signature check.
+
+        Digests are one-way and reveal nothing about ``outsalt``, so both the
+        received and expected SHASIGN are safe to report. Only parameter names
+        are reported, never their values, since some SHA_OUT_PARAMS carry card data.
+
+        :param query_params: The callback query params that failed validation.
+        :param outsalt: The SHA-OUT passphrase used to recompute the expected signature.
+        :returns: Diagnostic fields safe to attach to a Sentry event.
+        """
+        parameters = query_params.dict()
+        parameters.pop("SHASIGN", None)
+        return {
+            "received_shasign": query_params.get("SHASIGN", ""),
+            "expected_shasign": cls._compute_out_signature(query_params, outsalt=outsalt),
+            "signed_keys": sorted(k.upper() for k in parameters if k.upper() in SHA_OUT_PARAMS and parameters[k]),
+            "all_keys": sorted(parameters.keys()),
+            "salt_configured": bool(outsalt),
+        }

@@ -1,3 +1,4 @@
+import sentry_sdk
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -201,6 +202,29 @@ class RegistrationPaymentDelegatedView(RegistrationPaymentBaseView):
         return super().dispatch(request, *args, **kwargs)
 
 
+def _log_worldline_signature_mismatch(registration: Registration, query_params: QueryDict, *, context: str) -> None:
+    """Report a failed Worldline SHA-OUT signature check to Sentry for diagnosis.
+
+    :param registration: The registration the callback targeted.
+    :param query_params: The callback query params (GET or POST) that failed validation.
+    :param context: Which caller rejected the signature, ``"credit"`` or ``"finalize"``.
+    """
+    outsalt = registration.event.ugent_bridge.get("salt", "")
+    diagnostic = UGentBridge.describe_out_signature_mismatch(query_params, outsalt=outsalt)
+    sentry_sdk.capture_message(
+        "Worldline SHA-OUT signature mismatch",
+        level="warning",
+        extras={
+            "context": context,
+            "registration_id": registration.id,
+            "event_id": registration.event_id,
+            "order_id": query_params.get("ORDERID", ""),
+            "status": query_params.get("STATUS", ""),
+            **diagnostic,
+        },
+    )
+
+
 def _credit_worldline_payment(registration: Registration, query_params: QueryDict) -> bool:
     """Credit a Worldline payment to a registration if valid and not already processed.
 
@@ -213,6 +237,7 @@ def _credit_worldline_payment(registration: Registration, query_params: QueryDic
     if not payid or not order_id:
         return False
     if not UGentBridge.validate_out_parameters(query_params, outsalt=registration.event.ugent_bridge.get("salt")):
+        _log_worldline_signature_mismatch(registration, query_params, context="credit")
         return False
 
     try:
@@ -269,6 +294,7 @@ def _finalize_payment_attempt(registration: Registration, query_params: QueryDic
     :returns: True only when the attempt was actually transitioned out of PENDING.
     """
     if not UGentBridge.validate_out_parameters(query_params, outsalt=registration.event.ugent_bridge.get("salt")):
+        _log_worldline_signature_mismatch(registration, query_params, context="finalize")
         return False
 
     order_id = query_params.get("ORDERID", "")

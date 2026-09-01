@@ -154,6 +154,38 @@ class TestValidateOutParameters:
 
 
 # ---------------------------------------------------------------------------
+# describe_out_signature_mismatch
+# ---------------------------------------------------------------------------
+
+
+class TestDescribeOutSignatureMismatch:
+    """describe_out_signature_mismatch surfaces enough to diagnose a bad SHASIGN without leaking secrets."""
+
+    def test_matches_validate_out_parameters_verdict(self) -> None:
+        qs = _build_valid_callback(outsalt="outsalt")
+        qs["AMOUNT"] = "999"  # tamper after signing
+        diagnostic = UGentBridge.describe_out_signature_mismatch(qs, outsalt="outsalt")
+
+        assert diagnostic["received_shasign"] == qs["SHASIGN"]
+        assert diagnostic["expected_shasign"] != qs["SHASIGN"]
+        assert diagnostic["signed_keys"] == sorted({"ORDERID", "AMOUNT", "STATUS", "PAYID", "CURRENCY"})
+        assert "AMOUNT" in diagnostic["all_keys"]
+        assert diagnostic["salt_configured"] is True
+
+    def test_does_not_leak_the_salt(self) -> None:
+        qs = _build_valid_callback(outsalt="outsalt")
+        diagnostic = UGentBridge.describe_out_signature_mismatch(qs, outsalt="outsalt")
+
+        assert "outsalt" not in diagnostic.values()
+        assert "outsalt" not in str(diagnostic)
+
+    def test_flags_unconfigured_salt(self) -> None:
+        qs = _build_valid_callback(outsalt="outsalt")
+        diagnostic = UGentBridge.describe_out_signature_mismatch(qs, outsalt="")
+        assert diagnostic["salt_configured"] is False
+
+
+# ---------------------------------------------------------------------------
 # process_parameters
 # ---------------------------------------------------------------------------
 
