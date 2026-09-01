@@ -16,6 +16,9 @@ from pydantic_extra_types.color import Color
 SOCIAL_EVENT_BADGE_ICONS: tuple[str, ...] = (
     "reception",
     "dinner",
+    "beer",
+    "coffee",
+    "restaurant",
     "boat_trip",
     "kayaking",
     "guided_tour",
@@ -37,12 +40,15 @@ AVAILABLE_BADGE_ICONS: tuple[str, ...] = (*SOCIAL_EVENT_BADGE_ICONS, CAMERA_BADG
 #: (without extension) in ``evan/site/static/images/icons/``.
 ICON_FILES: dict[str, str] = {
     "reception": "wine_bar",
-    "dinner": "flatware",
+    "dinner": "meal_dinner",
+    "beer": "beer_meal",
+    "coffee": "coffee",
+    "restaurant": "restaurant",
     "boat_trip": "directions_boat",
     "kayaking": "kayaking",
     "guided_tour": "tour",
     "audio_tour": "headphones",
-    "castle": "fort",
+    "castle": "castle",
     "star": "kid_star",
     "asterisk": "asterisk",
     CAMERA_BADGE_ICON: "photo_camera",

@@ -9,15 +9,16 @@ import {
   symSharpAssignmentTurnedIn,
   symSharpAttachFile,
   symSharpBackspace,
+  symSharpBeerMeal,
   symSharpCampaign,
   symSharpDirectionsBoat,
-  symSharpFlatware,
   symSharpChatBubble,
   symSharpColors,
   symSharpMarkChatUnread,
   symSharpCheck,
   symSharpCheckBox,
   symSharpClose,
+  symSharpCoffee,
   symSharpContacts,
   symSharpContentCopy,
   symSharpContract,
@@ -36,7 +37,7 @@ import {
   symSharpHistoryToggleOff,
   symSharpKayaking,
   symSharpKidStar,
-  symSharpFort,
+  symSharpCastle,
   symSharpNoPhotography,
   symSharpInfo,
   symSharpLabel,
@@ -46,6 +47,7 @@ import {
   symSharpLogin,
   symSharpLogout,
   symSharpMail,
+  symSharpMealDinner,
   symSharpMeetingRoom,
   symSharpMenu,
   symSharpOpenInBrowser,
@@ -53,6 +55,7 @@ import {
   symSharpPhotoCamera,
   symSharpPinDrop,
   symSharpRadioButtonChecked,
+  symSharpRestaurant,
   symSharpSearch,
   symSharpSchedule,
   symSharpSend,
@@ -144,12 +147,15 @@ export const iconNotifyWarning = symSharpWarning;
 
 // Badge icons. Keep in sync with ICON_FILES in evan/models/documents/badges.py
 export const iconBadgeReception = symSharpWineBar;
-export const iconBadgeDinner = symSharpFlatware;
+export const iconBadgeDinner = symSharpMealDinner;
+export const iconBadgeBeer = symSharpBeerMeal;
+export const iconBadgeCoffee = symSharpCoffee;
+export const iconBadgeRestaurant = symSharpRestaurant;
 export const iconBadgeBoatTrip = symSharpDirectionsBoat;
 export const iconBadgeKayaking = symSharpKayaking;
 export const iconBadgeGuidedTour = symSharpTour;
 export const iconBadgeAudioTour = symSharpHeadphones;
-export const iconBadgeCastle = symSharpFort;
+export const iconBadgeCastle = symSharpCastle;
 export const iconBadgeStar = symSharpKidStar;
 export const iconBadgeAsterisk = symSharpAsterisk;
 export const iconBadgeCamera = symSharpPhotoCamera;

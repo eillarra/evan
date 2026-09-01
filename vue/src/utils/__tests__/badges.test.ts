@@ -7,7 +7,7 @@ import { BADGE_ICONS, badgeIconName } from '../badges';
 describe('BADGE_ICONS', () => {
   it('stays within the ~10 icon whitelist', () => {
     expect(BADGE_ICONS.length).toBeGreaterThanOrEqual(5);
-    expect(BADGE_ICONS.length).toBeLessThanOrEqual(10);
+    expect(BADGE_ICONS.length).toBeLessThanOrEqual(12);
   });
 
   it('contains unique entries', () => {
