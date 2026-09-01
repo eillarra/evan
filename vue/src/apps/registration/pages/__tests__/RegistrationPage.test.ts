@@ -46,6 +46,7 @@ const i18n = createI18n({
       },
       form: { update: 'Update', create: 'Create' },
       messages: { registration_created: 'Registered', registration_updated: 'Updated' },
+      session: { remaining: '{n} places left', remaining_one: '1 place left' },
     },
   },
 } as any);
@@ -355,6 +356,57 @@ describe('RegistrationPage', () => {
       await nextTick();
 
       expect(wrapper.text()).not.toContain('Social events');
+    });
+
+    it('shows remaining places caption for a capped social event', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeSocialSession()];
+      mockPageProps.sessions[0].remaining_capacity = 7;
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('7 places left');
+    });
+
+    it('shows singular remaining places caption when one place left', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeSocialSession()];
+      mockPageProps.sessions[0].remaining_capacity = 1;
+
+      await nextTick();
+
+      expect(wrapper.text()).toContain('1 place left');
+    });
+
+    it('hides remaining places caption when social event uncapped', async () => {
+      const wrapper = mountPage();
+
+      const store = useStore();
+      const userStore = useUserStore();
+      store.evanEvent = makeEvent(makeFee('onsite__regular', false));
+      store.loading = false;
+      store.registration = makeRegistration('onsite__regular');
+      userStore.user = mockUser;
+      mockPageProps.sessions = [makeSocialSession()];
+      mockPageProps.sessions[0].remaining_capacity = null;
+
+      await nextTick();
+
+      expect(wrapper.text()).not.toContain('places left');
     });
   });
 

@@ -292,6 +292,8 @@ export default {
     program_with_subsessions_note:
       'This session has subsessions. Individual subsession programs will override this general program.',
     view_subsessions: 'View Subsessions',
+    remaining: '{n} places left',
+    remaining_one: '1 place left',
   },
   subsession: {
     title: 'Subsession title',

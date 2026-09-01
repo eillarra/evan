@@ -1,5 +1,5 @@
 <template>
-  <h6 class="text-weight-bold q-mb-md" :class="{ 'q-mt-xl': !first, 'q-mt-none': first }">
+  <h6 class="q-mb-md" :class="{ 'q-mt-xl': !first, 'q-mt-none': first }">
     <slot></slot>
   </h6>
 </template>

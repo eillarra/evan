@@ -243,6 +243,8 @@ export default {
     program_with_subsessions_note:
       "Deze sessie heeft subsessies. Individuele subsessie programma's zullen dit algemene programma overschrijven.",
     view_subsessions: 'Bekijk Subsessies',
+    remaining: '{n} plaatsen vrij',
+    remaining_one: '1 plaats vrij',
   },
   subsession: {
     title: 'Subsessie titel',

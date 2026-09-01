@@ -108,8 +108,16 @@
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ session.title }}</q-item-label>
-                <q-item-label caption
-                  ><span>{{ formatDate(session.start_at || '', 'dddd, MMMM D') }}</span>
+                <q-item-label caption>
+                  <strong v-if="hasRemainingCapacity(session)"
+                    >{{
+                      session.remaining_capacity === 1
+                        ? $t('session.remaining_one')
+                        : $t('session.remaining', { n: session.remaining_capacity })
+                    }}
+                    -
+                  </strong>
+                  <span>{{ formatDate(session.start_at || '', 'dddd, MMMM D') }}</span>
                   <template v-if="formatTimeRange(session.start_at, session.end_at)"
                     >, {{ formatTimeRange(session.start_at, session.end_at) }}</template
                   ></q-item-label
@@ -166,8 +174,16 @@
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ session.title }}</q-item-label>
-                <q-item-label caption
-                  ><span>{{ formatDate(session.start_at || '', 'dddd, MMMM D') }}</span>
+                <q-item-label caption>
+                  <strong v-if="hasRemainingCapacity(session)"
+                    >{{
+                      session.remaining_capacity === 1
+                        ? $t('session.remaining_one')
+                        : $t('session.remaining', { n: session.remaining_capacity })
+                    }}
+                    -
+                  </strong>
+                  <span>{{ formatDate(session.start_at || '', 'dddd, MMMM D') }}</span>
                   <template v-if="formatTimeRange(session.start_at, session.end_at)"
                     >, {{ formatTimeRange(session.start_at, session.end_at) }}</template
                   ></q-item-label
@@ -514,6 +530,10 @@ function isSocialEventDisabled(session: Session, isSelectedByBearer: boolean): b
 
 function isSocialEventDisabledForRegistrant(session: Session): boolean {
   return isSocialEventDisabled(session, selectedSocialEvents.value.includes(session.id));
+}
+
+function hasRemainingCapacity(session: Session): boolean {
+  return session.remaining_capacity !== null && session.remaining_capacity > 0;
 }
 
 function getGroupedSessionSelection(group: string): number | null {

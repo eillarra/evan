@@ -289,8 +289,9 @@ $in-table-dense-field-height: 28px;
   font-family: 'UGent Panno SemiLight', 'Arial', sans-serif;
 }
 
-h1, h2, h3, h4, h5 {
+h1, h2, h3, h4, h5, h6, strong, .text-h6 {
   font-family: 'UGent Panno Medium', 'Arial', sans-serif;
+  font-weight: normal !important;
 }
 
 h2 {
