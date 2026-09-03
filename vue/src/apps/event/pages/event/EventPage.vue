@@ -139,21 +139,18 @@
           <div class="text-caption text-grey-6 col-12">{{ $t('badges.camera_hint') }}</div>
           <q-toggle v-model="badgeConfigQrContactCard" :label="$t('badges.qr_contact_card')" dense class="col-12" />
           <div class="text-caption text-grey-6 col-12">{{ $t('badges.qr_contact_hint') }}</div>
-          <div v-if="false">
-            <!-- hidden for now -->
-            <q-toggle v-model="badgeConfigShowLogo" :label="$t('badges.show_logo')" dense class="col-12" />
-            <div v-if="badgeConfigShowLogo" class="col-12">
-              <file-field
-                v-if="evanEvent"
-                public
-                dense
-                :api-endpoint="evanEvent.rel_files"
-                :tags="['logo']"
-                :label="$t('badges.logo')"
-                accept=".svg,image/svg+xml"
-              />
-              <div v-else class="text-caption text-grey-6">{{ $t('badges.logo_hint') }}</div>
-            </div>
+          <q-toggle v-model="badgeConfigShowLogo" :label="$t('badges.show_logo')" dense class="col-12" />
+          <div v-if="badgeConfigShowLogo" class="col-12">
+            <file-field
+              v-if="evanEvent"
+              public
+              dense
+              :api-endpoint="evanEvent.rel_files"
+              :tags="['logo']"
+              :label="$t('badges.logo')"
+              accept=".svg,image/svg+xml"
+            />
+            <div v-else class="text-caption text-grey-6">{{ $t('badges.logo_hint') }}</div>
           </div>
           <div class="col-12">
             <h6 class="text-subtitle2 q-mb-sm">{{ $t('badges.fee_type_colors') }}</h6>

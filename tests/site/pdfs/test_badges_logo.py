@@ -7,9 +7,16 @@ PDF-module loader; drawing itself is layout code and not tested here.
 
 import pytest
 from django.core.files.base import ContentFile
+from reportlab.graphics.shapes import Drawing
+from reportlab.lib.colors import black
 
 from evan.models import File
-from evan.site.pdfs.badges import get_event_logo_drawing
+from evan.site.pdfs.badges import (
+    BADGE_WIDTH,
+    LOGO_Y,
+    draw_badge,
+    get_event_logo_drawing,
+)
 
 
 SVG = b'<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10"/></svg>'
@@ -90,3 +97,41 @@ class TestGetEventLogoDrawing:
         logo_event("logo.svg", content=b"<!this is not svg><broken>")
 
         assert get_event_logo_drawing(t_event) is None
+
+
+class TestDrawBadgeLogo:
+    """draw_badge places the logo on the first (left) badge half only."""
+
+    @pytest.fixture
+    def logo_drawing(self) -> Drawing:
+        return Drawing(10, 10)
+
+    def test_logo_only_on_first_half(self, logo_drawing: Drawing) -> None:
+        """The logo is drawn once, on the left half, below the attendee name."""
+        badge = draw_badge(
+            event_name="Event",
+            event_hashtag="ev",
+            event_info="info",
+            attendee_name="Jane Doe",
+            color=black,
+            logo=logo_drawing,
+        )
+
+        logos = [item for item in badge.contents if isinstance(item, Drawing)]
+
+        assert len(logos) == 1
+        (logo,) = logos
+        assert logo.transform[4] < BADGE_WIDTH / 2
+        assert logo.transform[5] == LOGO_Y
+
+    def test_no_logo_when_disabled(self, logo_drawing: Drawing) -> None:
+        """No logo drawing is added when no logo is passed."""
+        badge = draw_badge(
+            event_name="Event",
+            event_hashtag="ev",
+            event_info="info",
+            attendee_name="Jane Doe",
+            color=black,
+        )
+
+        assert not [item for item in badge.contents if isinstance(item, Drawing)]

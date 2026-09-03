@@ -46,10 +46,11 @@ ICONS_RIGHT_OFFSET = 0.15  # fraction of badge width right of each half centre
 QR_SIZE = 15 * mm
 QR_LEVEL = "M"
 
-# Event logo: fitted inside this box, bottom-left aligned with the icon row.
+# Event logo: fitted inside this box, bottom aligned with the icon row so it
+# sits between the country line and the footer color band.
 LOGO_MAX_WIDTH = 30 * mm
 LOGO_MAX_HEIGHT = 13 * mm
-LOGO_Y = 22 * mm
+LOGO_Y = 13 * mm
 
 
 def get_font_size(text: str, *, max_size: float, char_max: int) -> float:
@@ -296,6 +297,7 @@ def draw_badge(  # type: ignore[misc]
     :param attendee_name: Name of the attendee.
     :param color: Background color for the top and bottom bands.
     :param logo: Parsed event logo drawing, or None for no logo.
+        Drawn on the first (left) half only, below the attendee name.
     :param icons: Icon keys (social event icons) to draw on the right half.
     :param show_camera_icon: Whether to draw a camera icon for photo permission.
     :param no_photos: Whether the attendee opted out of photography
@@ -326,7 +328,9 @@ def draw_badge(  # type: ignore[misc]
         )
 
     for i, x in enumerate([width * 0.25, width * 0.75]):
-        if logo:
+        # Logo only on the first (left) half; the right half carries the
+        # social event icons and QR contact card.
+        if logo and i == 0:
             draw_logo(draw, logo, x)
 
         draw.add(
