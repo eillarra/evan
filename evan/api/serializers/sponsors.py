@@ -2,12 +2,10 @@ from rest_framework import serializers
 
 from evan.models import Sponsor
 
-from .rel.files import FileSerializer, FilesMixin
+from .rel.files import AccessibleFilesMixin, FilesMixin
 
 
-class SponsorReadOnlySerializer(serializers.ModelSerializer):
-    files = FileSerializer(many=True, read_only=True)
-
+class SponsorReadOnlySerializer(AccessibleFilesMixin, serializers.ModelSerializer):
     class Meta:  # noqa: D106
         model = Sponsor
         exclude = ["event"]

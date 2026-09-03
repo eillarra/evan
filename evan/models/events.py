@@ -227,7 +227,8 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         return user.is_staff or self.acl.filter(user_id=user.id, level__gte=Permission.ADMIN).exists()
 
     def files_viewable_by_user(self, user) -> bool:
-        return self.editable_by_user(user) or self.registrations.filter(user_id=user.id).exists()
+        """Check if the event files are viewable by a user (managers or accepted attendees)."""
+        return self.editable_by_user(user) or self.registrations.filter(user_id=user.id, is_accepted=True).exists()
 
     def get_abstract_url(self) -> str:
         return "".join(["//", get_current_site(None).domain, reverse("abstract:redirect", args=[self.code])])

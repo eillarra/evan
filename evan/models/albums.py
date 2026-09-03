@@ -36,6 +36,10 @@ class Album(FilesMixin, models.Model):
             no_show=False,
         ).exists()
 
+    def files_viewable_by_user(self, user: User) -> bool:
+        """Check if the user can view album files (no-show attendees excluded)."""
+        return self.is_accessible_by_user(user)
+
     def get_original_photos(self) -> models.QuerySet:
         """Get all original photos in the album."""
         # Use icontains for SQLite compatibility in tests

@@ -3,13 +3,12 @@ from rest_framework import serializers
 from evan.models import Event, Session, validate_datetime
 from evan.models.documents.sessions import get_validated_session_extra_data
 
-from .rel.files import FileSerializer, FilesMixin
+from .rel.files import AccessibleFilesMixin, FilesMixin
 from .subsessions import SubsessionReadOnlySerializer, SubsessionSerializer
 
 
-class SessionReadOnlySerializer(serializers.ModelSerializer):
+class SessionReadOnlySerializer(AccessibleFilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:session-detail")
-    files = FileSerializer(many=True, read_only=True)
     subsessions = SubsessionReadOnlySerializer(many=True, read_only=True)
     slug = serializers.SlugField(read_only=True)
     remaining_capacity = serializers.IntegerField(read_only=True, allow_null=True)

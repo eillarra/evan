@@ -1,3 +1,4 @@
+from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -14,7 +15,15 @@ class MediaFileView(View):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.get_object().is_accessible_by_user(request.user):  # type: ignore
+        file = self.get_object()
+
+        # A login_required decorator cannot be used here: the same URL serves
+        # public and private files, so the redirect must happen per file after
+        # the lookup, never for public files.
+        if not file.is_public and not request.user.is_authenticated:  # type: ignore
+            return redirect_to_login(next=request.get_full_path())
+
+        if not file.is_accessible_by_user(request.user):  # type: ignore
             raise PermissionDenied("You don't have the necessary permissions to access this file.")
         return super().dispatch(request, *args, **kwargs)
 

@@ -2,12 +2,11 @@ from rest_framework import serializers
 
 from evan.models import Paper
 
-from .rel.files import FileSerializer, FilesMixin
+from .rel.files import AccessibleFilesMixin, FilesMixin
 
 
-class PaperReadOnlySerializer(serializers.ModelSerializer):
+class PaperReadOnlySerializer(AccessibleFilesMixin, serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:paper-detail")
-    files = FileSerializer(many=True, read_only=True)
 
     class Meta:  # noqa: D106
         model = Paper

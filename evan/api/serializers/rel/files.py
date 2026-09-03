@@ -1,5 +1,6 @@
 import os
 
+from django.contrib.auth.models import AnonymousUser
 from rest_framework import serializers
 
 from evan.models.documents.files import BaseFileUploaderConfig
@@ -81,8 +82,24 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class FilesMixin(serializers.ModelSerializer):
+class AccessibleFilesMixin(serializers.ModelSerializer):
+    """Serializes related ``files``, hiding private files from users without access."""
+
+    files = serializers.SerializerMethodField()
+
+    def get_files(self, obj):
+        """Serialize the files the current request user is allowed to access.
+
+        :param obj: The model instance with related files.
+        :returns: Serialized list of accessible files.
+        """
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        accessible = [file for file in obj.files.all() if file.is_accessible_by_user(user or AnonymousUser())]
+        return FileSerializer(accessible, many=True, context=self.context).data
+
+
+class FilesMixin(AccessibleFilesMixin, serializers.ModelSerializer):
     """Addresses mixin."""
 
     rel_files = RelHyperlinkedField(view_name="v1:file-list")
-    files = FileSerializer(many=True, read_only=True)

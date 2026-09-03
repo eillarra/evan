@@ -106,3 +106,23 @@ class FilesMixin(models.Model):
         elif hasattr(self, "can_be_managed_by"):
             return self.can_be_managed_by(user)  # type: ignore
         raise NotImplementedError("files_can_be_managed_by must be implemented in the model using this mixin.")
+
+    def files_viewable_by_user(self, user: User) -> bool:
+        """Check if the user can view related files.
+
+        Default: managers of the related event, or accepted attendees
+        registered for it. Override for custom behaviour (e.g. Album excludes
+        no-shows, Abstract allows authors and reviewers).
+
+        :param user: The user to check access for.
+        :returns: True if the user can view the related files.
+        :raises NotImplementedError: If no access control can be determined.
+        """
+        if hasattr(self, "event") and self.event:  # type: ignore
+            event = self.event
+            return (
+                event.can_be_managed_by(user) or event.registrations.filter(user_id=user.id, is_accepted=True).exists()
+            )
+        elif hasattr(self, "can_be_managed_by"):
+            return self.can_be_managed_by(user)  # type: ignore
+        raise NotImplementedError("files_viewable_by_user must be implemented in the model using this mixin.")
