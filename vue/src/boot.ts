@@ -13,7 +13,6 @@ import symSharp from 'quasar/icon-set/svg-material-symbols-sharp';
 import { axios, api } from './axios';
 import { createI18n, messages } from './i18n';
 import { notify } from './utils/notify';
-import { storage } from './utils/storage';
 
 import EvanSelect from './components/EvanSelect.vue';
 import EvanFilterSelect from './components/EvanFilterSelect.vue';
@@ -45,16 +44,10 @@ const bootApp = (routes: RouteRecordRaw[]) => {
       return import('./layouts/MainLayout.vue' as string);
     },
     setup({ el, App, props, plugin }) {
-      // locale
-      storage.set('evan.locale', props.initialPage.props.django_locale);
-
       // i18n
       const i18n = createI18n({
         legacy: false,
-        locale: props.initialPage.props.django_locale as string,
-        fallbackLocale: {
-          default: ['en'],
-        },
+        locale: 'en',
         messages,
       });
 

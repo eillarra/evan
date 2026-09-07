@@ -35,7 +35,7 @@ def render_inertia(request, vue_entry_point: str, *, props: dict | None = None, 
             "django_csrf_token": get_csrf_token(request),
             "django_debug": settings.DEBUG,
             "django_env": os.environ.get("DJANGO_ENV", "development"),
-            "django_locale": request.LANGUAGE_CODE,
+            "django_locale": settings.LANGUAGE_CODE,
             "django_user": UserSerializer(request.user, context={"request": request}).data
             if request.user.is_authenticated
             else None,

@@ -25,7 +25,7 @@ Aliases: `CLAUDE.md` and `.github/copilot-instructions.md` are symlinks to this 
 - **Storage**: S3 via django-storages + boto3 (UGent S3 endpoint).
 - **Auth**: django-allauth (GitHub, Google, LinkedIn, UGent provider).
 - **Admin**: django.contrib.admin.
-- **i18n**: en + nl (Dutch is the default `LANGUAGE_CODE`).
+- **i18n**: English only (`LANGUAGE_CODE = "en"`).
 - **Observability**: Sentry SDK (Django + Redis integrations) backend; `@sentry/vue` frontend.
 
 ## Commands

@@ -66,7 +66,6 @@ MIDDLEWARE = [
     "django.middleware.gzip.GZipMiddleware",
     "django.middleware.http.ConditionalGetMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -119,14 +118,7 @@ TIME_ZONE = "Europe/Brussels"
 
 USE_I18N = True
 
-LANGUAGE_CODE = "nl"
-LANGUAGES = (
-    ("en", "English"),
-    ("nl", "Nederlands"),
-)
-LANGUAGE_COOKIE_NAME = "evan.language"
-MODELTRANSLATION_LANGUAGES = ("en", "nl")
-MODELTRANSLATION_TRANSLATION_FILES = ("evan.model_translations",)
+LANGUAGE_CODE = "en"
 
 FIRST_DAY_OF_WEEK = 1
 

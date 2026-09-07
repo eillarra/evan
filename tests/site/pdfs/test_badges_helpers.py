@@ -49,17 +49,17 @@ class TestFormatEventInfo:
             (
                 date(2025, 8, 11),
                 date(2025, 8, 14),
-                "augustus 11-14",
+                "August 11-14",
             ),
             (
                 date(2025, 8, 28),
                 date(2025, 9, 1),
-                "augustus 28 - september 1",
+                "August 28 - September 1",
             ),
             (
                 date(2025, 8, 11),
                 date(2025, 8, 11),
-                "augustus 11",
+                "August 11",
             ),
         ],
     )
