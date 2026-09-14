@@ -33,6 +33,76 @@ def test_registration_excel_includes_configured_extra_fields(t_event) -> None:
     assert row["paper_id"] == "P-123"
 
 
+def test_registration_excel_includes_sponsor_email_consent(t_event) -> None:
+    """Sponsor email consent from ``_internal`` extra data is exported in the registrations sheet."""
+    consented = RegistrationFactory(
+        event=t_event,
+        user=UserFactory(),
+        is_accepted=True,
+        extra_data={"_internal": {"share_email_with_sponsors": True}},
+    )
+    opted_out = RegistrationFactory(
+        event=t_event,
+        user=UserFactory(),
+        is_accepted=True,
+        extra_data={},
+    )
+
+    sheets = get_registration_sheets(t_event)
+    registrations_sheet = next(df for df, name in sheets if name == "REGISTRATIONS")
+    rows = {row["uuid"]: row for row in registrations_sheet.to_dicts()}
+
+    assert "share_email_with_sponsors" in registrations_sheet.columns
+    assert rows[str(consented.uuid)]["share_email_with_sponsors"] is True
+    assert rows[str(opted_out.uuid)]["share_email_with_sponsors"] is False
+
+
+def test_registration_excel_includes_photo_consent(t_event) -> None:
+    """Photo consent from ``_internal`` extra data is exported in the registrations sheet."""
+    opted_out = RegistrationFactory(
+        event=t_event,
+        user=UserFactory(),
+        is_accepted=True,
+        extra_data={"_internal": {"allow_photo_sharing": False}},
+    )
+    allowed = RegistrationFactory(
+        event=t_event,
+        user=UserFactory(),
+        is_accepted=True,
+        extra_data={"_internal": {"allow_photo_sharing": True}},
+    )
+    not_asked = RegistrationFactory(
+        event=t_event,
+        user=UserFactory(),
+        is_accepted=True,
+        extra_data={},
+    )
+
+    sheets = get_registration_sheets(t_event)
+    registrations_sheet = next(df for df, name in sheets if name == "REGISTRATIONS")
+    rows = {row["uuid"]: row for row in registrations_sheet.to_dicts()}
+
+    assert "allow_photo_sharing" in registrations_sheet.columns
+    assert rows[str(opted_out.uuid)]["allow_photo_sharing"] is False
+    assert rows[str(allowed.uuid)]["allow_photo_sharing"] is True
+    assert rows[str(not_asked.uuid)]["allow_photo_sharing"] is True
+
+
+def test_registration_excel_omits_photo_consent_for_virtual_events(t_event) -> None:
+    """Virtual events never ask the photo consent question, so the column is blank."""
+    t_event.is_virtual = True
+    t_event.save()
+
+    registration = RegistrationFactory(event=t_event, user=UserFactory(), is_accepted=True)
+
+    sheets = get_registration_sheets(t_event)
+    registrations_sheet = next(df for df, name in sheets if name == "REGISTRATIONS")
+    row = registrations_sheet.to_dicts()[0]
+
+    assert row["uuid"] == str(registration.uuid)
+    assert row["allow_photo_sharing"] is None
+
+
 def test_registration_excel_serializes_complex_extra_field_values(t_event) -> None:
     """List and object extra values are serialized as JSON strings in Excel rows."""
     t_event.registration_config = {

@@ -142,6 +142,7 @@ class EventExcelView(EventFirewallMixin, ExcelView):
 def get_registration_sheets(event: Event) -> list[DataSheet]:
     """Get the sheets with an overview of the event registrations."""
     rows = []
+    photo_consent_asked = not event.is_virtual
     extra_field_codes = [
         field.get("code")
         for field in event.registration_configuration.get("form_fields", [])
@@ -149,6 +150,7 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
     ]
 
     for registration in event.registrations.filter(is_accepted=True).select_related("user", "coupon"):  # type: ignore
+        internal = (registration.extra_data or {}).get("_internal") or {}
         registration_extra_values = {
             code: _get_excel_serializable_extra_value(registration.extra_data.get(code)) for code in extra_field_codes
         }
@@ -166,6 +168,8 @@ def get_registration_sheets(event: Event) -> list[DataSheet]:
                 "is_paid": registration.is_paid,
                 "paid_via_coupon": registration.paid_via_coupon,
                 "visa_requested": registration.visa_requested,
+                "share_email_with_sponsors": internal.get("share_email_with_sponsors", False),
+                "allow_photo_sharing": internal.get("allow_photo_sharing", True) if photo_consent_asked else None,
                 "gender": registration.user.extra_data.get("gender"),
                 "dietary": registration.user.extra_data.get("dietary"),
                 "special_needs": registration.user.extra_data.get("special_needs"),
