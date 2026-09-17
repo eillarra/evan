@@ -63,6 +63,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    pool: 'vmThreads',
+    fsModuleCache: true,
+    setupFiles: [resolve(import.meta.dirname, './vue/src/test-setup.ts')],
     include: ['**/__tests__/**/*.{test,spec}.ts'],
     coverage: {
       provider: 'v8',

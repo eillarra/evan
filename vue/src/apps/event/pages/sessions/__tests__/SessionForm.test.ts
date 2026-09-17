@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { createI18n } from 'vue-i18n';
-import { nextTick } from 'vue';
+import { nextTick, readonly, ref } from 'vue';
 
 import SessionForm from '../SessionForm.vue';
 import { useStore } from '../../store';
+import { createI18n, messages } from '@/i18n';
 
 // Regression test for EVAN-FRONTEND-13: "ReferenceError: Cannot access 'Y'
 // before initialization". Opening the form on an existing session that already
@@ -44,7 +44,7 @@ vi.mock('quasar', async (importOriginal) => {
 
 vi.mock('@/composables/useMinimumLoading', () => ({
   useMinimumLoading: () => ({
-    loading: { value: false },
+    loading: readonly(ref(false)),
     executeWithMinLoading: vi.fn(async (fn: () => Promise<unknown>) => fn()),
   }),
 }));
@@ -64,8 +64,8 @@ vi.mock('@/axios.ts', () => ({
 const i18n = createI18n({
   legacy: false,
   locale: 'en',
-  messages: { en: {} },
-} as any);
+  messages,
+});
 
 const SESSION_WITH_PROGRAM: Session = {
   id: 42,
