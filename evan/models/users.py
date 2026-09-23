@@ -2,14 +2,18 @@ import re
 from typing import TYPE_CHECKING
 
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount
 from allauth.socialaccount.signals import pre_social_login
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import UserManager as DjangoUserManager
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, models, transaction
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django_countries.fields import CountryField
 from tld import Result, get_tld
+
+from evan.ugent_provider.provider import UGENT_PROVIDER_ID
 
 from .documents.users import get_validated_extra_data
 
@@ -54,7 +58,11 @@ def _strip_emoji(value: str | None) -> str:
 
 
 class AffiliationDomain(models.Model):
-    """Reference model that links email domains to affiliations."""
+    """Reference model that links e-mail domains to affiliations.
+
+    The derived affiliation is a display-only annotation of the user's organization and
+    MUST NOT be used to gate any access decision.
+    """
 
     fld = models.CharField(max_length=190, unique=True)
     affiliation = models.CharField(max_length=190)
@@ -67,14 +75,35 @@ class AffiliationDomain(models.Model):
         return self.fld
 
 
+class UserQuerySet(models.QuerySet):
+    def ugent_verified(self) -> UserQuerySet:
+        """Filter the queryset down to UGent-verified users in a single query.
+
+        :returns: A queryset containing only users with a linked UGent-provider account.
+        """
+        ugent_accounts = SocialAccount.objects.filter(
+            user=models.OuterRef("pk"),
+            provider=UGENT_PROVIDER_ID,
+        )
+        return self.filter(models.Exists(ugent_accounts))
+
+
+class UserManager(DjangoUserManager.from_queryset(UserQuerySet)):
+    """User manager combining auth user creation with the UGent-verification queryset."""
+
+
 class User(AbstractUser):
     """Custom user model."""
 
+    # Display-only annotation of the user's organization, auto-filled from
+    # AffiliationDomain. MUST NOT be used to gate any access decision.
     affiliation = models.CharField(max_length=190, default="", blank=True)
     country = CountryField()
     extra_data = models.JSONField(default=dict)
 
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = UserManager()
 
     def save(self, *args, **kwargs) -> None:
         try:
@@ -127,6 +156,18 @@ class User(AbstractUser):
     def to_email(self) -> str:
         return f"{self.name} <{self.email}>"
 
+    @property
+    def is_ugent_verified(self) -> bool:
+        """Whether the user is UGent-verified.
+
+        A user is UGent-verified if and only if they hold a linked social account from the
+        tenant-pinned UGent provider. This is the only authoritative fact of UGent identity;
+        affiliation strings and e-mail domains are display-only and are never consulted.
+
+        :returns: True when a UGent-provider social account is linked, False otherwise.
+        """
+        return SocialAccount.objects.filter(user=self, provider=UGENT_PROVIDER_ID).exists()
+
     def events(self) -> models.QuerySet[Event]:
         from evan.models.events import Event
 
@@ -159,8 +200,8 @@ def link_to_existing_user(sender, request, sociallogin, **kwargs):
     if sociallogin.is_existing:
         return
 
-    # for "ugent" social accounts, we can use the email address to find the user
-    if sociallogin.account.provider == "ugent":
+    # for UGent social accounts, we can use the email address to find the user
+    if sociallogin.account.provider == UGENT_PROVIDER_ID:
         try:
             email = sociallogin.account.extra_data["mail"]
             user = find_user_by_email(email)

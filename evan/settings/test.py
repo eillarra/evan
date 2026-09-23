@@ -1,4 +1,8 @@
 import logging
+import os
+
+
+os.environ.setdefault("UGENT_TENANT_ID", "test-tenant")
 
 from .base import *  # noqa
 

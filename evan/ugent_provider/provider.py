@@ -3,6 +3,9 @@ from allauth.socialaccount.providers.microsoft.provider import MicrosoftGraphAcc
 from .views import UGentMicrosoftOAuth2Adapter
 
 
+UGENT_PROVIDER_ID = "ugent"
+
+
 class UGentAccount(MicrosoftGraphAccount):
     """UGent account."""
 
@@ -10,7 +13,7 @@ class UGentAccount(MicrosoftGraphAccount):
 class UGentMicrosoftProvider(MicrosoftGraphProvider):
     """UGent Microsoft provider."""
 
-    id = "ugent"
+    id = UGENT_PROVIDER_ID
     name = "UGent"
     account_class = UGentAccount
     oauth2_adapter_class = UGentMicrosoftOAuth2Adapter

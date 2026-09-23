@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from django.contrib.messages import constants as messages
+from django.core.exceptions import ImproperlyConfigured
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -179,6 +180,23 @@ ACCOUNT_PRESERVE_USERNAME_CASING = False
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 
 SOCIALACCOUNT_QUERY_EMAIL = True
+
+
+def _require_ugent_tenant() -> str:
+    """Resolve the UGent Microsoft tenant id, failing fast on permissive values.
+
+    :returns: The configured UGent tenant id.
+    :raises ImproperlyConfigured: When the setting is missing, empty, or a permissive
+        Microsoft wildcard (``organizations``, ``common``, ``consumers``).
+    """
+    tenant = os.environ.get("UGENT_TENANT_ID", "").strip()
+    if not tenant or tenant.lower() in {"organizations", "common", "consumers"}:
+        raise ImproperlyConfigured(
+            "UGENT_TENANT_ID must be set to the UGent Microsoft tenant id; permissive wildcard values are not allowed."
+        )
+    return tenant
+
+
 SOCIALACCOUNT_PROVIDERS = {
     "github": {"SCOPE": ["read:user", "user:email"]},
     "google": {"SCOPE": ["profile", "email"], "AUTH_PARAMS": {"access_type": "online"}},
@@ -186,7 +204,7 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": ["r_emailaddress", "r_liteprofile"],
         "PROFILE_FIELDS": ["id", "firstName", "lastName", "emailAddress"],
     },
-    "ugent": {"TENANT": os.environ.get("UGENT_TENANT_ID", "organizations")},
+    "ugent": {"TENANT": _require_ugent_tenant()},
 }
 
 

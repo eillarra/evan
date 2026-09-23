@@ -1,6 +1,14 @@
-import pytest
+from unittest.mock import Mock
 
-from evan.models.users import _strip_emoji, _username_with_suffix
+import pytest
+from allauth.account.models import EmailAddress
+from allauth.socialaccount.models import SocialAccount
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+
+from evan.models import User
+from evan.models.users import _strip_emoji, _username_with_suffix, link_to_existing_user
+from evan.ugent_provider.provider import UGENT_PROVIDER_ID
 from tests._factories import AffiliationDomainFactory, UserFactory
 
 
@@ -117,3 +125,148 @@ def test_save_strips_emoji_on_update(db):
 
     user.refresh_from_db()
     assert user.last_name == "Updated"
+
+
+# ---------------------------------------------------------------------------
+# Affiliation auto-fill (pinned: display-only, never an access input)
+# ---------------------------------------------------------------------------
+
+
+def test_affiliation_stays_empty_for_unknown_domain(db):
+    """An unknown e-mail domain leaves affiliation and country empty, without error."""
+    user = UserFactory(email="someone@gmail.com", affiliation="", country="")
+
+    assert user.affiliation == ""
+    assert user.country == ""
+
+
+def test_affiliation_not_overwritten_on_login(db):
+    """An already-set affiliation is never overwritten by the auto-fill."""
+    AffiliationDomainFactory(fld="example.com", affiliation="Example Inc.", country="BE")
+
+    user = UserFactory(
+        email="jane@example.com",
+        affiliation="Ghent University",
+        country="",
+    )
+
+    assert user.affiliation == "Ghent University"
+    assert user.country == "BE"  # country is still filled when empty
+
+
+# ---------------------------------------------------------------------------
+# UGent verification (identity/ugent-verification)
+# ---------------------------------------------------------------------------
+
+
+def test_is_ugent_verified_with_linked_ugent_account(db):
+    """A user with a linked UGent-provider social account is UGent-verified."""
+    user = UserFactory()
+    SocialAccount.objects.create(user=user, provider=UGENT_PROVIDER_ID, uid="ug-1")
+
+    assert user.is_ugent_verified is True
+
+
+def test_is_ugent_verified_false_with_other_provider(db):
+    """A linked account from another provider does not make the user UGent-verified."""
+    user = UserFactory()
+    SocialAccount.objects.create(user=user, provider="github", uid="gh-1")
+
+    assert user.is_ugent_verified is False
+
+
+def test_is_ugent_verified_false_without_accounts(db):
+    """A user with no linked social accounts is not UGent-verified."""
+    assert UserFactory().is_ugent_verified is False
+
+
+def test_unlinking_ugent_account_removes_verification(db):
+    """Removing the only linked UGent-provider account flips verification to False."""
+    user = UserFactory()
+    account = SocialAccount.objects.create(user=user, provider=UGENT_PROVIDER_ID, uid="ug-1")
+    assert user.is_ugent_verified is True
+
+    account.delete()
+
+    assert user.is_ugent_verified is False
+
+
+def test_ugent_verified_queryset_filters_in_single_query(db):
+    """The queryset returns exactly the UGent-verified users in a single query."""
+    verified = UserFactory()
+    UserFactory()
+    SocialAccount.objects.create(user=verified, provider=UGENT_PROVIDER_ID, uid="ug-2")
+
+    with CaptureQueriesContext(connection) as queries:
+        result = list(User.objects.ugent_verified())
+
+    assert len(queries.captured_queries) == 1
+    assert result == [verified]
+
+
+# ---------------------------------------------------------------------------
+# UGent login linking (pinned behavior of link_to_existing_user)
+# ---------------------------------------------------------------------------
+
+
+def _fake_sociallogin(provider: str, extra_data: dict, is_existing: bool = False) -> Mock:
+    """Build a minimal sociallogin stand-in with a Mock connect method.
+
+    :param provider: The provider id of the social account.
+    :param extra_data: The extra data carried by the social account.
+    :param is_existing: Whether the sociallogin is already linked to a user.
+    :returns: A Mock shaped like an allauth SocialLogin.
+    """
+    sociallogin = Mock(is_existing=is_existing)
+    sociallogin.account.provider = provider
+    sociallogin.account.extra_data = extra_data
+    return sociallogin
+
+
+def test_ugent_login_links_existing_user_by_verified_email(db):
+    """A UGent login whose mail matches a verified e-mail links to that user."""
+    user = UserFactory(email="jane@ugent.be", affiliation="", country="")
+    EmailAddress.objects.create(user=user, email="jane@ugent.be", verified=True, primary=True)
+
+    sociallogin = _fake_sociallogin(UGENT_PROVIDER_ID, {"mail": "jane@ugent.be"})
+    link_to_existing_user(None, request=None, sociallogin=sociallogin)
+
+    sociallogin.connect.assert_called_once_with(None, user)
+
+
+def test_ugent_login_does_not_link_unverified_email(db):
+    """An unverified e-mail never links a UGent login to an existing user."""
+    user = UserFactory(email="jane@ugent.be", affiliation="", country="")
+    EmailAddress.objects.create(user=user, email="jane@ugent.be", verified=False, primary=True)
+
+    sociallogin = _fake_sociallogin(UGENT_PROVIDER_ID, {"mail": "jane@ugent.be"})
+    link_to_existing_user(None, request=None, sociallogin=sociallogin)
+
+    sociallogin.connect.assert_not_called()
+
+
+def test_ugent_login_without_mail_does_not_link(db):
+    """A UGent login whose extra data lacks a mail address is not linked."""
+    sociallogin = _fake_sociallogin(UGENT_PROVIDER_ID, {})
+    link_to_existing_user(None, request=None, sociallogin=sociallogin)
+
+    sociallogin.connect.assert_not_called()
+
+
+def test_non_ugent_login_does_not_link_by_email(db):
+    """Only UGent-provider logins use e-mail-based linking."""
+    user = UserFactory(email="jane@ugent.be", affiliation="", country="")
+    EmailAddress.objects.create(user=user, email="jane@ugent.be", verified=True, primary=True)
+
+    sociallogin = _fake_sociallogin("github", {"mail": "jane@ugent.be"})
+    link_to_existing_user(None, request=None, sociallogin=sociallogin)
+
+    sociallogin.connect.assert_not_called()
+
+
+def test_existing_sociallogin_is_left_alone(db):
+    """An already-linked social login skips the linking receiver entirely."""
+    sociallogin = _fake_sociallogin(UGENT_PROVIDER_ID, {"mail": "jane@ugent.be"}, is_existing=True)
+    link_to_existing_user(None, request=None, sociallogin=sociallogin)
+
+    sociallogin.connect.assert_not_called()

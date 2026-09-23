@@ -5,7 +5,6 @@
 [![codecov-badge]][codecov]
 [![license-badge]](LICENSE)
 
-
 ## Backend
 
 The Evan api/website uses [Django][django] and the [Django REST Framework][drf].
@@ -23,6 +22,15 @@ uv sync --upgrade --group dev
 ```bash
 ./run server
 ```
+
+### Environment variables
+
+The app loads variables from `.env` (via `./run`) and from the deployment environment
+(Dokku config in production). Required for every environment:
+
+| Variable          | Purpose                                                                                                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `UGENT_TENANT_ID` | UGent Microsoft (Entra ID) tenant id the `ugent` login provider is pinned to. Startup fails fast when it is missing or set to a permissive wildcard (`organizations`, `common`, `consumers`). Ask the Evan team for the tenant GUID. |
 
 ### Run Huey worker
 
@@ -55,7 +63,6 @@ yarn
 yarn dev
 ```
 
-
 [codecov]: https://app.codecov.io/gh/eillarra/evan
 [codecov-badge]: https://codecov.io/gh/eillarra/evan/graph/badge.svg?token=wsvdcCF75L
 [github-tests-py]: https://github.com/eillarra/evan/actions/workflows/tests_py.yml
@@ -63,7 +70,6 @@ yarn dev
 [github-tests-ts]: https://github.com/eillarra/evan/actions/workflows/tests_ts.yml
 [github-tests-ts-badge]: https://github.com/eillarra/evan/actions/workflows/tests_ts.yml/badge.svg?branch=main
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
-
 [django]: https://www.djangoproject.com/
 [drf]: https://www.django-rest-framework.org/
 [inertia]: https://inertiajs.com/
