@@ -99,6 +99,7 @@ class EmailPlansViewSet(EventRelatedViewSet, UpdateModelMixin, DestroyModelMixin
       - ``logs``: return the EmailLog entries tagged with this plan's id.
     """
 
+    module_key = "communications"
     queryset = EmailPlan.objects.select_related("event", "created_by")
     permission_classes = [EmailPlansPermission]
     serializer_class = EmailPlanSerializer

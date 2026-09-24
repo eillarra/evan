@@ -22,6 +22,7 @@ class KeynotePermission(EventRelatedObjectPermission):
 
 
 class KeynotesViewSet(EventRelatedViewSet):
+    module_key = "content"
     permission_classes = [KeynotesPermission]
     queryset = Keynote.objects.select_related("event", "session", "subsession").prefetch_related("topics", "files")
     serializer_class = KeynoteSerializer

@@ -13,6 +13,17 @@
       <img src="@/assets/hetpand.jpg" />
     </template>
   </ugent-banner>
+  <section v-if="events.length" class="q-px-lg q-pb-xl">
+    <h3 class="text-ugent">{{ $t('home.upcoming_events') }}</h3>
+    <q-list>
+      <q-item v-for="event in events" :key="event.code" clickable :href="`/e/${event.code}/`">
+        <q-item-section>
+          <q-item-label>{{ event.name }}</q-item-label>
+          <q-item-label caption>{{ event.full_name }} — {{ event.city }}</q-item-label>
+        </q-item-section>
+      </q-item>
+    </q-list>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -26,4 +37,5 @@ const page = usePage();
 
 const user = computed<DjangoAuthenticatedUser>(() => page.props.django_user as DjangoAuthenticatedUser);
 const csrfToken = computed<string>(() => page.props.django_csrf_token as string);
+const events = computed<EvanEvent[]>(() => (page.props.events as EvanEvent[]) ?? []);
 </script>

@@ -33,6 +33,7 @@ class SessionPermission(EventRelatedObjectPermission):
 
 
 class SessionsViewSet(EventRelatedViewSet):
+    module_key = "program"
     permission_classes = [SessionsPermission]
     queryset = Session.objects.all()
     serializer_class = SessionSerializer

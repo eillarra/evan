@@ -5,7 +5,7 @@
     </h3>
   </div>
   <q-list>
-    <q-item v-for="event in managedEvents" :key="event.id" clickable :href="`/e/${event.code}/`">
+    <q-item v-for="event in managedEvents" :key="event.id" clickable :href="`/e/${event.code}/manage/`">
       <q-item-section>
         <q-item-label>{{ event.name }}</q-item-label>
         <q-item-label caption>{{ event.full_name }}</q-item-label>

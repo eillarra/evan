@@ -20,6 +20,7 @@ class TopicPermission(EventRelatedObjectPermission):
 
 
 class TopicsViewSet(EventRelatedViewSet):
+    module_key = "program"
     permission_classes = [TopicsPermission]
     queryset = Topic.objects.order_by("name").all()
     serializer_class = TopicSerializer

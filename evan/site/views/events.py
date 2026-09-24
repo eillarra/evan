@@ -4,6 +4,7 @@ import polars as pl
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -45,6 +46,37 @@ class EventFirewallMixin(View):
             )
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
+
+
+class PublicEventView(InertiaView):
+    """Public event page, reachable without authentication by the event's code.
+
+    Non-listed events raise 404 for anyone who cannot manage the event, so a
+    pending or declined event is indistinguishable from an unknown code.
+    """
+
+    vue_entry_point = "apps/publicEvent/main.ts"
+
+    def get_event(self, queryset=None) -> Event:
+        if not hasattr(self, "object"):
+            self.object = get_object_or_404(Event, code=self.kwargs.get("code"))
+        return self.object
+
+    def get(self, request, *args, **kwargs):
+        event = self.get_event()
+        if not event.is_listed and not event.can_be_managed_by(request.user):
+            raise Http404("Event not found.")
+        return super().get(request, *args, **kwargs)
+
+    def get_props(self, request, *args, **kwargs) -> dict:
+        event = self.get_event()
+        return {
+            "event": EventSerializer(event, context={"request": request}).data,
+            "can_manage": event.can_be_managed_by(request.user),
+        }
+
+    def get_page_title(self, request, *args, **kwargs) -> str:
+        return f"{self.get_event().full_name} - Evan"
 
 
 class EventView(EventFirewallMixin, InertiaView):

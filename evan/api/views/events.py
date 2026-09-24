@@ -25,6 +25,27 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
 
+    def perform_update(self, serializer):
+        """Save an organizer-side edit and maintain the listing moderation flow.
+
+        A declined event returns to pending review; any other unlisted event
+        re-notifies the platform team of the organizer's edits. Platform-team
+        admin saves never pass through here, so the team cannot loop an event
+        back into its own review queue.
+        """
+        from evan.services.listing import notify_team_of_pending_review, return_declined_event_to_review
+
+        event = serializer.instance
+        was_declined = event.listing_status == Event.ListingStatus.DECLINED
+        was_unlisted = not event.is_listed
+
+        serializer.save()
+
+        if was_declined:
+            return_declined_event_to_review(event)
+        elif was_unlisted:
+            notify_team_of_pending_review(event, edited=True)
+
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         self.queryset = self.queryset.prefetch_related(

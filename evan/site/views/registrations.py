@@ -31,6 +31,12 @@ class RegistrationRedirectView(View):
             raise Http404 from exc
 
 
+UGENT_ONLY_REGISTRATION_MESSAGE = (
+    "This event is only open to UGent-verified users. Please sign in with your UGent account "
+    "(or link it to your profile) to register."
+)
+
+
 class RegistrationView(InertiaView):
     is_after_event = False
     vue_entry_point = "apps/registration/main.ts"
@@ -56,13 +62,24 @@ class RegistrationView(InertiaView):
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
-        if not self.get_event().is_open_for_registration:
+        event = self.get_event()
+
+        if not event.is_listed and not event.editable_by_user(request.user):
+            messages.error(request, "Registrations are not open for this event.")
+            raise PermissionDenied
+
+        if event.registration_audience == Event.RegistrationAudience.UGENT_ONLY and not request.user.is_ugent_verified:
+            messages.error(request, UGENT_ONLY_REGISTRATION_MESSAGE)
+            raise PermissionDenied
+
+        if not event.is_open_for_registration:
             # check if the user has a registration for this event
             if not Registration.objects.filter(event=self.get_event(), user=request.user).exists():
                 messages.error(request, "Registrations are not open for this event.")
                 raise PermissionDenied
             if self.get_event().is_closed:
                 self.is_after_event = True
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_vue_entry_point(self, request, *args, **kwargs) -> str:
@@ -106,11 +123,14 @@ class RegistrationPaymentBaseView(TemplateView):
         return attempt
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.get_object().event.allows_payments:
+        registration = self.get_object()
+        event = registration.event
+
+        if not event.module_enabled("payments") or not event.allows_payments:
             messages.error(request, "Payments are not active for this event.")
             raise PermissionDenied
 
-        if not self.get_object().is_accepted:
+        if not registration.is_accepted:
             messages.error(request, "Your registration has not been accepted.")
             raise PermissionDenied
 
@@ -234,6 +254,7 @@ def _credit_worldline_payment(registration: Registration, query_params: QueryDic
     """
     payid = query_params.get("PAYID", "")
     order_id = query_params.get("ORDERID", "")
+
     if not payid or not order_id:
         return False
     if not UGentBridge.validate_out_parameters(query_params, outsalt=registration.event.ugent_bridge.get("salt")):
@@ -379,6 +400,7 @@ class RegistrationPaymentResultBaseView(TemplateView):
             messages.error(request, "Your payment was declined.")
         elif status in UGentBridge.CANCEL_STATUSES:
             messages.warning(request, "Your payment was canceled.")
+
         return redirect(self.get_redirect_url())  # type: ignore
 
     def _process_status(self, registration: Registration, query_params: QueryDict, status: str | None) -> bool:
@@ -433,24 +455,31 @@ class RegistrationInvoiceRequestView(RedirectView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         registration = self.get_object()
+
         if not registration.editable_by_user(request.user):
             messages.error(request, "You don't have the necessary permissions to update this registration.")
             raise PermissionDenied
+
         if not registration.is_accepted:
             messages.error(request, "Your registration has not been accepted.")
             raise PermissionDenied
-        if not registration.event.allows_invoices:
+
+        if not registration.event.module_enabled("payments") or not registration.event.allows_invoices:
             messages.error(request, "We cannot issue invoices for this event.")
             raise PermissionDenied
+
         if registration.is_paid:
             messages.info(request, "Your registration is already paid.")
             return super().dispatch(request, *args, **kwargs)
+
         if registration.invoice_requested:
             messages.info(request, "Invoice was already requested.")
             return super().dispatch(request, *args, **kwargs)
+
         updated_count = Registration.objects.filter(pk=registration.pk, invoice_requested=False).update(
             invoice_requested=True
         )
+
         if updated_count == 0:
             messages.info(request, "Invoice was already requested.")
             return super().dispatch(request, *args, **kwargs)

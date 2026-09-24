@@ -49,10 +49,12 @@ class EventListSerializer(serializers.ModelSerializer):
 
     self = serializers.HyperlinkedIdentityField(view_name="v1:event-detail", lookup_field="code")
     url = serializers.URLField(source="get_absolute_url", read_only=True)
+    manage_url = serializers.URLField(source="get_manage_url", read_only=True)
     country = CountryField(country_dict=True, read_only=True)
     is_open_for_registration = serializers.BooleanField(read_only=True)
     is_active = serializers.BooleanField(read_only=True)
     is_closed = serializers.BooleanField(read_only=True)
+    is_listed = serializers.BooleanField(read_only=True)
 
     tracks = TrackReadOnlySerializer(many=True, read_only=True)
     topics = TopicReadOnlySerializer(many=True, read_only=True)
@@ -67,12 +69,14 @@ class EventListSerializer(serializers.ModelSerializer):
             "start_date",
             "end_date",
             "url",
+            "manage_url",
             "city",
             "country",
             "registrations_count",
             "is_open_for_registration",
             "is_active",
             "is_closed",
+            "is_listed",
             "tracks",
             "topics",
             "website",
@@ -88,7 +92,8 @@ class EventSerializer(FilesMixin, EventListSerializer):
     allows_invoices = serializers.BooleanField(read_only=True)
     allows_payments = serializers.BooleanField(read_only=True)
     is_open_for_abstract_submission = serializers.BooleanField(read_only=True)
-    fees = FeeSerializer(many=True, read_only=True)
+    fees = serializers.SerializerMethodField()
+    modules = serializers.SerializerMethodField()
     dates_display = serializers.CharField(read_only=True)
 
     sponsors = SponsorReadOnlySerializer(many=True, read_only=True)
@@ -109,6 +114,24 @@ class EventSerializer(FilesMixin, EventListSerializer):
                 kwargs={"code": obj.code},
             )
         return None
+
+    def get_fees(self, obj) -> list:
+        """Return the event's fees, or an empty list when the payments module is disabled.
+
+        :param obj: The event being serialized.
+        :returns: The serialized fees for the event.
+        """
+        if not obj.module_enabled("payments"):
+            return []
+        return FeeSerializer(obj.fees.all(), many=True, context=self.context).data
+
+    def get_modules(self, obj) -> dict:
+        """Return the event's module toggles from the validated configuration.
+
+        :param obj: The event being serialized.
+        :returns: A dict with a boolean per optional module.
+        """
+        return obj.configuration["modules"]
 
 
 class ManagedEventSerializer(EventSerializer):
@@ -139,4 +162,7 @@ class ManagedEventSerializer(EventSerializer):
 
     def validate(self, data):
         validate_event_dates(Event(**data))
+        if self.instance:
+            self.instance.config = data.get("config", self.instance.config)
+            self.instance.clean_modules()
         return data

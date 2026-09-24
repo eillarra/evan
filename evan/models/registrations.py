@@ -158,6 +158,10 @@ def calculate_registration_base_fee(registration: Registration) -> int:
     Given a registration, calculate the base fee.
     The base fee is the sum of the early fee and the extra fees for accompanying persons.
     """
+    if not registration.event.module_enabled("payments"):
+        # Payments module disabled: registration is free, no fee resolution applies.
+        return 0
+
     fee = registration.event.fees_dict.get(registration.fee_type, None)
 
     if not fee:
@@ -253,7 +257,10 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         self.base_fee = calculate_registration_base_fee(self)
 
         try:
-            self.extra_fees = calculate_accompanying_fees(self)
+            if self.event.module_enabled("payments"):
+                self.extra_fees = calculate_accompanying_fees(self)
+            else:
+                self.extra_fees = 0
         except KeyError:
             pass
 

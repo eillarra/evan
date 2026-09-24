@@ -59,13 +59,19 @@ class SubsessionPermission(EventRelatedObjectPermission):
 
 
 class SubsessionsViewSet(CreateModelMixin, ListModelMixin, GenericViewSet):
+    module_key = "program"
     permission_classes = [SubsessionsPermission]
     queryset = Subsession.objects.all()
     serializer_class = SubsessionSerializer
 
     def get_queryset(self):
         session_id = self.kwargs.get("parent_lookup_session_id")
-        return self.queryset.filter(session_id=session_id)
+        queryset = self.queryset.filter(session_id=session_id)
+        if self.module_key:
+            from ..viewsets import module_enabled_lookup
+
+            queryset = queryset.filter(**module_enabled_lookup(self.module_key, prefix="session__event"))
+        return queryset
 
     def get_serializer_class(self):
         session_id = self.kwargs.get("parent_lookup_session_id")

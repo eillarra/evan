@@ -15,7 +15,7 @@
           </q-item-section>
           <q-item-section>{{ $t('models.registration', 9) }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'coupons' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.payments" clickable :to="{ name: 'coupons' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconCoupon" size="xs" />
           </q-item-section>
@@ -34,61 +34,63 @@
           </q-item-section>
           <q-item-section>{{ $t('models.important_date', 9) }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'venues' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.program" clickable :to="{ name: 'venues' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconVenue" size="xs" />
           </q-item-section>
           <q-item-section>{{ $t('models.venues_rooms') }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'taxonomy' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.program" clickable :to="{ name: 'taxonomy' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconLabel" size="xs" />
           </q-item-section>
           <q-item-section>{{ $t('models.tracks_topics') }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'sessions' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.program" clickable :to="{ name: 'sessions' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconPlanning" size="xs" />
           </q-item-section>
           <q-item-section>{{ $t('models.session', 9) }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'keynotes' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.content" clickable :to="{ name: 'keynotes' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconKeynote" size="xs" />
           </q-item-section>
           <q-item-section>— {{ $t('models.keynote', 9) }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'papers' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.papers" clickable :to="{ name: 'papers' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconPaper" size="xs" />
           </q-item-section>
           <q-item-section>— {{ $t('models.paper', 9) }}</q-item-section>
         </q-item>
-        <q-item clickable :to="{ name: 'emailplans' }" active-class="bg-ugent text-white">
+        <q-item v-if="modules.communications" clickable :to="{ name: 'emailplans' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
             <q-icon :name="iconInfo" size="xs"></q-icon>
           </q-item-section>
           <q-item-section>{{ $t('send_emails') }}</q-item-section>
         </q-item>
-        <q-item-label header>Website</q-item-label>
-        <q-item clickable :to="{ name: 'contents' }" active-class="bg-ugent text-white">
-          <q-item-section avatar>
-            <q-icon :name="iconContent" size="xs" />
-          </q-item-section>
-          <q-item-section>{{ $t('models.content', 9) }}</q-item-section>
-        </q-item>
-        <q-item clickable :to="{ name: 'sponsors' }" active-class="bg-ugent text-white">
-          <q-item-section avatar>
-            <q-icon :name="iconSponsor" size="xs" />
-          </q-item-section>
-          <q-item-section>{{ $t('models.sponsor', 9) }}</q-item-section>
-        </q-item>
-        <q-item clickable :to="{ name: 'albums' }" active-class="bg-ugent text-white">
-          <q-item-section avatar>
-            <q-icon :name="iconPhotoAlbum" size="xs" />
-          </q-item-section>
-          <q-item-section>{{ $t('album', 9) }}</q-item-section>
-        </q-item>
+        <template v-if="modules.content">
+          <q-item-label header>Website</q-item-label>
+          <q-item clickable :to="{ name: 'contents' }" active-class="bg-ugent text-white">
+            <q-item-section avatar>
+              <q-icon :name="iconContent" size="xs" />
+            </q-item-section>
+            <q-item-section>{{ $t('models.content', 9) }}</q-item-section>
+          </q-item>
+          <q-item clickable :to="{ name: 'sponsors' }" active-class="bg-ugent text-white">
+            <q-item-section avatar>
+              <q-icon :name="iconSponsor" size="xs" />
+            </q-item-section>
+            <q-item-section>{{ $t('models.sponsor', 9) }}</q-item-section>
+          </q-item>
+          <q-item clickable :to="{ name: 'albums' }" active-class="bg-ugent text-white">
+            <q-item-section avatar>
+              <q-icon :name="iconPhotoAlbum" size="xs" />
+            </q-item-section>
+            <q-item-section>{{ $t('album', 9) }}</q-item-section>
+          </q-item>
+        </template>
         <q-item-label header>Logs</q-item-label>
         <q-item clickable :to="{ name: 'emails' }" active-class="bg-ugent text-white">
           <q-item-section avatar>
@@ -102,6 +104,9 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+
 import {
   iconContent,
   iconCoupon,
@@ -119,4 +124,11 @@ import {
   iconStats,
   iconVenue,
 } from '@/icons';
+
+const page = usePage();
+
+const modules = computed<EventModules>(() => {
+  const event = page.props.event as ManagedEvanEvent | undefined;
+  return event?.modules ?? { payments: false, content: false, program: false, papers: false, communications: false };
+});
 </script>

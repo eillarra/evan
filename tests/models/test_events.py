@@ -1,8 +1,20 @@
 from datetime import UTC, datetime
+from importlib import import_module
 from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
+
+from tests._factories import CouponFactory, EventFactory, PaperFactory, SessionFactory
+
+
+MODULE_KEYS = ("payments", "content", "program", "papers", "communications")
+
+
+def backfill_existing_events(apps, schema_editor):
+    """Run the 0028 data migration backfill against the given apps registry."""
+    migration = import_module("evan.migrations.0028_event_modules_backfill")
+    return migration.backfill_existing_events(apps, schema_editor)
 
 
 def convdate(date, format="%Y-%m-%d"):
@@ -312,6 +324,22 @@ class TestEventAllowsInvoices:
 
         assert t_event.allows_invoices is False
 
+    def test_false_on_stripe_rail(self, t_event) -> None:
+        """Invoice tracking is only available on the UGent bridge rail."""
+        t_event.config = {"payments": {"type": "stripe", "wbs_element": "WBS", "stripe_secret": "sk_test"}}
+        t_event.save()
+        t_event.refresh_from_db()
+
+        assert t_event.ugent_bridge == {}
+        assert t_event.allows_invoices is False
+
+    def test_bridge_rail_requires_wbs_element(self, t_event) -> None:
+        """The bridge's financial reference (WBS element) is required by config validation."""
+        t_event.config = {"payments": {"type": "ugent", "salt": "s4lt"}}
+
+        with pytest.raises(ValidationError):
+            t_event.save()
+
 
 @pytest.mark.django_db
 class TestEventUGentBridgeProperty:
@@ -579,3 +607,189 @@ class TestEventGetEmailTemplate:
 
     def test_none_when_no_template_exists(self, t_event) -> None:
         assert t_event.get_email_template(code="nonexistent.code") is None
+
+
+# ---------------------------------------------------------------------------
+# Event modules (config["modules"]), audience, listing status
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+class TestEventModulesDefaults:
+    """A fresh event reads all modules off, public audience, pending review."""
+
+    def test_fresh_event_reads_all_modules_false(self, db) -> None:
+        # The factory's default config is all-on (legacy mapping); a config-less
+        # event reads every module as disabled, per the pydantic defaults.
+        event = EventFactory(config={})
+
+        assert event.configuration["modules"] == {key: False for key in MODULE_KEYS}
+        assert event.module_enabled("payments") is False
+
+    def test_module_enabled_reflects_config(self, db) -> None:
+        event = EventFactory(config={})
+        assert event.module_enabled("payments") is False
+
+        event.config = {"modules": {"payments": True}}
+        event.save()
+        event.refresh_from_db()
+
+        assert event.module_enabled("payments") is True
+        assert event.module_enabled("content") is False
+
+    def test_module_enabled_rejects_unknown_key(self, t_event) -> None:
+        with pytest.raises(KeyError):
+            t_event.module_enabled("bogus")
+
+    def test_unknown_module_key_fails_validation(self, t_event) -> None:
+        t_event.config = {"modules": {"bogus": True}}
+
+        with pytest.raises(ValidationError):
+            t_event.save()
+
+    def test_fresh_event_audience_and_listing_defaults(self, db) -> None:
+        from evan.models import Event
+
+        assert Event._meta.get_field("registration_audience").default == "public"
+        assert Event._meta.get_field("listing_status").default == "pending_review"
+
+        event = EventFactory(config={})
+        assert event.registration_audience == "public"
+
+
+@pytest.mark.django_db
+class TestEventModulesLegacyMapping:
+    """Events that predate modules are mapped to all-on via the data migration."""
+
+    def test_backfill_maps_legacy_event_all_on(self, t_event) -> None:
+        # Simulate a pre-modules event: no modules section, pre-gate status.
+        Event = type(t_event)
+        Event.objects.filter(pk=t_event.pk).update(
+            config={"payments": {"type": "ugent", "wbs_element": "WBS", "salt": "s4lt"}},
+            registration_audience="public",
+            listing_status="pending_review",
+        )
+
+        from django.apps import apps as global_apps
+
+        backfill_existing_events(global_apps, None)
+        t_event.refresh_from_db()
+
+        assert t_event.configuration["modules"] == {key: True for key in MODULE_KEYS}
+        assert t_event.registration_audience == "public"
+        assert t_event.listing_status == "listed"
+        assert t_event.is_listed is True
+
+
+@pytest.mark.django_db
+class TestEventModulesGuard:
+    """Disabling a module with existing data is refused; data is preserved."""
+
+    @staticmethod
+    def _enable(event, key):
+        event.config = {"modules": {key: True}}
+        event.save()
+        event.refresh_from_db()
+
+    @staticmethod
+    def _disable(event, key):
+        event.config = {}
+        event.clean_modules()
+
+    def test_disable_payments_with_data_refused(self, t_event) -> None:
+        # t_event comes with a fee from the t_event fixture.
+        self._enable(t_event, "payments")
+
+        with pytest.raises(ValidationError, match="payments"):
+            self._disable(t_event, "payments")
+
+        t_event.refresh_from_db()
+        assert t_event.module_enabled("payments") is True
+        assert t_event.fees.exists()
+
+    def test_disable_payments_without_data_succeeds(self, db) -> None:
+        from tests._factories import EventFactory
+
+        event = EventFactory()
+        self._enable(event, "payments")
+        self._disable(event, "payments")
+
+    def test_disable_coupon_payments_refused(self, t_event) -> None:
+        t_event.fees.all().delete()
+        CouponFactory(event=t_event)
+        self._enable(t_event, "payments")
+
+        with pytest.raises(ValidationError, match="coupons"):
+            self._disable(t_event, "payments")
+
+    def test_disable_papers_with_data_refused(self, t_event) -> None:
+        PaperFactory(event=t_event, session=None)
+        self._enable(t_event, "papers")
+
+        with pytest.raises(ValidationError, match="papers"):
+            self._disable(t_event, "papers")
+
+    def test_disable_program_with_data_refused(self, t_event) -> None:
+        SessionFactory(event=t_event)
+        self._enable(t_event, "program")
+
+        with pytest.raises(ValidationError, match="sessions"):
+            self._disable(t_event, "program")
+
+    def test_disable_content_with_data_refused(self, t_event) -> None:
+        from tests._factories import KeynoteFactory
+
+        KeynoteFactory(event=t_event)
+        self._enable(t_event, "content")
+
+        with pytest.raises(ValidationError, match="keynotes"):
+            self._disable(t_event, "content")
+
+    def test_disable_communications_with_data_refused(self, t_event) -> None:
+        from evan.models import EmailPlan
+
+        EmailPlan.objects.create(event=t_event, name="Plan", subject="S", body="B")
+        self._enable(t_event, "communications")
+
+        with pytest.raises(ValidationError, match="email plans"):
+            self._disable(t_event, "communications")
+
+    def test_reenable_restores_behavior(self, t_event) -> None:
+        t_event.fees.all().delete()
+        self._enable(t_event, "payments")
+        self._disable(t_event, "payments")
+        self._enable(t_event, "payments")
+
+        t_event.refresh_from_db()
+        assert t_event.module_enabled("payments") is True
+
+
+@pytest.mark.django_db
+class TestEventListingAndUrls:
+    """EventManager.listed, is_listed and the URL helpers."""
+
+    def test_listed_returns_only_listed_events(self, t_event) -> None:
+        from tests._factories import EventFactory
+
+        EventFactory(code="listed-event", listing_status="listed")
+        EventFactory(code="pending-event", listing_status="pending_review")
+        EventFactory(code="declined-event", listing_status="declined")
+
+        from evan.models import Event
+
+        codes = set(Event.objects.listed().values_list("code", flat=True))
+
+        assert "listed-event" in codes
+        assert "pending-event" not in codes
+        assert "declined-event" not in codes
+
+    def test_is_listed_follows_status(self, t_event) -> None:
+        t_event.listing_status = "pending_review"
+        assert t_event.is_listed is False
+
+        t_event.listing_status = "listed"
+        assert t_event.is_listed is True
+
+    def test_url_helpers_point_to_public_and_manage_pages(self, t_event) -> None:
+        assert t_event.get_absolute_url() == f"/e/{t_event.code}/"
+        assert t_event.get_manage_url() == f"/e/{t_event.code}/manage/"

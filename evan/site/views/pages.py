@@ -20,9 +20,16 @@ def get_contents(key_prefix: str):
 
 
 class HomeView(InertiaView):
-    """Home page."""
+    """Home page with the public listing of upcoming listed events."""
 
     vue_entry_point = "apps/home/main.ts"
+
+    def get_props(self, request, *args, **kwargs) -> dict:
+        return {
+            "events": EventListSerializer(
+                Event.objects.listed().upcoming(), many=True, context={"request": request}
+            ).data,
+        }
 
 
 class DashboardView(InertiaView):

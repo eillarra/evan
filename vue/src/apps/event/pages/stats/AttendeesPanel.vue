@@ -276,7 +276,7 @@ const genderBalance = computed(() => {
   const femalePercentage = totalWithGender > 0 ? (femaleCount / totalWithGender) * 100 : 0;
   const isBalanced = femalePercentage >= 45 && femalePercentage <= 55;
 
-  let displayRatio = '';
+  let displayRatio: string;
   if (totalWithGender === 0) {
     displayRatio = '-';
   } else if (nonBinaryCount > 0 && (maleCount === 0 || femaleCount === 0)) {

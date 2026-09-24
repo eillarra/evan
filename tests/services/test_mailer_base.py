@@ -149,7 +149,8 @@ class TestScheduleEmail:
         assert call_args["body"] == "Test content"
 
     @patch("evan.models.emails.EmailLog.objects.create")
-    def test_schedule_email_with_tags(self, mock_create):
+    @patch("evan.services.listing.notify_team_of_pending_review")
+    def test_schedule_email_with_tags(self, mock_notify, mock_create):
         """Test scheduling email with tags."""
         user = UserFactory()
         event = EventFactory()

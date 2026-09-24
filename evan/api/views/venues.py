@@ -34,6 +34,7 @@ class RoomPermission(EventRelatedObjectPermission):
 
 
 class VenuesViewSet(EventRelatedViewSet):
+    module_key = "program"
     permission_classes = [VenuesPermission]
     queryset = Venue.objects.all()
     serializer_class = VenueSerializer
@@ -46,6 +47,7 @@ class VenueViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, Gene
 
 
 class RoomsViewSet(EventRelatedCreateOnlyViewSet):
+    module_key = "program"
     permission_classes = [RoomsPermission]
     queryset = Room.objects.all()
     serializer_class = RoomSerializer

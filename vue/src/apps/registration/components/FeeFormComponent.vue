@@ -203,7 +203,7 @@ onMounted(() => {
       criteria.extra_data_fields.forEach((field) => {
         // Field should be shown if criteria is visible AND show_for condition met
         const shouldShowField = isVisible && (field.show_for ? field.show_for.includes(selectedValue as string) : true);
-        if (!shouldShowField && initialExtraData.hasOwnProperty(field.code)) {
+        if (!shouldShowField && Object.hasOwn(initialExtraData, field.code)) {
           delete initialExtraData[field.code];
           extraDataChanged = true;
         }
@@ -249,7 +249,7 @@ watch(
 
           if (!shouldShowField) {
             // If field should not be shown, remove its data if it exists
-            if (newExtraData.hasOwnProperty(field.code)) {
+            if (Object.hasOwn(newExtraData, field.code)) {
               delete newExtraData[field.code];
               extraDataChanged = true;
             }

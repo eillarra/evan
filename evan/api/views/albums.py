@@ -58,6 +58,7 @@ class AlbumPermission(EventRelatedObjectPermission):
 class AlbumsViewSet(EventRelatedViewSet):
     """API endpoint for listing and creating albums for an event."""
 
+    module_key = "content"
     permission_classes = [AlbumsPermission]
     queryset = Album.objects.prefetch_related("files")
 

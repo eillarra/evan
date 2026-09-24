@@ -31,4 +31,3 @@ class EmailLogFactory(factory.django.DjangoModelFactory):
     reply_to = []
     subject = "Test subject"
     body = "Test **markdown** body"
-    event = SubFactory("tests._factories.events.EventFactory")

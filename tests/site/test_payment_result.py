@@ -11,14 +11,19 @@ from evan.models import Fee, RegistrationPaymentAttempt
 from evan.services.payments.ugent_bridge import UGentBridge
 from evan.site.views.registrations import _credit_worldline_payment
 from tests._factories import EventFactory, RegistrationFactory, UserFactory
+from tests._factories.events import ALL_MODULES_ON
 
 
 @pytest.fixture
 def payment_registration(db):
     """An accepted registration wired to an event with Worldline configuration."""
     event = EventFactory()
-    # Set up Worldline payment configuration via the underlying config JSONField.
-    event.config = {"payments": {"type": "ugent", "wbs_element": "TESTPSP", "salt": "testsalt"}}
+    # Set up Worldline payment configuration via the underlying config JSONField,
+    # keeping the payments module enabled (config replacement drops it otherwise).
+    event.config = {
+        "modules": dict(ALL_MODULES_ON),
+        "payments": {"type": "ugent", "wbs_element": "TESTPSP", "salt": "testsalt"},
+    }
     event.save()
     Fee.objects.create(event=event, type="regular", value=100)
 

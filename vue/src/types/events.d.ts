@@ -44,6 +44,14 @@ interface EvanEventExtraData {
   sponsor_types: string[];
 }
 
+interface EventModules {
+  payments: boolean;
+  content: boolean;
+  program: boolean;
+  papers: boolean;
+  communications: boolean;
+}
+
 interface EvanEvent extends ApiObject {
   readonly rel_files: ApiEndpoint;
   readonly code: string;
@@ -80,6 +88,15 @@ interface EvanEvent extends ApiObject {
   topics: Topic[];
   tracks: Track[];
   venues: Venue[];
+
+  readonly modules: EventModules;
+  readonly registration_audience: 'public' | 'ugent_only';
+  readonly listing_status: 'pending_review' | 'listed' | 'declined';
+  readonly decline_reason: string;
+  readonly is_listed: boolean;
+  readonly url: Url;
+  readonly manage_url: Url;
+  readonly dates_display: string;
 
   registration_configuration: EvanEventRegistrationConfig;
   extra_data: EvanEventExtraData;

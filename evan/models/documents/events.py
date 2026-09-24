@@ -10,7 +10,7 @@ from .payments import PaymentsConfig
 
 
 class EventModules(BaseModel):
-    """Active modules for an event."""
+    """Legacy per-event toggles for optional features."""
 
     model_config = ConfigDict(extra="ignore", validate_default=True)
 
@@ -19,12 +19,29 @@ class EventModules(BaseModel):
     subsessions: bool = Field(default=False, description="Whether the event supports subsessions within sessions")
 
 
+class Modules(BaseModel):
+    """Opt-in capability modules for an event.
+
+    Each module is independently toggleable; enabling one never implies another.
+    Unknown keys are rejected so the module inventory stays explicit.
+    """
+
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
+    payments: bool = Field(default=False, description="Fees, coupons, payment rails and invoice tracking")
+    content: bool = Field(default=False, description="Pages, sponsors, keynotes and albums")
+    program: bool = Field(default=False, description="Sessions, subsessions, tracks, topics and venues")
+    papers: bool = Field(default=False, description="Paper submission and review")
+    communications: bool = Field(default=False, description="Event email campaigns")
+
+
 class EventConfig(BaseModel):
     """General configuration for an event."""
 
     model_config = ConfigDict(extra="ignore", validate_default=False)
 
     active_modules: EventModules = Field(default_factory=EventModules)
+    modules: Modules = Field(default_factory=Modules)
     payments: PaymentsConfig = None
     file_uploader: FileUploaderConfig = None
 

@@ -27,7 +27,8 @@ const props = defineProps<{
 
 const displayName = computed<string>(() => {
   if (props.user) {
-    return `${props.user.first_name} ${props.user.last_name}` || props.user.username;
+    const fullName = `${props.user.first_name} ${props.user.last_name}`.trim();
+    return fullName || props.user.username;
   }
   return '';
 });

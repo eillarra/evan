@@ -11,7 +11,7 @@
     "build": "vite build",
     "dev": "vite",
     "format": "prettier --write \"vue/src/**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore",
-    "lint": "eslint vue/src --ext .js,.ts,.vue",
+    "lint": "eslint vue/src",
     "test": "yarn test:unit",
     "test:unit": "vitest run"
   },
@@ -38,6 +38,7 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@inertiajs/vue3": "^3.7.1",
     "@quasar/vite-plugin": "^2.0.2",
     "@types/lodash-es": "^4.17.12",
@@ -53,6 +54,7 @@
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-vue": "^10.11.0",
+    "globals": "^17.12.0",
     "happy-dom": "^20.14.5",
     "prettier": "^3.9.7",
     "sass": "^1.104.1",

@@ -26,7 +26,7 @@
             <q-item v-for="option in field.options || []" :key="String(option.value)" tag="label">
               <q-item-section avatar>
                 <q-radio
-                  :model-value="extraData[field.code] as string | number | null | undefined"
+                  :model-value="radioFieldValue(field.code)"
                   :val="option.value"
                   keep-color
                   @update:model-value="extraData[field.code] = option.value"
@@ -99,6 +99,12 @@ type SelectItem = { label: string; value: string | number };
 
 function selectOptions(field: ExtraDataField): SelectItem[] {
   return (field.options || []).map((option) => ({ label: option.label, value: option.value }));
+}
+
+function radioFieldValue(code: string): string | number | null | undefined {
+  // Type-only cast kept in script so the template does not use `|` union pipes,
+  // which vue/no-deprecated-filter cannot distinguish from Vue 2 filters.
+  return extraData.value[code] as string | number | null | undefined;
 }
 
 function toggleMultiselectOption(field: ExtraDataField, value: string | number): void {

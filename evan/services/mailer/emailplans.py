@@ -15,6 +15,7 @@ Every dimension is optional: an empty value means "no filter on this dimension".
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from django.db import connection
@@ -27,6 +28,9 @@ from evan.services.mailer.base import render_context
 if TYPE_CHECKING:
     from evan.models import Registration, Session, User
     from evan.models.emails import EmailPlan
+
+
+logger = logging.getLogger(__name__)
 
 
 def _get_filters(plan: EmailPlan) -> dict:
@@ -183,6 +187,14 @@ def execute_plan(plan: EmailPlan) -> int:
     :returns: The number of EmailLog entries created.
     """
     from evan.models.emails import EmailLog, EmailPlan
+
+    if not plan.event.module_enabled("communications"):
+        logger.info(
+            "Skipping email plan %s: the communications module is disabled for event %s.",
+            plan.pk,
+            plan.event.code,
+        )
+        return 0
 
     # Atomic claim: only proceed if this worker sets sent_at from NULL to now.
     claimed = EmailPlan.objects.filter(pk=plan.pk, sent_at__isnull=True).update(sent_at=timezone.now())

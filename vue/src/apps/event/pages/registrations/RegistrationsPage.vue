@@ -117,7 +117,7 @@ const registrationsExcelUrl = computed<string | null>(() => {
     return null;
   }
 
-  return `/e/${evanEvent.value.code}/files/registrations.xlsx`;
+  return `/e/${evanEvent.value.code}/manage/registrations.xlsx`;
 });
 
 const filteredRegistrations = computed<Registration[]>(() => {

@@ -5,6 +5,8 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.query import QuerySet
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.template.defaultfilters import date as date_filter
 from django.urls import reverse
 from django.utils import timezone
@@ -51,13 +53,126 @@ def validate_event_day(day):
         raise ValidationError("Please check the date: it should be between the start and end dates of the event.")
 
 
-class EventManager(models.Manager):
+def _guard_payments(event: Event) -> str | None:
+    """Explain why the payments module cannot be disabled, or None when it can.
+
+    :param event: The event whose payments data is checked.
+    :returns: A human-readable explanation, or None when the module holds no data.
+    """
+    if event.fees.exists():
+        return "the event has fees configured"
+    if event.coupons.exists():
+        return "the event has coupons configured"
+    if event.registrations.filter(paid__gt=0).exists():
+        return "the event has paid registrations"
+
+    from evan.models.payments import RegistrationPaymentAttempt
+
+    if RegistrationPaymentAttempt.objects.filter(registration__event=event).exists():
+        return "the event has payment attempts"
+
+    return None
+
+
+def _guard_papers(event: Event) -> str | None:
+    """Explain why the papers module cannot be disabled, or None when it can.
+
+    :param event: The event whose papers data is checked.
+    :returns: A human-readable explanation, or None when the module holds no data.
+    """
+    if event.papers.exists():
+        return "the event has papers"
+    if event.abstracts.exists():
+        return "the event has abstracts"
+
+    return None
+
+
+def _guard_program(event: Event) -> str | None:
+    """Explain why the program module cannot be disabled, or None when it can.
+
+    :param event: The event whose program data is checked.
+    :returns: A human-readable explanation, or None when the module holds no data.
+    """
+    if event.sessions.exists():
+        return "the event has sessions"
+    if event.tracks.exists() or event.topics.exists() or event.venues.exists():
+        return "the event has tracks, topics or venues"
+
+    return None
+
+
+def _guard_content(event: Event) -> str | None:
+    """Explain why the content module cannot be disabled, or None when it can.
+
+    :param event: The event whose content data is checked.
+    :returns: A human-readable explanation, or None when the module holds no data.
+    """
+    if event.contents.exists():
+        return "the event has contents"
+    if event.sponsors.exists():
+        return "the event has sponsors"
+    if event.albums.exists():
+        return "the event has albums"
+    if event.keynotes.exists():
+        return "the event has keynotes"
+
+    return None
+
+
+def _guard_communications(event: Event) -> str | None:
+    """Explain why the communications module cannot be disabled, or None when it can.
+
+    :param event: The event whose communications data is checked.
+    :returns: A human-readable explanation, or None when the module holds no data.
+    """
+    if event.email_plans.exists():
+        return "the event has email plans"
+
+    return None
+
+
+MODULES: dict[str, object] = {
+    "payments": _guard_payments,
+    "content": _guard_content,
+    "program": _guard_program,
+    "papers": _guard_papers,
+    "communications": _guard_communications,
+}
+
+
+class EventQuerySet(models.QuerySet):
     def upcoming(self):
         return self.filter(end_date__gte=timezone.now().date()).order_by("end_date")
+
+    def listed(self):
+        return self.filter(listing_status=Event.ListingStatus.LISTED)
+
+
+class EventManager(models.Manager.from_queryset(EventQuerySet)):
+    """Manager for Event, combining upcoming() and listed() as chainable queryset methods."""
+
+
+class RegistrationAudience(models.TextChoices):
+    """Who may register for an event."""
+
+    PUBLIC = "public", "Public"
+    UGENT_ONLY = "ugent_only", "UGent only"
+
+
+class ListingStatus(models.TextChoices):
+    """Moderation state of an event's public listing."""
+
+    PENDING_REVIEW = "pending_review", "Pending review"
+    LISTED = "listed", "Listed"
+    DECLINED = "declined", "Declined"
 
 
 class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     """An event."""
+
+    RegistrationAudience = RegistrationAudience
+    ListingStatus = ListingStatus
 
     is_virtual = models.BooleanField(default=False)
     code = models.CharField(max_length=32, unique=True)
@@ -78,6 +193,22 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     social_event_bundle_fee = models.PositiveSmallIntegerField(default=0)
     signature = models.TextField(default="", blank=True)
     email = models.EmailField(default="", blank=True)
+
+    registration_audience = models.CharField(
+        max_length=32,
+        choices=RegistrationAudience.choices,
+        default=RegistrationAudience.PUBLIC,
+    )
+    listing_status = models.CharField(
+        max_length=32,
+        choices=ListingStatus.choices,
+        default=ListingStatus.PENDING_REVIEW,
+    )
+    listing_decided_by = models.ForeignKey(
+        "evan.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="listing_decisions"
+    )
+    listing_decided_at = models.DateTimeField(null=True, blank=True)
+    decline_reason = models.TextField(default="", blank=True)
 
     config = models.JSONField(default=dict)
     registration_config = models.JSONField(default=dict)
@@ -123,8 +254,50 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         if self.hashtag:
             self.hashtag = self.hashtag[1:] if self.hashtag.startswith("#") else self.hashtag
 
+        self.clean_modules()
+
+    def clean_modules(self) -> None:
+        """Refuse disabling a module that already holds data.
+
+        :raises ValidationError: When a module being switched off still has data.
+        """
+        if not self.pk:
+            return
+
+        previous_modules = type(self).objects.filter(pk=self.pk).values_list("config", flat=True).first() or {}
+        previous = previous_modules.get("modules", {}) if isinstance(previous_modules, dict) else {}
+        current = (self.configuration or {}).get("modules", {})
+
+        for key, guard in MODULES.items():
+            if previous.get(key, False) and not current.get(key, False):
+                explanation = guard(self)
+                if explanation:
+                    raise ValidationError(
+                        {
+                            "config": [
+                                f"The '{key}' module cannot be disabled because {explanation}. "
+                                "The existing data is preserved; re-enable the module to use it again."
+                            ]
+                        }
+                    )
+
+    def module_enabled(self, key: str) -> bool:
+        """Check whether an optional module is enabled for this event.
+
+        :param key: The module key (one of the keys in the MODULES registry).
+        :returns: True when the module is enabled, False otherwise.
+        :raises KeyError: If the key is not a known module.
+        """
+        if key not in MODULES:
+            raise KeyError(f"Unknown module: {key}")
+        return bool((self.configuration or {}).get("modules", {}).get(key, False))
+
     def get_absolute_url(self) -> str:  # noqa: DJ012
         return reverse("event:app", args=[self.code])
+
+    def get_manage_url(self) -> str:  # noqa: DJ012
+        """Return the URL of the event's organizer console."""
+        return reverse("event:manage", args=[self.code])
 
     def get_api_url(self) -> str:
         return reverse("v1:event-detail", args=[self.code])
@@ -201,6 +374,10 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @property
     def registration_configuration(self) -> dict:
         return get_validated_event_registration_configuration(self.registration_config or {})
+
+    @property
+    def is_listed(self) -> bool:
+        return self.listing_status == self.ListingStatus.LISTED
 
     @property
     def is_active(self) -> bool:
@@ -293,3 +470,16 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     @classmethod
     def objects_for_user(cls, user):
         return cls.objects.filter(acl__user=user)
+
+
+@receiver(post_save, sender=Event)
+def event_post_save(sender, instance: Event, created: bool, **kwargs) -> None:
+    """Notify the platform team when a new event is created and awaits review.
+
+    :param instance: The event that was saved.
+    :param created: True when the event was just created.
+    """
+    if created:
+        from evan.services.listing import notify_team_of_pending_review
+
+        notify_team_of_pending_review(instance)

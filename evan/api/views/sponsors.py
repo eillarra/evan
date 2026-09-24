@@ -20,6 +20,7 @@ class SponsorPermission(EventRelatedObjectPermission):
 
 
 class SponsorsViewSet(EventRelatedViewSet):
+    module_key = "content"
     permission_classes = [SponsorsPermission]
     queryset = Sponsor.objects.prefetch_related("files").all()
     pagination_class = None

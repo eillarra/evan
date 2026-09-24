@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from evan.models import Fee
 from tests._factories import EventFactory, RegistrationFactory, UserFactory
+from tests._factories.events import ALL_MODULES_ON
 
 
 def _invoice_request_url(registration) -> str:
@@ -19,13 +20,15 @@ def _invoice_request_url(registration) -> str:
 def invoice_ready_registration(db):
     """Create an accepted unpaid registration for an event allowing invoices."""
     event = EventFactory()
+    # Replace the config wholesale, keeping the payments module enabled.
     event.config = {
+        "modules": dict(ALL_MODULES_ON),
         "payments": {
             "type": "ugent",
             "wbs_element": "TESTPSP",
             "salt": "testsalt",
             "allow_invoices": True,
-        }
+        },
     }
     event.save()
     Fee.objects.create(event=event, type="regular", value=100)
@@ -104,12 +107,13 @@ class TestRegistrationInvoiceRequestView:
         """Events configured without invoices reject invoice requests."""
         event = invoice_ready_registration.event
         event.config = {
+            "modules": dict(ALL_MODULES_ON),
             "payments": {
                 "type": "ugent",
                 "wbs_element": "TESTPSP",
                 "salt": "testsalt",
                 "allow_invoices": False,
-            }
+            },
         }
         event.save()
         client.force_login(invoice_ready_registration.user)

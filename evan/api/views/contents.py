@@ -19,6 +19,7 @@ class ContentPermission(EventRelatedObjectPermission):
 
 
 class ContentsViewSet(EventRelatedViewSet):
+    module_key = "content"
     permission_classes = [ContentsPermission]
     queryset = Content.objects.prefetch_related("files").all()
     pagination_class = None

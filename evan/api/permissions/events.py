@@ -40,6 +40,10 @@ class EventRelatedPermission(BasePermission):
             return True
 
         event = self.get_event(view)
+        module_key = getattr(view, "module_key", None)
+
+        if module_key and request.method not in ["GET"] and not event.module_enabled(module_key):
+            return False
 
         if request.method == "GET":
             if "pk" in view.kwargs:

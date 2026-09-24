@@ -30,6 +30,12 @@ export default {
     presentation:
       'Event assistant that helps you collect registration fees, manage attendees, and track the real-time status of your event',
     login: 'Sign in',
+    upcoming_events: 'Upcoming events',
+  },
+  public_event: {
+    register: 'Register',
+    manage: 'Manage event',
+    contact: 'Contact',
   },
   dashboard: {},
   models: {

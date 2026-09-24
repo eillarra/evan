@@ -43,6 +43,6 @@ const selectedEventCode = ref<string>(currentEvent.value.code);
 store.setData(currentEvent.value);
 
 watch(selectedEventCode, (code: string) => {
-  window.location.href = `../${code}/`;
+  window.location.href = `../../${code}/manage/`;
 });
 </script>

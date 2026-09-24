@@ -25,20 +25,25 @@ from ..viewsets import EventRelatedViewSet
 
 
 class AbstractsViewSet(EventRelatedViewSet):
+    module_key = "papers"
     queryset = Abstract.objects.select_related("event", "user").prefetch_related("files", "reviews")
     serializer_class = ManagedAbstractSerializer
 
 
 class AbstractCreateViewSet(CreateModelMixin, GenericViewSet):
+    module_key = "papers"
     permission_classes = (IsAuthenticated,)
     queryset = Abstract.objects.select_related("user")
     serializer_class = AbstractSerializer
 
     def perform_create(self, serializer):
+        event = Event.objects.get(code=self.kwargs.get("code"))
+        if not event.module_enabled("papers"):
+            raise PermissionDenied("The papers module is not enabled for this event.")
         try:
             serializer.save(
                 user=self.request.user,
-                event=Event.objects.get(code=self.kwargs.get("code")),
+                event=event,
             )
         except IntegrityError as exc:
             raise ValidationError({"event-user": ["Duplicate entry - this user already has an abstract."]}) from exc
@@ -67,6 +72,7 @@ class AbstractViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
 
 class AbstractReviewsViewSet(ListModelMixin, GenericViewSet):
+    module_key = "papers"
     pagination_class = None
     queryset = AbstractReview.objects.prefetch_related("abstract__files", "abstract__user")
     serializer_class = FullAbstractReviewSerializer
@@ -75,16 +81,24 @@ class AbstractReviewsViewSet(ListModelMixin, GenericViewSet):
     def list(self, request, *args, **kwargs):
         event_id = Event.objects.values_list("id", flat=True).get(code=self.kwargs.get("code"))
         self.queryset = self.queryset.filter(abstract__event_id=event_id, user_id=request.user.id)
+
+        if not Event.objects.get(id=event_id).module_enabled("papers"):
+            self.queryset = self.queryset.none()
+
         return super().list(request, *args, **kwargs)
 
 
 class AbstractReviewCreateViewSet(CreateModelMixin, GenericViewSet):
+    module_key = "papers"
     permission_classes = (IsAuthenticated,)
     queryset = AbstractReview.objects.select_related("abstract__event", "user")
     serializer_class = AbstractReviewSerializer
 
     def perform_create(self, serializer):
         event = Event.objects.get(code=self.kwargs.get("code"))
+
+        if not event.module_enabled("papers"):
+            raise PermissionDenied("The papers module is not enabled for this event.")
 
         if not event.can_be_managed_by(self.request.user):
             raise PermissionDenied("Only managers can create a new review.")

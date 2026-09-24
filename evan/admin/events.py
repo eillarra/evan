@@ -2,10 +2,12 @@ from django import forms
 from django.contrib import admin
 from django.db.models import Count
 from django.http import HttpResponseRedirect
-from django.urls import reverse
+from django.shortcuts import render
+from django.urls import path, reverse
 from django.utils.html import format_html
 
 from evan.models import Event, Fee, Sponsor
+from evan.services.listing import record_listing_decision
 
 from .rel.files import FilesInline
 from .rel.links import LinksInline
@@ -87,6 +89,17 @@ class SponsorsInline(admin.TabularInline):
     extra = 0
 
 
+class EventDeclineForm(forms.Form):
+    """Form collecting the decline reason shown to the organizers."""
+
+    reason = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 4}),
+        required=True,
+        label="Reason",
+        help_text="This reason is shown to the event's organizers.",
+    )
+
+
 class EventAdminForm(forms.ModelForm):
     """Admin form for Event with explicit fields for nested JSON config."""
 
@@ -102,6 +115,13 @@ class EventAdminForm(forms.ModelForm):
     module_abstracts = forms.BooleanField(required=False, label="Module: Abstracts")
     module_cms = forms.BooleanField(required=False, label="Module: CMS")
     module_subsessions = forms.BooleanField(required=False, label="Module: Subsessions")
+
+    # config: capability modules
+    module_payments = forms.BooleanField(required=False, label="Capability module: Payments")
+    module_content = forms.BooleanField(required=False, label="Capability module: Content")
+    module_program = forms.BooleanField(required=False, label="Capability module: Program")
+    module_papers = forms.BooleanField(required=False, label="Capability module: Papers")
+    module_communications = forms.BooleanField(required=False, label="Capability module: Communications")
 
     # config: payments (UGent bridge — the only type currently used)
     payments_type = forms.ChoiceField(
@@ -138,6 +158,7 @@ class EventAdminForm(forms.ModelForm):
             "social_event_bundle_fee",
             "signature",
             "email",
+            "registration_audience",
             "config",
             "registration_config",
             "extra_data",
@@ -158,6 +179,13 @@ class EventAdminForm(forms.ModelForm):
             self.fields["module_abstracts"].initial = modules.get("abstracts", False)
             self.fields["module_cms"].initial = modules.get("cms", False)
             self.fields["module_subsessions"].initial = modules.get("subsessions", False)
+
+            capability_modules = config.get("modules", {})
+            self.fields["module_payments"].initial = capability_modules.get("payments", False)
+            self.fields["module_content"].initial = capability_modules.get("content", False)
+            self.fields["module_program"].initial = capability_modules.get("program", False)
+            self.fields["module_papers"].initial = capability_modules.get("papers", False)
+            self.fields["module_communications"].initial = capability_modules.get("communications", False)
 
             payments = config.get("payments") or {}
             self.fields["payments_type"].initial = payments.get("type", "")
@@ -184,6 +212,15 @@ class EventAdminForm(forms.ModelForm):
             "abstracts": self.cleaned_data.get("module_abstracts", False),
             "cms": self.cleaned_data.get("module_cms", False),
             "subsessions": self.cleaned_data.get("module_subsessions", False),
+        }
+
+        # config: capability modules
+        config["modules"] = {
+            "payments": self.cleaned_data.get("module_payments", False),
+            "content": self.cleaned_data.get("module_content", False),
+            "program": self.cleaned_data.get("module_program", False),
+            "papers": self.cleaned_data.get("module_papers", False),
+            "communications": self.cleaned_data.get("module_communications", False),
         }
 
         # config: payments
@@ -213,21 +250,29 @@ class EventAdmin(admin.ModelAdmin):
     """Admin view for events."""
 
     form = EventAdminForm
-    actions = ["registrations_excel"]
+    actions = ["list_events", "decline_events", "registrations_excel"]
     date_hierarchy = "start_date"
     list_display = (
         "code",
         "start_date",
         "end_date",
         "name",
+        "listing_status",
         "sessions_link",
         "registrations_link",
         "is_active",
         "is_open",
     )
+    list_filter = ("listing_status", "registration_audience")
     list_per_page = 30
     search_fields = ["city", "country", "start_date__year"]
-    readonly_fields = ["registrations_count"]
+    readonly_fields = [
+        "registrations_count",
+        "listing_status",
+        "decline_reason",
+        "listing_decided_by",
+        "listing_decided_at",
+    ]
     inlines = (
         FeesInline,
         SponsorsInline,
@@ -268,6 +313,18 @@ class EventAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Listing & registration access",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "registration_audience",
+                    "listing_status",
+                    "decline_reason",
+                    ("listing_decided_by", "listing_decided_at"),
+                ),
+            },
+        ),
+        (
             "Sponsor tiers",
             {
                 "classes": ("collapse",),
@@ -280,6 +337,22 @@ class EventAdmin(admin.ModelAdmin):
             {
                 "classes": ("collapse",),
                 "fields": ("module_abstracts", "module_cms", "module_subsessions"),
+            },
+        ),
+        (
+            "Capability modules",
+            {
+                "classes": ("collapse",),
+                "description": (
+                    "Opt-in capability modules for this event. Disabling a module that holds data is refused."
+                ),
+                "fields": (
+                    "module_payments",
+                    "module_content",
+                    "module_program",
+                    "module_papers",
+                    "module_communications",
+                ),
             },
         ),
         (
@@ -320,6 +393,61 @@ class EventAdmin(admin.ModelAdmin):
         return qs.none()
 
     # custom actions
+
+    @admin.action(description="Publish: list selected events")
+    def list_events(self, request, queryset):
+        """List the selected events and record the decision."""
+        for event in queryset:
+            record_listing_decision(event, decided_by=request.user, decision=Event.ListingStatus.LISTED)
+        self.message_user(request, f"Listed {queryset.count()} event(s).")
+
+    @admin.action(description="Decline selected events")
+    def decline_events(self, request, queryset):
+        """Redirect to the decline confirmation view asking for a reason."""
+        ids = ",".join(str(pk) for pk in queryset.values_list("pk", flat=True))
+        return HttpResponseRedirect(f"decline/?ids={ids}")
+
+    def get_urls(self):
+        """Add the decline confirmation view to the event admin URLs."""
+        urls = super().get_urls()
+        custom = [
+            path(
+                "decline/",
+                self.admin_site.admin_view(self.decline_view),
+                name="evan_event_decline",
+            )
+        ]
+        return custom + urls
+
+    def decline_view(self, request):
+        """Render the decline confirmation form and apply the decision."""
+        if request.method == "POST":
+            form = EventDeclineForm(request.POST)
+            if form.is_valid():
+                ids = [pk for pk in request.POST.get("ids", "").split(",") if pk.isdigit()]
+                events = self.get_queryset(request).filter(id__in=ids)
+                for event in events:
+                    record_listing_decision(
+                        event,
+                        decided_by=request.user,
+                        decision=Event.ListingStatus.DECLINED,
+                        reason=form.cleaned_data["reason"],
+                    )
+                self.message_user(request, f"Declined {events.count()} event(s).")
+                return HttpResponseRedirect("../")
+        else:
+            form = EventDeclineForm(initial={"ids": request.GET.get("ids", "")})
+
+        ids = [pk for pk in request.GET.get("ids", request.POST.get("ids", "")).split(",") if pk.isdigit()]
+        events = self.get_queryset(request).filter(id__in=ids)
+        context = {
+            **self.admin_site.each_context(request),
+            "form": form,
+            "events": events,
+            "ids": request.GET.get("ids", request.POST.get("ids", "")),
+            "title": "Decline events for public listing",
+        }
+        return render(request, "admin/evan/event/decline.html", context)
 
     @admin.action(description="🔡 Registrations overview")
     def registrations_excel(self, request, queryset):

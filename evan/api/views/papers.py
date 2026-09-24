@@ -22,6 +22,7 @@ class PaperPermission(EventRelatedObjectPermission):
 
 
 class PapersViewSet(EventRelatedViewSet):
+    module_key = "papers"
     permission_classes = [PapersPermission]
     queryset = Paper.objects.all()
     serializer_class = PaperSerializer

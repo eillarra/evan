@@ -51,6 +51,10 @@ class RegistrationSerializer(RemarksMixin, serializers.ModelSerializer):
 class RegistrationRetrieveSerializer(RegistrationSerializer):
     """Serializer for retrieving registration details."""
 
+    # On events with the payments module disabled, registrations complete without
+    # a fee type; the model-level fee resolution keeps payments-on events honest.
+    fee_type = serializers.CharField(required=False, allow_blank=True)
+
     class Meta(RegistrationSerializer.Meta):
         model = Registration
         exclude = ["id", "event"]

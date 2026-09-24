@@ -20,6 +20,7 @@ class CouponPermission(EventRelatedObjectPermission):
 
 
 class CouponsViewSet(EventRelatedViewSet):
+    module_key = "payments"
     permission_classes = [CouponsPermission]
     queryset = Coupon.objects.order_by("notes").all()
     serializer_class = CouponSerializer

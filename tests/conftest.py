@@ -23,9 +23,9 @@ def now():
 
 @pytest.fixture
 def t_event(db):
-    from evan.models import Fee
+    from evan.models import Event, Fee
 
-    event = EventFactory()
+    event = EventFactory(listing_status=Event.ListingStatus.LISTED)
     Fee.objects.create(event=event, type="regular", value=100)
 
     return event

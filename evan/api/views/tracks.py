@@ -20,6 +20,7 @@ class TrackPermission(EventRelatedObjectPermission):
 
 
 class TracksViewSet(EventRelatedViewSet):
+    module_key = "program"
     permission_classes = [TracksPermission]
     queryset = Track.objects.order_by("name").all()
     serializer_class = TrackSerializer

@@ -331,7 +331,7 @@ async function viewBadgesPdf() {
 
   try {
     // Open PDF in browser instead of downloading
-    window.open(`/e/${evanEvent.value.code}/files/badges.pdf`, '_blank');
+    window.open(`/e/${evanEvent.value.code}/manage/badges.pdf`, '_blank');
   } catch (error) {
     console.error('Error opening PDF:', error);
   } finally {

@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p>The following events will be declined for public listing. The organizers are notified with the reason.</p>
+  <ul>
+    {% for event in events %}
+      <li>{{ event.name }} ({{ event.code }})</li>
+    {% endfor %}
+  </ul>
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="ids" value="{{ ids }}" />
+    {{ form.as_p }}
+    <input type="submit" name="_apply" value="Decline events" class="default" />
+    <a href="../" class="button cancel-link">Cancel</a>
+  </form>
+{% endblock %}
