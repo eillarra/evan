@@ -143,7 +143,10 @@ interface Props {
   loading?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  albums: () => [],
+  loading: false,
+});
 
 const selectedAlbum = ref<number | null>(null);
 const showPhotoDialog = ref(false);
