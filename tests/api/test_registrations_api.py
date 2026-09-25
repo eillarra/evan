@@ -4,6 +4,7 @@ Covers:
   1. Payment, invoicing and attendance fields staying read-only for attendees,
      on both ``POST /events/{code}/register/`` and ``PUT/PATCH /registrations/{uuid}/``.
   2. The registration window (``Event.is_open_for_registration``) on API create.
+  3. Failed creates and updates leaving no partial writes behind.
 """
 
 from datetime import UTC, date, datetime, timedelta
@@ -13,7 +14,7 @@ import pytest
 from django.urls import reverse
 
 from evan.models import Fee, Registration
-from tests._factories import EventFactory, RegistrationFactory, UserFactory
+from tests._factories import EventFactory, RegistrationFactory, SessionFactory, UserFactory
 
 
 PROTECTED_FIELD_VALUES: dict[str, object] = {
@@ -54,6 +55,14 @@ def open_event(db):
 def registration(open_event, user):
     """An unpaid registration owned by the regular user fixture."""
     return RegistrationFactory(event=open_event, user=user)
+
+
+@pytest.fixture
+def full_session(open_event):
+    """A capped session on the open event whose single slot is already taken."""
+    session = SessionFactory(event=open_event, max_attendees=1)
+    RegistrationFactory(event=open_event, user=UserFactory()).sessions.add(session)
+    return session
 
 
 def _register_url(event) -> str:
@@ -190,3 +199,51 @@ class TestRegistrationCreateWindow:
         response = api_client.post(_register_url(open_event), {"fee_type": "regular"}, format="json")
 
         assert response.status_code == status.FORBIDDEN
+
+
+# ---------------------------------------------------------------------------
+# 3. No partial writes
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.api
+@pytest.mark.django_db(transaction=True)
+class TestRegistrationWritesAreAtomic:
+    """A create or update rejected by a session cap leaves the database untouched."""
+
+    def test_create_with_full_session_leaves_no_registration(self, api_client, open_event, user, full_session) -> None:
+        api_client.force_authenticate(user=user)
+
+        response = api_client.post(
+            _register_url(open_event), {"fee_type": "regular", "sessions": [full_session.id]}, format="json"
+        )
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "full" in str(response.data["non_field_errors"])
+        assert not Registration.objects.filter(event=open_event, user=user).exists()
+
+    def test_retry_without_full_session_succeeds(self, api_client, open_event, user, full_session) -> None:
+        api_client.force_authenticate(user=user)
+        api_client.post(
+            _register_url(open_event), {"fee_type": "regular", "sessions": [full_session.id]}, format="json"
+        )
+
+        response = api_client.post(_register_url(open_event), {"fee_type": "regular"}, format="json")
+
+        assert response.status_code == status.CREATED
+
+    def test_update_with_full_session_leaves_registration_unchanged(
+        self, api_client, open_event, user, registration, full_session
+    ) -> None:
+        api_client.force_authenticate(user=user)
+
+        response = api_client.patch(
+            _detail_url(registration),
+            {"extra_data": {"paper_id": "P-2"}, "sessions": [full_session.id]},
+            format="json",
+        )
+
+        assert response.status_code == status.BAD_REQUEST
+        registration.refresh_from_db()
+        assert registration.extra_data == {}
+        assert list(registration.sessions.all()) == []

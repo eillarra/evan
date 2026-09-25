@@ -1,4 +1,4 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -47,10 +47,12 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
             raise PermissionDenied("Registrations are not open for this event.")
 
         try:
-            serializer.save(
-                user=user,
-                event=event,
-            )
+            # Session caps are enforced while the M2M is set, after the row is inserted.
+            with transaction.atomic():
+                serializer.save(
+                    user=user,
+                    event=event,
+                )
         except IntegrityError as exc:
             raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]}) from exc
         except ValueError as exc:
@@ -69,6 +71,7 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
     def perform_update(self, serializer):
         try:
-            serializer.save()
+            with transaction.atomic():
+                serializer.save()
         except ValueError as exc:
             raise ValidationError({"non_field_errors": [str(exc)]}) from exc
