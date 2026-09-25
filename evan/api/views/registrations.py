@@ -43,6 +43,9 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
         if event.registration_audience == Event.RegistrationAudience.UGENT_ONLY and not user.is_ugent_verified:
             raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
 
+        if not event.is_open_for_registration:
+            raise PermissionDenied("Registrations are not open for this event.")
+
         try:
             serializer.save(
                 user=user,

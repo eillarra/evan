@@ -3,6 +3,7 @@
 Covers:
   1. Payment, invoicing and attendance fields staying read-only for attendees,
      on both ``POST /events/{code}/register/`` and ``PUT/PATCH /registrations/{uuid}/``.
+  2. The registration window (``Event.is_open_for_registration``) on API create.
 """
 
 from datetime import UTC, date, datetime, timedelta
@@ -135,3 +136,57 @@ class TestRegistrationCreateReadOnlyFields:
         assert registration.tags != ["vip"]
         assert registration.saldo == -100
         assert registration.visa_requested is True
+
+
+# ---------------------------------------------------------------------------
+# 2. Registration window
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.api
+class TestRegistrationCreateWindow:
+    """API self-registration honours the event's registration window, like the site view."""
+
+    @pytest.mark.parametrize(
+        ("start_offset_days", "deadline_offset_days"),
+        [
+            pytest.param(-30, -1, id="deadline-passed"),
+            pytest.param(5, 30, id="not-yet-open"),
+        ],
+    )
+    def test_create_outside_window_is_refused(
+        self, api_client, open_event, user, start_offset_days, deadline_offset_days
+    ) -> None:
+        open_event.registration_start_date = date.today() + timedelta(days=start_offset_days)
+        open_event.registration_deadline = datetime.now(UTC) + timedelta(days=deadline_offset_days)
+        open_event.save()
+        api_client.force_authenticate(user=user)
+
+        response = api_client.post(_register_url(open_event), {"fee_type": "regular"}, format="json")
+
+        assert response.status_code == status.FORBIDDEN
+        assert not open_event.registrations.filter(user=user).exists()
+
+    def test_create_during_onsite_window_is_accepted(self, api_client, open_event, user) -> None:
+        open_event.registration_deadline = datetime.now(UTC) - timedelta(days=1)
+        open_event.registration_onsite_deadline = datetime.now(UTC) + timedelta(days=1)
+        open_event.save()
+        api_client.force_authenticate(user=user)
+
+        response = api_client.post(_register_url(open_event), {"fee_type": "regular"}, format="json")
+
+        assert response.status_code == status.CREATED
+
+    def test_manager_cannot_create_after_deadline(self, api_client, open_event) -> None:
+        """The site view has no manager exemption for the window, so neither does the API."""
+        from evan.models.rel.permissions import Permission
+
+        manager = UserFactory()
+        open_event.acl.create(user=manager, level=Permission.ADMIN)
+        open_event.registration_deadline = datetime.now(UTC) - timedelta(days=1)
+        open_event.save()
+        api_client.force_authenticate(user=manager)
+
+        response = api_client.post(_register_url(open_event), {"fee_type": "regular"}, format="json")
+
+        assert response.status_code == status.FORBIDDEN

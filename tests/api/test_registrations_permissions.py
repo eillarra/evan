@@ -7,13 +7,14 @@ Three distinct endpoint groups, each with different access rules:
      Attendees are never allowed to see each other's data.
 
   2. RegistrationCreateViewSet → POST /events/{code}/register/
-     Any authenticated user may register for an event once.
+     Any authenticated user may register for an event once, while its registration window is open.
      Anonymous users and duplicate registrations are rejected.
 
   3. RegistrationViewSet → GET/PUT /registrations/{uuid}/
      Each attendee can only access their own registration.
 """
 
+from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus as status
 
 import pytest
@@ -32,6 +33,15 @@ def user(db):
 def other_user(db):
     """A second user, used for ownership boundary tests."""
     return UserFactory()
+
+
+@pytest.fixture
+def t_event(t_event):
+    """The shared test event, with its registration window open so self-registration is allowed."""
+    t_event.registration_start_date = date.today() - timedelta(days=1)
+    t_event.registration_deadline = datetime.now(UTC) + timedelta(days=30)
+    t_event.save()
+    return t_event
 
 
 @pytest.fixture
