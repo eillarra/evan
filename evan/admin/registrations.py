@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 from django.contrib.admin.utils import unquote
 from django.urls import path, reverse
@@ -6,6 +7,47 @@ from django.utils.html import format_html
 from evan.models import InvitationLetter, Registration
 from evan.services.mailer.registrations import schedule_registration_email
 from evan.site.pdfs.badges import BadgesPdfMaker
+
+
+class RegistrationAdminForm(forms.ModelForm):
+    """Admin form for registrations.
+
+    Surfaces an unknown fee type as a form error instead of the server error
+    ``calculate_registration_base_fee`` raises when saving such a registration.
+    """
+
+    class Meta:  # noqa: DJ012
+        model = Registration
+        fields = (
+            "user",
+            "is_accepted",
+            "fee_type",
+            "manual_extra_fees",
+            "paid_via_invoice",
+            "invoice_requested",
+            "invoice_sent",
+            "coupon",
+            "invoice_address",
+            "visa_requested",
+            "visa_sent",
+        )
+
+    def clean(self) -> dict:
+        """Validate that the fee type belongs to the registration's event.
+
+        The event field is read-only in the admin, so the current event comes
+        from the instance being edited rather than from the submitted form.
+
+        :returns: The validated form data.
+        """
+        cleaned_data = super().clean()
+        fee_type = cleaned_data.get("fee_type")
+        event = self.instance.event if self.instance and self.instance.event_id else None
+
+        if event and fee_type and event.module_enabled("payments") and fee_type not in event.fees_dict:
+            self.add_error("fee_type", f"Fee type '{fee_type}' not found for event {event}.")
+
+        return cleaned_data
 
 
 class RegistrationIsPaidFilter(admin.SimpleListFilter):
@@ -41,6 +83,7 @@ class InvitationLetterInline(admin.StackedInline):
 
 @admin.register(Registration)
 class RegistrationAdmin(admin.ModelAdmin):
+    form = RegistrationAdminForm
     date_hierarchy = "created_at"
     list_display = (
         "id",

@@ -167,3 +167,61 @@ class TestRegistrationAdminActions:
 
         assert response.status_code == 200
         assert InvitationLetter.objects.filter(pk=registration.pk).exists() is False
+
+
+@pytest.mark.django_db
+class TestRegistrationAdminFeeTypeValidation:
+    """Saving a registration with an unknown fee type shows a form error, not a server error."""
+
+    @staticmethod
+    def _post_change(client, registration: Registration, fee_type: str):
+        return client.post(
+            reverse("admin:evan_registration_change", args=[registration.pk]),
+            {
+                "event": str(registration.event_id),
+                "user": str(registration.user_id),
+                "is_accepted": "on" if registration.is_accepted else "",
+                "fee_type": fee_type,
+                "manual_extra_fees": str(registration.manual_extra_fees),
+                "paid_via_invoice": str(registration.paid_via_invoice),
+                "invoice_requested": "on" if registration.invoice_requested else "",
+                "invoice_sent": "on" if registration.invoice_sent else "",
+                "coupon": "",
+                "visa_requested": "on" if registration.visa_requested else "",
+                "visa_sent": "on" if registration.visa_sent else "",
+                "letter-TOTAL_FORMS": "1",
+                "letter-INITIAL_FORMS": "0",
+                "letter-MIN_NUM_FORMS": "0",
+                "letter-MAX_NUM_FORMS": "1",
+                "_save": "Save",
+            },
+            follow=True,
+        )
+
+    def test_unknown_fee_type_shows_form_error(self, client, t_event, t_superuser):
+        """A fee type missing from the event blocks the save with a form error."""
+        registration = Registration.objects.create(event=t_event, user=UserFactory(), fee_type="regular")
+
+        client.force_login(t_superuser)
+        response = self._post_change(client, registration, fee_type="onsite__student__1day_pass")
+
+        assert response.status_code == 200
+        form = response.context["adminform"].form
+        assert "fee_type" in form.errors
+        assert "not found for event" in form.errors["fee_type"][0]
+
+        registration.refresh_from_db()
+        assert registration.fee_type == "regular"
+
+    def test_unknown_fee_type_allowed_without_payments_module(self, client, t_event, t_superuser):
+        """Fee types are not validated when the payments module is disabled."""
+        t_event.config["modules"]["payments"] = False
+        t_event.save()
+        registration = Registration.objects.create(event=t_event, user=UserFactory(), fee_type="regular")
+
+        client.force_login(t_superuser)
+        response = self._post_change(client, registration, fee_type="onsite__student__1day_pass")
+
+        assert response.status_code == 200
+        registration.refresh_from_db()
+        assert registration.fee_type == "onsite__student__1day_pass"
