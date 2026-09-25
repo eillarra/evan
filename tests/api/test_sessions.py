@@ -242,6 +242,39 @@ class TestSessionPaperValidation:
 
 
 @pytest.mark.api
+class TestSessionExtraDataValidation:
+    """Session extra_data validation produces clean, user-safe 400 messages."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
+
+    def test_unknown_badge_icon_message_is_controlled(self, api_client, session) -> None:
+        """An unknown icon key surfaces the curated message, not pydantic internals."""
+        response = api_client.patch(session.get_api_url(), {"extra_data": {"badge_icon": "not-an-icon"}}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        detail = str(response.data["extra_data"])
+        assert "Unknown badge icon 'not-an-icon'" in detail
+        assert "validation error" not in detail
+
+    def test_non_object_extra_data_rejected_with_clear_message(self, api_client, session) -> None:
+        """A non-object extra_data payload is rejected with an explicit message."""
+        response = api_client.patch(session.get_api_url(), {"extra_data": ["not", "an", "object"]}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "Extra data must be a JSON object." in str(response.data["extra_data"])
+
+    def test_field_error_message_has_no_raw_pydantic_output(self, api_client, session) -> None:
+        """Type errors name the field without echoing pydantic's internal rendering."""
+        response = api_client.patch(session.get_api_url(), {"extra_data": {"committees": "not-a-list"}}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        detail = str(response.data["extra_data"])
+        assert "committees" in detail
+        assert "validation error" not in detail
+
+
 class TestSessionBadgeIcon:
     """Test badge icon configuration through the session API endpoint."""
 

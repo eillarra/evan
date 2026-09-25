@@ -36,12 +36,38 @@ class SessionExtraData(BaseModel):
         return value
 
 
+def _format_validation_errors(exc: ValidationError) -> str:
+    """Build a user-safe message from pydantic validation errors.
+
+    Exposes only field paths and the actual validation feedback; strips
+    pydantic boilerplate so raw input values and internals stay out of API
+    error responses.
+
+    :param exc: The pydantic ValidationError to format.
+    :returns: A single-line, human-readable error message.
+    """
+    messages = []
+    for error in exc.errors():
+        loc = ".".join(str(part) for part in error["loc"])
+        msg = error["msg"]
+        if msg.startswith("Value error, "):
+            msg = msg[len("Value error, ") :]
+        messages.append(f"{loc}: {msg}" if loc else msg)
+    return "; ".join(messages)
+
+
 def get_validated_session_extra_data(extra_data) -> dict:
     """Validate extra data for a session.
 
+    :param extra_data: The raw extra data mapping to validate.
     :returns: The validated dictionary with default values if not provided.
-    :raises ValueError: If the extra data is invalid."""
+    :raises ValueError: If the extra data is not an object or fails validation."""
+    if not isinstance(extra_data, dict):
+        raise ValueError("Extra data must be a JSON object.")
+
     try:
-        return json.loads(SessionExtraData(**extra_data).model_dump_json())
-    except (TypeError, ValidationError) as exc:
-        raise ValueError(exc) from exc
+        validated = SessionExtraData(**extra_data)
+    except ValidationError as exc:
+        raise ValueError(_format_validation_errors(exc)) from exc
+
+    return json.loads(validated.model_dump_json())
