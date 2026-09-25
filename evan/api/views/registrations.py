@@ -1,4 +1,4 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -6,7 +6,7 @@ from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateMo
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Registration
+from evan.models import Event, Registration, lock_capacity_rows
 
 from ..permissions import RegistrationPermission
 from ..serializers import AuthRegistrationRetrieveSerializer, RegistrationRetrieveSerializer, RegistrationSerializer
@@ -17,6 +17,19 @@ UGENT_ONLY_REGISTRATION_DETAIL = (
     "This event is only open to UGent-verified users. Please sign in with your UGent account "
     "(or link it to your profile) to register."
 )
+
+
+def lock_requested_capacity(event: Event, validated_data: dict) -> None:
+    """Lock the capped fee and sessions that a validated registration payload selects.
+
+    :param event: The event the registration belongs to.
+    :param validated_data: The serializer's validated data for the create or update.
+    """
+    session_ids = {session.pk for session in validated_data.get("sessions", [])}
+    for person in validated_data.get("extra_data", {}).get("accompanying_persons", []):
+        session_ids.update(person.get("selected_social_events", []))
+
+    lock_capacity_rows(event, fee_type=validated_data.get("fee_type"), session_ids=session_ids)
 
 
 class RegistrationsViewSet(EventRelatedViewSet):
@@ -43,11 +56,17 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
         if event.registration_audience == Event.RegistrationAudience.UGENT_ONLY and not user.is_ugent_verified:
             raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
 
+        if not event.is_open_for_registration:
+            raise PermissionDenied("Registrations are not open for this event.")
+
         try:
-            serializer.save(
-                user=user,
-                event=event,
-            )
+            # Capped rows stay locked until commit; session caps are checked after the row is inserted.
+            with transaction.atomic():
+                lock_requested_capacity(event, serializer.validated_data)
+                serializer.save(
+                    user=user,
+                    event=event,
+                )
         except IntegrityError as exc:
             raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]}) from exc
         except ValueError as exc:
@@ -66,6 +85,8 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
     def perform_update(self, serializer):
         try:
-            serializer.save()
+            with transaction.atomic():
+                lock_requested_capacity(serializer.instance.event, serializer.validated_data)
+                serializer.save()
         except ValueError as exc:
             raise ValidationError({"non_field_errors": [str(exc)]}) from exc

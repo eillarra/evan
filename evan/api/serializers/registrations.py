@@ -32,20 +32,25 @@ class RegistrationSerializer(RemarksMixin, serializers.ModelSerializer):
     certificate_url = serializers.URLField(source="get_certificate_url", read_only=True)
     total_fee = serializers.IntegerField(read_only=True)
 
+    # Registrations are only written through the API by their attendees. Payment,
+    # invoicing and attendance fields are managed by staff (admin), so every field
+    # outside this allowlist is read-only, including fields added to the model later.
+    attendee_writable_fields = frozenset({"fee_type", "sessions", "extra_data", "visa_requested"})
+
     class Meta:  # noqa: D106
         model = Registration
         exclude = ["id", "event", "sessions"]
-        read_only_fields = [
-            "id",
-            "uuid",
-            "event",
-            "created_at",
-            "updated_at",
-            "is_accepted",
-            "base_fee",
-            "extra_fees",
-            "saldo",
-        ]
+
+    def get_fields(self) -> dict[str, serializers.Field]:
+        """Return the serializer fields, marking every non-attendee field as read-only.
+
+        :returns: The serializer fields, keyed by name.
+        """
+        fields = super().get_fields()
+        for name, field in fields.items():
+            if name not in self.attendee_writable_fields:
+                field.read_only = True
+        return fields
 
 
 class RegistrationRetrieveSerializer(RegistrationSerializer):
@@ -58,9 +63,6 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
     class Meta(RegistrationSerializer.Meta):
         model = Registration
         exclude = ["id", "event"]
-        read_only_fields = RegistrationSerializer.Meta.read_only_fields + [
-            "manual_extra_fees",
-        ]
 
 
 class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
