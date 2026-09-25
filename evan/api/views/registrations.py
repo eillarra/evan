@@ -6,7 +6,7 @@ from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateMo
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, Registration
+from evan.models import Event, Registration, lock_capacity_rows
 
 from ..permissions import RegistrationPermission
 from ..serializers import AuthRegistrationRetrieveSerializer, RegistrationRetrieveSerializer, RegistrationSerializer
@@ -17,6 +17,19 @@ UGENT_ONLY_REGISTRATION_DETAIL = (
     "This event is only open to UGent-verified users. Please sign in with your UGent account "
     "(or link it to your profile) to register."
 )
+
+
+def lock_requested_capacity(event: Event, validated_data: dict) -> None:
+    """Lock the capped fee and sessions that a validated registration payload selects.
+
+    :param event: The event the registration belongs to.
+    :param validated_data: The serializer's validated data for the create or update.
+    """
+    session_ids = {session.pk for session in validated_data.get("sessions", [])}
+    for person in validated_data.get("extra_data", {}).get("accompanying_persons", []):
+        session_ids.update(person.get("selected_social_events", []))
+
+    lock_capacity_rows(event, fee_type=validated_data.get("fee_type"), session_ids=session_ids)
 
 
 class RegistrationsViewSet(EventRelatedViewSet):
@@ -47,8 +60,9 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
             raise PermissionDenied("Registrations are not open for this event.")
 
         try:
-            # Session caps are enforced while the M2M is set, after the row is inserted.
+            # Capped rows stay locked until commit; session caps are checked after the row is inserted.
             with transaction.atomic():
+                lock_requested_capacity(event, serializer.validated_data)
                 serializer.save(
                     user=user,
                     event=event,
@@ -72,6 +86,7 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     def perform_update(self, serializer):
         try:
             with transaction.atomic():
+                lock_requested_capacity(serializer.instance.event, serializer.validated_data)
                 serializer.save()
         except ValueError as exc:
             raise ValidationError({"non_field_errors": [str(exc)]}) from exc

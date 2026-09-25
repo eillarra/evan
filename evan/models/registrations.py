@@ -153,6 +153,28 @@ def enforce_fee_type_capacity(registration: Registration, previous: Registration
         raise ValueError(f"Fee type {registration.fee_type} is sold out.")
 
 
+def lock_capacity_rows(event: Event, *, fee_type: str | None, session_ids: set[int]) -> None:
+    """Lock the capped fee and session rows a registration write is about to reserve.
+
+    The capacity checks count existing reservations and then insert, so two concurrent
+    writes could both see the last slot as free. Holding a row lock on each capped fee
+    and session makes those writes run their checks one after the other. Rows are locked
+    fee first, then sessions by primary key, so concurrent writers acquire them in the
+    same order. Must be called inside ``transaction.atomic()``, before the registration
+    is saved; the locks are held until that transaction ends.
+
+    :param event: The event the registration belongs to.
+    :param fee_type: The fee type being written, or None when it is not changing.
+    :param session_ids: The session IDs being selected, by the registrant or accompanying persons.
+    """
+    fee = event.fees_dict.get(fee_type) if fee_type else None
+    if fee and fee.config.get("max_registrations"):
+        list(event.fees.filter(pk=fee.pk).select_for_update())
+
+    if session_ids:
+        list(event.sessions.filter(id__in=session_ids, max_attendees__gt=0).order_by("pk").select_for_update())
+
+
 def calculate_registration_base_fee(registration: Registration) -> int:
     """
     Given a registration, calculate the base fee.

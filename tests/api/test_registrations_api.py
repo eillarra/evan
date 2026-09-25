@@ -5,12 +5,15 @@ Covers:
      on both ``POST /events/{code}/register/`` and ``PUT/PATCH /registrations/{uuid}/``.
   2. The registration window (``Event.is_open_for_registration``) on API create.
   3. Failed creates and updates leaving no partial writes behind.
+  4. Capped fee and session rows being locked for the duration of a write.
 """
 
 from datetime import UTC, date, datetime, timedelta
 from http import HTTPStatus as status
 
 import pytest
+from django.db import connection
+from django.db.models import QuerySet
 from django.urls import reverse
 
 from evan.models import Fee, Registration
@@ -63,6 +66,27 @@ def full_session(open_event):
     session = SessionFactory(event=open_event, max_attendees=1)
     RegistrationFactory(event=open_event, user=UserFactory()).sessions.add(session)
     return session
+
+
+@pytest.fixture
+def row_locks(monkeypatch) -> list[tuple[str, list[int], bool]]:
+    """Record every ``select_for_update()`` request made through the ORM.
+
+    Each entry holds the model name, the primary keys the locking query matches and whether
+    a transaction was open. SQLite ignores ``FOR UPDATE``, so this checks which rows are
+    requested for locking, not how concurrent writers actually block each other.
+    """
+    requests: list[tuple[str, list[int], bool]] = []
+    select_for_update = QuerySet.select_for_update
+
+    def spy(queryset: QuerySet, *args, **kwargs) -> QuerySet:
+        requests.append(
+            (queryset.model.__name__, list(queryset.values_list("pk", flat=True)), connection.in_atomic_block)
+        )
+        return select_for_update(queryset, *args, **kwargs)
+
+    monkeypatch.setattr(QuerySet, "select_for_update", spy)
+    return requests
 
 
 def _register_url(event) -> str:
@@ -247,3 +271,72 @@ class TestRegistrationWritesAreAtomic:
         registration.refresh_from_db()
         assert registration.extra_data == {}
         assert list(registration.sessions.all()) == []
+
+
+# ---------------------------------------------------------------------------
+# 4. Capacity locks
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.api
+@pytest.mark.django_db(transaction=True)
+class TestRegistrationCapacityLocks:
+    """Writes lock the capped fee and sessions they select, inside the request's transaction.
+
+    Outside the view's ``atomic()`` block these tests run in autocommit mode, so the recorded
+    ``in_atomic_block`` flag shows the locks are taken within the write's own transaction.
+    """
+
+    @pytest.fixture
+    def capped_rows(self, open_event):
+        """A capped ``phd`` fee plus capped, capped-social and uncapped sessions on the open event."""
+        fee = Fee.objects.create(event=open_event, type="phd", value=0, config={"max_registrations": 5})
+        capped = SessionFactory(event=open_event, max_attendees=5)
+        capped_social = SessionFactory(event=open_event, max_attendees=5, is_social_event=True)
+        uncapped = SessionFactory(event=open_event, max_attendees=0)
+        return fee, capped, capped_social, uncapped
+
+    @staticmethod
+    def _capacity_locks(row_locks) -> list[tuple[str, list[int], bool]]:
+        return [lock for lock in row_locks if lock[0] in {"Fee", "Session"}]
+
+    def test_create_locks_capped_fee_and_sessions(self, api_client, open_event, user, capped_rows, row_locks) -> None:
+        fee, capped, capped_social, uncapped = capped_rows
+        api_client.force_authenticate(user=user)
+        payload = {
+            "fee_type": "phd",
+            "sessions": [uncapped.id, capped.id],
+            "extra_data": {"accompanying_persons": [{"name": "Jane", "selected_social_events": [capped_social.id]}]},
+        }
+
+        response = api_client.post(_register_url(open_event), payload, format="json")
+
+        assert response.status_code == status.CREATED
+        assert self._capacity_locks(row_locks) == [
+            ("Fee", [fee.pk], True),
+            ("Session", sorted([capped.pk, capped_social.pk]), True),
+        ]
+
+    def test_create_without_capped_selection_locks_no_rows(
+        self, api_client, open_event, user, capped_rows, row_locks
+    ) -> None:
+        *_, uncapped = capped_rows
+        api_client.force_authenticate(user=user)
+
+        response = api_client.post(
+            _register_url(open_event), {"fee_type": "regular", "sessions": [uncapped.id]}, format="json"
+        )
+
+        assert response.status_code == status.CREATED
+        assert [pks for _, pks, _ in self._capacity_locks(row_locks) if pks] == []
+
+    def test_update_locks_requested_capped_sessions(
+        self, api_client, user, registration, capped_rows, row_locks
+    ) -> None:
+        _, capped, _, uncapped = capped_rows
+        api_client.force_authenticate(user=user)
+
+        response = api_client.patch(_detail_url(registration), {"sessions": [capped.id, uncapped.id]}, format="json")
+
+        assert response.status_code == status.OK
+        assert self._capacity_locks(row_locks) == [("Session", [capped.pk], True)]
