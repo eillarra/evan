@@ -25,7 +25,7 @@ class TestForAnonymous:
     }
 
     def _get_endpoint(self, event) -> str:
-        return event.get_api_url() + "tracks/"
+        return event.get_api_url() + "topics/"
 
     def _get_create_data(self):
         return {}
@@ -78,17 +78,17 @@ class TestForEventManager(TestForAuthenticated):
 
     def _get_create_data(self):
         return {
-            "name": "The track",
+            "name": "The topic",
         }
 
     def _get_update_data(self):
         return {
-            "name": "The updated track",
+            "name": "The updated topic",
         }
 
     def _get_invalid_data(self):
         return {
-            "name": "The updated track",
+            "name": "The updated topic",
         }
 
     def test_create_for_other_event(self, api_client) -> None:
