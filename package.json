@@ -16,14 +16,12 @@
     "test:unit": "vitest run"
   },
   "resolutions": {
-    "dompurify": "^3.4.11",
     "immutable": "^5.1.8",
     "minimatch@9.0.1": "^9.0.7"
   },
   "dependencies": {
     "@quasar/extras": "^2.1.0",
     "@sentry/vue": "^10.74.0",
-    "@toast-ui/editor": "^3.2.2",
     "axios": "^1.20.0",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
