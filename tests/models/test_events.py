@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from django.core.exceptions import ValidationError
 
+from evan.models import Event
 from tests._factories import CouponFactory, EventFactory, PaperFactory, SessionFactory
 
 
@@ -35,6 +36,17 @@ def convtime(date, format="%Y-%m-%d %H:%M"):
     :returns: A UTC-aware datetime object.
     """
     return datetime.strptime(date, format).replace(tzinfo=UTC)
+
+
+def _use_consistent_dates(event: Event) -> None:
+    """Give an event dates that pass every rule except the one under test.
+
+    :param event: The event to adjust, in place.
+    """
+    event.start_date = convdate("2024-09-15")
+    event.end_date = convdate("2024-09-17")
+    event.registration_start_date = convdate("2024-06-01")
+    event.registration_early_deadline = None
 
 
 # ---------------------------------------------------------------------------
@@ -77,11 +89,22 @@ def test_invalid_dates(t_event, start_date, end_date, reg_start_date, reg_early_
 )
 def test_invalid_onsite_deadline(t_event, reg_deadline, reg_onsite_deadline):
     """On-site deadline that is not strictly after the regular deadline raises ValidationError."""
+    _use_consistent_dates(t_event)
     t_event.registration_deadline = convtime(reg_deadline)
     t_event.registration_onsite_deadline = convtime(reg_onsite_deadline)
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="On-site deadline"):
         t_event.clean()
+
+
+@pytest.mark.django_db
+def test_valid_onsite_deadline(t_event):
+    """An on-site deadline just after the regular deadline passes validation."""
+    _use_consistent_dates(t_event)
+    t_event.registration_deadline = convtime("2024-08-31 23:59")
+    t_event.registration_onsite_deadline = convtime("2024-09-01 00:00")
+
+    t_event.clean()
 
 
 # ---------------------------------------------------------------------------
