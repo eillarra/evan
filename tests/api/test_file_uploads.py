@@ -8,6 +8,12 @@ from django.urls import reverse
 from tests._factories import ContentFactory, UserFactory
 
 
+@pytest.fixture(autouse=True)
+def media_root(settings, tmp_path):
+    """Redirect media storage to a temp directory so tests never touch real files."""
+    settings.MEDIA_ROOT = tmp_path / "media"
+
+
 @pytest.fixture
 def user(db):
     return UserFactory()
