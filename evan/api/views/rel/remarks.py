@@ -1,5 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
@@ -48,6 +50,10 @@ class RemarkViewSet(RelModelViewSet):
     pagination_class = None
     permission_classes = [RemarkPermission]
     serializer_class = RemarkSerializer
+
+    @method_decorator(never_cache)
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
 
     def get_queryset(self):
         return self.get_content_object().remarks.select_related("created_by")  # type: ignore
