@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 
+from evan.models import Registration
 from evan.models.rel.remarks import RemarksMixin
 
 from ...serializers.rel.remarks import RemarkSerializer
@@ -29,7 +30,8 @@ class RemarkPermission(IsAuthenticated):
             return False
 
         parent = self.get_parent(view)
-        return parent is not None and parent.event.can_be_managed_by(request.user)  # type: ignore[attr-defined]
+        # Only registrations carry the event that managers are checked against; other parents are refused.
+        return isinstance(parent, Registration) and parent.event.can_be_managed_by(request.user)
 
     @staticmethod
     def get_parent(view: RelModelViewSet) -> RemarksMixin | None:
