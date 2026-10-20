@@ -19,6 +19,7 @@ class AttendeeSerializer(serializers.ModelSerializer):
 
 class UserTinySerializer(serializers.ModelSerializer):
     name = serializers.CharField()
+    country = CountryField(read_only=True)
 
     class Meta:  # noqa: D106
         model = User
