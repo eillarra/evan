@@ -8,9 +8,10 @@
       <q-markup-table dense flat class="use-default-q-btn full-width q-mb-lg text-body1">
         <tbody>
           <tr v-for="file in filteredFiles" :key="file.id">
-            <td>{{ file.type }}</td>
+            <td>{{ visibilityLabel(file.visibility) }}</td>
             <td>
-              <a :href="file.file" target="_blank">{{ getDisplayName(file.file) }}</a>
+              <a v-if="secret" href="#" @click.prevent="downloadFile(file)">{{ getDisplayName(file.file) }}</a>
+              <a v-else :href="file.file" target="_blank">{{ getDisplayName(file.file) }}</a>
             </td>
             <td>{{ file.description || '-' }}</td>
             <td>{{ file.tags.join(', ') }}</td>
@@ -57,15 +58,15 @@
                 </template>
               </q-file>
               <q-select
-                v-model="formData.type"
-                :label="$t('fields.type')"
-                :options="typeOptions"
+                v-model="formData.visibility"
+                :label="$t('fields.visibility')"
+                :options="visibilityOptions"
                 emit-value
                 map-options
                 class="col-12"
                 dense
                 options-dense
-                :disable="typeOptions.length === 1"
+                :disable="visibilityOptions.length === 1"
               />
               <q-input v-model="formData.description" :label="$t('fields.description')" dense class="col-12" />
             </div>
@@ -92,7 +93,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import { api } from '@/axios';
+import { api, axios } from '@/axios';
 import { confirm } from '@/utils/dialog';
 import { notify } from '@/utils/notify';
 
@@ -111,24 +112,38 @@ const props = defineProps<{
   visibilityOptions?: string[];
   readOnly?: boolean;
   createOnly?: boolean;
+  /**
+   * The secret of the owning object, when the viewer holds one (a session's
+   * secret link). Every call carries it, and the files are downloaded through
+   * the media path, because a plain link cannot carry a header.
+   */
+  secret?: string;
 }>();
 
 const loading = ref<boolean>(true);
 const dialogVisible = ref<boolean>(false);
 const files = ref<RelatedFile[]>([]);
 const file = ref<File | null>(null);
-const typeOptions: QuasarSelectOption[] = [
+const allVisibilityOptions: QuasarSelectOption[] = [
   {
-    label: t('public'),
+    label: t('fields.visibility_public'),
     value: 'public',
   },
   {
-    label: t('private'),
-    value: 'private',
+    label: t('fields.visibility_attendees'),
+    value: 'attendees',
+  },
+  {
+    label: t('fields.visibility_organizers'),
+    value: 'organizers',
   },
 ];
+const visibilityOptions = computed<QuasarSelectOption[]>(() => {
+  if (!props.visibilityOptions?.length) return allVisibilityOptions;
+  return allVisibilityOptions.filter((option) => props.visibilityOptions?.includes(option.value as string));
+});
 const formData = ref({
-  type: 'public' as 'public' | 'private',
+  visibility: 'attendees' as 'public' | 'attendees' | 'organizers',
   description: null,
   tags: [],
 });
@@ -140,17 +155,32 @@ const filteredFiles = computed<RelatedFile[]>(() => {
 
 const selectedAccept = computed(() => props.accept || '*');
 
+const requestHeaders = computed((): Record<string, string> => {
+  if (!props.secret) return {};
+  return { 'X-Evan-Secret': props.secret };
+});
+
 function getDisplayName(fileUrl: string): string {
   if (!fileUrl) return '';
   return fileUrl.split('/').pop() || fileUrl;
 }
 
+function visibilityLabel(visibility: RelatedFile['visibility']): string {
+  const option = allVisibilityOptions.find((item) => item.value === visibility);
+  return option?.label ?? visibility;
+}
+
 async function fetchRelatedFiles() {
   if (!props.apiEndpoint) return;
-  await api.get<RelatedFile[]>(props.apiEndpoint).then((res) => {
-    files.value = res.data.sort((a, b) => a.description.localeCompare(b.description));
-    loading.value = false;
-  });
+  await api
+    .get<RelatedFile[]>(props.apiEndpoint, { headers: requestHeaders.value })
+    .then((res) => {
+      files.value = res.data.sort((a, b) => a.description.localeCompare(b.description));
+      loading.value = false;
+    })
+    .catch(() => {
+      loading.value = false;
+    });
 }
 
 async function addRelatedFile() {
@@ -164,6 +194,7 @@ async function addRelatedFile() {
     .post<RelatedFile>(props.apiEndpoint, multipartFormData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...requestHeaders.value,
       },
     })
     .then((res) => {
@@ -175,11 +206,32 @@ async function addRelatedFile() {
 
 async function deleteRelatedFile(file: RelatedFile) {
   confirm(t('messages.file_confirm_delete'), () => {
-    api.delete(file.self).then(() => {
+    api.delete(file.self, { headers: requestHeaders.value }).then(() => {
       notify.success(t('messages.file_deleted'));
       files.value.splice(files.value.indexOf(file), 1);
     });
   });
+}
+
+// A plain link cannot carry the secret header, so the file is fetched through
+// the media path and saved client-side.
+async function downloadFile(file: RelatedFile) {
+  try {
+    const response = await axios.get(file.file, {
+      headers: requestHeaders.value,
+      responseType: 'blob',
+    });
+    const url = URL.createObjectURL(response.data as Blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = getDisplayName(file.file);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch {
+    notify.error(t('messages.file_download_failed'));
+  }
 }
 
 fetchRelatedFiles();

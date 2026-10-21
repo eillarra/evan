@@ -153,8 +153,21 @@ class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     def files_viewable_by_user(self, user) -> bool:
         """Check if the session files are viewable by a user (managers or accepted attendees)."""
         return (
-            self.editable_by_user(user) or self.event.registrations.filter(user_id=user.id, is_accepted=True).exists()
+            self.editable_by_user(user)
+            or self.event.can_be_managed_by(user)
+            or self.event.registrations.filter(user_id=user.id, is_accepted=True).exists()
         )
+
+    def files_can_be_managed_by(self, user) -> bool:
+        """Check if the user can manage the session's files.
+
+        A session's organizers are the event's managers, the session's own
+        administrators and the platform staff.
+
+        :param user: The user to check access for.
+        :returns: True if the user can manage the session's files.
+        """
+        return self.editable_by_user(user) or self.event.can_be_managed_by(user)
 
     def validate_program_template(self) -> dict[str, Any]:
         """Validate the program template and return validation results."""

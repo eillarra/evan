@@ -100,6 +100,7 @@ const mountSessionForm = async (obj?: Session) => {
         // a full render test.
         DialogForm: { template: '<div><slot name="tabs" /><slot name="page" /><slot name="footer" /></div>' },
         ProgramTemplateEditor: true,
+        FilesView: true,
         MarkedTextarea: true,
         DateSelect: true,
         ReadonlyField: true,
@@ -108,7 +109,7 @@ const mountSessionForm = async (obj?: Session) => {
         UpdateBtn: true,
         'evan-select': true,
         'q-tabs': { template: '<div class="q-tabs"><slot /></div>' },
-        'q-tab': { template: '<div class="q-tab" />', props: ['name', 'label'] },
+        'q-tab': { template: '<div class="q-tab" :name="name" />', props: ['name', 'label'] },
         'q-tab-panels': { template: '<div class="q-tab-panels"><slot /></div>' },
         'q-tab-panel': { template: '<div class="q-tab-panel"><slot /></div>' },
         'q-input': true,
@@ -144,5 +145,23 @@ describe('SessionForm (regression: EVAN-FRONTEND-13)', () => {
     expect(wrapper.exists()).toBe(true);
     // Debounced rendering was scheduled for the existing program.
     expect(mockRenderTemplate).toHaveBeenCalledWith('Welcome by [paperi:1]');
+  });
+
+  it('offers a materials tab for the session', async () => {
+    const wrapper = await mountSessionForm(SESSION_WITH_PROGRAM);
+
+    const tabNames = wrapper.findAll('.q-tab').map((tab) => tab.attributes('name'));
+    expect(tabNames).toContain('materials');
+  });
+
+  it('shows the session materials in the materials tab', async () => {
+    const wrapper = await mountSessionForm({
+      ...SESSION_WITH_PROGRAM,
+      rel_files: '/api/v1/rel/30/42/files/',
+    } as unknown as Session);
+
+    const filesView = wrapper.findComponent({ name: 'FilesView' });
+    expect(filesView.exists()).toBe(true);
+    expect(filesView.props('apiEndpoint')).toBe('/api/v1/rel/30/42/files/');
   });
 });

@@ -103,7 +103,7 @@ async function handleFileSelect(selectedFile: File | null) {
     formData.append(
       'json',
       JSON.stringify({
-        type: props.public ? 'public' : 'private',
+        visibility: props.public ? 'public' : 'attendees',
         description: selectedFile.name,
         tags: props.tags,
       }),

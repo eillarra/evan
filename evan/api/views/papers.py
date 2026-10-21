@@ -44,7 +44,7 @@ class PaperViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, Gene
     queryset = Paper.objects.prefetch_related("files", "topics").all()
     serializer_class = PaperSerializer
     max_files = 30
-    default_file_type = File.PRIVATE
+    default_visibility = File.ATTENDEES
 
     def get_serializer_class(self):
         """Event managers can see the UUID and secret."""

@@ -11,19 +11,25 @@ from evan.services.s3 import get_s3_response
 
 class MediaFileView(View):
     """
-    Serves private S3 files, checking user permissions beforehand if needed.
+    Serves files, checking the file guard beforehand if needed.
+
+    The file's visibility tier decides the audience: public files are open to
+    everyone, the other tiers are served to the people the guard accepts. The
+    owning object's secret, presented in the ``X-Evan-Secret`` header, unlocks
+    that object's own files.
     """
 
     def dispatch(self, request, *args, **kwargs):
         file = self.get_object()
+        secret = request.headers.get("X-Evan-Secret")
 
         # A login_required decorator cannot be used here: the same URL serves
-        # public and private files, so the redirect must happen per file after
+        # public and non-public files, so the redirect must happen per file after
         # the lookup, never for public files.
-        if not file.is_public and not request.user.is_authenticated:  # type: ignore
+        if not file.is_public and not request.user.is_authenticated and not secret:  # type: ignore
             return redirect_to_login(next=request.get_full_path())
 
-        if not file.is_accessible_by_user(request.user):  # type: ignore
+        if not file.is_accessible_by_user(request.user, secret=secret):  # type: ignore
             raise PermissionDenied("You don't have the necessary permissions to access this file.")
         return super().dispatch(request, *args, **kwargs)
 

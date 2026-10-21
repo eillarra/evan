@@ -21,8 +21,12 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
         write_only_fields = ["file"]
         exclude = ["content_type", "object_id"]
 
-    def _get_max_files_allowed(self, content_object):
-        """Determines the maximum number of files allowed based on the content_object's configuration."""
+    def _get_uploader_config(self, content_object) -> BaseFileUploaderConfig | None:
+        """Return the uploader configuration of the content object, if any.
+
+        :param content_object: The object the file is attached to.
+        :returns: The validated uploader configuration, or None.
+        """
         if not hasattr(content_object, "config") or not isinstance(content_object.config, dict):
             return None
 
@@ -31,10 +35,14 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
             return None
 
         try:
-            parsed_config = BaseFileUploaderConfig(**file_uploader_config_dict)
-            return parsed_config.max_files
+            return BaseFileUploaderConfig(**file_uploader_config_dict)
         except Exception:
             return None
+
+    def _get_max_files_allowed(self, content_object) -> int | None:
+        """Determines the maximum number of files allowed based on the content_object's configuration."""
+        config = self._get_uploader_config(content_object)
+        return config.max_files if config else None
 
     def validate(self, data):
         """Validate the incoming data for file uploads."""
@@ -46,7 +54,10 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
         if not content_object:
             return data
 
-        max_files_allowed = self._get_max_files_allowed(content_object)
+        config = self._get_uploader_config(content_object)
+        max_files_allowed = config.max_files if config else None
+        max_files_allowed = max_files_allowed or getattr(content_object, "files_max_count", None)
+        max_files_allowed = max_files_allowed or getattr(view, "max_files", None)
 
         # Only enforce limit if explicitly configured
         if max_files_allowed is not None:
@@ -54,7 +65,54 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
             if current_file_count >= max_files_allowed:
                 raise serializers.ValidationError(f"Maximum number of files ({max_files_allowed}) already uploaded.")
 
+        if config:
+            self._validate_accepted_types(data, config.accept)
+
+        visibility = data.get("visibility")
+        if self.instance is not None:
+            # An update carries only the changed fields; never reset the tier.
+            return data
+
+        if config:
+            if not visibility:
+                data["visibility"] = config.default_visibility
+            elif visibility not in config.allowed_visibility:
+                raise serializers.ValidationError(f"Visibility must be one of: {', '.join(config.allowed_visibility)}.")
+        elif not visibility:
+            data["visibility"] = getattr(
+                content_object, "files_default_visibility", getattr(view, "default_visibility", File.ATTENDEES)
+            )
+
         return data
+
+    def _validate_accepted_types(self, data, accept: str) -> None:
+        """Check the uploaded file against the uploader's accepted types.
+
+        :param data: The validated upload data.
+        :param accept: The accepted types, as a comma-separated list of
+            extensions or MIME types.
+        :raises serializers.ValidationError: If the file's type is not accepted.
+        """
+        if not accept or accept == "*":
+            return
+
+        uploaded_file = data.get("file")
+        if not uploaded_file:
+            return
+
+        name = getattr(uploaded_file, "name", "")
+        extension = os.path.splitext(name)[1].lower()
+        content_type = getattr(uploaded_file, "content_type", "") or ""
+
+        accepted = [item.strip().lower() for item in accept.split(",") if item.strip()]
+        for item in accepted:
+            if item.startswith("."):
+                if extension == item:
+                    return
+            elif item == content_type.lower():
+                return
+
+        raise serializers.ValidationError(f"File type not accepted. Allowed: {accept}")
 
     def create(self, validated_data):
         """Create a new file instance with image processing if applicable."""
@@ -83,7 +141,7 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
 
 
 class AccessibleFilesMixin(serializers.ModelSerializer):
-    """Serializes related ``files``, hiding private files from users without access."""
+    """Serializes related ``files``, hiding the files the viewer may not access."""
 
     files = serializers.SerializerMethodField()
 
@@ -95,7 +153,10 @@ class AccessibleFilesMixin(serializers.ModelSerializer):
         """
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        accessible = [file for file in obj.files.all() if file.is_accessible_by_user(user or AnonymousUser())]
+        secret = request.headers.get("X-Evan-Secret") if request else None
+        accessible = [
+            file for file in obj.files.all() if file.is_accessible_by_user(user or AnonymousUser(), secret=secret)
+        ]
         return FileSerializer(accessible, many=True, context=self.context).data
 
 

@@ -21,11 +21,17 @@
           </q-item-section>
           <q-item-section>{{ $t('models.important_date', 9) }}</q-item-section>
         </q-item>
+        <q-item clickable :to="{ name: 'materials' }" active-class="bg-ugent text-white">
+          <q-item-section avatar>
+            <q-icon :name="iconAttachment" size="xs" />
+          </q-item-section>
+          <q-item-section>{{ $t('models.materials') }}</q-item-section>
+        </q-item>
       </q-list>
     </div>
   </q-scroll-area>
 </template>
 
 <script setup lang="ts">
-import { iconContact, iconImportantDates, iconPlanning } from '@/icons';
+import { iconAttachment, iconContact, iconImportantDates, iconPlanning } from '@/icons';
 </script>

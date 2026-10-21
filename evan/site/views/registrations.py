@@ -48,6 +48,7 @@ class RegistrationView(InertiaView):
                     "files",
                     "fees",
                     "sessions",
+                    "sessions__files",
                     "sessions__topics",
                     "sessions__subsessions",
                     "sponsors",

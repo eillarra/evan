@@ -5,6 +5,7 @@
         <q-tab name="general" :label="$t('tabs.general')" />
         <q-tab name="description" :label="$t('fields.description')" />
         <q-tab name="program" :label="$t('fields.program')" />
+        <q-tab name="materials" :label="$t('models.materials')" />
         <q-tab
           v-for="(subsession, index) in sortedSubsessions"
           :key="`tab-${subsession.id}`"
@@ -115,6 +116,9 @@
               </div>
             </div>
           </q-tab-panel>
+          <q-tab-panel name="materials">
+            <files-view v-if="session?.rel_files" :api-endpoint="session.rel_files" />
+          </q-tab-panel>
           <q-tab-panel
             v-for="subsession in sortedSubsessions"
             :key="`panel-${subsession.id}`"
@@ -165,6 +169,7 @@ import MarkedTextarea from '@/components/forms/MarkedTextarea.vue';
 import ProgramTemplateEditor from '@/components/forms/ProgramTemplateEditor.vue';
 import ReadonlyField from '@/components/forms/ReadonlyField.vue';
 import WarningBanner from '@/components/ui/WarningBanner.vue';
+import FilesView from '@/components/rel/FilesView.vue';
 import SubsessionForm from './SubsessionForm.vue';
 
 import { iconAdd, iconSession } from '@/icons';

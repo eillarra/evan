@@ -99,7 +99,7 @@ class SubsessionViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin,
     queryset = Subsession.objects.all()
     serializer_class = SubsessionSerializer
     max_files = 30
-    default_file_type = File.PRIVATE
+    default_visibility = File.ATTENDEES
 
     def get_serializer_class(self):
         if user_is_manager_of_event(self.request.user, self.get_object().session.event):

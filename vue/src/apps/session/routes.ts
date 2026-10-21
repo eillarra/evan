@@ -28,6 +28,12 @@ const routes: RouteRecordRaw[] = [
         strict: true,
         component: () => import('./pages/ImportantDatesPage.vue'),
       },
+      {
+        path: 'materials/',
+        name: 'materials',
+        strict: true,
+        component: () => import('./pages/MaterialsPage.vue'),
+      },
     ],
   },
 ];

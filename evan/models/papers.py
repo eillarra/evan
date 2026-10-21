@@ -15,6 +15,8 @@ from .rel.permissions import PermissionsMixin
 class Paper(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     """A paper for an event."""
 
+    files_max_count = 30
+
     event = models.ForeignKey("evan.Event", related_name="papers", on_delete=models.CASCADE)
     title = models.CharField(max_length=190)
     abstract = models.TextField(default="", blank=True)
