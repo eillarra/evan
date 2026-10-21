@@ -204,6 +204,7 @@ export default {
     file_created: 'File created',
     file_confirm_delete: 'Are you sure you want to delete this file?',
     file_deleted: 'File deleted',
+    file_delete_failed: 'File deletion failed',
     file_download_failed: 'File download failed',
     file_updated: 'File updated',
     file_uploaded: 'File uploaded',

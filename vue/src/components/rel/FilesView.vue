@@ -111,13 +111,12 @@ const props = defineProps<{
   filterTypes?: string[];
   visibilityOptions?: string[];
   readOnly?: boolean;
-  createOnly?: boolean;
   /**
    * The secret of the owning object, when the viewer holds one (a session's
    * secret link). Every call carries it, and the files are downloaded through
    * the media path, because a plain link cannot carry a header.
    */
-  secret?: string;
+  secret?: string | null;
 }>();
 
 const loading = ref<boolean>(true);
@@ -201,15 +200,23 @@ async function addRelatedFile() {
       notify.success(t('messages.file_created'));
       files.value.push(res.data);
       reset();
+    })
+    .catch(() => {
+      notify.error(t('messages.file_upload_failed'));
     });
 }
 
 async function deleteRelatedFile(file: RelatedFile) {
   confirm(t('messages.file_confirm_delete'), () => {
-    api.delete(file.self, { headers: requestHeaders.value }).then(() => {
-      notify.success(t('messages.file_deleted'));
-      files.value.splice(files.value.indexOf(file), 1);
-    });
+    api
+      .delete(file.self, { headers: requestHeaders.value })
+      .then(() => {
+        notify.success(t('messages.file_deleted'));
+        files.value.splice(files.value.indexOf(file), 1);
+      })
+      .catch(() => {
+        notify.error(t('messages.file_delete_failed'));
+      });
   });
 }
 
@@ -240,6 +247,7 @@ watch(() => props.apiEndpoint, fetchRelatedFiles);
 
 function reset() {
   file.value = null;
+  formData.value.visibility = 'attendees';
   formData.value.description = null;
   formData.value.tags = [];
   dialogVisible.value = false;

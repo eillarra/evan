@@ -3,6 +3,8 @@ import json
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
+from evan.services.file_guard import has_matching_secret
+
 from ...serializers.rel.files import FileSerializer
 from .base import RelModelViewSet
 
@@ -32,7 +34,7 @@ class FilePermission(BasePermission):
         rel_object = view.get_content_object()
         secret = get_presented_secret(request)
 
-        if secret and _secret_matches(rel_object, secret):
+        if secret and has_matching_secret(rel_object, secret):
             return True
 
         if not bool(request.user and request.user.is_authenticated):
@@ -53,23 +55,10 @@ class FilePermission(BasePermission):
         rel_object = obj.content_object
         secret = get_presented_secret(request)
 
-        if secret and _secret_matches(rel_object, secret):
+        if secret and has_matching_secret(rel_object, secret):
             return True
 
         return rel_object.files_can_be_managed_by(request.user)
-
-
-def _secret_matches(rel_object, secret: str) -> bool:
-    """Check whether the presented secret belongs to the given object.
-
-    :param rel_object: The object owning the file.
-    :param secret: The secret presented by the requester.
-    :returns: True if the secret matches the object's own secret.
-    """
-    object_secret = getattr(rel_object, "secret", None)
-    if not object_secret:
-        return False
-    return str(object_secret) == secret
 
 
 class FileViewSet(RelModelViewSet):

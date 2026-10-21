@@ -4,7 +4,7 @@
       {{ $t('models.materials') }}
     </h3>
     <div class="col-12">
-      <files-view v-if="filesEndpoint" :api-endpoint="filesEndpoint" :secret="secret ?? ''" />
+      <files-view v-if="filesEndpoint" :api-endpoint="filesEndpoint" :secret="secret" />
     </div>
   </div>
 </template>
