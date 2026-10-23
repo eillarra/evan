@@ -261,6 +261,20 @@ class TestRegistrationOwnerAccess:
         response = api_client.patch(_detail_url(registration), {"visa_requested": True})
         assert response.status_code == status.OK
 
+    def test_payment_fields_are_read_only_on_patch(self, api_client, user, registration) -> None:
+        """PATCHing paid/paid_via_invoice is accepted but never persists paid state."""
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(
+            _detail_url(registration),
+            {"paid": 100, "paid_via_invoice": 100},
+            format="json",
+        )
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.paid == 0
+        assert registration.paid_via_invoice == 0
+        assert registration.is_paid is False
+
     def test_owner_can_update_registration_extra_data(self, api_client, user, registration) -> None:
         """Owner can PATCH registration extra_data and the new values are persisted."""
         api_client.force_authenticate(user=user)
