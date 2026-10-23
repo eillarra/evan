@@ -1,11 +1,14 @@
 import base64
+import logging
 import os
 import secrets
 from typing import TYPE_CHECKING
 
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
+from django.db import models, transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.utils.text import slugify
 
 from evan.services.file_guard import check_file_access
@@ -16,6 +19,9 @@ from ..validators import validate_list_of_strings
 
 if TYPE_CHECKING:
     from evan.models.users import User
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_upload_path(instance, filename) -> str:
@@ -31,10 +37,13 @@ def get_upload_path(instance, filename) -> str:
     unique_id = base64.urlsafe_b64encode(secrets.token_bytes(6)).decode("utf-8").rstrip("=")
     name, ext = os.path.splitext(filename)
     clean_name = slugify(name)[:50]
+
     if not clean_name:  # Fallback for empty or non-ASCII filenames
         clean_name = "file"
+
     clean_ext = ext.lower() if ext else ""
     new_filename = f"{clean_name}_{unique_id}{clean_ext}"
+
     return f"{instance.type}/{instance.content_type_id}/{instance.object_id}/{new_filename}"
 
 
@@ -67,14 +76,6 @@ class File(models.Model):
     def __str__(self) -> str:
         return self.file.name
 
-    def delete(self, *args, **kwargs):
-        """Delete the file from S3 before deleting the model."""
-        try:
-            delete_s3_object(self.s3_object_key)
-        except Exception:
-            pass
-        super().delete(*args, **kwargs)
-
     def is_accessible_by_user(self, user: User) -> bool:
         """Check if the file is accessible by a user."""
         if self.is_public:
@@ -91,6 +92,32 @@ class File(models.Model):
         return self.file.name
 
 
+@receiver(post_delete, sender=File)
+def _delete_file_from_storage(sender: type[File], instance: File, **kwargs: object) -> None:
+    """Schedule storage cleanup once the DB delete has committed.
+
+    Deleting an owner (event, content, session, paper, ...) cascades to its files
+    as a bulk delete that bypasses model-level delete overrides, so the storage
+    cleanup lives in a signal to cover every deletion path. Using ``post_delete``
+    and ``transaction.on_commit`` keeps every DB row intact until the transaction
+    commits, so a rollback never leaves a broken (pointing at a missing object)
+    row behind. Storage failures are logged but do not block the delete.
+
+    :param instance: The file that has been deleted.
+    """
+    object_key = instance.s3_object_key
+    if not object_key:
+        return
+
+    def _delete() -> None:
+        try:
+            delete_s3_object(object_key)
+        except Exception:
+            logger.exception("Failed to delete %s from storage", object_key)
+
+    transaction.on_commit(_delete)
+
+
 class FilesMixin(models.Model):
     """A mixin to add files to a model."""
 
@@ -105,6 +132,7 @@ class FilesMixin(models.Model):
             return self.event.can_be_managed_by(user)  # type: ignore
         elif hasattr(self, "can_be_managed_by"):
             return self.can_be_managed_by(user)  # type: ignore
+
         raise NotImplementedError("files_can_be_managed_by must be implemented in the model using this mixin.")
 
     def files_viewable_by_user(self, user: User) -> bool:
@@ -125,4 +153,5 @@ class FilesMixin(models.Model):
             )
         elif hasattr(self, "can_be_managed_by"):
             return self.can_be_managed_by(user)  # type: ignore
+
         raise NotImplementedError("files_viewable_by_user must be implemented in the model using this mixin.")
