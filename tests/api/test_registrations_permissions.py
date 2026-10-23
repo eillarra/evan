@@ -102,6 +102,7 @@ class TestRegistrationsListForEventManager(TestRegistrationsListForAuthenticated
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationCreate:
     """Registration creation endpoint requires authentication."""
 
@@ -144,6 +145,7 @@ class TestRegistrationCreate:
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationCreateFeeCap:
     """Registration creation against a capped fee type that is sold out."""
 
@@ -181,6 +183,7 @@ class TestRegistrationCreateFeeCap:
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationCreateSessionCap:
     """A session-capacity error surfaced via the registration endpoint uses the right key.
 
@@ -332,3 +335,105 @@ class TestRegistrationOwnerAccess:
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(own), {"fee_type": "regular"})
         assert response.status_code == status.OK
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("closed_registration_window")
+class TestRegistrationCreateAfterDeadline:
+    """Registration creation enforces the registration window."""
+
+    def test_attendee_cannot_register_after_deadline(self, api_client, t_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "Registrations are not open for this event."
+
+    def test_manager_can_register_after_deadline(self, api_client, t_event, t_event_manager) -> None:
+        api_client.force_authenticate(user=t_event_manager)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.CREATED
+
+    def test_duplicate_registration_still_returns_400_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """An existing registrant is not masked by the window denial."""
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.BAD_REQUEST
+        assert "event-user" in response.data
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("not_yet_open_registration_window")
+class TestRegistrationCreateBeforeStart:
+    """Creation is refused before the registration window opens."""
+
+    def test_attendee_cannot_register_before_start(self, api_client, t_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "Registrations are not open for this event."
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("onsite_registration_window")
+class TestRegistrationCreateDuringOnsiteWindow:
+    """Creation still works when only the on-site deadline keeps the window open."""
+
+    def test_attendee_can_register_during_onsite_period(self, api_client, t_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.CREATED
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("closed_registration_window")
+class TestRegistrationUpdateAfterDeadline:
+    """An existing owner keeps edit access after the registration window closes."""
+
+    def test_owner_can_update_own_registration_after_deadline(self, api_client, user, registration) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+        assert response.status_code == status.OK
+
+    def test_owner_can_change_fee_type_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """Late edits deliberately remain unrestricted for the registration owner."""
+        from evan.models import Fee
+
+        Fee.objects.create(event=t_event, type="student", value=50)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.base_fee == 50
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
+class TestRegistrationUpdatePolicy:
+    """Owner edits still honour the event's listing and audience policy."""
+
+    def test_owner_cannot_update_on_unlisted_event(self, api_client, t_event, user, registration) -> None:
+        from evan.models import Event
+
+        t_event.listing_status = Event.ListingStatus.PENDING_REVIEW
+        t_event.save(update_fields=["listing_status"])
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "Registrations are not open for this event."
+
+    def test_owner_cannot_update_when_ugent_required_and_unverified(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        from evan.models import Event
+
+        t_event.registration_audience = Event.RegistrationAudience.UGENT_ONLY
+        t_event.save(update_fields=["registration_audience"])
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+        assert response.status_code == status.FORBIDDEN
+        assert "UGent" in response.data["detail"]
