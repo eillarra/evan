@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
@@ -28,6 +28,9 @@ from .users import User
 
 if TYPE_CHECKING:
     from evan.models.fees import Fee
+
+
+RegistrationDenialReason = Literal["not_listed", "audience", "window"]
 
 
 def validate_event_dates(event):
@@ -399,6 +402,40 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
 
     def editable_by_user(self, user) -> bool:
         return self.can_be_managed_by(user)
+
+    def registration_access_denied_reason(
+        self,
+        user: User,
+        *,
+        has_registration: bool = False,
+    ) -> RegistrationDenialReason | None:
+        """Return why ``user`` may not use this event's registration flow.
+
+        The check order mirrors the page view: listing, then audience, then
+        the registration window. An existing registrant keeps access after
+        the window closes; event managers may override the window.
+
+        :param user: The user attempting to access the flow.
+        :param has_registration: Whether ``user`` already holds a registration.
+        :returns: ``not_listed``, ``audience`` or ``window`` when refused, otherwise None.
+        """
+        window_open = self.is_open_for_registration
+        if self.is_closed and not has_registration:
+            return "window"
+
+        needs_manager = not self.is_listed or (not window_open and not has_registration)
+        is_manager = needs_manager and self.editable_by_user(user)
+
+        if not self.is_listed and not is_manager:
+            return "not_listed"
+
+        if self.registration_audience == self.RegistrationAudience.UGENT_ONLY and not user.is_ugent_verified:
+            return "audience"
+
+        if not window_open and not has_registration and not is_manager:
+            return "window"
+
+        return None
 
     def can_be_managed_by(self, user) -> bool:
         return user.is_staff or self.acl.filter(user_id=user.id, level__gte=Permission.ADMIN).exists()

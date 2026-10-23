@@ -36,18 +36,16 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         event = Event.objects.get(code=self.kwargs.get("code"))
+        has_registration = Registration.objects.filter(event=event, user=user).exists()
+        denial = event.registration_access_denied_reason(user, has_registration=has_registration)
 
-        if not event.is_listed and not event.editable_by_user(user):
+        if denial == "audience":
+            raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
+        if denial is not None:
             raise PermissionDenied("Registrations are not open for this event.")
 
-        if event.registration_audience == Event.RegistrationAudience.UGENT_ONLY and not user.is_ugent_verified:
-            raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
-
         try:
-            serializer.save(
-                user=user,
-                event=event,
-            )
+            serializer.save(user=user, event=event)
         except IntegrityError as exc:
             raise ValidationError({"event-user": ["Duplicate entry - this user already has a registration."]}) from exc
         except ValueError as exc:
@@ -65,6 +63,16 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     def perform_update(self, serializer):
+        user = self.request.user
+        event = serializer.instance.event
+        # RegistrationPermission already limits this endpoint to the owner.
+        denial = event.registration_access_denied_reason(user, has_registration=True)
+
+        if denial == "audience":
+            raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
+        if denial is not None:
+            raise PermissionDenied("Registrations are not open for this event.")
+
         try:
             serializer.save()
         except ValueError as exc:

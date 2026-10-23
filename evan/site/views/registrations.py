@@ -63,22 +63,22 @@ class RegistrationView(InertiaView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         event = self.get_event()
+        has_registration = (
+            False
+            if event.is_open_for_registration
+            else Registration.objects.filter(event=event, user=request.user).exists()
+        )
+        denial = event.registration_access_denied_reason(request.user, has_registration=has_registration)
 
-        if not event.is_listed and not event.editable_by_user(request.user):
-            messages.error(request, "Registrations are not open for this event.")
-            raise PermissionDenied
-
-        if event.registration_audience == Event.RegistrationAudience.UGENT_ONLY and not request.user.is_ugent_verified:
-            messages.error(request, UGENT_ONLY_REGISTRATION_MESSAGE)
-            raise PermissionDenied
-
-        if not event.is_open_for_registration:
-            # check if the user has a registration for this event
-            if not Registration.objects.filter(event=self.get_event(), user=request.user).exists():
+        if denial is not None:
+            if denial == "audience":
+                messages.error(request, UGENT_ONLY_REGISTRATION_MESSAGE)
+            else:
                 messages.error(request, "Registrations are not open for this event.")
-                raise PermissionDenied
-            if self.get_event().is_closed:
-                self.is_after_event = True
+            raise PermissionDenied
+
+        if not event.is_open_for_registration and event.is_closed and has_registration:
+            self.is_after_event = True
 
         return super().dispatch(request, *args, **kwargs)
 
