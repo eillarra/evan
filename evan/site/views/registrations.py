@@ -262,8 +262,10 @@ def _credit_worldline_payment(registration: Registration, query_params: QueryDic
         return False
 
     try:
-        amount = int(float(query_params.get("AMOUNT", 0)))
-    except TypeError, ValueError:
+        from decimal import Decimal, InvalidOperation
+
+        amount = int(Decimal(str(query_params.get("AMOUNT", 0))))
+    except (InvalidOperation, ValueError, OverflowError):
         return False
 
     with transaction.atomic():
@@ -278,6 +280,11 @@ def _credit_worldline_payment(registration: Registration, query_params: QueryDic
         if attempt.status != RegistrationPaymentAttempt.PENDING:
             return False
         if attempt.expected_amount != amount:
+            return False
+        expected_order_id = UGentBridge.generate_order_id(
+            locked_registration.pk, amount, locked_registration.unique_hash
+        )
+        if order_id != expected_order_id:
             return False
         if RegistrationPaymentAttempt.objects.exclude(pk=attempt.pk).filter(payid=payid).exists():
             return False
@@ -323,14 +330,33 @@ def _finalize_payment_attempt(registration: Registration, query_params: QueryDic
         return False
 
     with transaction.atomic():
+        locked_registration = Registration.objects.select_for_update().get(pk=registration.pk)
         try:
             attempt = RegistrationPaymentAttempt.objects.select_for_update().get(order_id=order_id)
         except RegistrationPaymentAttempt.DoesNotExist:
             return False
 
-        if attempt.registration_id != registration.id:
+        if attempt.registration_id != locked_registration.id:
             return False
         if attempt.status != RegistrationPaymentAttempt.PENDING:
+            return False
+
+        amount_raw = query_params.get("AMOUNT")
+        if amount_raw not in (None, ""):
+            try:
+                from decimal import Decimal, InvalidOperation
+
+                amount = int(Decimal(str(amount_raw)))
+            except (InvalidOperation, ValueError, OverflowError):
+                return False
+            if amount != attempt.expected_amount:
+                return False
+
+        if order_id != UGentBridge.generate_order_id(
+            locked_registration.pk,
+            attempt.expected_amount,
+            locked_registration.unique_hash,
+        ):
             return False
 
         attempt.mark_resolved(status=status, payid=query_params.get("PAYID", ""), callback_data=query_params.dict())
@@ -514,6 +540,9 @@ class RegistrationCertificatePdf(RegistrationPdfView):
 
     def get(self, request, *args, **kwargs):
         obj = self.get_object()
+        if not obj.is_paid or obj.no_show:
+            messages.error(request, "Certificate is not available.")
+            raise PermissionDenied
         maker = CertificatePdfMaker(registration=obj, as_attachment=False)
         return maker.response
 

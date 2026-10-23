@@ -93,6 +93,7 @@ def enforce_session_group_exclusivity(session_ids: set[int], *, registration: Re
     existing_groups = {
         session.extra_data.get("group") for session in existing_sessions if session.extra_data.get("group")
     }
+
     for session in new_sessions:
         group = session.extra_data.get("group")
         if group and group in existing_groups:
@@ -114,11 +115,13 @@ def enforce_accompanying_person_session_capacity(
     :raises ValueError: If a newly selected social event is already full.
     """
     previous_person_session_ids: set[int] = set()
+
     if previous:
         for person in previous.extra_data.get("accompanying_persons", []):
             previous_person_session_ids.update(person.get("selected_social_events", []))
 
     new_person_session_ids: set[int] = set()
+
     for person in registration.extra_data.get("accompanying_persons", []):
         new_person_session_ids.update(person.get("selected_social_events", []))
 
@@ -138,14 +141,17 @@ def enforce_fee_type_capacity(registration: Registration, previous: Registration
     :raises ValueError: If the fee type is sold out (the cap is reached).
     """
     fee = registration.event.fees_dict.get(registration.fee_type, None)
+
     if not fee:
         return
 
     max_registrations = fee.config.get("max_registrations")
+
     if not max_registrations:
         return
 
     reserved_qs = registration.event.registrations.exclude(is_accepted=False).filter(fee_type=registration.fee_type)
+
     if previous and previous.pk:
         reserved_qs = reserved_qs.exclude(pk=previous.pk)
 
@@ -246,6 +252,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         `extra_fees` are recalculated every time (accompanying persons, for example).
         """
         previous = None
+
         if not self.pk:
             self.is_accepted = True if self.event.accept_by_default else None
             self.unique_hash = self.generate_unique_hash()
@@ -286,7 +293,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         return self.user.id == user.id
 
     def get_certificate_url(self) -> str | None:
-        if self.no_show:
+        if self.no_show or not self.is_paid:
             return None
         return reverse("registration:certificate", args=[self.uuid])
 
@@ -341,6 +348,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
             registration=self,
             status=RegistrationPaymentAttempt.PENDING,
         )
+
         if current_order_id is not None:
             attempts = attempts.exclude(order_id=current_order_id)
 

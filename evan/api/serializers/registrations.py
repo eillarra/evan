@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from evan.models import Coupon, Registration
+from evan.models import Coupon, Event, Registration, Session
 
 from .events import EventListSerializer
 from .rel.remarks import RemarksMixin
@@ -44,14 +44,17 @@ class RegistrationSerializer(RemarksMixin, serializers.ModelSerializer):
             "is_accepted",
             "base_fee",
             "extra_fees",
+            "manual_extra_fees",
             "paid",
-            "payid",
             "paid_via_invoice",
+            "payid",
+            "invoice_requested",
             "invoice_sent",
             "visa_sent",
             "no_show",
             "unique_hash",
             "saldo",
+            "tags",
         ]
 
 
@@ -61,13 +64,44 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
     # On events with the payments module disabled, registrations complete without
     # a fee type; the model-level fee resolution keeps payments-on events honest.
     fee_type = serializers.CharField(required=False, allow_blank=True)
+    sessions = serializers.PrimaryKeyRelatedField(queryset=Session.objects.all(), many=True, required=False)
+
+    def validate_sessions(self, value):
+        """Ensure selected sessions belong to the registration's event.
+
+        Without this guard an attacker could link sessions from another
+        event (or otherwise tamper with the M2M list) through the API.
+        """
+        if value is None:
+            return value
+
+        instance = self.instance
+
+        if instance is not None:
+            event = instance.event
+        else:
+            event = None
+            view = self.context.get("view")
+            code = getattr(view, "kwargs", {}).get("code") if view is not None else None
+
+            if code is not None:
+                try:
+                    event = Event.objects.get(code=code)
+                except Event.DoesNotExist:
+                    event = None
+
+        if event is None:
+            raise serializers.ValidationError("The registration's event could not be determined.")
+
+        for session in value:
+            if getattr(session, "event_id", None) != event.id:
+                raise serializers.ValidationError("Sessions must belong to the registration's event.")
+
+        return value
 
     class Meta(RegistrationSerializer.Meta):
         model = Registration
         exclude = ["id", "event"]
-        read_only_fields = RegistrationSerializer.Meta.read_only_fields + [
-            "manual_extra_fees",
-        ]
 
 
 class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
@@ -77,6 +111,6 @@ class AuthRegistrationRetrieveSerializer(RegistrationRetrieveSerializer):
     certificate_url = serializers.URLField(source="get_certificate_url", read_only=True)
     receipt_url = serializers.URLField(source="get_receipt_url", read_only=True)
 
-    class Meta(RegistrationSerializer.Meta):
+    class Meta(RegistrationRetrieveSerializer.Meta):
         model = Registration
         exclude = ["id"]
