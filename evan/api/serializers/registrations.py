@@ -44,6 +44,13 @@ class RegistrationSerializer(RemarksMixin, serializers.ModelSerializer):
             "is_accepted",
             "base_fee",
             "extra_fees",
+            "paid",
+            "payid",
+            "paid_via_invoice",
+            "invoice_sent",
+            "visa_sent",
+            "no_show",
+            "unique_hash",
             "saldo",
         ]
 
