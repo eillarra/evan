@@ -92,3 +92,10 @@ ignore = ["SIM105"]
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
+
+# Security floors
+[tool.uv]
+constraint-dependencies = [
+  "brotli>=1.2.1",
+  "brotlicffi>=1.2.1.0",
+]
