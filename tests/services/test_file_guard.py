@@ -17,8 +17,11 @@ from tests._factories import (
     AlbumFactory,
     ContentFactory,
     EventFactory,
+    KeynoteFactory,
+    PaperFactory,
     RegistrationFactory,
     SessionFactory,
+    SubsessionFactory,
     UserFactory,
 )
 
@@ -265,3 +268,47 @@ class TestCheckFileAccessSecret:
         file = _make_file(session, visibility=File.ORGANIZERS, path="session/slides.pdf")
 
         assert check_file_access(file, AnonymousUser(), secret="not-the-secret") is False
+
+    def test_non_ascii_secret_is_refused(self, db):
+        """A crafted header is refused instead of raising in the constant-time compare."""
+        session = SessionFactory()
+        file = _make_file(session, visibility=File.ORGANIZERS, path="session/slides.pdf")
+
+        assert check_file_access(file, AnonymousUser(), secret="sécret") is False
+
+
+@pytest.mark.django_db
+class TestSecretOnlyUnlocksOptedInObjects:
+    """Only an object that opts in on its files accepts its own secret.
+
+    Several objects carry a secret for an unrelated purpose; using it as a file
+    credential would hand that link far more than it was issued for.
+    """
+
+    def test_registration_secret_does_not_unlock_files(self, event):
+        """A registration's delegated-payment link grants nothing on its files."""
+        registration = RegistrationFactory(event=event, user=UserFactory(), is_accepted=True)
+        file = _make_file(registration, visibility=File.ATTENDEES, path="registration/invoice.pdf")
+
+        assert check_file_access(file, AnonymousUser(), secret=registration.secret) is False
+
+    def test_paper_secret_does_not_unlock_files(self, db):
+        """A paper's editing link grants nothing on its files."""
+        paper = PaperFactory()
+        file = _make_file(paper, visibility=File.ORGANIZERS, path="paper/draft.pdf")
+
+        assert check_file_access(file, AnonymousUser(), secret=paper.secret) is False
+
+    def test_keynote_secret_does_not_unlock_files(self, db):
+        """A keynote's editing link grants nothing on its files."""
+        keynote = KeynoteFactory()
+        file = _make_file(keynote, visibility=File.ORGANIZERS, path="keynote/slides.pdf")
+
+        assert check_file_access(file, AnonymousUser(), secret=keynote.secret) is False
+
+    def test_subsession_secret_does_not_unlock_files(self, db):
+        """A subsession's link grants nothing on files it cannot even own."""
+        subsession = SubsessionFactory()
+        file = _make_file(subsession, visibility=File.ORGANIZERS, path="subsession/slides.pdf")
+
+        assert check_file_access(file, AnonymousUser(), secret=subsession.secret) is False

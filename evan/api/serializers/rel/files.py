@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from evan.models.documents.files import BaseFileUploaderConfig
 from evan.models.rel.files import File
+from evan.services.file_guard import get_presented_secret
 from evan.services.image_processor import ImageProcessor
 
 from ..base import TagsMixin
@@ -39,11 +40,6 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
         except Exception:
             return None
 
-    def _get_max_files_allowed(self, content_object) -> int | None:
-        """Determines the maximum number of files allowed based on the content_object's configuration."""
-        config = self._get_uploader_config(content_object)
-        return config.max_files if config else None
-
     def validate(self, data):
         """Validate the incoming data for file uploads."""
         view = self.context.get("view")
@@ -55,33 +51,26 @@ class FileSerializer(TagsMixin, serializers.ModelSerializer):
             return data
 
         config = self._get_uploader_config(content_object)
-        max_files_allowed = config.max_files if config else None
-        max_files_allowed = max_files_allowed or getattr(content_object, "files_max_count", None)
-        max_files_allowed = max_files_allowed or getattr(view, "max_files", None)
-
-        # Only enforce limit if explicitly configured
-        if max_files_allowed is not None:
-            current_file_count = content_object.files.count()
-            if current_file_count >= max_files_allowed:
-                raise serializers.ValidationError(f"Maximum number of files ({max_files_allowed}) already uploaded.")
 
         if config:
             self._validate_accepted_types(data, config.accept)
 
-        visibility = data.get("visibility")
+            if self.instance is None and not data.get("visibility"):
+                data["visibility"] = config.default_visibility
+
+            if data.get("visibility") and data["visibility"] not in config.allowed_visibility:
+                raise serializers.ValidationError(f"Visibility must be one of: {', '.join(config.allowed_visibility)}.")
+        elif self.instance is None and not data.get("visibility"):
+            data["visibility"] = getattr(content_object, "files_default_visibility", File.ATTENDEES)
+
+        # An update carries only the changed fields: the file cap belongs to the
+        # creation it would otherwise block.
         if self.instance is not None:
-            # An update carries only the changed fields; never reset the tier.
             return data
 
-        if config:
-            if not visibility:
-                data["visibility"] = config.default_visibility
-            elif visibility not in config.allowed_visibility:
-                raise serializers.ValidationError(f"Visibility must be one of: {', '.join(config.allowed_visibility)}.")
-        elif not visibility:
-            data["visibility"] = getattr(
-                content_object, "files_default_visibility", getattr(view, "default_visibility", File.ATTENDEES)
-            )
+        max_files_allowed = (config.max_files if config else None) or getattr(content_object, "files_max_count", None)
+        if max_files_allowed is not None and content_object.files.count() >= max_files_allowed:
+            raise serializers.ValidationError(f"Maximum number of files ({max_files_allowed}) already uploaded.")
 
         return data
 
@@ -153,7 +142,7 @@ class AccessibleFilesMixin(serializers.ModelSerializer):
         """
         request = self.context.get("request")
         user = getattr(request, "user", None)
-        secret = request.headers.get("X-Evan-Secret") if request else None
+        secret = get_presented_secret(request)
         accessible = [
             file for file in obj.files.all() if file.is_accessible_by_user(user or AnonymousUser(), secret=secret)
         ]

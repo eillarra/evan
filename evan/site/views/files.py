@@ -6,6 +6,7 @@ from django.views.generic import View
 from requests.exceptions import HTTPError
 
 from evan.models.rel.files import File
+from evan.services.file_guard import get_presented_secret
 from evan.services.s3 import get_s3_response
 
 
@@ -16,12 +17,13 @@ class MediaFileView(View):
     The file's visibility tier decides the audience: public files are open to
     everyone, the other tiers are served to the people the guard accepts. The
     owning object's secret, presented in the ``X-Evan-Secret`` header, unlocks
-    that object's own files.
+    that object's own files when the object accepts it — the session, whose
+    secret link is the session organizer's way in.
     """
 
     def dispatch(self, request, *args, **kwargs):
         file = self.get_object()
-        secret = request.headers.get("X-Evan-Secret")
+        secret = get_presented_secret(request)
 
         # A login_required decorator cannot be used here: the same URL serves
         # public and non-public files, so the redirect must happen per file after

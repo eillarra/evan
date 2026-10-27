@@ -5,15 +5,22 @@ starts with their old visibility (``public/…`` or ``private/…``). The key no
 longer means anything — the guard decides access — so this command copies those
 objects to the visibility-free layout and rewrites the rows.
 
-The command is safe to run twice and never deletes the old objects: the old
-layout keeps working, so a failed run changes nothing.
+The old objects are kept unless ``--delete-source`` is passed, and the command
+is safe to run twice: the old layout keeps working, so a failed run changes
+nothing. Deletion goes through the shared S3 helper, so it only happens in
+production.
+
+Note that the old ``/media/public/…`` and ``/media/private/…`` addresses stop
+resolving once their objects are deleted with ``--delete-source``, so links
+already sent out (emails, pasted URLs) break.
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.db.models import Q
 
 from evan.models import File
-from evan.services.s3 import copy_s3_object, get_s3_client
+from evan.services.s3 import copy_s3_object, delete_s3_object, get_s3_client
 
 
 LEGACY_PREFIXES = ("public/", "private/")
@@ -37,7 +44,10 @@ class Command(BaseCommand):
         parser.add_argument(
             "--delete-source",
             action="store_true",
-            help="Delete the old object after copying it. Off by default: the old layout keeps working.",
+            help=(
+                "Delete the old object after copying it, in production only. "
+                "Off by default: the old layout keeps working."
+            ),
         )
 
     def handle(self, *args, **options) -> None:
@@ -49,13 +59,26 @@ class Command(BaseCommand):
         """
         dry_run = options.get("dry_run", False)
         delete_source = options.get("delete_source", False)
+        legacy_query = Q()
 
-        legacy_files = [file for file in File.objects.order_by("pk") if file.s3_object_key.startswith(LEGACY_PREFIXES)]
-        if not legacy_files:
+        for prefix in LEGACY_PREFIXES:
+            legacy_query |= Q(file__startswith=prefix)
+
+        legacy_files = File.objects.filter(legacy_query).order_by("pk")
+
+        # Snapshot the ids: the loop rewrites the very column the filter reads,
+        # so iterating a live queryset could skip rows.
+        legacy_pks = list(legacy_files.values_list("pk", flat=True))
+        if not legacy_pks:
             self.stdout.write("No files to relocate.")
             return
 
-        self.stdout.write(f"Found {len(legacy_files)} file(s) to relocate.")
+        self.stdout.write(f"Found {len(legacy_pks)} file(s) to relocate.")
+
+        if delete_source and settings.ENV != "production":
+            self.stdout.write(
+                self.style.WARNING("Source deletion is skipped outside production; the old objects stay in place.")
+            )
 
         if not dry_run:
             try:
@@ -64,7 +87,12 @@ class Command(BaseCommand):
                 raise CommandError(f"Could not reach the storage backend: {exc}") from exc
 
         relocated = 0
-        for file in legacy_files:
+
+        for file_pk in legacy_pks:
+            file = File.objects.filter(pk=file_pk).first()
+            if file is None:
+                continue
+
             source_key = file.s3_object_key
             destination_key = self.destination_key(file)
 
@@ -78,15 +106,14 @@ class Command(BaseCommand):
                 continue
 
             copy_s3_object(source_key, destination_key)
-            if delete_source:
-                get_s3_client().delete_object(
-                    Bucket=self._bucket_name(),
-                    Key=source_key,
-                )
 
-            with transaction.atomic():
-                file.file.name = destination_key
-                file.save(update_fields=["file"])
+            # The row must point at the copy before the source goes: a failed
+            # save then leaves a re-runnable file rather than a dangling row.
+            file.file.name = destination_key
+            file.save(update_fields=["file"])
+
+            if delete_source:
+                delete_s3_object(source_key)
 
             relocated += 1
 
@@ -102,10 +129,3 @@ class Command(BaseCommand):
         """
         _, _, remainder = file.s3_object_key.partition("/")
         return f"files/{remainder}"
-
-    @staticmethod
-    def _bucket_name() -> str:
-        """Return the configured bucket name."""
-        import os
-
-        return os.environ.get("S3_BUCKET_NAME", "")

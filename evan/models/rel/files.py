@@ -137,6 +137,11 @@ class FilesMixin(models.Model):
     files_max_count: int | None = None
     files_default_visibility: str = File.ATTENDEES
 
+    # Whether the object's own secret is a credential for managing its files.
+    # Off by default: a secret issued for another purpose (a registration's
+    # delegated-payment link, a paper's editing link) never unlocks files.
+    files_secret_unlocks: bool = False
+
     class Meta:  # noqa: D106
         abstract = True
 

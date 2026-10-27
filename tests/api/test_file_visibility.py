@@ -11,7 +11,7 @@ from django.core.files.base import ContentFile
 
 from evan.models import File
 from evan.models.rel.permissions import Permission
-from tests._factories import RegistrationFactory, UserFactory
+from tests._factories import PaperFactory, RegistrationFactory, SessionFactory, UserFactory
 
 
 @pytest.fixture(autouse=True)
@@ -108,3 +108,44 @@ class TestEventFilesVisibility:
 
         assert set(_visibilities(response)) == {File.PUBLIC, File.ATTENDEES, File.ORGANIZERS}
         assert "type" not in response.json()["files"][0]
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestSecretScopedFileLists:
+    """A secret reveals the files only of the object that accepts it."""
+
+    @staticmethod
+    def _material(content_object, name="session/budget.pdf"):
+        return File.objects.create(
+            content_object=content_object,
+            visibility=File.ORGANIZERS,
+            file=ContentFile(b"material", name=name),
+        )
+
+    def test_session_secret_reveals_its_organizers_material(self, api_client, t_event):
+        """The session's secret link holder sees the organizers-tier material."""
+        session = SessionFactory(event=t_event)
+        self._material(session)
+
+        response = api_client.get(session.get_api_url(), headers={"X-Evan-Secret": session.secret})
+
+        assert _visibilities(response) == [File.ORGANIZERS]
+
+    def test_without_the_secret_the_material_stays_hidden(self, api_client, t_event):
+        """The same response shows nothing to a visitor without the secret."""
+        session = SessionFactory(event=t_event)
+        self._material(session)
+
+        response = api_client.get(session.get_api_url())
+
+        assert _visibilities(response) == []
+
+    def test_paper_secret_reveals_nothing(self, api_client, db):
+        """A paper's editing link is not a credential for the paper's files."""
+        paper = PaperFactory()
+        self._material(paper, name="paper/draft.pdf")
+
+        response = api_client.get(paper.get_api_url(), headers={"X-Evan-Secret": paper.secret})
+
+        assert _visibilities(response) == []

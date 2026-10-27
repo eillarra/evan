@@ -14,8 +14,15 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
-from evan.models import File
-from tests._factories import ContentFactory, PaperFactory, SessionFactory
+from evan.models import File, Session
+from tests._factories import (
+    ContentFactory,
+    PaperFactory,
+    RegistrationFactory,
+    SessionFactory,
+    SubsessionFactory,
+    UserFactory,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -32,6 +39,18 @@ def _file_url(obj) -> str:
         kwargs={
             "parent_lookup_content_type_id": content_type_id,
             "parent_lookup_object_id": obj.pk,
+        },
+    )
+
+
+def _file_detail_url(file: File) -> str:
+    """Return the detail URL of a file."""
+    return reverse(
+        "v1:file-detail",
+        kwargs={
+            "parent_lookup_content_type_id": file.content_type_id,
+            "parent_lookup_object_id": file.object_id,
+            "pk": file.pk,
         },
     )
 
@@ -123,8 +142,8 @@ class TestUploaderConfiguration:
         assert refused.status_code == status.BAD_REQUEST, refused.data
         assert accepted.status_code == status.CREATED, accepted.data
 
-    def test_viewset_max_files_is_enforced(self, api_client, t_event, t_event_manager):
-        """A viewset's declared file cap is honoured."""
+    def test_model_file_cap_is_enforced(self, api_client, t_event, t_event_manager):
+        """A paper accepts 30 files and refuses the 31st."""
         paper = PaperFactory(event=t_event)
         api_client.force_authenticate(user=t_event_manager)
 
@@ -194,18 +213,58 @@ class TestSecretScopedFileManagement:
         """The holder of a session's secret may remove that session's file."""
         session = SessionFactory()
         file = File.objects.create(content_object=session, visibility=File.ATTENDEES, file="session/slides.pdf")
-        url = reverse(
-            "v1:file-detail",
-            kwargs={
-                "parent_lookup_content_type_id": file.content_type_id,
-                "parent_lookup_object_id": file.object_id,
-                "pk": file.pk,
-            },
-        )
 
-        response = api_client.delete(url, headers={"X-Evan-Secret": session.secret})
+        response = api_client.delete(_file_detail_url(file), headers={"X-Evan-Secret": session.secret})
 
         assert response.status_code == status.NO_CONTENT, response.data
+
+    def test_registration_secret_cannot_upload(self, api_client, t_event):
+        """A registration's delegated-payment link does not create a file."""
+        registration = RegistrationFactory(event=t_event, user=UserFactory(), is_accepted=True)
+
+        response = _upload(api_client, registration, "invoice.pdf", secret=registration.secret)
+
+        assert response.status_code == status.FORBIDDEN, response.data
+        assert not File.objects.filter(
+            content_type=ContentType.objects.get_for_model(registration), object_id=registration.pk
+        ).exists()
+
+    def test_paper_secret_cannot_upload(self, api_client, db):
+        """A paper's editing link does not create a file on the paper."""
+        paper = PaperFactory()
+
+        response = _upload(api_client, paper, "draft.pdf", visibility=File.ORGANIZERS, secret=paper.secret)
+
+        assert response.status_code == status.FORBIDDEN, response.data
+        assert not File.objects.filter(
+            content_type=ContentType.objects.get_for_model(paper), object_id=paper.pk
+        ).exists()
+
+    def test_paper_secret_cannot_delete(self, api_client, db):
+        """A paper's editing link does not remove the paper's files either."""
+        paper = PaperFactory()
+        file = File.objects.create(content_object=paper, visibility=File.ORGANIZERS, file="paper/draft.pdf")
+
+        response = api_client.delete(_file_detail_url(file), headers={"X-Evan-Secret": paper.secret})
+
+        assert response.status_code == status.FORBIDDEN, response.data
+
+    def test_non_ascii_secret_is_refused(self, api_client, db):
+        """A crafted header is refused, not compared byte by byte in a way that raises."""
+        session = SessionFactory()
+        File.objects.create(content_object=session, visibility=File.ORGANIZERS, file="session/slides.pdf")
+
+        response = api_client.get(_file_url(session), headers={"X-Evan-Secret": "sécret"})
+
+        assert response.status_code == status.FORBIDDEN, response.data
+
+    def test_subsession_secret_cannot_list(self, api_client, db):
+        """A subsession secret does not open a file collection it cannot own."""
+        subsession = SubsessionFactory()
+
+        response = api_client.get(_file_url(subsession), headers={"X-Evan-Secret": subsession.secret})
+
+        assert response.status_code == status.FORBIDDEN, response.data
 
 
 @pytest.mark.api
@@ -235,3 +294,87 @@ class TestFileSerialization:
 
         assert response.status_code == status.OK, response.data
         assert {entry["visibility"] for entry in response.data} == {File.PUBLIC}
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestMissingContentObject:
+    """A file collection hung off an object that does not exist."""
+
+    @staticmethod
+    def _url(object_id: int | str) -> str:
+        return reverse(
+            "v1:file-list",
+            kwargs={
+                "parent_lookup_content_type_id": ContentType.objects.get_for_model(Session).id,
+                "parent_lookup_object_id": object_id,
+            },
+        )
+
+    def test_anonymous_visitor_is_refused_without_probing(self, api_client, db):
+        """An anonymous request is refused before the object is looked up."""
+        response = api_client.get(self._url(999_999))
+
+        assert response.status_code == status.FORBIDDEN, response.data
+
+    def test_anonymous_visitor_with_a_secret_learns_nothing_either(self, api_client, db):
+        """A bad secret gets the same answer for a missing object and a foreign one."""
+        response = api_client.get(self._url(999_999), headers={"X-Evan-Secret": "not-a-secret"})
+
+        assert response.status_code == status.FORBIDDEN, response.data
+
+    def test_missing_object_is_not_found(self, api_client, t_event_manager):
+        """A signed-in requester learns the object is gone, not that it crashed."""
+        api_client.force_authenticate(user=t_event_manager)
+
+        response = api_client.get(self._url(999_999))
+
+        assert response.status_code == status.NOT_FOUND, response.data
+
+    def test_object_id_that_is_not_a_number_is_not_found(self, api_client, t_event_manager):
+        """The nested route accepts any object id, including ones no lookup can use."""
+        api_client.force_authenticate(user=t_event_manager)
+
+        response = api_client.get(self._url("not-an-id"))
+
+        assert response.status_code == status.NOT_FOUND, response.data
+
+
+@pytest.mark.api
+@pytest.mark.django_db
+class TestFileUpdates:
+    """Editing a file is not an upload."""
+
+    def test_description_can_be_edited_at_the_file_cap(self, api_client, t_event, t_event_manager):
+        """The upload cap does not block editing a description once the object is full."""
+        content = ContentFactory(event=t_event, config={"file_uploader": {"max_files": 1}})
+        file = File.objects.create(content_object=content, visibility=File.ATTENDEES, file="content/one.pdf")
+        api_client.force_authenticate(user=t_event_manager)
+
+        response = api_client.patch(_file_detail_url(file), {"description": "Final version"}, format="multipart")
+
+        assert response.status_code == status.OK, response.data
+        assert response.data["description"] == "Final version"
+
+    def test_tier_outside_the_uploader_config_is_refused_on_update(self, api_client, t_event, t_event_manager):
+        """A patch cannot move a file to a tier the uploader forbids."""
+        content = ContentFactory(event=t_event, config={"file_uploader": {"allowed_visibility": ["attendees"]}})
+        file = File.objects.create(content_object=content, visibility=File.ATTENDEES, file="content/one.pdf")
+        api_client.force_authenticate(user=t_event_manager)
+
+        response = api_client.patch(_file_detail_url(file), {"visibility": File.PUBLIC}, format="multipart")
+
+        assert response.status_code == status.BAD_REQUEST, response.data
+
+    def test_allowed_tier_can_be_patched(self, api_client, t_event, t_event_manager):
+        """A patch inside the allowed set goes through."""
+        content = ContentFactory(
+            event=t_event, config={"file_uploader": {"allowed_visibility": ["attendees", "organizers"]}}
+        )
+        file = File.objects.create(content_object=content, visibility=File.ATTENDEES, file="content/one.pdf")
+        api_client.force_authenticate(user=t_event_manager)
+
+        response = api_client.patch(_file_detail_url(file), {"visibility": File.ORGANIZERS}, format="multipart")
+
+        assert response.status_code == status.OK, response.data
+        assert response.data["visibility"] == File.ORGANIZERS

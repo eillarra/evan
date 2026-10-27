@@ -1,24 +1,14 @@
 import json
 
+from django.http import Http404
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
-from evan.services.file_guard import has_matching_secret
+from evan.models.rel.files import FilesMixin
+from evan.services.file_guard import get_presented_secret, has_matching_secret
 
 from ...serializers.rel.files import FileSerializer
 from .base import RelModelViewSet
-
-
-def get_presented_secret(request) -> str | None:
-    """Return the secret presented by the request, if any.
-
-    The secret travels in a header so it never lands in access logs or in the
-    ``Referer`` of any outbound link.
-
-    :param request: The incoming request.
-    :returns: The presented secret, or None.
-    """
-    return request.headers.get("X-Evan-Secret")
 
 
 class FilePermission(BasePermission):
@@ -31,21 +21,30 @@ class FilePermission(BasePermission):
 
     def has_permission(self, request, view):
         """Check if the user has permission to access the view."""
-        rel_object = view.get_content_object()
+        authenticated = bool(request.user and request.user.is_authenticated)
         secret = get_presented_secret(request)
+
+        # Refuse before resolving the object: an anonymous requester without a
+        # secret must not learn whether the object exists.
+        if not authenticated and not secret:
+            return False
+
+        try:
+            rel_object = view.get_content_object()
+        except Http404:
+            if not authenticated:
+                # Answer the same way as for an object that exists but is out of
+                # reach, so a bad secret reveals nothing about the object either.
+                return False
+            raise
 
         if secret and has_matching_secret(rel_object, secret):
             return True
 
-        if not bool(request.user and request.user.is_authenticated):
+        if not authenticated or not isinstance(rel_object, FilesMixin):
             return False
 
-        if hasattr(rel_object, "event") and rel_object.event:
-            return rel_object.event.can_be_managed_by(request.user)
-        elif hasattr(rel_object, "can_be_managed_by"):
-            return rel_object.can_be_managed_by(request.user)
-
-        return False
+        return rel_object.files_can_be_managed_by(request.user)
 
     def has_object_permission(self, request, view, obj):
         """Check if the user has permission to manipulate the file."""
@@ -57,6 +56,9 @@ class FilePermission(BasePermission):
 
         if secret and has_matching_secret(rel_object, secret):
             return True
+
+        if not isinstance(rel_object, FilesMixin):
+            return False
 
         return rel_object.files_can_be_managed_by(request.user)
 

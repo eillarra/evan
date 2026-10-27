@@ -1,3 +1,6 @@
+import hmac
+from typing import Any
+
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 
 from evan import models
@@ -24,7 +27,9 @@ def check_file_access(
     - ``organizers``: those who may manage the owning object.
 
     A requester presenting the owning object's secret is treated as that
-    object's organizer, whatever the tier.
+    object's organizer, whatever the tier — only for the objects that opt in
+    on ``FilesMixin.files_secret_unlocks`` (today: the session, whose secret
+    link is the session organizer's way in).
 
     :param file: The file to check access for
     :param user: The user to check access for
@@ -51,18 +56,41 @@ def check_file_access(
     return file.content_object.files_viewable_by_user(user)  # type: ignore[union-attr]
 
 
-def has_matching_secret(content_object, secret: str) -> bool:
+def get_presented_secret(request: Any) -> str | None:
+    """Return the secret presented by the request, if any.
+
+    The secret travels in a header so it never lands in access logs or in the
+    ``Referer`` of any outbound link.
+
+    :param request: The incoming request, Django or DRF.
+    :returns: The presented secret, or None.
+    """
+    if request is None:
+        return None
+    return request.headers.get("X-Evan-Secret")
+
+
+def has_matching_secret(content_object: models.Model | None, secret: str | None) -> bool:
     """Check whether the secret belongs to the given content object.
 
-    Only objects that expose a secret (sessions, subsessions, papers, keynotes)
-    can be unlocked this way, and the secret is only ever accepted for the
-    object it was issued for.
+    Only objects that opt in on ``FilesMixin.files_secret_unlocks`` accept
+    their own secret as a management credential; the check is opt-in rather
+    than derived from the presence of a ``secret`` attribute because several
+    objects carry a secret for an unrelated purpose (a registration's
+    delegated-payment link, a paper's or keynote's editing link). The secret is
+    only ever accepted for the object it was issued for.
 
     :param content_object: The object owning the file.
     :param secret: The secret presented by the requester.
     :returns: True if the secret matches the object's own secret.
     """
+    if not secret or not getattr(content_object, "files_secret_unlocks", False):
+        return False
+
     object_secret = getattr(content_object, "secret", None)
     if not object_secret:
         return False
-    return str(object_secret) == secret
+
+    # Compared as bytes: ``compare_digest`` rejects non-ASCII str values, and a
+    # header is decoded latin-1, so a crafted secret would otherwise raise.
+    return hmac.compare_digest(str(object_secret).encode(), str(secret).encode())

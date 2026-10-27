@@ -25,6 +25,10 @@ def validate_datetime(dt, event) -> None:
 class Session(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     """A session for an event."""
 
+    # The session organizer's secret link manages this session's materials and
+    # nothing else.
+    files_secret_unlocks = True
+
     event = models.ForeignKey("evan.Event", related_name="sessions", on_delete=models.CASCADE)
     start_at = models.DateTimeField(null=True, blank=True)
     end_at = models.DateTimeField(null=True, blank=True)
