@@ -43,4 +43,6 @@ interface Session extends ApiObject, SessionData {
   subsessions?: Subsession[];
   remaining_capacity: number | null;
   is_full: boolean;
+  readonly rel_files?: ApiEndpoint;
+  readonly files?: RelatedFile[];
 }

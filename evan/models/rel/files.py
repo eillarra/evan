@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 def get_upload_path(instance, filename) -> str:
     """Get the upload path for a file.
 
-    Generates a unique, collision-free path using the instance's type, content type,
-    object ID, and a slugified filename with URL-safe unique identifier.
+    Generates a unique, collision-free path using the instance's content type,
+    object ID, and a slugified filename with URL-safe unique identifier. The
+    visibility tier is deliberately absent from the path: access is decided by
+    the file guard, so changing a file's audience never moves the stored object.
 
     :param instance: The File model instance being saved.
     :param filename: The original filename uploaded by the user.
@@ -43,25 +45,27 @@ def get_upload_path(instance, filename) -> str:
 
     clean_ext = ext.lower() if ext else ""
     new_filename = f"{clean_name}_{unique_id}{clean_ext}"
-
-    return f"{instance.type}/{instance.content_type_id}/{instance.object_id}/{new_filename}"
+    return f"files/{instance.content_type_id}/{instance.object_id}/{new_filename}"
 
 
 class File(models.Model):
     """A file attached to a model."""
 
     PUBLIC = "public"
-    PRIVATE = "private"
-    TYPE_CHOICES = (
+    ATTENDEES = "attendees"
+    ORGANIZERS = "organizers"
+    VISIBILITY_CHOICES = (
         (PUBLIC, "Public"),
-        (PRIVATE, "Private"),
+        (ATTENDEES, "Attendees"),
+        (ORGANIZERS, "Organizers"),
     )
+    VISIBILITY_TIERS = (PUBLIC, ATTENDEES, ORGANIZERS)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, related_name="files")
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_id")
 
-    type = models.CharField(max_length=8, choices=TYPE_CHOICES)
+    visibility = models.CharField(max_length=16, choices=VISIBILITY_CHOICES, default=ATTENDEES)
     file = models.FileField(upload_to=get_upload_path)
     description = models.CharField(max_length=255, blank=True, default="")
     tags = models.JSONField(default=list, validators=[validate_list_of_strings])
@@ -76,16 +80,21 @@ class File(models.Model):
     def __str__(self) -> str:
         return self.file.name
 
-    def is_accessible_by_user(self, user: User) -> bool:
-        """Check if the file is accessible by a user."""
+    def is_accessible_by_user(self, user: User, secret: str | None = None) -> bool:
+        """Check if the file is accessible by a user.
+
+        :param user: The user to check access for.
+        :param secret: An optional secret of the owning object.
+        :returns: True if the user may access the file.
+        """
         if self.is_public:
             return True
-        return check_file_access(self, user)
+        return check_file_access(self, user, secret=secret)
 
     @property
     def is_public(self) -> bool:
         """Check if the file is public."""
-        return self.type == self.PUBLIC
+        return self.visibility == self.PUBLIC
 
     @property
     def s3_object_key(self):
@@ -122,6 +131,16 @@ class FilesMixin(models.Model):
     """A mixin to add files to a model."""
 
     files = GenericRelation(File)
+
+    # How many files this kind of object accepts, and the tier a new file gets
+    # when the object declares no uploader configuration of its own.
+    files_max_count: int | None = None
+    files_default_visibility: str = File.ATTENDEES
+
+    # Whether the object's own secret is a credential for managing its files.
+    # Off by default: a secret issued for another purpose (a registration's
+    # delegated-payment link, a paper's editing link) never unlocks files.
+    files_secret_unlocks: bool = False
 
     class Meta:  # noqa: D106
         abstract = True

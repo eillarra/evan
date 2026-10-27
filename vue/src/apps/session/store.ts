@@ -71,6 +71,7 @@ export const useStore = defineStore('evanSession', () => {
     updateSession,
     evanEvent,
     session,
+    secret,
     topicOptions,
     trackName,
   };

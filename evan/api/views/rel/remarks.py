@@ -1,5 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.permissions import IsAuthenticated
@@ -43,7 +44,7 @@ class RemarkPermission(IsAuthenticated):
         try:
             model = ContentType.objects.get_for_id(int(view.kwargs["parent_lookup_content_type_id"])).model_class()
             return view.get_content_object() if model and issubclass(model, RemarksMixin) else None
-        except ObjectDoesNotExist, ValueError:
+        except ObjectDoesNotExist, Http404, ValueError:
             return None
 
 

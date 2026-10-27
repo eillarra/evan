@@ -134,13 +134,13 @@ class TestMediaFileViewCookieHandling:
             settings.MEDIA_ROOT = tmp_path / "media"
 
         @staticmethod
-        def _create_event_file(t_event, file_type=File.PRIVATE):
+        def _create_event_file(t_event, visibility=File.ATTENDEES):
             """Create a File attached to the given event."""
             from django.core.files.base import ContentFile
 
             return File.objects.create(
                 content_object=t_event,
-                type=file_type,
+                visibility=visibility,
                 file=ContentFile(b"proceedings", name="event/proceedings.pdf"),
             )
 
@@ -155,7 +155,7 @@ class TestMediaFileViewCookieHandling:
             assert f"next=/media/{file.file.name}" in response["Location"]
 
         def test_accepted_attendee_gets_file(self, client, t_event):
-            """An accepted attendee can download a private event file."""
+            """An accepted attendee can download an attendees-tier event file."""
             file = self._create_event_file(t_event)
             user = UserFactory()
             RegistrationFactory(event=t_event, user=user, is_accepted=True)
@@ -200,7 +200,7 @@ class TestMediaFileViewCookieHandling:
 
         def test_public_file_served_to_anonymous_user(self, client, t_event):
             """Public files are served without authentication."""
-            file = self._create_event_file(t_event, file_type=File.PUBLIC)
+            file = self._create_event_file(t_event, visibility=File.PUBLIC)
 
             with patch("evan.site.views.files.get_s3_response") as mock_s3_response:
                 mock_response = Mock()
@@ -212,3 +212,104 @@ class TestMediaFileViewCookieHandling:
 
             assert response.status_code == 200
             assert response["Cache-Control"] == "public, max-age=3600"
+
+        def test_organizers_file_refused_to_attendee(self, client, t_event):
+            """An accepted attendee cannot download an organizers-tier file."""
+            file = self._create_event_file(t_event, visibility=File.ORGANIZERS)
+            user = UserFactory()
+            RegistrationFactory(event=t_event, user=user, is_accepted=True)
+            client.force_login(user)
+
+            response = client.get(f"/media/{file.file.name}")
+
+            assert response.status_code == 403
+
+        def test_organizers_file_served_to_event_manager(self, client, t_event):
+            """An event manager can download an organizers-tier file."""
+            from evan.models import Permission
+
+            file = self._create_event_file(t_event, visibility=File.ORGANIZERS)
+            user = UserFactory()
+            Permission.objects.create(content_object=t_event, user=user, level=Permission.ADMIN)
+            client.force_login(user)
+
+            with patch("evan.site.views.files.get_s3_response") as mock_s3_response:
+                mock_response = Mock()
+                mock_response.raw = b"proceedings"
+                mock_response.headers = {"Content-Length": "11", "Content-Type": "application/pdf"}
+                mock_s3_response.return_value = mock_response
+
+                response = client.get(f"/media/{file.file.name}")
+
+            assert response.status_code == 200
+            assert response["Cache-Control"] == "private, no-cache"
+
+        def test_session_secret_unlocks_its_own_organizers_file(self, client, db):
+            """A session's secret opens that session's organizers-tier file."""
+            from django.core.files.base import ContentFile
+
+            from tests._factories import SessionFactory
+
+            session = SessionFactory()
+            file = File.objects.create(
+                content_object=session,
+                visibility=File.ORGANIZERS,
+                file=ContentFile(b"slides", name="session/slides.pdf"),
+            )
+
+            with patch("evan.site.views.files.get_s3_response") as mock_s3_response:
+                mock_response = Mock()
+                mock_response.raw = b"slides"
+                mock_response.headers = {"Content-Length": "6", "Content-Type": "application/pdf"}
+                mock_s3_response.return_value = mock_response
+
+                response = client.get(f"/media/{file.file.name}", headers={"X-Evan-Secret": session.secret})
+
+            assert response.status_code == 200
+
+        def test_legacy_address_serves_the_relocated_file(self, client, t_event):
+            """An address handed out before the relocation keeps resolving."""
+            file = self._create_event_file(t_event, visibility=File.PUBLIC)
+            legacy_path = f"/media/public/{file.file.name.removeprefix('files/')}"
+
+            with patch("evan.site.views.files.get_s3_response") as mock_s3_response:
+                mock_response = Mock()
+                mock_response.raw = b"proceedings"
+                mock_response.headers = {"Content-Length": "11", "Content-Type": "application/pdf"}
+                mock_s3_response.return_value = mock_response
+
+                response = client.get(legacy_path)
+
+            assert response.status_code == 200
+
+        def test_legacy_address_is_still_guarded(self, client, t_event):
+            """The fallback grants no access the current address would not."""
+            file = self._create_event_file(t_event)
+            legacy_path = f"/media/public/{file.file.name.removeprefix('files/')}"
+
+            response = client.get(legacy_path)
+
+            assert response.status_code == 302
+            assert "/u/login/" in response["Location"]
+
+        def test_address_naming_no_file_is_not_found(self, client, db):
+            """A legacy-looking address with nothing behind it is a 404."""
+            assert client.get("/media/public/nowhere/really.pdf").status_code == 404
+
+        def test_foreign_session_secret_is_refused(self, client, db):
+            """Another session's secret does not open this session's file."""
+            from django.core.files.base import ContentFile
+
+            from tests._factories import SessionFactory
+
+            session = SessionFactory()
+            other_session = SessionFactory()
+            file = File.objects.create(
+                content_object=session,
+                visibility=File.ORGANIZERS,
+                file=ContentFile(b"slides", name="session/slides.pdf"),
+            )
+
+            response = client.get(f"/media/{file.file.name}", headers={"X-Evan-Secret": other_session.secret})
+
+            assert response.status_code == 403

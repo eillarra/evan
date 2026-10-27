@@ -111,7 +111,7 @@ class TestFilePermission:
         event = EventFactory()
 
         # Create a file manually
-        file = File.objects.create(content_object=event, type=File.PRIVATE, file="test/path.txt")
+        file = File.objects.create(content_object=event, visibility=File.ATTENDEES, file="test/path.txt")
 
         # Make user an event manager
         Permission.objects.create(content_object=event, user=user, level=Permission.ADMIN)
@@ -126,7 +126,7 @@ class TestFilePermission:
         user = UserFactory()
         event = EventFactory()
 
-        file = File.objects.create(content_object=event, type=File.PRIVATE, file="test/path.txt")
+        file = File.objects.create(content_object=event, visibility=File.ATTENDEES, file="test/path.txt")
 
         request = RequestFactory().delete("/")
         request.user = user

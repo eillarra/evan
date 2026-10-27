@@ -1,35 +1,66 @@
 import json
 
+from django.http import Http404
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import SAFE_METHODS, BasePermission
+
+from evan.models.rel.files import FilesMixin
+from evan.services.file_guard import get_presented_secret, has_matching_secret
 
 from ...serializers.rel.files import FileSerializer
 from .base import RelModelViewSet
 
 
 class FilePermission(BasePermission):
-    """Permissions for related files."""
+    """Permissions for related files.
+
+    A requester may manage an object's files with that object's write
+    capability, or with the object's own secret — a session's secret link
+    manages that session's files and nothing else.
+    """
 
     def has_permission(self, request, view):
         """Check if the user has permission to access the view."""
-        if not bool(request.user and request.user.is_authenticated):
+        authenticated = bool(request.user and request.user.is_authenticated)
+        secret = get_presented_secret(request)
+
+        # Refuse before resolving the object: an anonymous requester without a
+        # secret must not learn whether the object exists.
+        if not authenticated and not secret:
             return False
 
-        rel_object = view.get_content_object()
+        try:
+            rel_object = view.get_content_object()
+        except Http404:
+            if not authenticated:
+                # Answer the same way as for an object that exists but is out of
+                # reach, so a bad secret reveals nothing about the object either.
+                return False
+            raise
 
-        if hasattr(rel_object, "event") and rel_object.event:
-            return rel_object.event.can_be_managed_by(request.user)
-        elif hasattr(rel_object, "can_be_managed_by"):
-            return rel_object.can_be_managed_by(request.user)
+        if secret and has_matching_secret(rel_object, secret):
+            return True
 
-        return False
+        if not authenticated or not isinstance(rel_object, FilesMixin):
+            return False
+
+        return rel_object.files_can_be_managed_by(request.user)
 
     def has_object_permission(self, request, view, obj):
-        """Check if the user has permission to manipulate the Timesheet object."""
+        """Check if the user has permission to manipulate the file."""
         if request.method in SAFE_METHODS:
             return True
 
-        return obj.content_object.files_can_be_managed_by(request.user)
+        rel_object = obj.content_object
+        secret = get_presented_secret(request)
+
+        if secret and has_matching_secret(rel_object, secret):
+            return True
+
+        if not isinstance(rel_object, FilesMixin):
+            return False
+
+        return rel_object.files_can_be_managed_by(request.user)
 
 
 class FileViewSet(RelModelViewSet):
@@ -47,7 +78,8 @@ class FileViewSet(RelModelViewSet):
     def create(self, request, *args, **kwargs):
         """Convert tags to a valid JSON object. This is necessary because we get the multipart data mengled."""
         json_data = json.loads(request.data.get("json", "{}"))
-        request.data["type"] = json_data.get("type", "private")
+        if json_data.get("visibility"):
+            request.data["visibility"] = json_data["visibility"]
         request.data["description"] = json_data.get("description", "")
         request.data["tags"] = json.dumps(json_data.get("tags", []))
         return super().create(request, *args, **kwargs)

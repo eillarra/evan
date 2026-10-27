@@ -38,7 +38,7 @@ def attach_file(content_object, name="event/proceedings.pdf") -> File:
     """Attach a file to the given content object."""
     return File.objects.create(
         content_object=content_object,
-        type=File.PRIVATE,
+        visibility=File.ATTENDEES,
         file=ContentFile(b"file content", name=name),
     )
 

@@ -132,9 +132,9 @@ class EventViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     @method_decorator(never_cache)
     def files(self, request, *args, **kwargs):
         file_tags = request.query_params.get("tags", None)
-        file_type = request.query_params.get("type", File.PRIVATE)
-        file_type = file_type if file_type in [File.PUBLIC, File.PRIVATE] else File.PRIVATE
-        file = File(content_object=self.get_object(), type=file_type, tags=file_tags, file=request.data["file"])
+        visibility = request.query_params.get("visibility", File.ATTENDEES)
+        visibility = visibility if visibility in File.VISIBILITY_TIERS else File.ATTENDEES
+        file = File(content_object=self.get_object(), visibility=visibility, tags=file_tags, file=request.data["file"])
         file.save()
         return self.retrieve(request, *args, **kwargs)
 

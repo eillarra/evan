@@ -79,3 +79,16 @@ def get_s3_response(object_key: str) -> requests.Response:
     res = requests.get(url=get_s3_presigned_url(object_key, 10), stream=True, timeout=10)
     res.raise_for_status()
     return res
+
+
+def copy_s3_object(source_key: str, destination_key: str) -> None:
+    """Copy an object within the S3 bucket, leaving the source in place.
+
+    :param source_key: The key of the object to copy.
+    :param destination_key: The key to copy the object to.
+    """
+    get_s3_client().copy_object(
+        Bucket=os.environ.get("S3_BUCKET_NAME"),
+        Key=destination_key,
+        CopySource={"Bucket": os.environ.get("S3_BUCKET_NAME"), "Key": source_key},
+    )

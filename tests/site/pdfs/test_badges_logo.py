@@ -32,10 +32,10 @@ def media_root(settings, tmp_path) -> None:
 def logo_event(t_event):
     """Return a creation helper attaching files to the event."""
 
-    def _create_logo(filename: str, content: bytes = SVG, tags: list | None = None, type_: str = File.PUBLIC):
+    def _create_logo(filename: str, content: bytes = SVG, tags: list | None = None, visibility: str = File.PUBLIC):
         return File.objects.create(
             content_object=t_event,
-            type=type_,
+            visibility=visibility,
             file=ContentFile(content, name=filename),
             tags=tags if tags is not None else ["logo"],
         )
@@ -62,9 +62,9 @@ class TestEventGetLogoFile:
 
         assert t_event.get_logo_file() is None
 
-    def test_ignores_private_files(self, media_root, logo_event, t_event) -> None:
-        """Private files tagged logo are ignored."""
-        logo_event("logo.svg", type_=File.PRIVATE)
+    def test_ignores_non_public_files(self, media_root, logo_event, t_event) -> None:
+        """Non-public files tagged logo are ignored."""
+        logo_event("logo.svg", visibility=File.ATTENDEES)
 
         assert t_event.get_logo_file() is None
 

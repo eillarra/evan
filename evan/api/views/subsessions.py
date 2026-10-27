@@ -7,7 +7,7 @@ from rest_framework.mixins import (
 )
 from rest_framework.viewsets import GenericViewSet
 
-from evan.models import Event, File, Session, Subsession
+from evan.models import Event, Session, Subsession
 
 from ..permissions import EventRelatedObjectPermission, EventRelatedPermission
 from ..serializers import SubsessionSerializer, SubsessionWithSecretsSerializer
@@ -98,8 +98,6 @@ class SubsessionViewSet(RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin,
     permission_classes = [SubsessionPermission]
     queryset = Subsession.objects.all()
     serializer_class = SubsessionSerializer
-    max_files = 30
-    default_file_type = File.PRIVATE
 
     def get_serializer_class(self):
         if user_is_manager_of_event(self.request.user, self.get_object().session.event):

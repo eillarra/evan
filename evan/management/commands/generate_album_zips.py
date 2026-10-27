@@ -145,7 +145,7 @@ class Command(BaseCommand):
             # Create File object for the zip
             zip_file_obj = File(
                 content_object=album,
-                type=File.PRIVATE,  # Keep zip files private like individual photos
+                visibility=File.ATTENDEES,  # Keep zip files attendee-only like individual photos
                 description=f"Complete photo collection for {album.title}",
                 tags=["gallery:collection", "type:zip"],
                 file=zip_uploaded_file,

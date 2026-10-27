@@ -121,7 +121,7 @@ class Command(BaseCommand):
                 # Create File object for original (no processing tags)
                 original_file = File(
                     content_object=album,
-                    type=File.PRIVATE,
+                    visibility=File.ATTENDEES,
                     description=photo_file.stem,
                     tags=["gallery:original"],  # Tag to identify as original photo
                     file=original_uploaded_file,
@@ -144,7 +144,7 @@ class Command(BaseCommand):
                 # Create File object for thumbnail
                 thumbnail_file = File(
                     content_object=album,
-                    type=File.PRIVATE,
+                    visibility=File.ATTENDEES,
                     description=f"{photo_file.stem} (thumbnail)",
                     tags=[
                         "gallery:thumbnail",

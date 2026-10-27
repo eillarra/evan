@@ -356,7 +356,7 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
 
         :returns: The logo File, or None when no SVG logo is attached.
         """
-        for file in self.files.filter(type=File.PUBLIC).order_by("pk"):
+        for file in self.files.filter(visibility=File.PUBLIC).order_by("pk"):
             if "logo" in (file.tags or []) and file.file.name.lower().endswith(".svg"):
                 return file
         return None
