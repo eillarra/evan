@@ -3,8 +3,6 @@ from rest_framework import serializers
 
 from evan.models import Session, Subsession, validate_datetime
 
-from .rel.base import RelHyperlinkedField
-
 
 class SubsessionReadOnlySerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:subsession-detail")
@@ -16,7 +14,6 @@ class SubsessionReadOnlySerializer(serializers.ModelSerializer):
 
 class SubsessionSerializer(serializers.ModelSerializer):
     self = serializers.HyperlinkedIdentityField(view_name="v1:subsession-detail")
-    rel_files = RelHyperlinkedField(view_name="v1:file-list")
 
     class Meta:
         model = Subsession

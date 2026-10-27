@@ -10,9 +10,11 @@ is safe to run twice: the old layout keeps working, so a failed run changes
 nothing. Deletion goes through the shared S3 helper, so it only happens in
 production.
 
-Note that the old ``/media/public/…`` and ``/media/private/…`` addresses stop
-resolving once their objects are deleted with ``--delete-source``, so links
-already sent out (emails, pasted URLs) break.
+Rewriting a row changes the address the file is served at: media delivery looks
+the file up by its stored name. The temporary fallback in ``MediaFileView``
+resolves the old ``/media/public/…`` and ``/media/private/…`` addresses to the
+moved object, so links already handed out (emails, pasted URLs) keep working;
+removing that fallback together with this command is what finally breaks them.
 """
 
 from django.conf import settings

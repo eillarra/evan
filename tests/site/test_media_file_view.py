@@ -267,6 +267,35 @@ class TestMediaFileViewCookieHandling:
 
             assert response.status_code == 200
 
+        def test_legacy_address_serves_the_relocated_file(self, client, t_event):
+            """An address handed out before the relocation keeps resolving."""
+            file = self._create_event_file(t_event, visibility=File.PUBLIC)
+            legacy_path = f"/media/public/{file.file.name.removeprefix('files/')}"
+
+            with patch("evan.site.views.files.get_s3_response") as mock_s3_response:
+                mock_response = Mock()
+                mock_response.raw = b"proceedings"
+                mock_response.headers = {"Content-Length": "11", "Content-Type": "application/pdf"}
+                mock_s3_response.return_value = mock_response
+
+                response = client.get(legacy_path)
+
+            assert response.status_code == 200
+
+        def test_legacy_address_is_still_guarded(self, client, t_event):
+            """The fallback grants no access the current address would not."""
+            file = self._create_event_file(t_event)
+            legacy_path = f"/media/public/{file.file.name.removeprefix('files/')}"
+
+            response = client.get(legacy_path)
+
+            assert response.status_code == 302
+            assert "/u/login/" in response["Location"]
+
+        def test_address_naming_no_file_is_not_found(self, client, db):
+            """A legacy-looking address with nothing behind it is a 404."""
+            assert client.get("/media/public/nowhere/really.pdf").status_code == 404
+
         def test_foreign_session_secret_is_refused(self, client, db):
             """Another session's secret does not open this session's file."""
             from django.core.files.base import ContentFile
