@@ -1,6 +1,7 @@
 from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
+from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
@@ -46,14 +47,24 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
 class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     lookup_field = "uuid"
     permission_classes = (RegistrationPermission,)
-    queryset = Registration.objects.select_related("user").prefetch_related("sessions", "event")
+    queryset = Registration.objects.select_related("user", "coupon", "event").prefetch_related("sessions")
     serializer_class = AuthRegistrationRetrieveSerializer
 
     @method_decorator(never_cache)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
-    def perform_update(self, serializer):
+    def perform_update(self, serializer: serializers.BaseSerializer) -> None:
+        """Update the owner's registration, fixing the total fee after the window.
+
+        ``Registration.save()`` and its session M2M signal recalculate the fee, so
+        the write happens inside a transaction and is rolled back when the amount
+        changes. The pre-save fee is recomputed from the current price table, so a
+        later price correction does not read as a change made by this request.
+
+        :param serializer: The validated update serializer.
+        :raises ValidationError: When the update would change the total fee.
+        """
         user = self.request.user
         event = serializer.instance.event
         # RegistrationPermission already limits this endpoint to the owner.
@@ -61,18 +72,24 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         if denial is not None:
             raise PermissionDenied(denial.message)
 
-        previous_total = serializer.instance.total_fee
         try:
             with transaction.atomic():
-                registration = serializer.save()
-                if event.is_registration_window_closed and registration.total_fee != previous_total:
-                    raise ValidationError(
-                        {
-                            "non_field_errors": [
-                                "The registration window has closed; changes that affect the total fee "
-                                "are no longer allowed."
-                            ]
-                        }
-                    )
+                if event.is_registration_window_closed:
+                    # Lock the row so a concurrent write cannot slip past the check.
+                    serializer.instance = Registration.objects.select_for_update().get(pk=serializer.instance.pk)
+                    previous_total = serializer.instance.projected_total_fee()
+                    registration = serializer.save()
+                    registration.refresh_from_db()
+                    if registration.total_fee != previous_total:
+                        raise ValidationError(
+                            {
+                                "non_field_errors": [
+                                    "The registration window has closed; changes that affect the total fee "
+                                    "are no longer allowed."
+                                ]
+                            }
+                        )
+                else:
+                    serializer.save()
         except ValueError as exc:
             raise ValidationError({"non_field_errors": [str(exc)]}) from exc

@@ -440,16 +440,18 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         Listing and audience policy gate new registrations only: someone who
         registered while the event was listed keeps access when it is later
         un-listed or switched to UGent-only. The window also gates new
-        registrations, except for event managers. Existing registrants keep
-        read access after the window closes (and to the read-only after-event
-        app), but may no longer edit once the event has ended.
+        registrations, except for event managers, who bypass both the listing
+        and window checks; the audience check still applies to them. Existing
+        registrants keep read access after the window closes (and to the
+        read-only after-event app), but may no longer edit once the event has
+        ended.
 
         :param user: The user attempting to access the flow.
         :param has_registration: Whether ``user`` already holds a registration.
         :param for_update: Whether the check guards a write instead of a read.
         :returns: The denial reason when refused, otherwise None.
         """
-        is_manager: bool | None = None
+        is_manager: bool | None = None  # Resolved lazily: only unlisted or closed flows need the ACL.
 
         if not has_registration:
             if not self.is_listed:

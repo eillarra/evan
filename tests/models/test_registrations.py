@@ -266,6 +266,20 @@ class TestAccompanyingPersonFees:
 
         assert reg.extra_fees == 0
 
+    def test_string_session_ids_are_charged(self, db, event_with_socials) -> None:
+        """Numeric strings are normalised so they cannot hide a fee."""
+        social = SessionFactory(event=event_with_socials, is_social_event=True, extra_attendees_fee=20)
+
+        with patch("django.utils.timezone.now", return_value=dt("2026-07-01 12:00")):
+            reg = RegistrationFactory(
+                event=event_with_socials,
+                user=UserFactory(),
+                fee_type="full",
+                extra_data={"accompanying_persons": [{"selected_social_events": [str(social.id)]}]},
+            )
+
+        assert reg.extra_fees == 20
+
 
 # ---------------------------------------------------------------------------
 # Social-event fees (calculate_social_event_fees)

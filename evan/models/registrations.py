@@ -26,7 +26,7 @@ def calculate_accompanying_fees(registration: Registration) -> int:
     social_events = registration.event.sessions.filter(is_social_event=True)
 
     for person in registration.extra_data.get("accompanying_persons", []):
-        session_ids = person.get("selected_social_events", [])
+        session_ids = {int(session_id) for session_id in person.get("selected_social_events", [])}
         extra_fees += sum(session.extra_attendees_fee for session in social_events if session.id in session_ids)
 
     return extra_fees
@@ -397,6 +397,19 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     @property
     def total_fee(self) -> int:
         return self.base_fee + self.extra_fees + self.manual_extra_fees
+
+    def projected_total_fee(self) -> int:
+        """Return the total fee this registration would have if saved now.
+
+        Recomputes the fee from the current price table without writing, so a
+        later price correction does not look like a change made by an update.
+
+        :returns: The projected total fee.
+        """
+        if not self.event.module_enabled("payments"):
+            return self.manual_extra_fees
+
+        return calculate_registration_base_fee(self) + calculate_accompanying_fees(self) + self.manual_extra_fees
 
     @property
     def url(self) -> str:

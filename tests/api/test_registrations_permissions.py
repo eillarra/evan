@@ -405,6 +405,7 @@ class TestRegistrationUpdateAfterDeadline:
         assert "total fee" in str(response.data["non_field_errors"])
         registration.refresh_from_db()
         assert registration.fee_type == "regular"
+        assert registration.total_fee == 100
 
     def test_owner_can_resend_unchanged_fee_type_after_deadline(self, api_client, user, registration) -> None:
         """Only a change to the total fee is blocked; resending the current tier is accepted."""
@@ -447,6 +448,76 @@ class TestRegistrationUpdateAfterDeadline:
 
         assert response.status_code == status.BAD_REQUEST
         assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert registration.extra_data == {}
+        assert registration.total_fee == 100
+
+    def test_owner_can_switch_to_same_price_tier_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """The rule is the amount owed, not the field: an equal-price tier swap is allowed."""
+        Fee.objects.create(event=t_event, type="student", value=100)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.fee_type == "student"
+        assert registration.total_fee == 100
+
+    def test_owner_cannot_remove_paid_social_event_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """Dropping a paid session lowers the amount owed, so it is refused too."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=25)
+        registration.sessions.add(social)
+        registration.refresh_from_db()
+        assert registration.total_fee == 125
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"sessions": []}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert list(registration.sessions.values_list("id", flat=True)) == [social.id]
+
+    def test_owner_can_update_when_price_changed_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """A later price correction is not a fee change made by this request."""
+        Fee.objects.filter(event=t_event, type="regular").update(value=110)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.total_fee == 110
+
+    def test_owner_cannot_bypass_fee_freeze_with_string_session_ids(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """Session IDs are normalised before fee calculation, so strings cannot hide a fee."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        payload = {"extra_data": {"accompanying_persons": [{"selected_social_events": [str(social.id)]}]}}
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+
+    def test_full_put_without_fee_change_after_deadline(self, api_client, user, registration) -> None:
+        """PUT follows the same total-fee rule as PATCH."""
+        payload = {
+            "fee_type": registration.fee_type,
+            "extra_data": registration.extra_data,
+            "sessions": [],
+            "visa_requested": True,
+        }
+
+        api_client.force_authenticate(user=user)
+        response = api_client.put(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.OK
 
 
 @pytest.mark.api
