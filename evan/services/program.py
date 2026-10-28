@@ -68,21 +68,18 @@ class ProgramService:
 
         internal_matches = self.PAPER_INTERNAL_PATTERN.findall(template)
         for internal_id in internal_matches:
-            try:
-                papers = Paper.objects.filter(extra_data__internal_id=internal_id)
-                if not papers.exists():
-                    try:
-                        internal_id_int = int(internal_id)
-                        papers = Paper.objects.filter(extra_data__internal_id=internal_id_int)
-                    except ValueError:
-                        pass
+            papers = Paper.objects.filter(extra_data__internal_id=internal_id)
+            if not papers.exists():
+                try:
+                    internal_id_int = int(internal_id)
+                    papers = Paper.objects.filter(extra_data__internal_id=internal_id_int)
+                except ValueError:
+                    pass
 
-                if papers.exists():
-                    paper = papers.first()
-                    if paper:
-                        paper_ids.append(paper.pk)
-            except Exception:
-                pass
+            if papers.exists():
+                paper = papers.first()
+                if paper:
+                    paper_ids.append(paper.pk)
 
         return list(set(paper_ids))
 
@@ -123,8 +120,6 @@ class ProgramService:
                 queryset.get(id=paper_id)
             except Paper.DoesNotExist:
                 errors.append(f"Paper {paper_id} not found")
-            except Exception as e:
-                errors.append(f"Error validating paper {paper_id}: {str(e)}")
 
         for keynote_code in keynote_codes:
             try:

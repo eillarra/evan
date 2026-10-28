@@ -4,9 +4,14 @@ Covers reference extraction, template validation, paper/keynote sync, and
 orphan cleanup. Tests assert real model state changes, not internal calls.
 """
 
+from typing import Any
+from unittest.mock import patch
+
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import DatabaseError
 
+from evan.models import Paper
 from evan.services.program import ProgramService
 from tests._factories import (
     EventFactory,
@@ -17,9 +22,22 @@ from tests._factories import (
 )
 
 
+_PAPER_FILTER = Paper.objects.filter
+
+
 @pytest.fixture
 def service():
     return ProgramService()
+
+
+def _fail_on_internal_id_lookup(*args: Any, **kwargs: Any) -> Any:
+    """Filter proxy that only fails the internal-id paper lookup.
+
+    :returns: The real filter result, or raises ``DatabaseError`` for internal-id lookups.
+    """
+    if "extra_data__internal_id" in kwargs:
+        raise DatabaseError("paper lookup failed")
+    return _PAPER_FILTER(*args, **kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +79,13 @@ class TestExtractPaperReferences:
 
     def test_nonexistent_internal_id_is_gracefully_skipped(self, service) -> None:
         assert service.extract_paper_references("[paperi:NOPE]") == []
+
+    def test_database_error_during_internal_id_lookup_propagates(self, service) -> None:
+        with (
+            patch.object(Paper.objects, "filter", side_effect=DatabaseError("paper lookup failed")),
+            pytest.raises(DatabaseError),
+        ):
+            service.extract_paper_references("[paperi:ABC-001]")
 
     def test_empty_template_returns_empty_list(self, service) -> None:
         assert service.extract_paper_references("") == []
@@ -144,6 +169,13 @@ class TestValidateTemplate:
 
         assert result["is_valid"] is False
 
+    def test_database_error_during_paper_validation_propagates(self, service, t_event) -> None:
+        with (
+            patch.object(Paper.objects, "select_related", side_effect=DatabaseError("paper lookup failed")),
+            pytest.raises(DatabaseError),
+        ):
+            service.validate_template("[paper:1]", event_id=t_event.id)
+
 
 # ---------------------------------------------------------------------------
 # validate_and_sync_program_papers
@@ -207,6 +239,31 @@ class TestValidateAndSyncProgramPapers:
 
         with pytest.raises(ValidationError, match="not found"):
             service.validate_and_sync_program_papers("[paper:999999]", session)
+
+    def test_missing_internal_id_reference_leaves_paper_unassigned(self, service, t_event) -> None:
+        session = SessionFactory(event=t_event)
+        subsession = SubsessionFactory(session=session)
+        paper = PaperFactory(event=t_event, session=None, subsession=None)
+
+        service.validate_and_sync_program_papers("[paperi:NOPE]", session, subsession_obj=subsession)
+
+        paper.refresh_from_db()
+        assert paper.session is None
+        assert paper.subsession is None
+
+    def test_database_error_during_sync_keeps_paper_assigned(self, service, t_event) -> None:
+        session = SessionFactory(event=t_event)
+        subsession = SubsessionFactory(session=session)
+        paper = PaperFactory(event=t_event, session=session, subsession=subsession, extra_data={"internal_id": "INT-1"})
+
+        with (
+            patch.object(Paper.objects, "filter", side_effect=_fail_on_internal_id_lookup),
+            pytest.raises(DatabaseError),
+        ):
+            service.validate_and_sync_program_papers("[paperi:INT-1]", session, subsession_obj=subsession)
+
+        paper.refresh_from_db()
+        assert paper.subsession == subsession
 
     def test_empty_program_with_subsession_triggers_cleanup(self, service, t_event) -> None:
         session = SessionFactory(event=t_event)
@@ -327,6 +384,20 @@ class TestCleanupOrphanedSubsessionPaperAssignments:
 
     def test_no_subsession_obj_is_noop(self, service) -> None:
         service.cleanup_orphaned_subsession_paper_assignments("[paper:0]", None)  # no raise
+
+    def test_database_error_during_cleanup_keeps_paper_assigned(self, service, t_event) -> None:
+        session = SessionFactory(event=t_event)
+        subsession = SubsessionFactory(session=session)
+        paper = PaperFactory(event=t_event, session=session, subsession=subsession, extra_data={"internal_id": "INT-1"})
+
+        with (
+            patch.object(Paper.objects, "filter", side_effect=_fail_on_internal_id_lookup),
+            pytest.raises(DatabaseError),
+        ):
+            service.cleanup_orphaned_subsession_paper_assignments("[paperi:INT-1]", subsession)
+
+        paper.refresh_from_db()
+        assert paper.subsession == subsession
 
 
 # ---------------------------------------------------------------------------
