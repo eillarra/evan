@@ -82,6 +82,8 @@ def notify_organizers_of_decision(event: Event) -> None:
 def record_listing_decision(event: Event, *, decided_by, decision: str, reason: str = "") -> None:
     """Record a platform-team listing decision and notify the organizers.
 
+    A decision other than a decline clears any previously recorded decline reason.
+
     :param event: The event being decided on.
     :param decided_by: The staff user who made the decision.
     :param decision: The new listing status (listed or declined).
@@ -91,8 +93,7 @@ def record_listing_decision(event: Event, *, decided_by, decision: str, reason: 
     event.listing_decided_by = decided_by
     event.listing_decided_at = timezone.now()
 
-    if decision == Event.ListingStatus.DECLINED:
-        event.decline_reason = reason
+    event.decline_reason = reason if decision == Event.ListingStatus.DECLINED else ""
 
     event.save()
     notify_organizers_of_decision(event)
@@ -101,8 +102,14 @@ def record_listing_decision(event: Event, *, decided_by, decision: str, reason: 
 def return_declined_event_to_review(event: Event) -> None:
     """Return a declined event to pending review after an organizer edit.
 
+    The recorded decline reason, decider and decision time are cleared, so the
+    event awaits review without a leftover decline record.
+
     :param event: The event being returned to review.
     """
     event.listing_status = Event.ListingStatus.PENDING_REVIEW
+    event.decline_reason = ""
+    event.listing_decided_by = None
+    event.listing_decided_at = None
     event.save()
     notify_team_of_pending_review(event, edited=True)

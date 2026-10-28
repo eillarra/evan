@@ -8,7 +8,11 @@ from django.urls import reverse
 
 from evan.api.serializers.events import ManagedEventSerializer
 from evan.models import EmailLog, Event
-from evan.services.listing import PLATFORM_TEAM_EMAIL, record_listing_decision
+from evan.services.listing import (
+    PLATFORM_TEAM_EMAIL,
+    record_listing_decision,
+    return_declined_event_to_review,
+)
 from tests._factories import EventFactory, UserFactory
 
 
@@ -92,13 +96,50 @@ class TestListingDecisions:
         assert "declined" in organizer_logs[0].subject
         assert "Not UGent-related" in organizer_logs[0].body
 
+    def test_listing_a_declined_event_clears_the_decline_reason(self):
+        """A re-listed event carries no decline reason from its previous decline."""
+        event = EventFactory()
+        staff = UserFactory(is_staff=True)
+
+        record_listing_decision(
+            event, decided_by=staff, decision=Event.ListingStatus.DECLINED, reason="Not UGent-related"
+        )
+        event.refresh_from_db()
+        assert event.decline_reason == "Not UGent-related"
+
+        record_listing_decision(event, decided_by=staff, decision=Event.ListingStatus.LISTED)
+
+        event.refresh_from_db()
+        assert event.listing_status == "listed"
+        assert event.decline_reason == ""
+
+    def test_returning_a_declined_event_to_review_clears_the_decline_record(self):
+        """A declined event back in review carries no leftover decline record."""
+        event = EventFactory()
+        staff = UserFactory(is_staff=True)
+
+        record_listing_decision(
+            event, decided_by=staff, decision=Event.ListingStatus.DECLINED, reason="Not UGent-related"
+        )
+        event.refresh_from_db()
+        assert event.decline_reason == "Not UGent-related"
+        assert event.listing_decided_by == staff
+
+        return_declined_event_to_review(event)
+
+        event.refresh_from_db()
+        assert event.listing_status == "pending_review"
+        assert event.decline_reason == ""
+        assert event.listing_decided_by is None
+        assert event.listing_decided_at is None
+
 
 @pytest.mark.django_db
 class TestOrganizerEditsReturnDeclinedToReview:
     """Organizer saves on a declined event return it to review; admin saves do not."""
 
     def test_organizer_api_edit_returns_declined_event_to_review(self, api_client):
-        event = EventFactory(listing_status="declined")
+        event = EventFactory(listing_status="declined", decline_reason="Not UGent-related")
         manager = _manager_on(event)
         api_client.force_authenticate(user=manager)
 
@@ -107,6 +148,7 @@ class TestOrganizerEditsReturnDeclinedToReview:
         assert response.status_code == status.OK
         event.refresh_from_db()
         assert event.listing_status == "pending_review"
+        assert event.decline_reason == ""
 
         team_logs = [log for log in _listing_logs() if log.to == [PLATFORM_TEAM_EMAIL]]
         assert len(team_logs) == 2  # creation + re-notification
