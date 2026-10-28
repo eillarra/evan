@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from django.db import connection
+from django.db import connection, transaction
 from django.db.models import Count, Q, QuerySet
 from django.utils import timezone
 
@@ -183,6 +183,10 @@ def execute_plan(plan: EmailPlan) -> int:
     by ``sent_at__isnull=True``. If zero rows are affected (another worker already
     claimed it), the function returns 0 without creating any logs.
 
+    The claim and the log inserts run in a single transaction, so a failure while
+    recording the messages rolls the claim back: the plan stays unsent and a later
+    run records its messages again instead of silently losing the email.
+
     :param plan: The EmailPlan to execute.
     :returns: The number of EmailLog entries created.
     """
@@ -196,38 +200,39 @@ def execute_plan(plan: EmailPlan) -> int:
         )
         return 0
 
-    # Atomic claim: only proceed if this worker sets sent_at from NULL to now.
-    claimed = EmailPlan.objects.filter(pk=plan.pk, sent_at__isnull=True).update(sent_at=timezone.now())
-    if not claimed:
-        return 0
+    with transaction.atomic():
+        # Atomic claim: only proceed if this worker sets sent_at from NULL to now.
+        claimed = EmailPlan.objects.filter(pk=plan.pk, sent_at__isnull=True).update(sent_at=timezone.now())
+        if not claimed:
+            return 0
 
-    recipients = list(resolve_recipients(plan))
-    if not recipients:
-        return 0
+        recipients = list(resolve_recipients(plan))
+        if not recipients:
+            return 0
 
-    base_tags = [f"emailplan.id:{plan.pk}", "type:emailplan", f"event.id:{plan.event_id}"]
-    logs: list[EmailLog] = []
-    for registration in recipients:
-        user: User = registration.user
-        subject, body = render_for_registration(plan, registration)
-        logs.append(
-            EmailLog(
-                event=plan.event,
-                from_email=plan.from_email,
-                to=[user.email],
-                bcc=plan.bcc,
-                reply_to=plan.reply_to,
-                subject=subject,
-                body=body,
-                tags=base_tags + [f"user.id:{user.pk}"],
+        base_tags = [f"emailplan.id:{plan.pk}", "type:emailplan", f"event.id:{plan.event_id}"]
+        logs: list[EmailLog] = []
+        for registration in recipients:
+            user: User = registration.user
+            subject, body = render_for_registration(plan, registration)
+            logs.append(
+                EmailLog(
+                    event=plan.event,
+                    from_email=plan.from_email,
+                    to=[user.email],
+                    bcc=plan.bcc,
+                    reply_to=plan.reply_to,
+                    subject=subject,
+                    body=body,
+                    tags=base_tags + [f"user.id:{user.pk}"],
+                )
             )
-        )
 
-    chunk_size = 500
-    created = 0
-    for offset in range(0, len(logs), chunk_size):
-        chunk = logs[offset : offset + chunk_size]
-        EmailLog.objects.bulk_create(chunk)
-        created += len(chunk)
+        chunk_size = 500
+        created = 0
+        for offset in range(0, len(logs), chunk_size):
+            chunk = logs[offset : offset + chunk_size]
+            EmailLog.objects.bulk_create(chunk)
+            created += len(chunk)
 
     return created

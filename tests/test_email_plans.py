@@ -451,3 +451,27 @@ class TestExecutePlan:
         subjects = [log.subject for log in logs]
         assert f"Hi {r1.user.first_name}" in subjects
         assert f"Hi {r2.user.first_name}" in subjects
+
+    def test_failed_log_insert_leaves_plan_unsent_and_rerun_records_messages(self, event) -> None:
+        """A failing log insert rolls the claim back, so a later run still records the messages."""
+        _make_registration(event)
+        plan = _plan(event)
+        plan.save()
+
+        with (
+            patch("evan.models.emails.EmailLog.objects.bulk_create", side_effect=RuntimeError("boom")),
+            pytest.raises(RuntimeError),
+        ):
+            execute_plan(plan)
+
+        plan.refresh_from_db()
+        assert plan.sent_at is None
+        assert logs_for_plan(plan).count() == 0
+
+        count = execute_plan(plan)
+
+        assert count == 1
+        plan.refresh_from_db()
+        assert plan.sent_at is not None
+        log = logs_for_plan(plan).get()
+        assert log.sent_at is None

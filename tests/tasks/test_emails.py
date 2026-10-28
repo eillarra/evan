@@ -233,3 +233,26 @@ class TestProcessEmailPlans:
         process_email_plans.call_local()
 
         assert EmailLog.objects.filter(event=event).count() == 0
+
+    def test_failing_plan_is_isolated_and_retried_later(self):
+        """A plan that fails while recording its messages does not block the next due plan."""
+        from evan.services.mailer import emailplans
+
+        event = self._event_with_registration()
+        past = datetime.now(UTC) - timedelta(hours=1)
+        failing = self._make_plan(event, send_at=past + timedelta(minutes=1))
+        healthy = self._make_plan(event, send_at=past)
+        execute = emailplans.execute_plan
+
+        def failing_then_healthy(plan):
+            if plan.pk == failing.pk:
+                raise RuntimeError("boom")
+            return execute(plan)
+
+        with patch("evan.services.mailer.emailplans.execute_plan", side_effect=failing_then_healthy):
+            process_email_plans.call_local()
+
+        failing.refresh_from_db()
+        healthy.refresh_from_db()
+        assert failing.sent_at is None
+        assert healthy.sent_at is not None

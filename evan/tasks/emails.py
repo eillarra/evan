@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 from smtplib import SMTPRecipientsRefused
 from time import sleep
@@ -14,6 +15,7 @@ from evan.services.mailer.base import schedule_email, send_email_to_admins
 
 
 EMAILS_PER_MINUTE = int(os.getenv("UGENT_EMAILS_PER_MINUTE", 2))
+logger = logging.getLogger(__name__)
 
 
 @db_periodic_task(crontab(minute="*"))
@@ -94,6 +96,7 @@ def process_email_plans() -> None:
     is still null. Plans with no ``send_at`` are drafts and are skipped.
     Idempotency is guaranteed by ``execute_plan`` which atomically claims the
     plan via ``update(sent_at=now())`` filtered by ``sent_at__isnull=True``.
+    A plan that fails is logged and skipped, so it cannot block the plans behind it.
     """
     from evan.models.emails import EmailPlan
     from evan.services.mailer.emailplans import execute_plan
@@ -104,4 +107,7 @@ def process_email_plans() -> None:
         sent_at__isnull=True,
     )
     for plan in plans:
-        execute_plan(plan)
+        try:
+            execute_plan(plan)
+        except Exception:
+            logger.exception("Failed to execute email plan %s", plan.pk)
