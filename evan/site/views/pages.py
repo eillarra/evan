@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ViewDoesNotExist
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.utils.decorators import method_decorator
 
 from evan.api.serializers.contents import ContentSerializer
@@ -61,7 +62,7 @@ class PaperSecretEditorView(InertiaView):
         try:
             paper = Paper.objects.get(uuid=kwargs["uuid"])
         except Paper.DoesNotExist as exc:
-            raise ViewDoesNotExist from exc
+            raise Http404 from exc
 
         if paper.secret != kwargs["secret"]:
             raise PermissionDenied
@@ -82,7 +83,7 @@ class SessionSecretEditorView(InertiaView):
         try:
             session = Session.objects.get(uuid=kwargs["uuid"])
         except Session.DoesNotExist as exc:
-            raise ViewDoesNotExist from exc
+            raise Http404 from exc
 
         if session.secret != kwargs["secret"]:
             raise PermissionDenied
