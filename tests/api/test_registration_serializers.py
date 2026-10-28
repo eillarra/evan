@@ -44,6 +44,21 @@ def _errors(event, extra_data):
     return serializer.errors
 
 
+def _registration_with_persons(event):
+    """Create a registration with one accompanying person, then disable them."""
+    social = SessionFactory(event=event, is_social_event=True, extra_attendees_fee=20)
+    registration = RegistrationFactory(
+        event=event,
+        user=UserFactory(),
+        fee_type="regular",
+        extra_data={"accompanying_persons": [{"name": "Jane", "selected_social_events": [social.id]}]},
+    )
+    event.registration_config = {"accompanying_persons": False}
+    event.save(update_fields=["registration_config"])
+    registration.refresh_from_db()
+    return registration, social
+
+
 @pytest.mark.api
 class TestRegistrationExtraDataSerializer:
     """Accompanying-person social-event IDs are normalised and validated."""
@@ -178,3 +193,37 @@ class TestRegistrationUpdateExtraDataSerializer:
 
         assert not serializer.is_valid()
         assert "social events of this event" in str(serializer.errors)
+
+    def test_unchanged_persons_allowed_when_event_disables_them(self, event) -> None:
+        registration, _ = _registration_with_persons(event)
+
+        serializer = AuthRegistrationRetrieveSerializer(
+            registration,
+            data={"extra_data": registration.extra_data},
+            partial=True,
+        )
+
+        assert serializer.is_valid(), serializer.errors
+
+    def test_changed_persons_rejected_when_event_disables_them(self, event) -> None:
+        registration, social = _registration_with_persons(event)
+
+        serializer = AuthRegistrationRetrieveSerializer(
+            registration,
+            data={"extra_data": {"accompanying_persons": [{"name": "Bob", "selected_social_events": [social.id]}]}},
+            partial=True,
+        )
+
+        assert not serializer.is_valid()
+        assert "does not accept accompanying persons" in str(serializer.errors)
+
+    def test_removing_persons_allowed_when_event_disables_them(self, event) -> None:
+        registration, _ = _registration_with_persons(event)
+
+        serializer = AuthRegistrationRetrieveSerializer(
+            registration,
+            data={"extra_data": {"accompanying_persons": []}},
+            partial=True,
+        )
+
+        assert serializer.is_valid(), serializer.errors

@@ -135,11 +135,6 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
             return value
 
         event = self._get_event()
-        if not event.registration_configuration.get("accompanying_persons", True):
-            raise serializers.ValidationError(
-                {"accompanying_persons": ["This event does not accept accompanying persons."]}
-            )
-
         social_event_ids = set(event.sessions.filter(is_social_event=True).values_list("id", flat=True))
         normalised_persons = []
 
@@ -174,6 +169,13 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
                 session_ids.append(session_id)
 
             normalised_persons.append({**person, "selected_social_events": session_ids})
+
+        if not event.registration_configuration.get("accompanying_persons", True):
+            current_persons = self.instance.extra_data.get("accompanying_persons", []) if self.instance else []
+            if normalised_persons != current_persons:
+                raise serializers.ValidationError(
+                    {"accompanying_persons": ["This event does not accept accompanying persons."]}
+                )
 
         return {**value, "accompanying_persons": normalised_persons}
 

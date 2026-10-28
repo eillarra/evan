@@ -388,7 +388,16 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
 
     @property
     def remaining_fee(self) -> int:
-        return self.total_fee - self.paid - self.paid_via_invoice - self.paid_via_coupon
+        return self._remaining_amount(self.total_fee, self.base_fee)
+
+    def _remaining_amount(self, total_fee: int, base_fee: int) -> int:
+        """Return the amount still due for the given fee amounts.
+
+        :param total_fee: The registration's total fee.
+        :param base_fee: The registration's base fee.
+        :returns: The remaining amount.
+        """
+        return total_fee - self.paid - self.paid_via_invoice - self._coupon_coverage(base_fee, total_fee)
 
     @property
     def secret(self) -> str:
@@ -401,7 +410,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     def compute_fees(self) -> tuple[int, int]:
         """Return the base fee and accompanying-person extra fees for the current state.
 
-        Shared by ``save()`` and ``projected_total_fee()`` so both sides of the
+        Shared by ``save()`` and ``projected_amounts()`` so both sides of the
         fee-change check use exactly the same rules.
 
         :returns: The base fee and the extra fees.
@@ -424,16 +433,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         """
         base_fee, extra_fees = self.compute_fees()
         total_fee = base_fee + extra_fees + self.manual_extra_fees
-        paid_via_coupon = self._coupon_coverage(base_fee, total_fee)
-        remaining_fee = total_fee - self.paid - self.paid_via_invoice - paid_via_coupon
-        return total_fee, remaining_fee
-
-    def projected_total_fee(self) -> int:
-        """Return the total fee this registration would have if saved now.
-
-        :returns: The projected total fee.
-        """
-        return self.projected_amounts()[0]
+        return total_fee, self._remaining_amount(total_fee, base_fee)
 
     @property
     def url(self) -> str:
