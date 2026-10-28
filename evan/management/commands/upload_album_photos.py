@@ -87,6 +87,9 @@ class Command(BaseCommand):
 
         if dry_run:
             self.stdout.write(self.style.WARNING("DRY RUN - No files will be uploaded"))
+            for photo_file in photo_files:
+                self.stdout.write(f"Would upload: {photo_file.name}")
+            return
 
         # Get or create album
         album, created = Album.objects.get_or_create(
@@ -98,11 +101,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"Created new album: {album_title}"))
         else:
             self.stdout.write(f"Using existing album: {album_title}")
-
-        if dry_run:
-            for photo_file in photo_files:
-                self.stdout.write(f"Would upload: {photo_file.name}")
-            return
 
         # Upload photos
         uploaded_count = 0
