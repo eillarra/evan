@@ -64,7 +64,7 @@ def onsite_registration_window(t_event, monkeypatch):
 
 @pytest.fixture()
 def closed_registration_window(t_event, monkeypatch):
-    """Freeze time after the event's registration window has closed.
+    """Freeze time after the registration window closed, before the event ends.
 
     :param t_event: The standard test event.
     :param monkeypatch: Pytest monkeypatch used for the clock.
@@ -74,6 +74,21 @@ def closed_registration_window(t_event, monkeypatch):
     fixed = end + timedelta(days=1)
     monkeypatch.setattr("django.utils.timezone.now", lambda: fixed)
     assert not event.is_open_for_registration
+    assert not event.is_closed
+
+
+@pytest.fixture()
+def ended_registration_window(t_event, monkeypatch):
+    """Freeze time after the event has ended.
+
+    :param t_event: The standard test event.
+    :param monkeypatch: Pytest monkeypatch used for the clock.
+    """
+    event = _fresh_event(t_event)
+    fixed = datetime.combine(event.end_date, time.min, tzinfo=UTC) + timedelta(days=1)
+    monkeypatch.setattr("django.utils.timezone.now", lambda: fixed)
+    assert not event.is_open_for_registration
+    assert event.is_closed
 
 
 @pytest.fixture()

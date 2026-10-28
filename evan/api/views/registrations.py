@@ -13,12 +13,6 @@ from ..serializers import AuthRegistrationRetrieveSerializer, RegistrationRetrie
 from ..viewsets import EventRelatedViewSet
 
 
-UGENT_ONLY_REGISTRATION_DETAIL = (
-    "This event is only open to UGent-verified users. Please sign in with your UGent account "
-    "(or link it to your profile) to register."
-)
-
-
 class RegistrationsViewSet(EventRelatedViewSet):
     queryset = Registration.objects.select_related("coupon", "user").prefetch_related("event")
     serializer_class = RegistrationRetrieveSerializer
@@ -38,11 +32,8 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
         event = Event.objects.get(code=self.kwargs.get("code"))
         has_registration = Registration.objects.filter(event=event, user=user).exists()
         denial = event.registration_access_denied_reason(user, has_registration=has_registration)
-
-        if denial == "audience":
-            raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
         if denial is not None:
-            raise PermissionDenied("Registrations are not open for this event.")
+            raise PermissionDenied(denial.message)
 
         try:
             serializer.save(user=user, event=event)
@@ -66,12 +57,16 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         user = self.request.user
         event = serializer.instance.event
         # RegistrationPermission already limits this endpoint to the owner.
-        denial = event.registration_access_denied_reason(user, has_registration=True)
-
-        if denial == "audience":
-            raise PermissionDenied(UGENT_ONLY_REGISTRATION_DETAIL)
+        has_registration = serializer.instance.user_id == user.id
+        denial = event.registration_access_denied_reason(user, has_registration=has_registration, for_update=True)
         if denial is not None:
-            raise PermissionDenied("Registrations are not open for this event.")
+            raise PermissionDenied(denial.message)
+
+        fee_type = serializer.validated_data.get("fee_type")
+        if fee_type is not None and event.is_registration_window_closed and fee_type != serializer.instance.fee_type:
+            raise ValidationError(
+                {"fee_type": ["The registration window has closed; the fee type can no longer be changed."]}
+            )
 
         try:
             serializer.save()

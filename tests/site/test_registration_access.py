@@ -6,6 +6,7 @@ Two distinct view groups, each with different access rules:
      Any authenticated user can access an event open for registration.
      A closed window needs either a prior registration or manager access; after the
      event ends only an existing registrant reaches the read-only after-event app.
+     Listing and audience changes do not revoke access from existing registrants.
 
   2. ``EventRegistrationPreviewView``   → GET /e/<code>/registration-preview/
      Only event managers may preview the registration form.
@@ -17,7 +18,7 @@ from http import HTTPStatus as status
 import pytest
 from django.urls import reverse
 
-from evan.models import Fee
+from evan.models import Event, Fee
 from evan.models.rel.permissions import Permission
 from tests._factories import EventFactory, RegistrationFactory, UserFactory
 
@@ -70,6 +71,22 @@ def open_event_manager(db, open_event):
     """A user with manager-level access on the open event."""
     manager = UserFactory()
     open_event.acl.create(user=manager, level=Permission.ADMIN)
+    return manager
+
+
+@pytest.fixture
+def closed_event_manager(db, closed_event):
+    """A user with manager-level access on the closed event."""
+    manager = UserFactory()
+    closed_event.acl.create(user=manager, level=Permission.ADMIN)
+    return manager
+
+
+@pytest.fixture
+def ended_event_manager(db, ended_event):
+    """A user with manager-level access on the ended event."""
+    manager = UserFactory()
+    ended_event.acl.create(user=manager, level=Permission.ADMIN)
     return manager
 
 
@@ -127,6 +144,7 @@ class TestRegistrationViewForAuthenticated(TestRegistrationViewForAnonymous):
         response = client.get(_registration_url(closed_event))
 
         assert response.status_code == status.OK
+        assert "apps/registration/main.ts" in response.content.decode()
 
     def test_existing_registrant_gets_after_event_app(self, client, ended_event, user) -> None:
         """Once the event has ended, an existing registrant reaches the after-event app."""
@@ -137,38 +155,52 @@ class TestRegistrationViewForAuthenticated(TestRegistrationViewForAnonymous):
         assert response.status_code == status.OK
         assert "apps/registrationAfter/main.ts" in response.content.decode()
 
+    def test_existing_registrant_can_open_unlisted_event(self, client, open_event, user) -> None:
+        """A registrant keeps access when the event is later un-listed."""
+        open_event.listing_status = Event.ListingStatus.PENDING_REVIEW
+        open_event.save(update_fields=["listing_status"])
+        RegistrationFactory(event=open_event, user=user)
+
+        response = client.get(_registration_url(open_event))
+
+        assert response.status_code == status.OK
+
+    def test_existing_registrant_can_open_ugent_only_event(self, client, open_event, user) -> None:
+        """A registrant keeps access when the audience is later restricted."""
+        open_event.registration_audience = Event.RegistrationAudience.UGENT_ONLY
+        open_event.save(update_fields=["registration_audience"])
+        RegistrationFactory(event=open_event, user=user)
+
+        response = client.get(_registration_url(open_event))
+
+        assert response.status_code == status.OK
+
 
 @pytest.mark.site
 class TestRegistrationViewForEventManager:
     """Managers may open the closed flow even without their own registration."""
 
-    @pytest.fixture(autouse=True)
-    def setup(self, client, t_event_manager) -> None:
-        client.force_login(user=t_event_manager)
-
-    def test_manager_without_registration_can_open_closed_event(self, client, closed_event) -> None:
-        manager = UserFactory()
-        closed_event.acl.create(user=manager, level=Permission.ADMIN)
-        client.force_login(user=manager)
+    def test_manager_without_registration_can_open_closed_event(
+        self, client, closed_event, closed_event_manager
+    ) -> None:
+        client.force_login(user=closed_event_manager)
 
         response = client.get(_registration_url(closed_event))
         assert response.status_code == status.OK
 
-    def test_manager_without_registration_is_refused_after_event(self, client, ended_event) -> None:
+    def test_manager_without_registration_is_refused_after_event(
+        self, client, ended_event, ended_event_manager
+    ) -> None:
         """After the event ends, the manager needs a registration to reach the after-app."""
-        manager = UserFactory()
-        ended_event.acl.create(user=manager, level=Permission.ADMIN)
-        client.force_login(user=manager)
+        client.force_login(user=ended_event_manager)
 
         response = client.get(_registration_url(ended_event))
 
         assert response.status_code == status.FORBIDDEN
 
-    def test_manager_with_registration_gets_after_event_app(self, client, ended_event) -> None:
-        manager = UserFactory()
-        ended_event.acl.create(user=manager, level=Permission.ADMIN)
-        RegistrationFactory(event=ended_event, user=manager)
-        client.force_login(user=manager)
+    def test_manager_with_registration_gets_after_event_app(self, client, ended_event, ended_event_manager) -> None:
+        RegistrationFactory(event=ended_event, user=ended_event_manager)
+        client.force_login(user=ended_event_manager)
 
         response = client.get(_registration_url(ended_event))
 

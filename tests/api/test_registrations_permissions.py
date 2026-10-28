@@ -11,7 +11,10 @@ Three distinct endpoint groups, each with different access rules:
      Anonymous users and duplicate registrations are rejected.
 
   3. RegistrationViewSet → GET/PUT /registrations/{uuid}/
-     Each attendee can only access their own registration.
+     Each attendee can only access their own registration. Listing and audience
+     policy gate creation only; existing owners keep access. Edits are refused
+     after the event ends, and the fee type is final once the registration
+     window has closed.
 """
 
 from http import HTTPStatus as status
@@ -19,6 +22,7 @@ from http import HTTPStatus as status
 import pytest
 from django.urls import reverse
 
+from evan.models import Event, Fee, Session
 from tests._factories import RegistrationFactory, UserFactory
 
 
@@ -152,8 +156,6 @@ class TestRegistrationCreateFeeCap:
     @pytest.fixture
     def capped_event(self, t_event):
         """Add a capped ``phd`` fee (max 1) to the standard test event."""
-        from evan.models import Fee
-
         Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
         return t_event
 
@@ -194,8 +196,6 @@ class TestRegistrationCreateSessionCap:
     """
 
     def test_full_social_event_returns_400_under_non_field_errors(self, api_client, t_event, user) -> None:
-        from evan.models import Session
-
         social = Session.objects.create(
             event=t_event,
             title="Gala Dinner",
@@ -234,6 +234,7 @@ class TestRegistrationCreateSessionCap:
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationOwnerAccess:
     """Attendees can only retrieve and update their own registration."""
 
@@ -310,8 +311,6 @@ class TestRegistrationOwnerAccess:
 
     def test_owner_changing_fee_type_into_sold_out_returns_400(self, api_client, t_event, user) -> None:
         """Switching a registration to a sold-out capped fee is rejected with 400."""
-        from evan.models import Fee
-
         Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
         # Fill the single slot with another user.
         RegistrationFactory(event=t_event, user=UserFactory(), fee_type="phd")
@@ -326,8 +325,6 @@ class TestRegistrationOwnerAccess:
 
     def test_owner_changing_fee_type_out_of_capped_frees_slot(self, api_client, t_event, user) -> None:
         """Switching away from a capped fee frees the slot and succeeds."""
-        from evan.models import Fee
-
         Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
         # The owner holds the single `phd` slot.
         own = RegistrationFactory(event=t_event, user=user, fee_type="phd")
@@ -389,51 +386,78 @@ class TestRegistrationCreateDuringOnsiteWindow:
 @pytest.mark.api
 @pytest.mark.usefixtures("closed_registration_window")
 class TestRegistrationUpdateAfterDeadline:
-    """An existing owner keeps edit access after the registration window closes."""
+    """An owner keeps edit access after the deadline while the event is still running."""
 
     def test_owner_can_update_own_registration_after_deadline(self, api_client, user, registration) -> None:
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"visa_requested": True})
         assert response.status_code == status.OK
 
-    def test_owner_can_change_fee_type_after_deadline(self, api_client, t_event, user, registration) -> None:
-        """Late edits deliberately remain unrestricted for the registration owner."""
-        from evan.models import Fee
-
+    def test_owner_cannot_change_fee_type_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """The fee tier is final once the window closes, even for the registration owner."""
         Fee.objects.create(event=t_event, type="student", value=50)
 
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
-        assert response.status_code == status.OK
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "fee_type" in response.data
         registration.refresh_from_db()
-        assert registration.base_fee == 50
+        assert registration.fee_type == "regular"
+
+    def test_owner_can_resend_unchanged_fee_type_after_deadline(self, api_client, user, registration) -> None:
+        """Only an actual fee-type change is blocked; the current value is still accepted."""
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": registration.fee_type})
+        assert response.status_code == status.OK
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("not_yet_open_registration_window")
+class TestRegistrationUpdateBeforeStart:
+    """The fee freeze keys on the window having closed, not merely being not open."""
+
+    def test_owner_can_change_fee_type_before_window_opens(self, api_client, t_event, user, registration) -> None:
+        Fee.objects.create(event=t_event, type="student", value=50)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
+
+        assert response.status_code == status.OK
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("ended_registration_window")
+class TestRegistrationUpdateAfterEventEnded:
+    """Once the event has ended, the registration is read-only."""
+
+    def test_owner_cannot_update_registration_after_event_ended(self, api_client, user, registration) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "This event has ended."
 
 
 @pytest.mark.api
 @pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationUpdatePolicy:
-    """Owner edits still honour the event's listing and audience policy."""
+    """Listing and audience policy gate new registrations only, not existing ones."""
 
-    def test_owner_cannot_update_on_unlisted_event(self, api_client, t_event, user, registration) -> None:
-        from evan.models import Event
-
+    def test_owner_can_update_after_event_is_unlisted(self, api_client, t_event, user, registration) -> None:
         t_event.listing_status = Event.ListingStatus.PENDING_REVIEW
         t_event.save(update_fields=["listing_status"])
 
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"visa_requested": True})
-        assert response.status_code == status.FORBIDDEN
-        assert response.data["detail"] == "Registrations are not open for this event."
 
-    def test_owner_cannot_update_when_ugent_required_and_unverified(
-        self, api_client, t_event, user, registration
-    ) -> None:
-        from evan.models import Event
+        assert response.status_code == status.OK
 
+    def test_owner_can_update_when_ugent_required_and_unverified(self, api_client, t_event, user, registration) -> None:
         t_event.registration_audience = Event.RegistrationAudience.UGENT_ONLY
         t_event.save(update_fields=["registration_audience"])
 
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"visa_requested": True})
-        assert response.status_code == status.FORBIDDEN
-        assert "UGent" in response.data["detail"]
+
+        assert response.status_code == status.OK
