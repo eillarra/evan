@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import TYPE_CHECKING
 
 from django.contrib.sites.shortcuts import get_current_site
@@ -168,10 +169,37 @@ class ListingStatus(models.TextChoices):
     DECLINED = "declined", "Declined"
 
 
+class RegistrationDenialReason(StrEnum):
+    """Reason a user cannot use an event's registration flow."""
+
+    NOT_LISTED = "not_listed"
+    AUDIENCE = "audience"
+    ENDED = "ended"
+    WINDOW = "window"
+
+    @property
+    def message(self) -> str:
+        """Return the user-facing explanation for this denial.
+
+        :returns: The message shown to the user.
+        """
+        if self is RegistrationDenialReason.AUDIENCE:
+            return (
+                "This event is only open to UGent-verified users. Please sign in with your UGent account "
+                "(or link it to your profile) to register."
+            )
+
+        if self is RegistrationDenialReason.ENDED:
+            return "This event has ended."
+
+        return "Registrations are not open for this event."
+
+
 class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
     """An event."""
 
     RegistrationAudience = RegistrationAudience
+    RegistrationDenialReason = RegistrationDenialReason
     ListingStatus = ListingStatus
 
     is_virtual = models.BooleanField(default=False)
@@ -397,10 +425,55 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         else:
             return f"{date_filter(self.start_date, 'F j')}-{date_filter(self.end_date, 'j, Y')}"
 
-    def editable_by_user(self, user) -> bool:
+    def editable_by_user(self, user: User) -> bool:
         return self.can_be_managed_by(user)
 
-    def can_be_managed_by(self, user) -> bool:
+    def registration_access_denied_reason(
+        self,
+        user: User,
+        *,
+        has_registration: bool = False,
+        for_update: bool = False,
+    ) -> RegistrationDenialReason | None:
+        """Return why ``user`` may not use this event's registration flow.
+
+        Listing and audience policy gate new registrations only: someone who
+        registered while the event was listed keeps access when it is later
+        un-listed or switched to UGent-only. The window also gates new
+        registrations, except for event managers, who bypass both the listing
+        and window checks; the audience check still applies to them. Existing
+        registrants keep read access after the window closes (and to the
+        read-only after-event app), but may no longer edit once the event has
+        ended.
+
+        :param user: The user attempting to access the flow.
+        :param has_registration: Whether ``user`` already holds a registration.
+        :param for_update: Whether the check guards a write instead of a read.
+        :returns: The denial reason when refused, otherwise None.
+        """
+        is_manager: bool | None = None  # Resolved lazily: only unlisted or closed flows need the ACL.
+
+        if not has_registration:
+            if not self.is_listed:
+                is_manager = self.editable_by_user(user)
+                if not is_manager:
+                    return RegistrationDenialReason.NOT_LISTED
+
+            if self.registration_audience == self.RegistrationAudience.UGENT_ONLY and not user.is_ugent_verified:
+                return RegistrationDenialReason.AUDIENCE
+
+        if self.is_closed and (for_update or not has_registration):
+            return RegistrationDenialReason.ENDED
+
+        if not self.is_open_for_registration and not has_registration:
+            if is_manager is None:
+                is_manager = self.editable_by_user(user)
+            if not is_manager:
+                return RegistrationDenialReason.WINDOW
+
+        return None
+
+    def can_be_managed_by(self, user: User) -> bool:
         return user.is_staff or self.acl.filter(user_id=user.id, level__gte=Permission.ADMIN).exists()
 
     def files_viewable_by_user(self, user) -> bool:
@@ -432,6 +505,19 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         now = timezone.now()
         end = self.registration_onsite_deadline or self.registration_deadline
         return self.registration_start_date <= now.date() and now <= end
+
+    @property
+    def is_registration_window_closed(self) -> bool:
+        """Whether the registration window has already closed.
+
+        Unlike ``is_open_for_registration``, this stays false before the window
+        opens; it only becomes true once the on-site deadline (or the regular
+        deadline when none is configured) has passed.
+
+        :returns: True when the registration window is in the past.
+        """
+        end = self.registration_onsite_deadline or self.registration_deadline
+        return timezone.now() > end
 
     @cached_property
     def abstracts_config(self) -> dict:

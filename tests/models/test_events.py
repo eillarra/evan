@@ -6,7 +6,8 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from evan.models import Event
-from tests._factories import CouponFactory, EventFactory, PaperFactory, SessionFactory
+from evan.models.rel.permissions import Permission
+from tests._factories import CouponFactory, EventFactory, PaperFactory, SessionFactory, UserFactory
 
 
 MODULE_KEYS = ("payments", "content", "program", "papers", "communications")
@@ -816,3 +817,134 @@ class TestEventListingAndUrls:
     def test_url_helpers_point_to_public_and_manage_pages(self, t_event) -> None:
         assert t_event.get_absolute_url() == f"/e/{t_event.code}/"
         assert t_event.get_manage_url() == f"/e/{t_event.code}/manage/"
+
+
+# ---------------------------------------------------------------------------
+# Registration flow access (registration_access_denied_reason)
+# ---------------------------------------------------------------------------
+
+
+WINDOW_MOMENTS = {
+    "before_start": "2026-05-31 12:00",
+    "open": "2026-08-01 12:00",
+    "onsite": "2026-09-11 12:00",
+    "closed": "2026-09-12 12:00",
+    "ended": "2026-09-13 12:00",
+}
+
+
+def _registration_flow_event(t_event: Event) -> Event:
+    """Pin an event to fixed dates with a distinct on-site phase.
+
+    The event runs from 2026-09-10 to 2026-09-12, with registrations open from
+    2026-06-01, the regular deadline on 2026-09-01 and the on-site deadline on
+    2026-09-11. This keeps "before start", "open", "on-site only", "closed"
+    and "ended" moments unambiguous.
+
+    :param t_event: The standard test event.
+    :returns: The saved event.
+    """
+    t_event.start_date = convdate("2026-09-10")
+    t_event.end_date = convdate("2026-09-12")
+    t_event.registration_start_date = convdate("2026-06-01")
+    t_event.registration_early_deadline = None
+    t_event.registration_deadline = convtime("2026-09-01 23:59")
+    t_event.registration_onsite_deadline = convtime("2026-09-11 23:59")
+    t_event.save()
+    return t_event
+
+
+def _expected_denial(*, listed: bool, audience: str, window: str, access: str) -> Event.RegistrationDenialReason | None:
+    """Return the expected denial for one point of the access policy matrix.
+
+    Listing and audience gate new registrations only; the window gates people
+    without a registration unless they manage the event. An ended event also
+    refuses new registrations from managers.
+
+    :param listed: Whether the event is publicly listed.
+    :param audience: The event's registration audience.
+    :param window: The moment relative to the registration window.
+    :param access: One of ``neither``, ``manager`` or ``registrant``.
+    :returns: The expected denial reason, or None when access is allowed.
+    """
+    if not listed and access == "neither":
+        return Event.RegistrationDenialReason.NOT_LISTED
+    if audience == Event.RegistrationAudience.UGENT_ONLY and access in {"neither", "manager"}:
+        return Event.RegistrationDenialReason.AUDIENCE
+    if access == "neither" and window in {"before_start", "closed"}:
+        return Event.RegistrationDenialReason.WINDOW
+    if window == "ended" and access in {"neither", "manager"}:
+        return Event.RegistrationDenialReason.ENDED
+    return None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("listed", [True, False])
+@pytest.mark.parametrize("audience", [Event.RegistrationAudience.PUBLIC, Event.RegistrationAudience.UGENT_ONLY])
+@pytest.mark.parametrize("window", list(WINDOW_MOMENTS))
+@pytest.mark.parametrize("access", ["neither", "manager", "registrant"])
+def test_registration_access_denied_reason(
+    t_event: Event, listed: bool, audience: str, window: str, access: str
+) -> None:
+    """The rule gates listing, audience and window as documented."""
+    event = _registration_flow_event(t_event)
+    event.listing_status = Event.ListingStatus.LISTED if listed else Event.ListingStatus.PENDING_REVIEW
+    event.registration_audience = audience
+    event.save()
+
+    user = UserFactory()
+    if access == "manager":
+        event.acl.create(user=user, level=Permission.ADMIN)
+
+    expected = _expected_denial(listed=listed, audience=audience, window=window, access=access)
+    with patch("django.utils.timezone.now", return_value=convtime(WINDOW_MOMENTS[window])):
+        denial = event.registration_access_denied_reason(user, has_registration=access == "registrant")
+
+    assert denial is expected
+
+
+@pytest.mark.django_db
+def test_registrant_cannot_update_after_event_ended(t_event: Event) -> None:
+    """An existing registrant can read the after-event app but may not edit it."""
+    event = _registration_flow_event(t_event)
+    user = UserFactory()
+
+    with patch("django.utils.timezone.now", return_value=convtime(WINDOW_MOMENTS["ended"])):
+        assert event.registration_access_denied_reason(user, has_registration=True) is None
+        assert (
+            event.registration_access_denied_reason(user, has_registration=True, for_update=True)
+            is Event.RegistrationDenialReason.ENDED
+        )
+
+
+@pytest.mark.django_db
+def test_registrant_can_update_after_deadline_before_event_ended(t_event: Event) -> None:
+    """The registration window closing does not freeze owner edits before the event ends."""
+    event = _registration_flow_event(t_event)
+    user = UserFactory()
+
+    with patch("django.utils.timezone.now", return_value=convtime(WINDOW_MOMENTS["closed"])):
+        assert event.registration_access_denied_reason(user, has_registration=True, for_update=True) is None
+
+
+@pytest.mark.django_db
+def test_registration_window_closed_only_after_deadline(t_event: Event) -> None:
+    """Before the window opens it is not open, but it has not closed either."""
+    event = _registration_flow_event(t_event)
+
+    for moment in ("before_start", "open", "onsite"):
+        with patch("django.utils.timezone.now", return_value=convtime(WINDOW_MOMENTS[moment])):
+            assert event.is_registration_window_closed is False
+
+    for moment in ("closed", "ended"):
+        with patch("django.utils.timezone.now", return_value=convtime(WINDOW_MOMENTS[moment])):
+            assert event.is_registration_window_closed is True
+
+
+@pytest.mark.django_db
+def test_registration_denial_message_depends_on_reason() -> None:
+    """Only the audience denial uses the UGent-specific message."""
+    assert "UGent" in Event.RegistrationDenialReason.AUDIENCE.message
+    assert Event.RegistrationDenialReason.ENDED.message == "This event has ended."
+    assert Event.RegistrationDenialReason.NOT_LISTED.message == "Registrations are not open for this event."
+    assert Event.RegistrationDenialReason.WINDOW.message == "Registrations are not open for this event."

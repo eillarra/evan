@@ -31,12 +31,6 @@ class RegistrationRedirectView(View):
             raise Http404 from exc
 
 
-UGENT_ONLY_REGISTRATION_MESSAGE = (
-    "This event is only open to UGent-verified users. Please sign in with your UGent account "
-    "(or link it to your profile) to register."
-)
-
-
 class RegistrationView(InertiaView):
     is_after_event = False
     vue_entry_point = "apps/registration/main.ts"
@@ -64,22 +58,15 @@ class RegistrationView(InertiaView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         event = self.get_event()
+        has_registration = Registration.objects.filter(event=event, user=request.user).exists()
+        denial = event.registration_access_denied_reason(request.user, has_registration=has_registration)
 
-        if not event.is_listed and not event.editable_by_user(request.user):
-            messages.error(request, "Registrations are not open for this event.")
+        if denial is not None:
+            messages.error(request, denial.message)
             raise PermissionDenied
 
-        if event.registration_audience == Event.RegistrationAudience.UGENT_ONLY and not request.user.is_ugent_verified:
-            messages.error(request, UGENT_ONLY_REGISTRATION_MESSAGE)
-            raise PermissionDenied
-
-        if not event.is_open_for_registration:
-            # check if the user has a registration for this event
-            if not Registration.objects.filter(event=self.get_event(), user=request.user).exists():
-                messages.error(request, "Registrations are not open for this event.")
-                raise PermissionDenied
-            if self.get_event().is_closed:
-                self.is_after_event = True
+        if event.is_closed and has_registration:
+            self.is_after_event = True
 
         return super().dispatch(request, *args, **kwargs)
 

@@ -66,6 +66,30 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
     fee_type = serializers.CharField(required=False, allow_blank=True)
     sessions = serializers.PrimaryKeyRelatedField(queryset=Session.objects.all(), many=True, required=False)
 
+    def _get_event(self) -> Event:
+        """Return the event this registration belongs or is being created for.
+
+        :returns: The registration's event.
+        :raises serializers.ValidationError: When the event cannot be determined.
+        """
+        event = self.context.get("event")
+        if event is not None:
+            return event
+
+        if self.instance is not None:
+            return self.instance.event
+
+        view = self.context.get("view")
+        code = getattr(view, "kwargs", {}).get("code") if view is not None else None
+
+        if code is not None:
+            try:
+                return Event.objects.get(code=code)
+            except Event.DoesNotExist:
+                pass
+
+        raise serializers.ValidationError("The registration's event could not be determined.")
+
     def validate_sessions(self, value):
         """Ensure selected sessions belong to the registration's event.
 
@@ -75,29 +99,85 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
         if value is None:
             return value
 
-        instance = self.instance
-
-        if instance is not None:
-            event = instance.event
-        else:
-            event = None
-            view = self.context.get("view")
-            code = getattr(view, "kwargs", {}).get("code") if view is not None else None
-
-            if code is not None:
-                try:
-                    event = Event.objects.get(code=code)
-                except Event.DoesNotExist:
-                    event = None
-
-        if event is None:
-            raise serializers.ValidationError("The registration's event could not be determined.")
+        event = self._get_event()
 
         for session in value:
             if getattr(session, "event_id", None) != event.id:
                 raise serializers.ValidationError("Sessions must belong to the registration's event.")
 
         return value
+
+    def validate_extra_data(self, value):
+        """Normalise accompanying-person social-event selections.
+
+        Every ``selected_social_events`` entry must be a social-event session of
+        this event. Numeric strings are converted to integers; anything else is
+        rejected so all readers (fees, capacity, headcounts, badges) see ints.
+
+        :param value: The registration extra data sent by the client.
+        :returns: The normalised extra data.
+        :raises serializers.ValidationError: When the data is invalid.
+        """
+        if value is None:
+            return value
+
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Registration data must be an object.")
+
+        if "accompanying_persons" not in value:
+            return value
+
+        persons = value["accompanying_persons"]
+        if not isinstance(persons, list):
+            raise serializers.ValidationError({"accompanying_persons": ["This field must be a list."]})
+
+        if not persons:
+            return value
+
+        event = self._get_event()
+        social_event_ids = set(event.sessions.filter(is_social_event=True).values_list("id", flat=True))
+        normalised_persons = []
+
+        for person in persons:
+            if not isinstance(person, dict):
+                raise serializers.ValidationError({"accompanying_persons": ["Each person must be an object."]})
+
+            if "selected_social_events" not in person:
+                normalised_persons.append(person)
+                continue
+
+            selected = person["selected_social_events"]
+            if not isinstance(selected, list):
+                raise serializers.ValidationError({"accompanying_persons": ["Selected social events must be a list."]})
+
+            session_ids = []
+            for session_id in selected:
+                if isinstance(session_id, bool) or not isinstance(session_id, (int, str)):
+                    raise serializers.ValidationError(
+                        {"accompanying_persons": ["Selected social events must contain integer IDs."]}
+                    )
+                try:
+                    session_id = int(session_id)
+                except ValueError as exc:
+                    raise serializers.ValidationError(
+                        {"accompanying_persons": ["Selected social events must contain integer IDs."]}
+                    ) from exc
+                if session_id not in social_event_ids:
+                    raise serializers.ValidationError(
+                        {"accompanying_persons": ["Selected social events must be social events of this event."]}
+                    )
+                session_ids.append(session_id)
+
+            normalised_persons.append({**person, "selected_social_events": session_ids})
+
+        if not event.registration_configuration.get("accompanying_persons", True):
+            current_persons = self.instance.extra_data.get("accompanying_persons", []) if self.instance else []
+            if normalised_persons != current_persons:
+                raise serializers.ValidationError(
+                    {"accompanying_persons": ["This event does not accept accompanying persons."]}
+                )
+
+        return {**value, "accompanying_persons": normalised_persons}
 
     class Meta(RegistrationSerializer.Meta):
         model = Registration

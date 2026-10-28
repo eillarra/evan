@@ -11,7 +11,10 @@ Three distinct endpoint groups, each with different access rules:
      Anonymous users and duplicate registrations are rejected.
 
   3. RegistrationViewSet → GET/PUT /registrations/{uuid}/
-     Each attendee can only access their own registration.
+     Each attendee can only access their own registration. Listing and audience
+     policy gate creation only; existing owners keep access. Edits are refused
+     after the event ends, and updates that change the total fee are refused once
+     the registration window has closed.
 """
 
 from http import HTTPStatus as status
@@ -19,7 +22,8 @@ from http import HTTPStatus as status
 import pytest
 from django.urls import reverse
 
-from tests._factories import RegistrationFactory, UserFactory
+from evan.models import Coupon, Event, Fee, Registration, Session
+from tests._factories import CouponFactory, RegistrationFactory, SessionFactory, UserFactory
 
 
 @pytest.fixture
@@ -102,6 +106,7 @@ class TestRegistrationsListForEventManager(TestRegistrationsListForAuthenticated
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationCreate:
     """Registration creation endpoint requires authentication."""
 
@@ -142,16 +147,31 @@ class TestRegistrationCreate:
         assert response.status_code == status.CREATED
         assert response.data["extra_data"]["paper_id"] == "P-123"
 
+    def test_numeric_string_session_ids_are_stored_as_int(self, api_client, t_event, user) -> None:
+        """Numeric strings are normalised at the API boundary and charged as ints."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        payload = {
+            "fee_type": "regular",
+            "extra_data": {"accompanying_persons": [{"selected_social_events": [str(social.id)]}]},
+        }
+
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), payload, format="json")
+
+        assert response.status_code == status.CREATED
+        registration = Registration.objects.get(event=t_event, user=user)
+        assert registration.extra_data["accompanying_persons"][0]["selected_social_events"] == [social.id]
+        assert registration.extra_fees == 20
+
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationCreateFeeCap:
     """Registration creation against a capped fee type that is sold out."""
 
     @pytest.fixture
     def capped_event(self, t_event):
         """Add a capped ``phd`` fee (max 1) to the standard test event."""
-        from evan.models import Fee
-
         Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
         return t_event
 
@@ -181,6 +201,7 @@ class TestRegistrationCreateFeeCap:
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationCreateSessionCap:
     """A session-capacity error surfaced via the registration endpoint uses the right key.
 
@@ -191,8 +212,6 @@ class TestRegistrationCreateSessionCap:
     """
 
     def test_full_social_event_returns_400_under_non_field_errors(self, api_client, t_event, user) -> None:
-        from evan.models import Session
-
         social = Session.objects.create(
             event=t_event,
             title="Gala Dinner",
@@ -231,6 +250,7 @@ class TestRegistrationCreateSessionCap:
 
 
 @pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
 class TestRegistrationOwnerAccess:
     """Attendees can only retrieve and update their own registration."""
 
@@ -307,8 +327,6 @@ class TestRegistrationOwnerAccess:
 
     def test_owner_changing_fee_type_into_sold_out_returns_400(self, api_client, t_event, user) -> None:
         """Switching a registration to a sold-out capped fee is rejected with 400."""
-        from evan.models import Fee
-
         Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
         # Fill the single slot with another user.
         RegistrationFactory(event=t_event, user=UserFactory(), fee_type="phd")
@@ -323,12 +341,274 @@ class TestRegistrationOwnerAccess:
 
     def test_owner_changing_fee_type_out_of_capped_frees_slot(self, api_client, t_event, user) -> None:
         """Switching away from a capped fee frees the slot and succeeds."""
-        from evan.models import Fee
-
         Fee.objects.create(event=t_event, type="phd", value=0, config={"max_registrations": 1})
         # The owner holds the single `phd` slot.
         own = RegistrationFactory(event=t_event, user=user, fee_type="phd")
 
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(own), {"fee_type": "regular"})
+        assert response.status_code == status.OK
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("closed_registration_window")
+class TestRegistrationCreateAfterDeadline:
+    """Registration creation enforces the registration window."""
+
+    def test_attendee_cannot_register_after_deadline(self, api_client, t_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "Registrations are not open for this event."
+
+    def test_manager_can_register_after_deadline(self, api_client, t_event, t_event_manager) -> None:
+        api_client.force_authenticate(user=t_event_manager)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.CREATED
+
+    def test_duplicate_registration_still_returns_400_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """An existing registrant is not masked by the window denial."""
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.BAD_REQUEST
+        assert "event-user" in response.data
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("not_yet_open_registration_window")
+class TestRegistrationCreateBeforeStart:
+    """Creation is refused before the registration window opens."""
+
+    def test_attendee_cannot_register_before_start(self, api_client, t_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "Registrations are not open for this event."
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("onsite_registration_window")
+class TestRegistrationCreateDuringOnsiteWindow:
+    """Creation still works when only the on-site deadline keeps the window open."""
+
+    def test_attendee_can_register_during_onsite_period(self, api_client, t_event, user) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), {"fee_type": "regular"})
+        assert response.status_code == status.CREATED
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("closed_registration_window")
+class TestRegistrationUpdateAfterDeadline:
+    """An owner keeps edit access after the deadline while the event is still running."""
+
+    def test_owner_can_update_own_registration_after_deadline(self, api_client, user, registration) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+        assert response.status_code == status.OK
+
+    def test_owner_cannot_change_fee_type_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """Switching to a different price tier changes the total fee, so it is refused."""
+        Fee.objects.create(event=t_event, type="student", value=50)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        assert "total fee" in str(response.data["non_field_errors"])
+        registration.refresh_from_db()
+        assert registration.fee_type == "regular"
+        assert registration.total_fee == 100
+
+    def test_owner_can_resend_unchanged_fee_type_after_deadline(self, api_client, user, registration) -> None:
+        """Only a change to the total fee is blocked; resending the current tier is accepted."""
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": registration.fee_type})
+        assert response.status_code == status.OK
+
+    def test_owner_cannot_add_paid_social_event_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """Selecting a paid social event changes the total fee, so it is refused."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=25)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"sessions": [social.id]}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert not registration.sessions.exists()
+
+    def test_owner_can_add_free_session_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """A session without an extra fee does not change the total, so it is accepted."""
+        session = SessionFactory(event=t_event, title="Free meetup", is_social_event=True, extra_attendees_fee=0)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"sessions": [session.id]}, format="json")
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert list(registration.sessions.values_list("id", flat=True)) == [session.id]
+
+    def test_owner_cannot_add_accompanying_person_fee_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """An accompanying person's social event changes the total fee too."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        payload = {"extra_data": {"accompanying_persons": [{"selected_social_events": [social.id]}]}}
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert registration.extra_data == {}
+        assert registration.total_fee == 100
+
+    def test_owner_can_switch_to_same_price_tier_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """The rule is the amount owed, not the field: an equal-price tier swap is allowed."""
+        Fee.objects.create(event=t_event, type="student", value=100)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.fee_type == "student"
+        assert registration.total_fee == 100
+
+    def test_owner_cannot_remove_paid_social_event_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """Dropping a paid session lowers the amount owed, so it is refused too."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=25)
+        registration.sessions.add(social)
+        registration.refresh_from_db()
+        assert registration.total_fee == 125
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"sessions": []}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert list(registration.sessions.values_list("id", flat=True)) == [social.id]
+
+    def test_owner_can_update_when_price_changed_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """A later price correction is not a fee change made by this request."""
+        Fee.objects.filter(event=t_event, type="regular").update(value=110)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert registration.total_fee == 110
+
+    def test_owner_cannot_bypass_fee_freeze_with_string_session_ids(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """Session IDs are normalised before fee calculation, so strings cannot hide a fee."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        payload = {"extra_data": {"accompanying_persons": [{"selected_social_events": [str(social.id)]}]}}
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+
+    def test_owner_cannot_shift_fee_into_coupon_coverage_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """An equal total is still refused when the coupon leaves more to pay."""
+        Fee.objects.create(event=t_event, type="student", value=80)
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        registration.coupon = CouponFactory(event=t_event, value=100, coverage=Coupon.BASE_FEE)
+        registration.save()
+        registration.refresh_from_db()
+        assert registration.remaining_fee == 0
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(
+            _detail_url(registration),
+            {
+                "fee_type": "student",
+                "extra_data": {"accompanying_persons": [{"selected_social_events": [social.id]}]},
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert registration.fee_type == "regular"
+        assert registration.remaining_fee == 0
+
+    def test_full_put_without_fee_change_after_deadline(self, api_client, user, registration) -> None:
+        """PUT follows the same total-fee rule as PATCH."""
+        payload = {
+            "fee_type": registration.fee_type,
+            "extra_data": registration.extra_data,
+            "sessions": [],
+            "visa_requested": True,
+        }
+
+        api_client.force_authenticate(user=user)
+        response = api_client.put(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.OK
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("not_yet_open_registration_window")
+class TestRegistrationUpdateBeforeStart:
+    """The fee freeze keys on the window having closed, not merely being not open."""
+
+    def test_owner_can_change_fee_type_before_window_opens(self, api_client, t_event, user, registration) -> None:
+        Fee.objects.create(event=t_event, type="student", value=50)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
+
+        assert response.status_code == status.OK
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("ended_registration_window")
+class TestRegistrationUpdateAfterEventEnded:
+    """Once the event has ended, the registration is read-only."""
+
+    def test_owner_cannot_update_registration_after_event_ended(self, api_client, user, registration) -> None:
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+
+        assert response.status_code == status.FORBIDDEN
+        assert response.data["detail"] == "This event has ended."
+
+
+@pytest.mark.api
+@pytest.mark.usefixtures("open_registration_window")
+class TestRegistrationUpdatePolicy:
+    """Listing and audience policy gate new registrations only, not existing ones."""
+
+    def test_owner_can_update_after_event_is_unlisted(self, api_client, t_event, user, registration) -> None:
+        t_event.listing_status = Event.ListingStatus.PENDING_REVIEW
+        t_event.save(update_fields=["listing_status"])
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+
+        assert response.status_code == status.OK
+
+    def test_owner_can_update_when_ugent_required_and_unverified(self, api_client, t_event, user, registration) -> None:
+        t_event.registration_audience = Event.RegistrationAudience.UGENT_ONLY
+        t_event.save(update_fields=["registration_audience"])
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"visa_requested": True})
+
         assert response.status_code == status.OK
