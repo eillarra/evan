@@ -74,11 +74,15 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
         try:
             with transaction.atomic():
+                previous_total = None
                 if event.is_registration_window_closed:
                     # Lock the row so a concurrent write cannot slip past the check.
                     serializer.instance = Registration.objects.select_for_update().get(pk=serializer.instance.pk)
                     previous_total = serializer.instance.projected_total_fee()
-                    registration = serializer.save()
+
+                registration = serializer.save()
+
+                if previous_total is not None:
                     registration.refresh_from_db()
                     if registration.total_fee != previous_total:
                         raise ValidationError(
@@ -89,7 +93,5 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
                                 ]
                             }
                         )
-                else:
-                    serializer.save()
         except ValueError as exc:
             raise ValidationError({"non_field_errors": [str(exc)]}) from exc

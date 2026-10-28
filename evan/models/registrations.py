@@ -26,7 +26,7 @@ def calculate_accompanying_fees(registration: Registration) -> int:
     social_events = registration.event.sessions.filter(is_social_event=True)
 
     for person in registration.extra_data.get("accompanying_persons", []):
-        session_ids = {int(session_id) for session_id in person.get("selected_social_events", [])}
+        session_ids = person.get("selected_social_events", [])
         extra_fees += sum(session.extra_attendees_fee for session in social_events if session.id in session_ids)
 
     return extra_fees
@@ -261,15 +261,7 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
 
         enforce_fee_type_capacity(self, previous=previous)
         enforce_accompanying_person_session_capacity(self, previous=previous)
-        self.base_fee = calculate_registration_base_fee(self)
-
-        try:
-            if self.event.module_enabled("payments"):
-                self.extra_fees = calculate_accompanying_fees(self)
-            else:
-                self.extra_fees = 0
-        except KeyError:
-            pass
+        self.base_fee, self.extra_fees = self.compute_fees()
 
         if previous and previous.remaining_fee != self.remaining_fee and previous.unique_hash == self.unique_hash:
             self.unique_hash = self.generate_unique_hash()
@@ -398,6 +390,25 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
     def total_fee(self) -> int:
         return self.base_fee + self.extra_fees + self.manual_extra_fees
 
+    def compute_fees(self) -> tuple[int, int]:
+        """Return the base fee and accompanying-person extra fees for the current state.
+
+        Shared by ``save()`` and ``projected_total_fee()`` so both sides of the
+        fee-change check use exactly the same rules.
+
+        :returns: The base fee and the extra fees.
+        """
+        base_fee = calculate_registration_base_fee(self)
+        extra_fees = 0
+
+        try:
+            if self.event.module_enabled("payments"):
+                extra_fees = calculate_accompanying_fees(self)
+        except KeyError:
+            pass
+
+        return base_fee, extra_fees
+
     def projected_total_fee(self) -> int:
         """Return the total fee this registration would have if saved now.
 
@@ -406,10 +417,8 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
 
         :returns: The projected total fee.
         """
-        if not self.event.module_enabled("payments"):
-            return self.manual_extra_fees
-
-        return calculate_registration_base_fee(self) + calculate_accompanying_fees(self) + self.manual_extra_fees
+        base_fee, extra_fees = self.compute_fees()
+        return base_fee + extra_fees + self.manual_extra_fees
 
     @property
     def url(self) -> str:
