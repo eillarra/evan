@@ -1,6 +1,11 @@
 """Tests for event registration Excel exports."""
 
 import json
+from http import HTTPStatus as status
+from typing import Any, NoReturn
+
+import pytest
+from django.urls import reverse
 
 from evan.site.views.events import get_registration_sheets
 from tests._factories import RegistrationFactory, SessionFactory, UserFactory
@@ -196,3 +201,42 @@ def test_registration_excel_program_session_selection_flag_shows_all(t_event) ->
     program_sheet = next((df for df, name in sheets if name == f"PROGRAM - {session.title}"), None)
 
     assert program_sheet is not None
+
+
+@pytest.mark.site
+class TestEventExcelExport:
+    """The Excel export view serves known file codes and rejects unknown ones."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, client, t_event_manager) -> None:
+        client.force_login(user=t_event_manager)
+
+    def test_unknown_file_code_is_not_found(self, client, t_event) -> None:
+        """An unknown export file code is a 404, not a server error."""
+        response = client.get(reverse("event:event_excel", args=[t_event.code, "unknown"]))
+
+        assert response.status_code == status.NOT_FOUND
+
+    def test_known_file_code_returns_the_workbook(self, client, t_event) -> None:
+        """A known export file code still returns the generated workbook."""
+        response = client.get(reverse("event:event_excel", args=[t_event.code, "registrations"]))
+
+        assert response.status_code == status.OK
+        assert response["Content-Type"] == (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8"
+        )
+        assert response["Content-Disposition"] == (f'attachment; filename="{t_event.code}_registrations.xlsx"')
+        assert response.content.startswith(b"PK")
+
+    def test_failing_sheet_builder_is_a_server_error(self, client, t_event, monkeypatch) -> None:
+        """A genuine failure while building the workbook is not masked as a 404."""
+
+        def broken_builder(event: Any) -> NoReturn:
+            raise RuntimeError("broken builder")
+
+        monkeypatch.setattr("evan.site.views.events.get_registration_sheets", broken_builder)
+        client.raise_request_exception = False
+
+        response = client.get(reverse("event:event_excel", args=[t_event.code, "registrations"]))
+
+        assert response.status_code == status.INTERNAL_SERVER_ERROR

@@ -161,14 +161,17 @@ class EventExcelView(EventFirewallMixin, ExcelView):
     def get_sheets(self) -> list[DataSheet]:
         """Get the sheets of the Excel file.
 
-        :raises NotImplementedError: If the file code is not implemented.
+        :raises Http404: If the file code is not known.
         """
-        try:
-            return {
-                "registrations": get_registration_sheets,
-            }[self.kwargs.get("file_code")](self.get_event())
-        except KeyError as exc:
-            raise NotImplementedError from exc
+        sheet_builders = {
+            "registrations": get_registration_sheets,
+        }
+        file_code = self.kwargs.get("file_code")
+
+        if file_code not in sheet_builders:
+            raise Http404("Export not found.")
+
+        return sheet_builders[file_code](self.get_event())
 
 
 def get_registration_sheets(event: Event) -> list[DataSheet]:
