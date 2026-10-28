@@ -3,6 +3,7 @@ from datetime import UTC, timedelta
 import factory
 from factory.declarations import LazyAttribute, Sequence
 
+
 # Existing events are all-modules-on and listed (see the 0028 backfill migration);
 # tests for minimal/new events override these explicitly.
 ALL_MODULES_ON = {

@@ -6,7 +6,6 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from evan.models import Event
 from tests._factories import EventFactory, UserFactory
 
 
@@ -96,7 +95,7 @@ class TestListingModerationAdmin:
     def test_decline_view_requires_reason(self, client, superuser, pending_event):
         client.force_login(user=superuser)
 
-        response = client.post(
+        client.post(
             reverse("admin:evan_event_decline"),
             {"ids": str(pending_event.pk), "reason": ""},
         )

@@ -253,7 +253,7 @@ def _credit_worldline_payment(registration: Registration, query_params: QueryDic
         from decimal import Decimal, InvalidOperation
 
         amount = int(Decimal(str(query_params.get("AMOUNT", 0))))
-    except (InvalidOperation, ValueError, OverflowError):
+    except InvalidOperation, ValueError, OverflowError:
         return False
 
     with transaction.atomic():
@@ -335,7 +335,7 @@ def _finalize_payment_attempt(registration: Registration, query_params: QueryDic
                 from decimal import Decimal, InvalidOperation
 
                 amount = int(Decimal(str(amount_raw)))
-            except (InvalidOperation, ValueError, OverflowError):
+            except InvalidOperation, ValueError, OverflowError:
                 return False
             if amount != attempt.expected_amount:
                 return False

@@ -1,5 +1,4 @@
 import factory
-from factory.declarations import SubFactory
 from factory.faker import Faker
 
 from evan.models import EmailTemplate
