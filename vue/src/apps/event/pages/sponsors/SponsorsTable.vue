@@ -30,6 +30,19 @@ const { sponsorTypeOptions } = storeToRefs(store);
 const { t } = useI18n();
 
 const queryColumns = ['name', 'website'];
+
+// The column displays the configured tier label, so sorting on that label alone
+// would order tiers alphabetically instead of by the configured tier order.
+function sortByConfiguredLevel(a: string | number, b: string | number): number {
+  const options = sponsorTypeOptions.value;
+  const rankA = options.findIndex((option) => option.label === a);
+  const rankB = options.findIndex((option) => option.label === b);
+
+  return rankA !== -1 && rankB !== -1
+    ? rankA - rankB
+    : String(a).localeCompare(String(b), undefined, { numeric: true });
+}
+
 const columns = [
   {
     name: 'name',
@@ -55,6 +68,7 @@ const columns = [
     align: 'right' as const,
     autoWidth: true,
     sortable: true,
+    sort: sortByConfiguredLevel,
   },
   {
     name: 'has_logo',
