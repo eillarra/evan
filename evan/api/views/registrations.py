@@ -1,4 +1,4 @@
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -57,18 +57,22 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
         user = self.request.user
         event = serializer.instance.event
         # RegistrationPermission already limits this endpoint to the owner.
-        has_registration = serializer.instance.user_id == user.id
-        denial = event.registration_access_denied_reason(user, has_registration=has_registration, for_update=True)
+        denial = event.registration_access_denied_reason(user, has_registration=True, for_update=True)
         if denial is not None:
             raise PermissionDenied(denial.message)
 
-        fee_type = serializer.validated_data.get("fee_type")
-        if fee_type is not None and event.is_registration_window_closed and fee_type != serializer.instance.fee_type:
-            raise ValidationError(
-                {"fee_type": ["The registration window has closed; the fee type can no longer be changed."]}
-            )
-
+        previous_total = serializer.instance.total_fee
         try:
-            serializer.save()
+            with transaction.atomic():
+                registration = serializer.save()
+                if event.is_registration_window_closed and registration.total_fee != previous_total:
+                    raise ValidationError(
+                        {
+                            "non_field_errors": [
+                                "The registration window has closed; changes that affect the total fee "
+                                "are no longer allowed."
+                            ]
+                        }
+                    )
         except ValueError as exc:
             raise ValidationError({"non_field_errors": [str(exc)]}) from exc

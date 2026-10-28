@@ -13,8 +13,8 @@ Three distinct endpoint groups, each with different access rules:
   3. RegistrationViewSet → GET/PUT /registrations/{uuid}/
      Each attendee can only access their own registration. Listing and audience
      policy gate creation only; existing owners keep access. Edits are refused
-     after the event ends, and the fee type is final once the registration
-     window has closed.
+     after the event ends, and updates that change the total fee are refused once
+     the registration window has closed.
 """
 
 from http import HTTPStatus as status
@@ -23,7 +23,7 @@ import pytest
 from django.urls import reverse
 
 from evan.models import Event, Fee, Session
-from tests._factories import RegistrationFactory, UserFactory
+from tests._factories import RegistrationFactory, SessionFactory, UserFactory
 
 
 @pytest.fixture
@@ -394,22 +394,59 @@ class TestRegistrationUpdateAfterDeadline:
         assert response.status_code == status.OK
 
     def test_owner_cannot_change_fee_type_after_deadline(self, api_client, t_event, user, registration) -> None:
-        """The fee tier is final once the window closes, even for the registration owner."""
+        """Switching to a different price tier changes the total fee, so it is refused."""
         Fee.objects.create(event=t_event, type="student", value=50)
 
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"fee_type": "student"})
 
         assert response.status_code == status.BAD_REQUEST
-        assert "fee_type" in response.data
+        assert "non_field_errors" in response.data
+        assert "total fee" in str(response.data["non_field_errors"])
         registration.refresh_from_db()
         assert registration.fee_type == "regular"
 
     def test_owner_can_resend_unchanged_fee_type_after_deadline(self, api_client, user, registration) -> None:
-        """Only an actual fee-type change is blocked; the current value is still accepted."""
+        """Only a change to the total fee is blocked; resending the current tier is accepted."""
         api_client.force_authenticate(user=user)
         response = api_client.patch(_detail_url(registration), {"fee_type": registration.fee_type})
         assert response.status_code == status.OK
+
+    def test_owner_cannot_add_paid_social_event_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """Selecting a paid social event changes the total fee, so it is refused."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=25)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"sessions": [social.id]}, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert not registration.sessions.exists()
+
+    def test_owner_can_add_free_session_after_deadline(self, api_client, t_event, user, registration) -> None:
+        """A session without an extra fee does not change the total, so it is accepted."""
+        session = SessionFactory(event=t_event, title="Free meetup", is_social_event=True, extra_attendees_fee=0)
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), {"sessions": [session.id]}, format="json")
+
+        assert response.status_code == status.OK
+        registration.refresh_from_db()
+        assert list(registration.sessions.values_list("id", flat=True)) == [session.id]
+
+    def test_owner_cannot_add_accompanying_person_fee_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """An accompanying person's social event changes the total fee too."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        payload = {"extra_data": {"accompanying_persons": [{"selected_social_events": [social.id]}]}}
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(_detail_url(registration), payload, format="json")
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
 
 
 @pytest.mark.api

@@ -449,9 +449,13 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         :param for_update: Whether the check guards a write instead of a read.
         :returns: The denial reason when refused, otherwise None.
         """
+        is_manager: bool | None = None
+
         if not has_registration:
-            if not self.is_listed and not self.editable_by_user(user):
-                return RegistrationDenialReason.NOT_LISTED
+            if not self.is_listed:
+                is_manager = self.editable_by_user(user)
+                if not is_manager:
+                    return RegistrationDenialReason.NOT_LISTED
 
             if self.registration_audience == self.RegistrationAudience.UGENT_ONLY and not user.is_ugent_verified:
                 return RegistrationDenialReason.AUDIENCE
@@ -459,8 +463,11 @@ class Event(FilesMixin, LinksMixin, PermissionsMixin, models.Model):
         if self.is_closed and (for_update or not has_registration):
             return RegistrationDenialReason.ENDED
 
-        if not self.is_open_for_registration and not has_registration and not self.editable_by_user(user):
-            return RegistrationDenialReason.WINDOW
+        if not self.is_open_for_registration and not has_registration:
+            if is_manager is None:
+                is_manager = self.editable_by_user(user)
+            if not is_manager:
+                return RegistrationDenialReason.WINDOW
 
         return None
 
