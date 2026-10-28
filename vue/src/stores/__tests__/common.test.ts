@@ -1,6 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createApp, defineComponent, h } from 'vue';
+import { onMounted } from 'vue';
 
 const storageGet = vi.fn();
 const storageSet = vi.fn();
@@ -22,23 +22,6 @@ vi.mock('@/axios', () => ({
 
 import { useCommonStore } from '../common';
 
-// The store registers an onMounted lifecycle hook, so it must be created
-// during component setup. Mounting a dummy component provides that context
-// and lets the clock cleanup run on unmount.
-function useStoreInSetup() {
-  let store!: ReturnType<typeof useCommonStore>;
-  const app = createApp(
-    defineComponent({
-      setup() {
-        store = useCommonStore();
-        return () => h('div');
-      },
-    }),
-  );
-  app.mount(document.createElement('div'));
-  return { store, app };
-}
-
 describe('useCommonStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -52,13 +35,12 @@ describe('useCommonStore', () => {
       const cached = { BE: 'Belgium', NL: 'Netherlands' };
       storageGet.mockReturnValue(cached);
 
-      const { store, app } = useStoreInSetup();
+      const store = useCommonStore();
       await store.init();
 
       expect(store.countries).toEqual(cached);
       expect(apiGet).not.toHaveBeenCalled();
       expect(storageSet).not.toHaveBeenCalled();
-      app.unmount();
     });
 
     it('fetches from the API and stores the result with a 1-hour ttl on cache miss', async () => {
@@ -66,29 +48,46 @@ describe('useCommonStore', () => {
       storageGet.mockReturnValue(null);
       apiGet.mockResolvedValue({ data: fetched });
 
-      const { store, app } = useStoreInSetup();
+      const store = useCommonStore();
       await store.init();
 
       expect(store.countries).toEqual(fetched);
       expect(apiGet).toHaveBeenCalledWith('../countries/');
       expect(storageSet).toHaveBeenCalledWith('countries', fetched, 3600);
-      app.unmount();
     });
   });
 
   describe('setTitle', () => {
     it('updates the title ref', () => {
-      const { store, app } = useStoreInSetup();
+      const store = useCommonStore();
       store.setTitle('My Event');
 
       expect(store.title).toBe('My Event');
-      app.unmount();
     });
 
     it('has a default title of Evan', () => {
-      const { store, app } = useStoreInSetup();
+      const store = useCommonStore();
       expect(store.title).toBe('Evan');
-      app.unmount();
     });
+  });
+
+  it('can be created outside a component without lifecycle warnings', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const lifecycleWarnings = () =>
+      warn.mock.calls.filter((call) => /lifecycle|onMounted|onUnmounted/i.test(String(call[0])));
+
+    try {
+      // Positive control: a lifecycle hook outside setup must warn, otherwise this
+      // assertion would stay green after Vue stops emitting the warning.
+      onMounted(() => {});
+      expect(lifecycleWarnings()).not.toEqual([]);
+
+      warn.mockClear();
+      useCommonStore();
+
+      expect(lifecycleWarnings()).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

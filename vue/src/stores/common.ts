@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, ref } from 'vue';
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
 
 import { api } from '@/axios';
@@ -10,7 +10,6 @@ interface CountryMap {
 
 export const useCommonStore = defineStore('common', () => {
   const countries = ref<CountryMap | null>(null);
-  const now = ref<Date>(new Date());
   const title = ref<string>('Evan');
 
   async function init() {
@@ -35,18 +34,10 @@ export const useCommonStore = defineStore('common', () => {
     title.value = newTitle;
   }
 
-  onMounted(() => {
-    const interval = setInterval(() => {
-      now.value = new Date();
-    }, 1000);
-    onUnmounted(() => clearInterval(interval));
-  });
-
   return {
     init,
     setTitle,
     countries,
-    now,
     title,
   };
 });
