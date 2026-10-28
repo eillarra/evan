@@ -72,6 +72,10 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
         :returns: The registration's event.
         :raises serializers.ValidationError: When the event cannot be determined.
         """
+        event = self.context.get("event")
+        if event is not None:
+            return event
+
         if self.instance is not None:
             return self.instance.event
 
@@ -130,7 +134,13 @@ class RegistrationRetrieveSerializer(RegistrationSerializer):
         if not persons:
             return value
 
-        social_event_ids = set(self._get_event().sessions.filter(is_social_event=True).values_list("id", flat=True))
+        event = self._get_event()
+        if not event.registration_configuration.get("accompanying_persons", True):
+            raise serializers.ValidationError(
+                {"accompanying_persons": ["This event does not accept accompanying persons."]}
+            )
+
+        social_event_ids = set(event.sessions.filter(is_social_event=True).values_list("id", flat=True))
         normalised_persons = []
 
         for person in persons:

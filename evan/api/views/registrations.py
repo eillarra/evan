@@ -1,4 +1,5 @@
 from django.db import IntegrityError, transaction
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from rest_framework import serializers
@@ -28,9 +29,23 @@ class RegistrationCreateViewSet(CreateModelMixin, GenericViewSet):
     queryset = Registration.objects.select_related("user").prefetch_related("coupon", "event")
     serializer_class = RegistrationRetrieveSerializer
 
+    def get_event(self) -> Event:
+        """Return the event from the URL, raising 404 when it does not exist.
+
+        :returns: The event to register for.
+        """
+        if not hasattr(self, "_event"):
+            self._event = get_object_or_404(Event, code=self.kwargs.get("code"))
+        return self._event
+
+    def get_serializer_context(self) -> dict:
+        context = super().get_serializer_context()
+        context["event"] = self.get_event()
+        return context
+
     def perform_create(self, serializer):
         user = self.request.user
-        event = Event.objects.get(code=self.kwargs.get("code"))
+        event = self.get_event()
         has_registration = Registration.objects.filter(event=event, user=user).exists()
         denial = event.registration_access_denied_reason(user, has_registration=has_registration)
         if denial is not None:
@@ -74,22 +89,22 @@ class RegistrationViewSet(RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
 
         try:
             with transaction.atomic():
-                previous_total = None
+                previous_amounts = None
                 if event.is_registration_window_closed:
                     # Lock the row so a concurrent write cannot slip past the check.
                     serializer.instance = Registration.objects.select_for_update().get(pk=serializer.instance.pk)
-                    previous_total = serializer.instance.projected_total_fee()
+                    previous_amounts = serializer.instance.projected_amounts()
 
                 registration = serializer.save()
 
-                if previous_total is not None:
+                if previous_amounts is not None:
                     registration.refresh_from_db()
-                    if registration.total_fee != previous_total:
+                    if (registration.total_fee, registration.remaining_fee) != previous_amounts:
                         raise ValidationError(
                             {
                                 "non_field_errors": [
                                     "The registration window has closed; changes that affect the total fee "
-                                    "are no longer allowed."
+                                    "or the amount due are no longer allowed."
                                 ]
                             }
                         )

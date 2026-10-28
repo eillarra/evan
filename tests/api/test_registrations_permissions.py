@@ -22,8 +22,8 @@ from http import HTTPStatus as status
 import pytest
 from django.urls import reverse
 
-from evan.models import Event, Fee, Session
-from tests._factories import RegistrationFactory, SessionFactory, UserFactory
+from evan.models import Coupon, Event, Fee, Registration, Session
+from tests._factories import CouponFactory, RegistrationFactory, SessionFactory, UserFactory
 
 
 @pytest.fixture
@@ -146,6 +146,22 @@ class TestRegistrationCreate:
 
         assert response.status_code == status.CREATED
         assert response.data["extra_data"]["paper_id"] == "P-123"
+
+    def test_numeric_string_session_ids_are_stored_as_int(self, api_client, t_event, user) -> None:
+        """Numeric strings are normalised at the API boundary and charged as ints."""
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        payload = {
+            "fee_type": "regular",
+            "extra_data": {"accompanying_persons": [{"selected_social_events": [str(social.id)]}]},
+        }
+
+        api_client.force_authenticate(user=user)
+        response = api_client.post(_register_url(t_event), payload, format="json")
+
+        assert response.status_code == status.CREATED
+        registration = Registration.objects.get(event=t_event, user=user)
+        assert registration.extra_data["accompanying_persons"][0]["selected_social_events"] == [social.id]
+        assert registration.extra_fees == 20
 
 
 @pytest.mark.api
@@ -504,6 +520,33 @@ class TestRegistrationUpdateAfterDeadline:
 
         assert response.status_code == status.BAD_REQUEST
         assert "non_field_errors" in response.data
+
+    def test_owner_cannot_shift_fee_into_coupon_coverage_after_deadline(
+        self, api_client, t_event, user, registration
+    ) -> None:
+        """An equal total is still refused when the coupon leaves more to pay."""
+        Fee.objects.create(event=t_event, type="student", value=80)
+        social = SessionFactory(event=t_event, title="Gala dinner", is_social_event=True, extra_attendees_fee=20)
+        registration.coupon = CouponFactory(event=t_event, value=100, coverage=Coupon.BASE_FEE)
+        registration.save()
+        registration.refresh_from_db()
+        assert registration.remaining_fee == 0
+
+        api_client.force_authenticate(user=user)
+        response = api_client.patch(
+            _detail_url(registration),
+            {
+                "fee_type": "student",
+                "extra_data": {"accompanying_persons": [{"selected_social_events": [social.id]}]},
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.BAD_REQUEST
+        assert "non_field_errors" in response.data
+        registration.refresh_from_db()
+        assert registration.fee_type == "regular"
+        assert registration.remaining_fee == 0
 
     def test_full_put_without_fee_change_after_deadline(self, api_client, user, registration) -> None:
         """PUT follows the same total-fee rule as PATCH."""

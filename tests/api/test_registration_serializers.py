@@ -65,36 +65,68 @@ class TestRegistrationExtraDataSerializer:
     def test_non_numeric_string_is_rejected(self, event) -> None:
         errors = _errors(event, {"accompanying_persons": [{"selected_social_events": ["abc"]}]})
 
-        assert "extra_data" in errors
+        assert "integer IDs" in str(errors)
+
+    def test_boolean_and_float_are_rejected(self, event) -> None:
+        assert "integer IDs" in str(_errors(event, {"accompanying_persons": [{"selected_social_events": [True]}]}))
+        assert "integer IDs" in str(_errors(event, {"accompanying_persons": [{"selected_social_events": [1.0]}]}))
 
     def test_null_selection_is_rejected(self, event) -> None:
         errors = _errors(event, {"accompanying_persons": [{"selected_social_events": None}]})
 
-        assert "extra_data" in errors
+        assert "must be a list" in str(errors)
 
     def test_null_persons_list_is_rejected(self, event) -> None:
         errors = _errors(event, {"accompanying_persons": None})
 
-        assert "extra_data" in errors
+        assert "must be a list" in str(errors)
+
+    def test_non_list_persons_is_rejected(self, event) -> None:
+        errors = _errors(event, {"accompanying_persons": {"name": "Jane"}})
+
+        assert "must be a list" in str(errors)
+
+    def test_non_object_person_is_rejected(self, event) -> None:
+        errors = _errors(event, {"accompanying_persons": ["Jane"]})
+
+        assert "must be an object" in str(errors)
+
+    def test_non_object_extra_data_is_rejected(self, event) -> None:
+        errors = _errors(event, ["not", "an", "object"])
+
+        assert "must be an object" in str(errors)
 
     def test_object_selection_is_rejected(self, event) -> None:
         errors = _errors(event, {"accompanying_persons": [{"selected_social_events": [{}]}]})
 
-        assert "extra_data" in errors
+        assert "integer IDs" in str(errors)
 
     def test_session_from_another_event_is_rejected(self, event) -> None:
         other = SessionFactory(event=EventFactory(), is_social_event=True)
 
         errors = _errors(event, {"accompanying_persons": [{"selected_social_events": [other.id]}]})
 
-        assert "extra_data" in errors
+        assert "social events of this event" in str(errors)
 
     def test_non_social_session_is_rejected(self, event) -> None:
         session = SessionFactory(event=event, is_social_event=False)
 
         errors = _errors(event, {"accompanying_persons": [{"selected_social_events": [session.id]}]})
 
-        assert "extra_data" in errors
+        assert "social events of this event" in str(errors)
+
+    def test_empty_persons_list_is_allowed(self, event) -> None:
+        data = _validated_extra_data(event, {"accompanying_persons": []})
+
+        assert data["accompanying_persons"] == []
+
+    def test_accompanying_persons_refused_when_event_disallows(self, event) -> None:
+        event.registration_config = {"accompanying_persons": False}
+        event.save(update_fields=["registration_config"])
+
+        errors = _errors(event, {"accompanying_persons": [{"name": "Jane"}]})
+
+        assert "does not accept accompanying persons" in str(errors)
 
     def test_missing_selection_is_allowed(self, event) -> None:
         data = _validated_extra_data(event, {"accompanying_persons": [{"name": "Jane"}]})
@@ -145,4 +177,4 @@ class TestRegistrationUpdateExtraDataSerializer:
         )
 
         assert not serializer.is_valid()
-        assert "extra_data" in serializer.errors
+        assert "social events of this event" in str(serializer.errors)

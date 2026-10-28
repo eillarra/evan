@@ -371,12 +371,20 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
 
     @property
     def paid_via_coupon(self) -> int:
+        return self._coupon_coverage(self.base_fee, self.total_fee)
+
+    def _coupon_coverage(self, base_fee: int, total_fee: int) -> int:
+        """Return the amount the registration's coupon covers.
+
+        :param base_fee: The base fee to cover.
+        :param total_fee: The total fee to cover.
+        :returns: The covered amount.
+        """
         if not self.coupon:
             return 0
-        elif self.coupon.coverage == self.coupon.BASE_FEE:
-            return min(self.coupon.value, self.base_fee)
-        else:
-            return min(self.coupon.value, self.total_fee)
+        if self.coupon.coverage == self.coupon.BASE_FEE:
+            return min(self.coupon.value, base_fee)
+        return min(self.coupon.value, total_fee)
 
     @property
     def remaining_fee(self) -> int:
@@ -401,24 +409,31 @@ class Registration(RemarksMixin, TagsMixin, models.Model):
         base_fee = calculate_registration_base_fee(self)
         extra_fees = 0
 
-        try:
-            if self.event.module_enabled("payments"):
-                extra_fees = calculate_accompanying_fees(self)
-        except KeyError:
-            pass
+        if self.event.module_enabled("payments"):
+            extra_fees = calculate_accompanying_fees(self)
 
         return base_fee, extra_fees
 
-    def projected_total_fee(self) -> int:
-        """Return the total fee this registration would have if saved now.
+    def projected_amounts(self) -> tuple[int, int]:
+        """Return the total and remaining fee this registration would have if saved now.
 
         Recomputes the fee from the current price table without writing, so a
         later price correction does not look like a change made by an update.
 
-        :returns: The projected total fee.
+        :returns: The projected total fee and remaining fee.
         """
         base_fee, extra_fees = self.compute_fees()
-        return base_fee + extra_fees + self.manual_extra_fees
+        total_fee = base_fee + extra_fees + self.manual_extra_fees
+        paid_via_coupon = self._coupon_coverage(base_fee, total_fee)
+        remaining_fee = total_fee - self.paid - self.paid_via_invoice - paid_via_coupon
+        return total_fee, remaining_fee
+
+    def projected_total_fee(self) -> int:
+        """Return the total fee this registration would have if saved now.
+
+        :returns: The projected total fee.
+        """
+        return self.projected_amounts()[0]
 
     @property
     def url(self) -> str:
