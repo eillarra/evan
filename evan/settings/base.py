@@ -248,7 +248,9 @@ TEMPLATES = [
         ],
         "APP_DIRS": True,
         "OPTIONS": {
-            "debug": DEBUG,
+            # No explicit "debug": the engine defaults to settings.DEBUG when it is built.
+            # Hard-coding DEBUG captured base.py's value (True) at import time, so
+            # production compiled templates with the debug lexer.
             "context_processors": [
                 "django.contrib.auth.context_processors.auth",
                 "django.template.context_processors.debug",
