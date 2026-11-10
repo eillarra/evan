@@ -305,3 +305,54 @@ class TestSessionBadgeIcon:
 
         assert response.status_code == status.OK
         assert response.data["extra_data"]["badge_icon"] is None
+
+
+@pytest.mark.api
+class TestPublicSessionChair:
+    """The public session payload exposes the programme chair as free text."""
+
+    def _get_session(self, api_client, event, code: str) -> dict:
+        response = api_client.get(event.get_api_url() + "sessions/")
+        assert response.status_code == status.OK
+        return next(session for session in response.data if session["code"] == code)
+
+    def test_chair_is_exposed(self, api_client, t_event) -> None:
+        """A recorded chair is returned under the session extra data."""
+        SessionFactory(event=t_event, code="A1", extra_data={"chair": "Ada Example"})
+
+        session = self._get_session(api_client, t_event, "A1")
+
+        assert session["extra_data"]["chair"] == "Ada Example"
+
+    def test_blank_chair_is_null(self, api_client, t_event) -> None:
+        """A blank chair is normalized to null instead of an empty string."""
+        SessionFactory(event=t_event, code="A2", extra_data={"chair": "   "})
+
+        session = self._get_session(api_client, t_event, "A2")
+
+        assert session["extra_data"]["chair"] is None
+
+
+class TestSessionChairWrite:
+    """Managers can record and clear the chair through the session endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api_client, t_event_manager):
+        api_client.force_authenticate(user=t_event_manager)
+
+    def test_chair_round_trips(self, api_client, session) -> None:
+        """A manager writes a chair and reads it back."""
+        response = api_client.patch(session.get_api_url(), {"extra_data": {"chair": "Grace Example"}}, format="json")
+
+        assert response.status_code == status.OK
+        assert response.data["extra_data"]["chair"] == "Grace Example"
+
+    def test_blank_chair_clears(self, api_client, session) -> None:
+        """A whitespace-only chair is stored as null."""
+        session.extra_data = {"chair": "Ada Example"}
+        session.save()
+
+        response = api_client.patch(session.get_api_url(), {"extra_data": {"chair": "   "}}, format="json")
+
+        assert response.status_code == status.OK
+        assert response.data["extra_data"]["chair"] is None

@@ -36,3 +36,7 @@ vue/dist
 
 cloc.md
 TODO.md
+
+# Local one-off import snapshots (may contain public professional names)
+.local/
+.tmp-*

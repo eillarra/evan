@@ -4,6 +4,20 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict
 
 
+def blank_to_none[T](value: T) -> T | None:
+    """Treat blank or whitespace-only text as no value.
+
+    Extra-data schemas use this for optional free-text fields: a JSON ``""`` or
+    ``"   "`` becomes ``None`` so clients only have to handle one empty state.
+
+    :param value: The raw value from the extra data mapping.
+    :returns: None when the value is a blank string, otherwise the value unchanged.
+    """
+    if isinstance(value, str) and not value.strip():
+        return None
+    return value
+
+
 class ImportantDate(BaseModel):
     """An important date for an event or session."""
 
